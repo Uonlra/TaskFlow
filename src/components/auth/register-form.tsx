@@ -40,8 +40,8 @@ export function RegisterForm() {
       await new Promise((resolve) => setTimeout(resolve, 300));
       setSubmittedName(values.name);
       showToast({
-        title: "演示账号已创建",
-        description: `${values.name} 的演示工作台已经准备好了。`,
+        title: "本地账号已创建",
+        description: `${values.name} 的本地工作台已经准备好了。`,
         tone: "success",
       });
       router.push("/dashboard");
@@ -124,7 +124,7 @@ export function RegisterForm() {
         <AuthInput
           label="姓名"
           type="text"
-          placeholder="请输入你的称呼"
+          placeholder="请输入你的昵称"
           error={errors.name?.message}
           registration={register("name")}
         />

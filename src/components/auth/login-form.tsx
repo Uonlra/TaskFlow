@@ -36,8 +36,8 @@ export function LoginForm() {
       await new Promise((resolve) => setTimeout(resolve, 300));
       setSubmittedEmail(values.email);
       showToast({
-        title: "演示登录已完成",
-        description: `已用本地演示模式登录 ${values.email}。`,
+        title: "登录已完成",
+        description: `已用本地模式登录 ${values.email}。`,
         tone: "success",
       });
       router.push("/dashboard");

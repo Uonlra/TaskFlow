@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ROUTES } from "@/lib/constants/routes";
 
 const navItems = [
-  { label: "仪表盘", href: ROUTES.dashboard },
+  { label: "主页面", href: ROUTES.dashboard },
   { label: "任务列表", href: ROUTES.tasks },
   { label: "设置", href: ROUTES.settings },
 ];
@@ -23,7 +23,7 @@ export function AppSidebar() {
     >
       <div>
         <p style={{ margin: 0, color: "var(--primary)", fontWeight: 700, letterSpacing: "0.12em", fontSize: "0.92rem" }}>
-          清衡任务台
+          U's Task
         </p>
         <h1 style={{ margin: "18px 0 0", fontSize: "2rem", lineHeight: 1.28 }}>
           让每天的推进
@@ -61,7 +61,7 @@ export function AppSidebar() {
       >
         <p style={{ margin: 0, fontWeight: 700, fontSize: "1rem" }}>本周提醒</p>
         <p style={{ margin: "10px 0 0", color: "var(--muted)", lineHeight: 1.8 }}>
-          先把进行中的任务收口，再继续新增事项，能明显减少上下文切换。
+          先把进行中的任务完成，再继续新增事项，能明显减少上下文切换。
         </p>
       </div>
     </aside>
