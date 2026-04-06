@@ -1,0 +1,440 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+import { ActivityFeed } from "@/components/dashboard/activity-feed";
+import { CompletionTrendChart } from "@/components/dashboard/completion-trend-chart";
+import { ProgressOverview } from "@/components/dashboard/progress-overview";
+import { StatsGrid } from "@/components/dashboard/stats-grid";
+import { StatusDistributionChart } from "@/components/dashboard/status-distribution-chart";
+import { TagSummary } from "@/components/dashboard/tag-summary";
+import { TagDistributionChart } from "@/components/dashboard/tag-distribution-chart";
+import { UpcomingDeadlines } from "@/components/dashboard/upcoming-deadlines";
+import { TaskList } from "@/components/task/task-list";
+import type { Task } from "@/features/tasks/types/task.types";
+import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
+import { useAuth } from "@/providers/auth-provider";
+import { useTaskStore } from "@/store/task-store";
+
+type DashboardRange = "today" | "week" | "all";
+
+const rangeOptions: Array<{ value: DashboardRange; label: string }> = [
+  { value: "today", label: "今天" },
+  { value: "week", label: "本周" },
+  { value: "all", label: "全部" },
+];
+
+type DashboardClientProps = {
+  initialRange?: DashboardRange;
+};
+
+export function DashboardClient({ initialRange = "today" }: DashboardClientProps) {
+  const { user, isConfigured } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [range, setRange] = useState<DashboardRange>(initialRange);
+  const tasks = useTaskStore((state) => state.tasks);
+  const isLoading = useTaskStore((state) => state.isLoading);
+  const error = useTaskStore((state) => state.error);
+  const syncTasks = useTaskStore((state) => state.syncTasks);
+
+  useEffect(() => {
+    if (isConfigured && user?.id) {
+      void syncTasks(user.id);
+    }
+  }, [isConfigured, syncTasks, user?.id]);
+
+  useEffect(() => {
+    const nextRange = parseDashboardRange(searchParams.get("range"));
+
+    setRange((current) => (current === nextRange ? current : nextRange));
+  }, [searchParams]);
+
+  const scopedTasks = useMemo(() => filterTasksByRange(tasks, range), [range, tasks]);
+  const activeScopedTasks = useMemo(() => scopedTasks.filter((task) => task.status !== "done"), [scopedTasks]);
+  const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "今天";
+  const prioritiesTitle = range === "all" ? "全部重点任务" : `${rangeLabel}重点任务`;
+  const dueSummary = useMemo(() => {
+    return activeScopedTasks.reduce(
+      (summary, task) => {
+        const dueMeta = getTaskDueMeta(task);
+
+        if (dueMeta.isOverdue) {
+          summary.overdue += 1;
+        }
+
+        if (dueMeta.isDueToday) {
+          summary.today += 1;
+        }
+
+        if (dueMeta.isUpcoming) {
+          summary.upcoming += 1;
+        }
+
+        return summary;
+      },
+      { overdue: 0, today: 0, upcoming: 0 },
+    );
+  }, [activeScopedTasks]);
+
+  const stats = useMemo(() => {
+    const open = scopedTasks.filter((task) => task.status !== "done").length;
+    const inProgress = scopedTasks.filter((task) => task.status === "in_progress").length;
+    const completed = scopedTasks.filter((task) => task.status === "done").length;
+    const completionLabel = range === "today" ? "今日完成" : range === "week" ? "本周完成" : "累计完成";
+
+    return [
+      {
+        label: "未完成任务",
+        value: String(open),
+        helper:
+          range === "all"
+            ? isConfigured
+              ? "已从你的 Supabase 项目同步。"
+              : "当前仍是演示模式，连接 Supabase 后会切换为真实数据。"
+            : `${rangeLabel}范围内仍未完成的任务。`,
+        accent: "var(--primary)",
+      },
+      {
+        label: "进行中",
+        value: String(inProgress),
+        helper: "把同时推进的任务数量收紧，节奏会更稳。",
+        accent: "#d18a49",
+      },
+      {
+        label: completionLabel,
+        value: String(completed),
+        helper:
+          range === "all"
+            ? "整个工作台里已经完成的任务总数。"
+            : `${rangeLabel}范围内完成的任务数量。`,
+        accent: "var(--success)",
+      },
+      {
+        label: "已逾期",
+        value: String(dueSummary.overdue),
+        helper: `${rangeLabel}范围内已经错过截止时间的任务。`,
+        accent: "var(--danger)",
+      },
+      {
+        label: "今天到期",
+        value: String(dueSummary.today),
+        helper: `${rangeLabel}范围内需要今天收口的任务。`,
+        accent: "var(--warning)",
+      },
+      {
+        label: "3 天内到期",
+        value: String(dueSummary.upcoming),
+        helper: `${rangeLabel}范围内接下来 3 天要提早安排的任务。`,
+        accent: "var(--warning)",
+      },
+    ];
+  }, [dueSummary.overdue, dueSummary.today, dueSummary.upcoming, isConfigured, range, rangeLabel, scopedTasks]);
+
+  const priorityTasks = scopedTasks.filter((task) => task.status !== "done").slice(0, 4);
+  const upcoming = activeScopedTasks
+    .filter((task) => task.dueDate)
+    .sort((a, b) => new Date(a.dueDate ?? "").getTime() - new Date(b.dueDate ?? "").getTime())
+    .slice(0, 3);
+  const activity = useMemo(() => buildActivityItems(scopedTasks), [scopedTasks]);
+  const topTags = useMemo(() => buildTopTags(scopedTasks), [scopedTasks]);
+  const completionTrend = useMemo(() => buildCompletionTrend(scopedTasks, range), [range, scopedTasks]);
+  const statusDistribution = useMemo(
+    () => [
+      { label: "待开始", count: scopedTasks.filter((task) => task.status === "todo").length, color: "rgba(183,121,31,0.9)" },
+      { label: "进行中", count: scopedTasks.filter((task) => task.status === "in_progress").length, color: "rgba(199,91,57,0.9)" },
+      { label: "已完成", count: scopedTasks.filter((task) => task.status === "done").length, color: "rgba(44,122,90,0.9)" },
+    ],
+    [scopedTasks],
+  );
+  const progress = useMemo(() => {
+    const completed = scopedTasks.filter((task) => task.status === "done").length;
+    const completionRate = scopedTasks.length ? Math.round((completed / scopedTasks.length) * 100) : 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const overdueCount = scopedTasks.filter(
+      (task) => task.status !== "done" && task.dueDate && new Date(task.dueDate) < today,
+    ).length;
+
+    return {
+      completionRate,
+      overdueCount,
+      streakMessage:
+        completed > 0
+          ? `${rangeLabel}范围内已经完成 ${completed} 条任务，继续保持这个推进节奏。`
+          : `${rangeLabel}范围内还没有完成记录，先收掉一条最重要的任务就能把节奏拉起来。`,
+    };
+  }, [rangeLabel, scopedTasks]);
+
+  const handleRangeChange = (nextRange: DashboardRange) => {
+    setRange(nextRange);
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (nextRange === "today") {
+      params.delete("range");
+    } else {
+      params.set("range", nextRange);
+    }
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
+  return (
+    <>
+      {!isConfigured ? (
+        <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
+          <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
+            当前还没有连接 Supabase，所以仪表盘仍以本地演示数据模式运行。
+          </p>
+        </section>
+      ) : null}
+      {error ? (
+        <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
+          <p style={{ margin: 0, color: "var(--danger)", lineHeight: 1.7 }}>{error}</p>
+        </section>
+      ) : null}
+      <section
+        className="card-surface"
+        style={{
+          borderRadius: 24,
+          padding: 16,
+          display: "flex",
+          gap: 10,
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div>
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>仪表盘范围</p>
+          <p style={{ margin: "6px 0 0", fontWeight: 700 }}>切换你观察任务数据的时间视角。</p>
+        </div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {rangeOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => handleRangeChange(option.value)}
+              style={{
+                border: "1px solid var(--border)",
+                padding: "12px 16px",
+                borderRadius: 999,
+                fontWeight: 700,
+                background: range === option.value ? "var(--primary)" : "rgba(255,255,255,0.7)",
+                color: range === option.value ? "var(--primary-foreground)" : "var(--foreground)",
+              }}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </section>
+      <StatsGrid stats={stats} />
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: 24,
+        }}
+      >
+        <CompletionTrendChart points={completionTrend} />
+        <StatusDistributionChart items={statusDistribution} />
+        <TagDistributionChart items={topTags.slice(0, 5)} />
+      </section>
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "2fr 1.2fr",
+          gap: 24,
+          alignItems: "start",
+        }}
+      >
+        <div className="card-surface" style={{ borderRadius: 28, padding: 24 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "1.25rem" }}>{prioritiesTitle}</h2>
+              <p style={{ margin: "8px 0 0", color: "var(--muted)" }}>
+                {isLoading ? "正在同步任务..." : `${rangeLabel}范围内最值得优先处理的任务。`}
+              </p>
+            </div>
+          </div>
+          <div style={{ marginTop: 20 }}>
+            <TaskList tasks={priorityTasks} compact />
+          </div>
+        </div>
+
+        <aside style={{ display: "grid", gap: 24 }}>
+          <UpcomingDeadlines tasks={upcoming} />
+          <ProgressOverview
+            completionRate={progress.completionRate}
+            overdueCount={progress.overdueCount}
+            streakMessage={progress.streakMessage}
+          />
+          <TagSummary items={topTags} />
+          <ActivityFeed items={activity} />
+        </aside>
+      </section>
+    </>
+  );
+}
+
+function filterTasksByRange(tasks: Task[], range: DashboardRange) {
+  if (range === "all") {
+    return tasks;
+  }
+
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+
+  if (range === "today") {
+    end.setDate(start.getDate() + 1);
+  } else {
+    end.setDate(start.getDate() + 7);
+  }
+
+  return tasks.filter((task) => {
+    const checkpoints = [task.createdAt, task.updatedAt, task.completedAt, task.dueDate].filter(Boolean) as string[];
+
+    return checkpoints.some((value) => {
+      const timestamp = new Date(value).getTime();
+
+      return !Number.isNaN(timestamp) && timestamp >= start.getTime() && timestamp < end.getTime();
+    });
+  });
+}
+
+function buildActivityItems(tasks: Task[]) {
+  return tasks
+    .flatMap((task) => {
+      const items: Array<{
+        id: string;
+        title: string;
+        summary: string;
+        timestamp: string;
+        tone: "success" | "info" | "warning";
+      }> = [
+        {
+          id: `${task.id}-created`,
+          title: "创建任务",
+          summary: task.title,
+          timestamp: task.createdAt,
+          tone: "info" as const,
+        },
+      ];
+
+      if (task.completedAt) {
+        items.push({
+          id: `${task.id}-completed`,
+          title: "完成任务",
+          summary: task.title,
+          timestamp: task.completedAt,
+          tone: "success" as const,
+        });
+      }
+
+      if (task.updatedAt && task.updatedAt !== task.createdAt && task.updatedAt !== task.completedAt) {
+        items.push({
+          id: `${task.id}-updated`,
+          title: "更新任务",
+          summary: task.title,
+          timestamp: task.updatedAt,
+          tone: "warning" as const,
+        });
+      }
+
+      return items;
+    })
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 5)
+    .map((item) => ({
+      ...item,
+      timestampLabel: formatRelativeTime(item.timestamp),
+    }));
+}
+
+function buildTopTags(tasks: Task[]) {
+  const counter = new Map<string, number>();
+
+  tasks.forEach((task) => {
+    (task.tags ?? []).forEach((tag) => {
+      counter.set(tag, (counter.get(tag) ?? 0) + 1);
+    });
+  });
+
+  return Array.from(counter.entries())
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], "zh-CN"))
+    .slice(0, 6)
+    .map(([tag, count]) => ({ tag, count }));
+}
+
+function buildCompletionTrend(tasks: Task[], range: DashboardRange) {
+  const bucketCount = range === "today" ? 6 : 7;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return Array.from({ length: bucketCount }, (_, index) => {
+    const day = new Date(today);
+    day.setDate(today.getDate() - (bucketCount - index - 1));
+
+    const nextDay = new Date(day);
+    nextDay.setDate(day.getDate() + 1);
+
+    const value = tasks.filter((task) => {
+      if (!task.completedAt) {
+        return false;
+      }
+
+      const completedAt = new Date(task.completedAt).getTime();
+
+      return completedAt >= day.getTime() && completedAt < nextDay.getTime();
+    }).length;
+
+    return {
+      label: formatTrendLabel(day),
+      value,
+    };
+  });
+}
+
+function formatTrendLabel(date: Date) {
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+function formatRelativeTime(value: string) {
+  const timestamp = new Date(value).getTime();
+
+  if (Number.isNaN(timestamp)) {
+    return value;
+  }
+
+  const diffInMinutes = Math.max(1, Math.round((Date.now() - timestamp) / 60000));
+
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} 分钟前`;
+  }
+
+  const diffInHours = Math.round(diffInMinutes / 60);
+
+  if (diffInHours < 24) {
+    return `${diffInHours} 小时前`;
+  }
+
+  const diffInDays = Math.round(diffInHours / 24);
+
+  return `${diffInDays} 天前`;
+}
+
+function parseDashboardRange(value: string | null | undefined): DashboardRange {
+  if (value === "week" || value === "all") {
+    return value;
+  }
+
+  return "today";
+}

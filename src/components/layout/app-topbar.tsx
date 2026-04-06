@@ -1,0 +1,90 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+
+import { useAuth } from "@/providers/auth-provider";
+
+export function AppTopbar() {
+  const router = useRouter();
+  const { user, profile, isConfigured, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/login");
+  };
+
+  return (
+    <header
+      className="card-surface"
+      style={{
+        borderRadius: 26,
+        padding: "18px 22px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 16,
+      }}
+    >
+      <div>
+        <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.92rem", letterSpacing: "0.03em" }}>
+          {isConfigured ? "Supabase 已连接" : "本地演示模式"}
+        </p>
+        <p style={{ margin: "8px 0 0", fontWeight: 600, lineHeight: 1.75 }}>
+          {isConfigured ? "当前登录状态与任务数据均来自 Supabase。" : "配置环境变量后，即可从本地演示切换到真实数据。"}
+        </p>
+      </div>
+      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: "50%",
+            overflow: "hidden",
+            border: "1px solid var(--border)",
+            background: "rgba(255,255,255,0.72)",
+            display: "grid",
+            placeItems: "center",
+            fontWeight: 800,
+          }}
+        >
+          {profile?.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.avatarUrl}
+              alt={profile.fullName || user?.email || "头像"}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <span>{(profile?.fullName || user?.email || "演").slice(0, 1).toUpperCase()}</span>
+          )}
+        </div>
+        <div
+          style={{
+            padding: "12px 14px",
+            borderRadius: 20,
+            background: "rgba(255,255,255,0.72)",
+            border: "1px solid var(--border)",
+            fontWeight: 600,
+          }}
+        >
+          {profile?.fullName || user?.email || "演示用户"}
+        </div>
+        {isConfigured && user ? (
+          <button
+            type="button"
+            onClick={handleSignOut}
+            style={{
+              border: "1px solid var(--border)",
+              background: "rgba(255,255,255,0.72)",
+              padding: "12px 16px",
+              borderRadius: 20,
+              fontWeight: 600,
+            }}
+          >
+            退出登录
+          </button>
+        ) : null}
+      </div>
+    </header>
+  );
+}
