@@ -1,11 +1,10 @@
-# 清衡任务台 TaskFlow
+# U's TaskFlow
 
-一个围绕中文阅读节奏设计的任务工作台。它把任务管理、到期风险、标签组织、进度趋势和个人资料整合到同一个前端项目里，适合作为个人作品集中的主项目继续打磨。
+围绕私人日程安排设计的任务工作台。它把任务管理、到期风险、标签组织、进度趋势和个人资料整合到同一个前端项目里，适合作为个人作品集中的主项目继续打磨。
 
 ## 在线地址
 
-- 生产部署：[https://fronted-flame-five.vercel.app](https://fronted-flame-five.vercel.app)
-- Vercel Inspector：[https://vercel.com/uonlrasnaeys-projects/fronted/4NeHUqL6qPE7mpf8XeC9FahxZJeL](https://vercel.com/uonlrasnaeys-projects/fronted/4NeHUqL6qPE7mpf8XeC9FahxZJeL)
+- 生产部署：[https://xx.vercel.app]
 
 说明：
 
@@ -13,30 +12,7 @@
 - 如果你还没有在 Vercel 项目设置里补上 Supabase 环境变量，线上站点会以演示模式运行。
 - 本地 `.env.local` 已接入真实 Supabase；线上若要使用真实认证和真实任务数据，需要在 Vercel 项目中同步配置相同环境变量。
 
-## 展示截图
 
-### 首页
-
-![首页截图](./docs/screenshots/landing.png)
-
-### 仪表盘
-
-![仪表盘截图](./docs/screenshots/dashboard.png)
-
-### 任务页
-
-![任务页截图](./docs/screenshots/tasks.png)
-
-### 设置页
-
-![设置页截图](./docs/screenshots/settings.png)
-
-截图文件位于：
-
-- [landing.png](D:\Studys\Projects\fronted\docs\screenshots\landing.png)
-- [dashboard.png](D:\Studys\Projects\fronted\docs\screenshots\dashboard.png)
-- [tasks.png](D:\Studys\Projects\fronted\docs\screenshots\tasks.png)
-- [settings.png](D:\Studys\Projects\fronted\docs\screenshots\settings.png)
 
 ## 项目亮点
 
@@ -154,7 +130,7 @@ http://localhost:3000
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=你的 Supabase Project URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=你的 Supabase Publishable Key
-NEXT_PUBLIC_SITE_URL=https://fronted-flame-five.vercel.app
+NEXT_PUBLIC_SITE_URL=Vercel给你的网址
 ```
 
 说明：
@@ -170,7 +146,7 @@ NEXT_PUBLIC_SITE_URL=https://fronted-flame-five.vercel.app
 1. 打开 `Authentication`
 2. 进入 `URL Configuration`
 3. 将 `Site URL` 设置为你的线上地址
-   - 例如：`https://fronted-flame-five.vercel.app`
+   - 例如：`https://xx.vercel.app`
 4. 在 `Redirect URLs` 中加入：
    - `http://localhost:3000/auth/callback`
    - `http://localhost:3001/auth/callback`
@@ -206,8 +182,8 @@ NEXT_PUBLIC_SITE_URL=https://fronted-flame-five.vercel.app
 部署结果：
 
 - Project：`fronted`
-- Team：`uonlrasnaey's projects`
-- Production URL：[https://fronted-flame-five.vercel.app](https://fronted-flame-five.vercel.app)
+- Team：`xx's projects`
+- Production URL：[xx.vercel.app]
 
 如果你要让线上站点接入真实 Supabase，而不是演示模式，请到 Vercel 项目中补环境变量：
 
