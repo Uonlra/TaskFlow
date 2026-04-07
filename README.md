@@ -154,7 +154,29 @@ http://localhost:3000
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=你的 Supabase Project URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=你的 Supabase Publishable Key
+NEXT_PUBLIC_SITE_URL=https://fronted-flame-five.vercel.app
 ```
+
+说明：
+
+- `NEXT_PUBLIC_SITE_URL` 建议填写你的线上可访问地址。
+- 这样注册邮件中的确认链接会回到线上站点，而不是依赖本地 `localhost`。
+- 如果你本地关掉了 `corepack pnpm dev`，邮箱确认仍然可以通过线上地址完成。
+
+## Supabase Auth URL 配置
+
+为了让邮箱确认在本地关闭时也能工作，建议在 Supabase 后台一并设置：
+
+1. 打开 `Authentication`
+2. 进入 `URL Configuration`
+3. 将 `Site URL` 设置为你的线上地址
+   - 例如：`https://fronted-flame-five.vercel.app`
+4. 在 `Redirect URLs` 中加入：
+   - `http://localhost:3000/auth/callback`
+   - `http://localhost:3001/auth/callback`
+   - `https://fronted-flame-five.vercel.app/auth/callback`
+
+这样无论你是在本地还是线上注册，邮件链接都会有稳定的回调地址。
 
 ## Supabase 初始化
 

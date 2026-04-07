@@ -93,9 +93,148 @@ textarea::placeholder {
   backdrop-filter: blur(14px);
 }
 
+.page-stack {
+  display: grid;
+  gap: 28px;
+  padding-bottom: 36px;
+}
+
+.dashboard-shell {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 24px;
+  padding: 20px;
+}
+
+.dashboard-sidebar {
+  position: sticky;
+  top: 20px;
+  height: calc(100vh - 40px);
+}
+
+.dashboard-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.dashboard-topbar__meta {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.dashboard-topbar__actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.dashboard-topbar__profile {
+  max-width: min(28vw, 220px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.dashboard-focus-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1.2fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.dashboard-range-panel {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.page-header {
+  border-radius: 34px;
+  padding: 32px 32px 34px;
+  background:
+    radial-gradient(circle at top right, rgba(199,91,57,0.18), transparent 28%),
+    rgba(255,255,255,0.76);
+}
+
+@media (max-width: 1180px) {
+  .dashboard-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-sidebar {
+    position: static;
+    height: auto;
+  }
+
+  .dashboard-analytics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-focus-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 960px) {
   .app-shell {
     display: block !important;
     padding: 16px !important;
+  }
+
+  .page-stack {
+    gap: 20px;
+    padding-bottom: 24px;
+  }
+
+  .dashboard-topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-topbar__actions {
+    justify-content: flex-start;
+  }
+
+  .dashboard-topbar__profile {
+    max-width: 100%;
+  }
+
+  .dashboard-analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    border-radius: 26px;
+    padding: 24px 22px 26px;
+  }
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+
+  .dashboard-shell {
+    gap: 16px;
+    padding: 12px;
+  }
+
+  .dashboard-range-panel {
+    width: 100%;
+  }
+
+  .dashboard-range-panel button {
+    flex: 1 1 calc(33.333% - 8px);
+    min-width: 84px;
   }
 }

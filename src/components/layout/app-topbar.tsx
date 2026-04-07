@@ -15,25 +15,21 @@ export function AppTopbar() {
 
   return (
     <header
-      className="card-surface"
+      className="card-surface dashboard-topbar"
       style={{
         borderRadius: 26,
         padding: "18px 22px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 16,
       }}
     >
-      <div>
+      <div className="dashboard-topbar__meta">
         <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.92rem", letterSpacing: "0.03em" }}>
           {isConfigured ? "Supabase 已连接" : "本地演示模式"}
         </p>
         <p style={{ margin: "8px 0 0", fontWeight: 600, lineHeight: 1.75 }}>
-          {isConfigured ? "当前登录状态与任务数据均来自 Supabase。" : "配置环境变量后，即可从本地演示切换到真实数据。"}
+          {isConfigured ? "登录状态与任务数据由 Supabase 支持。" : "配置环境变量后，即可从本地演示切换到真实数据。"}
         </p>
       </div>
-      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+      <div className="dashboard-topbar__actions">
         <div
           style={{
             width: 44,
@@ -59,6 +55,7 @@ export function AppTopbar() {
           )}
         </div>
         <div
+          className="dashboard-topbar__profile"
           style={{
             padding: "12px 14px",
             borderRadius: 20,
@@ -66,6 +63,7 @@ export function AppTopbar() {
             border: "1px solid var(--border)",
             fontWeight: 600,
           }}
+          title={profile?.fullName || user?.email || "演示用户"}
         >
           {profile?.fullName || user?.email || "演示用户"}
         </div>

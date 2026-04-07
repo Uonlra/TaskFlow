@@ -202,18 +202,14 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         style={{
           borderRadius: 24,
           padding: 16,
-          display: "flex",
-          gap: 10,
-          flexWrap: "wrap",
-          alignItems: "center",
-          justifyContent: "space-between",
         }}
       >
-        <div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ flex: "1 1 240px", minWidth: 0 }}>
           <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>仪表盘范围</p>
           <p style={{ margin: "6px 0 0", fontWeight: 700 }}>切换你观察任务数据的时间视角。</p>
         </div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div className="dashboard-range-panel">
           {rangeOptions.map((option) => (
             <button
               key={option.value}
@@ -232,27 +228,15 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
             </button>
           ))}
         </div>
+        </div>
       </section>
       <StatsGrid stats={stats} />
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: 24,
-        }}
-      >
+      <section className="dashboard-analytics-grid">
         <CompletionTrendChart points={completionTrend} />
         <StatusDistributionChart items={statusDistribution} />
         <TagDistributionChart items={topTags.slice(0, 5)} />
       </section>
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "2fr 1.2fr",
-          gap: 24,
-          alignItems: "start",
-        }}
-      >
+      <section className="dashboard-focus-grid">
         <div className="card-surface" style={{ borderRadius: 28, padding: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
             <div>

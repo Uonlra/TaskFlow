@@ -10,13 +10,11 @@ const navItems = [
 export function AppSidebar() {
   return (
     <aside
-      className="card-surface"
+      className="dashboard-sidebar card-surface"
+      aria-label="主导航"
       style={{
         borderRadius: 34,
         padding: 26,
-        position: "sticky",
-        top: 20,
-        height: "calc(100vh - 40px)",
         display: "flex",
         flexDirection: "column",
       }}
@@ -32,7 +30,7 @@ export function AppSidebar() {
         </h1>
       </div>
 
-      <nav style={{ display: "grid", gap: 12, marginTop: 36 }}>
+      <nav style={{ display: "grid", gap: 12, marginTop: 36, marginBottom: 36 }}>
         {navItems.map((item) => (
           <Link
             key={item.href}
@@ -43,6 +41,7 @@ export function AppSidebar() {
               border: "1px solid var(--border)",
               background: "rgba(255,255,255,0.62)",
               fontWeight: 600,
+              lineHeight: 1.55,
             }}
           >
             {item.label}
@@ -52,16 +51,17 @@ export function AppSidebar() {
 
       <div
         style={{
+          
           marginTop: "auto",
-          padding: 20,
+          padding: 21,
           borderRadius: 26,
           background: "linear-gradient(135deg, rgba(199,91,57,0.12), rgba(236,220,197,0.8))",
           border: "1px solid rgba(199,91,57,0.2)",
         }}
       >
-        <p style={{ margin: 0, fontWeight: 700, fontSize: "1rem" }}>本周提醒</p>
+        <p style={{ margin: 0, fontWeight: 700, fontSize: "1.25rem" }}>本周提醒</p>
         <p style={{ margin: "10px 0 0", color: "var(--muted)", lineHeight: 1.8 }}>
-          先把进行中的任务完成，再继续新增事项，能明显减少上下文切换。
+          先将进行中的任务完成，再继续新增事项，能明显减少上下文切换。
         </p>
       </div>
     </aside>

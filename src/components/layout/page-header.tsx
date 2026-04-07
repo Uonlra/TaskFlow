@@ -7,12 +7,9 @@ type PageHeaderProps = {
 export function PageHeader({ eyebrow, title, description }: PageHeaderProps) {
   return (
     <section
-      className="card-surface"
+      className="card-surface page-header"
       style={{
-        borderRadius: 34,
-        padding: "32px 32px 34px",
-        background:
-          "radial-gradient(circle at top right, rgba(199,91,57,0.18), transparent 28%), rgba(255,255,255,0.76)",
+        minWidth: 0,
       }}
     >
       <p
@@ -26,7 +23,7 @@ export function PageHeader({ eyebrow, title, description }: PageHeaderProps) {
       >
         {eyebrow}
       </p>
-      <h1 style={{ margin: "14px 0 0", fontSize: "clamp(2rem, 5vw, 3rem)", lineHeight: 1.2 }}>{title}</h1>
+      <h1 style={{ margin: "14px 0 0", fontSize: "clamp(2rem, 4.4vw, 3rem)", lineHeight: 1.2 }}>{title}</h1>
       <p style={{ margin: "16px 0 0", maxWidth: 720, color: "var(--muted)", lineHeight: 1.85 }}>{description}</p>
     </section>
   );

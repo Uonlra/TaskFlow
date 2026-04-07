@@ -29,6 +29,16 @@ export function LoginForm() {
     },
   });
 
+  const navigateToDashboard = () => {
+    if (typeof window !== "undefined") {
+      window.location.assign("/dashboard");
+      return;
+    }
+
+    router.replace("/dashboard");
+    router.refresh();
+  };
+
   const onSubmit = async (values: LoginFormValues) => {
     setSubmitError(null);
 
@@ -40,7 +50,7 @@ export function LoginForm() {
         description: `已用本地模式登录 ${values.email}。`,
         tone: "success",
       });
-      router.push("/dashboard");
+      navigateToDashboard();
       return;
     }
 
@@ -78,7 +88,7 @@ export function LoginForm() {
       description: `当前已登录 ${values.email}。`,
       tone: "success",
     });
-    router.push("/dashboard");
+    navigateToDashboard();
   };
 
   return (

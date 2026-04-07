@@ -44,7 +44,7 @@ export function TaskFilterBar({ filters, onChange }: TaskFilterBarProps) {
         <input
           value={filters.query}
           onChange={updateField("query")}
-          placeholder="搜索任务标题、说明或截止日期"
+          placeholder="搜索任务关键词"
           style={{
             borderRadius: 16,
             border: "1px solid var(--border)",

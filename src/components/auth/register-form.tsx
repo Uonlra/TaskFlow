@@ -9,7 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { registerSchema, type RegisterFormValues } from "@/features/auth/schemas/register-schema";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { getPublicSiteUrl, hasSupabaseEnv } from "@/lib/supabase/env";
 import { useToast } from "@/providers/toast-provider";
 
 export function RegisterForm() {
@@ -32,6 +32,16 @@ export function RegisterForm() {
     },
   });
 
+  const navigateToDashboard = () => {
+    if (typeof window !== "undefined") {
+      window.location.assign("/dashboard");
+      return;
+    }
+
+    router.replace("/dashboard");
+    router.refresh();
+  };
+
   const onSubmit = async (values: RegisterFormValues) => {
     setSubmitError(null);
     setSubmitMessage(null);
@@ -44,7 +54,7 @@ export function RegisterForm() {
         description: `${values.name} 的本地工作台已经准备好了。`,
         tone: "success",
       });
-      router.push("/dashboard");
+      navigateToDashboard();
       return;
     }
 
@@ -68,6 +78,7 @@ export function RegisterForm() {
         data: {
           name: values.name,
         },
+        emailRedirectTo: getPublicSiteUrl("/auth/callback?next=/dashboard"),
       },
     });
 
@@ -89,7 +100,7 @@ export function RegisterForm() {
         description: `当前已登录 ${values.email}。`,
         tone: "success",
       });
-      router.push("/dashboard");
+      navigateToDashboard();
       return;
     }
 
