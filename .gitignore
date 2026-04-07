@@ -6,3 +6,4 @@ dist
 .env.local
 .vercel
 tsconfig.tsbuildinfo
+\docs*
