@@ -194,10 +194,10 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
   };
 
   return (
-    <section style={{ display: "grid", gap: 20 }}>
+    <section className="tasks-toolbar">
       {!isConfigured ? (
         <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
-          <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
+          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.76 }}>
             当前还没有连接 Supabase，所以你正在编辑保存在浏览器本地的演示任务。
           </p>
         </section>
@@ -207,9 +207,53 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
           <p style={{ margin: 0, color: "var(--danger)", lineHeight: 1.7 }}>{error}</p>
         </section>
       ) : null}
+      <section className="tasks-highlight-grid">
+        <article
+          className="card-surface dashboard-highlight-card"
+          style={{
+            borderRadius: 28,
+            padding: "24px 24px 28px",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,250,255,0.86))",
+          }}
+        >
+          <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
+            Task View
+          </p>
+          <h2 style={{ margin: "12px 0 0", fontSize: "clamp(1.8rem, 3vw, 2.5rem)", lineHeight: 1.18 }}>
+            把零散事项
+            <br />
+            收成一列清晰工作流
+          </h2>
+          <p style={{ margin: "14px 0 0", maxWidth: 560, color: "var(--muted-strong)", lineHeight: 1.82 }}>
+            用筛选、排序和标签把任务列表整理成一个可执行的视图。先看清，后推进，减少来回切换的耗损。
+          </p>
+        </article>
+
+        <aside
+          className="card-surface"
+          style={{
+            borderRadius: 28,
+            padding: 22,
+            background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(237,245,255,0.88))",
+            display: "grid",
+            gap: 16,
+            alignContent: "start",
+          }}
+        >
+          <div>
+            <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
+              新建任务
+            </p>
+            <p style={{ margin: "10px 0 0", color: "var(--muted-strong)", lineHeight: 1.8 }}>
+              用一条明确标题、标签和截止日期，把新的事项快速纳入当前工作流。
+            </p>
+          </div>
+          <TaskFormDialog onSubmitTask={handleCreateTask} />
+        </aside>
+      </section>
+
       <div style={{ display: "grid", gap: 16 }}>
         <TaskFilterBar filters={filters} onChange={handleFiltersChange} />
-        <TaskFormDialog onSubmitTask={handleCreateTask} />
       </div>
       {(deadlineSummary.overdue > 0 || deadlineSummary.today > 0 || deadlineSummary.upcoming > 0) && (
         <section
@@ -221,12 +265,14 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
             gap: 10,
             background:
               deadlineSummary.overdue > 0
-                ? "linear-gradient(135deg, rgba(178,64,55,0.12), rgba(255,255,255,0.76))"
-                : "rgba(255,255,255,0.76)",
+                ? "linear-gradient(135deg, rgba(239,68,68,0.1), rgba(255,255,255,0.84))"
+                : "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(237,245,255,0.8))",
           }}
         >
-          <p style={{ margin: 0, color: "var(--foreground)", fontWeight: 700 }}>截止提醒</p>
-          <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.8 }}>
+          <p className="section-eyebrow" style={{ margin: 0, color: deadlineSummary.overdue > 0 ? "var(--danger)" : "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
+            截止提醒
+          </p>
+          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.8 }}>
             {deadlineSummary.overdue > 0
               ? `当前有 ${deadlineSummary.overdue} 条任务已经逾期，建议优先收口。`
               : deadlineSummary.today > 0
@@ -237,7 +283,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       )}
       {isConfigured && isLoading ? (
         <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
-          <p style={{ margin: 0, color: "var(--muted)" }}>正在从 Supabase 同步任务...</p>
+          <p style={{ margin: 0, color: "var(--muted-strong)" }}>正在从 Supabase 同步任务...</p>
         </section>
       ) : null}
       <TaskList

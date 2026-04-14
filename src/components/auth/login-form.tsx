@@ -127,14 +127,16 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={isSubmitting}
+          className="ui-sans"
           style={{
-            border: 0,
+            border: "1px solid transparent",
             padding: "14px 18px",
             borderRadius: 999,
-            background: "var(--primary)",
+            background: "linear-gradient(135deg, var(--primary), var(--data-cyan))",
             color: "var(--primary-foreground)",
             fontWeight: 700,
             opacity: isSubmitting ? 0.8 : 1,
+            boxShadow: "0 12px 24px rgba(37,99,235,0.18)",
           }}
         >
           {isSubmitting ? "登录中..." : "进入仪表盘"}
@@ -161,16 +163,17 @@ type AuthInputProps = {
 function AuthInput({ label, type, placeholder, error, registration }: AuthInputProps) {
   return (
     <label style={{ display: "grid", gap: 8 }}>
-      <span style={{ fontSize: "0.95rem", fontWeight: 600 }}>{label}</span>
+      <span className="ui-sans" style={{ fontSize: "0.95rem", fontWeight: 600 }}>{label}</span>
       <input
         type={type}
         placeholder={placeholder}
         {...registration}
+        className="ui-sans"
         style={{
           borderRadius: 16,
           border: `1px solid ${error ? "rgba(178,64,55,0.48)" : "var(--border)"}`,
           padding: "14px 16px",
-          background: "rgba(255,255,255,0.9)",
+          background: "rgba(255,255,255,0.92)",
         }}
       />
       {error ? <span style={{ color: "var(--danger)", fontSize: "0.9rem" }}>{error}</span> : null}

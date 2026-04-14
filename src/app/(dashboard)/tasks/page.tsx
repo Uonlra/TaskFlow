@@ -36,8 +36,8 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
     <PageContainer>
       <PageHeader
         eyebrow="任务"
-        title="先整理工作，再开始推进"
-        description="按状态和优先级筛选任务，在将列表收拾清楚后，思路也会跟着清楚。"
+        title="把任务整理成清楚的工作队列"
+        description="用搜索、标签、优先级和排序把工作收束成清晰列表，再决定今天先推进哪一项。"
       />
       <TaskListClient initialFilters={initialFilters} />
     </PageContainer>

@@ -84,14 +84,19 @@ export function TaskFormDialog({
       <button
         type="button"
         onClick={openDialog}
+        className="ui-sans"
         style={{
-          border: 0,
+          border: triggerLabel === "新建任务" ? "1px solid transparent" : "1px solid var(--border)",
           padding: "14px 18px",
           borderRadius: 999,
-          background: triggerLabel === "新建任务" ? "var(--primary)" : "rgba(255,255,255,0.76)",
+          background:
+            triggerLabel === "新建任务"
+              ? "linear-gradient(135deg, var(--primary), var(--data-cyan))"
+              : "rgba(255,255,255,0.82)",
           color: triggerLabel === "新建任务" ? "var(--primary-foreground)" : "var(--foreground)",
           fontWeight: 700,
           justifySelf: "start",
+          boxShadow: triggerLabel === "新建任务" ? "0 12px 28px rgba(37,99,235,0.18)" : "none",
         }}
       >
         {triggerLabel}
@@ -119,7 +124,7 @@ export function TaskFormDialog({
           >
             <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "start" }}>
               <div>
-                <p style={{ margin: 0, color: "var(--primary)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
                   {dialogEyebrow}
                 </p>
                 <h2 style={{ margin: "10px 0 0", fontSize: "1.6rem" }}>{dialogTitle}</h2>
@@ -128,11 +133,11 @@ export function TaskFormDialog({
                 type="button"
                 onClick={() => setOpen(false)}
                 style={{
-                  border: "1px solid var(--border)",
-                  background: "transparent",
-                  width: 40,
-                  height: 40,
-                  borderRadius: 999,
+                    border: "1px solid var(--border)",
+                    background: "rgba(255,255,255,0.8)",
+                    width: 40,
+                    height: 40,
+                    borderRadius: 999,
                   fontSize: "1.1rem",
                 }}
               >
@@ -158,7 +163,7 @@ export function TaskFormDialog({
                 />
               </Field>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
                 <Field label="状态" error={errors.status?.message}>
                   <select {...register("status")} style={inputStyle(Boolean(errors.status))}>
                     <option value="todo">待开始</option>
@@ -194,7 +199,7 @@ export function TaskFormDialog({
                   onClick={() => setOpen(false)}
                   style={{
                     border: "1px solid var(--border)",
-                    background: "transparent",
+                    background: "rgba(255,255,255,0.84)",
                     padding: "12px 16px",
                     borderRadius: 999,
                     fontWeight: 700,
@@ -206,13 +211,14 @@ export function TaskFormDialog({
                   type="submit"
                   disabled={isSubmitting}
                   style={{
-                    border: 0,
+                    border: "1px solid transparent",
                     padding: "12px 16px",
                     borderRadius: 999,
-                    background: "var(--primary)",
+                    background: "linear-gradient(135deg, var(--primary), var(--data-cyan))",
                     color: "var(--primary-foreground)",
                     fontWeight: 700,
                     opacity: isSubmitting ? 0.8 : 1,
+                    boxShadow: "0 10px 22px rgba(37,99,235,0.18)",
                   }}
                 >
                   {isSubmitting ? "保存中..." : submitLabel}
@@ -230,7 +236,7 @@ export function TaskFormDialog({
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
     <label style={{ display: "grid", gap: 8 }}>
-      <span style={{ fontSize: "0.95rem", fontWeight: 600 }}>{label}</span>
+      <span className="ui-sans" style={{ fontSize: "0.95rem", fontWeight: 600 }}>{label}</span>
       {children}
       {error ? <span style={{ color: "var(--danger)", fontSize: "0.9rem" }}>{error}</span> : null}
     </label>
@@ -243,6 +249,6 @@ function inputStyle(hasError: boolean) {
     borderRadius: 16,
     border: `1px solid ${hasError ? "rgba(178,64,55,0.48)" : "var(--border)"}`,
     padding: "14px 16px",
-    background: "rgba(255,255,255,0.9)",
+    background: "rgba(255,255,255,0.92)",
   };
 }

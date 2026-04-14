@@ -41,7 +41,7 @@ export function TaskDetailClient({ id }: { id: string }) {
     return (
       <PageContainer>
         <section className="card-surface" style={{ borderRadius: 28, padding: 28 }}>
-          <p style={{ margin: 0, color: "var(--muted)" }}>正在从 Supabase 加载任务详情...</p>
+          <p style={{ margin: 0, color: "var(--muted-strong)" }}>正在从 Supabase 加载任务详情...</p>
         </section>
       </PageContainer>
     );
@@ -50,7 +50,7 @@ export function TaskDetailClient({ id }: { id: string }) {
   if (!task) {
     return (
       <PageContainer>
-        <Link href="/tasks" style={{ display: "inline-block", marginBottom: 20, color: "var(--muted)" }}>
+        <Link href="/tasks" className="ui-sans" style={{ display: "inline-block", marginBottom: 20, color: "var(--muted)" }}>
           返回任务列表
         </Link>
         <EmptyState
@@ -94,156 +94,145 @@ export function TaskDetailClient({ id }: { id: string }) {
 
   return (
     <PageContainer>
-      <Link href="/tasks" style={{ display: "inline-block", marginBottom: 20, color: "var(--muted)" }}>
+      <Link href="/tasks" className="ui-sans" style={{ display: "inline-block", marginBottom: 4, color: "var(--muted)" }}>
         返回任务列表
       </Link>
-      <section className="card-surface" style={{ borderRadius: 28, padding: 28 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-          <div>
-            <p
-              style={{
-                margin: 0,
-                color: "var(--primary)",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                fontWeight: 700,
-                fontSize: "0.8rem",
+      <section
+        className="card-surface dashboard-highlight-card"
+        style={{
+          borderRadius: 30,
+          padding: 28,
+          background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,250,255,0.86))",
+        }}
+      >
+        <div style={{ display: "grid", gap: 18 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "start" }}>
+            <div>
+              <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
+                Task Detail
+              </p>
+              <h1 style={{ margin: "12px 0 0", fontSize: "clamp(2rem, 4vw, 2.8rem)", lineHeight: 1.18 }}>{task.title}</h1>
+              <p style={{ margin: "12px 0 0", maxWidth: 700, color: "var(--muted-strong)", lineHeight: 1.82 }}>
+                这里整理这条任务的状态、截止信息、标签与说明，让你在进入细节时依然保持清晰的工作视角。
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+              <TaskStatusBadge status={task.status} />
+              <TaskPriorityBadge priority={task.priority} />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className="ui-sans"
+              onClick={async () => {
+                try {
+                  await updateTaskStatus(task.id, nextStatus, user?.id);
+                  showToast({
+                    title: "状态已更新",
+                    description: `任务已切换为${nextStatus === "todo" ? "待开始" : nextStatus === "in_progress" ? "进行中" : "已完成"}。`,
+                    tone: "success",
+                  });
+                } catch (error) {
+                  showToast({
+                    title: "状态更新失败",
+                    description: error instanceof Error ? error.message : "请稍后再试。",
+                    tone: "error",
+                  });
+                }
               }}
+              style={actionButtonStyle}
             >
-              任务详情
-            </p>
-            <h1 style={{ margin: "10px 0 0", fontSize: "2rem" }}>{task.title}</h1>
-          </div>
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <TaskStatusBadge status={task.status} />
-            <TaskPriorityBadge priority={task.priority} />
-          </div>
-        </div>
-
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                await updateTaskStatus(task.id, nextStatus, user?.id);
-                showToast({
-                  title: "状态已更新",
-                  description: `任务已切换为${nextStatus === "todo" ? "待开始" : nextStatus === "in_progress" ? "进行中" : "已完成"}。`,
-                  tone: "success",
-                });
-              } catch (error) {
-                showToast({
-                  title: "状态更新失败",
-                  description: error instanceof Error ? error.message : "请稍后再试。",
-                  tone: "error",
-                });
-              }
-            }}
-            style={actionButtonStyle}
-          >
-            切换为{nextStatus === "todo" ? "待开始" : nextStatus === "in_progress" ? "进行中" : "已完成"}
-          </button>
-          <TaskFormDialog
-            onSubmitTask={async (values) => {
-              try {
-                await updateTask(task.id, values, user?.id);
-                showToast({
-                  title: "任务已更新",
-                  description: `“${values.title}” 的修改已经保存。`,
-                  tone: "success",
-                });
-              } catch (error) {
-                showToast({
-                  title: "更新失败",
-                  description: error instanceof Error ? error.message : "请稍后再试。",
-                  tone: "error",
-                });
-                throw error;
-              }
-            }}
-            initialValues={taskValues}
-            triggerLabel="编辑任务"
-            dialogEyebrow="编辑任务"
-            dialogTitle="修改这条任务的内容"
-            submitLabel="保存修改"
-          />
-          <ConfirmDialog
-            triggerLabel="删除任务"
-            title="确认删除这条任务？"
-            description="删除后它会从当前工作台中移除，并跳回任务列表。"
-            confirmLabel="确认删除"
-            confirmTone="danger"
-            onConfirm={handleDelete}
-            triggerStyle={{
-              ...actionButtonStyle,
-              color: "var(--danger)",
-            }}
-          />
-        </div>
-
-        {taskTags.length ? (
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
-            {taskTags.map((tag) => (
-              <span
-                key={tag}
-                style={{
-                  display: "inline-flex",
-                  padding: "8px 12px",
-                  borderRadius: 999,
-                  background: "rgba(44, 122, 90, 0.12)",
-                  color: "var(--success)",
-                  fontWeight: 700,
-                  fontSize: "0.86rem",
-                }}
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 18,
-            marginTop: 24,
-          }}
-        >
-          <div style={{ padding: 18, borderRadius: 20, background: "rgba(255,255,255,0.72)" }}>
-            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>截止日期</p>
-            <p style={{ margin: "8px 0 0", fontWeight: 700 }}>{task.dueDate ?? "未设置"}</p>
-            <p
-              style={{
-                margin: "8px 0 0",
-                color:
-                  dueMeta.tone === "danger"
-                    ? "var(--danger)"
-                    : dueMeta.tone === "warning"
-                      ? "var(--warning)"
-                      : dueMeta.tone === "success"
-                        ? "var(--success)"
-                        : "var(--muted)",
-                fontWeight: 700,
+              切换为{nextStatus === "todo" ? "待开始" : nextStatus === "in_progress" ? "进行中" : "已完成"}
+            </button>
+            <TaskFormDialog
+              onSubmitTask={async (values) => {
+                try {
+                  await updateTask(task.id, values, user?.id);
+                  showToast({
+                    title: "任务已更新",
+                    description: `“${values.title}” 的修改已经保存。`,
+                    tone: "success",
+                  });
+                } catch (error) {
+                  showToast({
+                    title: "更新失败",
+                    description: error instanceof Error ? error.message : "请稍后再试。",
+                    tone: "error",
+                  });
+                  throw error;
+                }
               }}
-            >
-              {dueMeta.label}
-            </p>
+              initialValues={taskValues}
+              triggerLabel="编辑任务"
+              dialogEyebrow="编辑任务"
+              dialogTitle="修改这条任务的内容"
+              submitLabel="保存修改"
+            />
+            <ConfirmDialog
+              triggerLabel="删除任务"
+              title="确认删除这条任务？"
+              description="删除后它会从当前工作台中移除，并跳回任务列表。"
+              confirmLabel="确认删除"
+              confirmTone="danger"
+              onConfirm={handleDelete}
+              triggerStyle={{
+                ...actionButtonStyle,
+                color: "var(--danger)",
+              }}
+            />
           </div>
-          <div style={{ padding: 18, borderRadius: 20, background: "rgba(255,255,255,0.72)" }}>
-            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>归属人</p>
-            <p style={{ margin: "8px 0 0", fontWeight: 700 }}>你</p>
-          </div>
-          <div style={{ padding: 18, borderRadius: 20, background: "rgba(255,255,255,0.72)" }}>
-            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>创建时间</p>
-            <p style={{ margin: "8px 0 0", fontWeight: 700 }}>{formatDateLabel(task.createdAt)}</p>
-          </div>
-        </div>
 
-        <div style={{ marginTop: 28 }}>
-          <h2 style={{ margin: 0, fontSize: "1.15rem" }}>任务说明</h2>
-          <p style={{ margin: "12px 0 0", color: "var(--muted)", lineHeight: 1.8 }}>{task.description}</p>
+          {taskTags.length ? (
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {taskTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="ui-sans"
+                  style={{
+                    display: "inline-flex",
+                    padding: "8px 12px",
+                    borderRadius: 999,
+                    background: "rgba(79,70,229,0.12)",
+                    color: "var(--data-indigo)",
+                    fontWeight: 700,
+                    fontSize: "0.86rem",
+                  }}
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
+      </section>
+
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 18,
+        }}
+      >
+        <InfoCard title="截止日期" value={task.dueDate ?? "未设置"} helper={dueMeta.label} helperTone={dueMeta.tone} />
+        <InfoCard title="归属人" value="你" helper="当前登录身份下的任务详情" />
+        <InfoCard title="创建时间" value={formatDateLabel(task.createdAt)} helper="用于回看任务进入工作台的时间点" />
+      </section>
+
+      <section
+        className="card-surface"
+        style={{
+          borderRadius: 28,
+          padding: 24,
+          background: "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(249,251,255,0.84))",
+        }}
+      >
+        <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
+          Description
+        </p>
+        <h2 style={{ margin: "10px 0 0", fontSize: "1.18rem" }}>任务说明</h2>
+        <p style={{ margin: "14px 0 0", color: "var(--muted-strong)", lineHeight: 1.86 }}>{task.description}</p>
       </section>
     </PageContainer>
   );
@@ -251,11 +240,51 @@ export function TaskDetailClient({ id }: { id: string }) {
 
 const actionButtonStyle = {
   border: "1px solid var(--border)",
-  background: "rgba(255,255,255,0.76)",
+  background: "rgba(255,255,255,0.84)",
   padding: "10px 14px",
   borderRadius: 999,
   fontWeight: 700,
 } satisfies React.CSSProperties;
+
+function InfoCard({
+  title,
+  value,
+  helper,
+  helperTone = "muted",
+}: {
+  title: string;
+  value: string;
+  helper: string;
+  helperTone?: "danger" | "warning" | "success" | "muted";
+}) {
+  const helperColor =
+    helperTone === "danger"
+      ? "var(--danger)"
+      : helperTone === "warning"
+        ? "var(--data-ink)"
+        : helperTone === "success"
+          ? "var(--data-indigo)"
+          : "var(--muted)";
+
+  return (
+    <div
+      className="card-surface"
+      style={{
+        borderRadius: 24,
+        padding: 20,
+        background: "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(247,250,255,0.82))",
+      }}
+    >
+      <p className="ui-sans" style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem", fontWeight: 600 }}>
+        {title}
+      </p>
+      <p style={{ margin: "10px 0 0", fontWeight: 700, fontSize: "1.08rem" }}>{value}</p>
+      <p className="ui-sans" style={{ margin: "10px 0 0", color: helperColor, fontWeight: 700, lineHeight: 1.7 }}>
+        {helper}
+      </p>
+    </div>
+  );
+}
 
 function formatDateLabel(value: string) {
   const timestamp = new Date(value);
