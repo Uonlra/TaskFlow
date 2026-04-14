@@ -1,10 +1,10 @@
 # U's TaskFlow
 
-围绕私人日程安排设计的任务工作台。它把任务管理、到期风险、标签组织、进度趋势和个人资料整合到同一个前端项目里，适合作为个人作品集中的主项目继续打磨。
+一个面向个人日程与任务推进的蓝白任务工作台。它把任务管理、截止风险、标签组织、进度趋势和个人资料整合到同一个前端项目里，适合作为个人作品集中的主项目继续打磨。
 
 ## 在线地址
 
-- 生产部署：[https://fronted-flame-five.vercel.app/]
+- 生产部署：[https://fronted-flame-five.vercel.app/](https://fronted-flame-five.vercel.app/)
 
 说明：
 
@@ -12,11 +12,27 @@
 - 如果你还没有在 Vercel 项目设置里补上 Supabase 环境变量，线上站点会以演示模式运行。
 - 本地 `.env.local` 已接入真实 Supabase；线上若要使用真实认证和真实任务数据，需要在 Vercel 项目中同步配置相同环境变量。
 
+## 展示截图
 
+### 首页
+
+![首页截图](./docs/screenshots/landing.png)
+
+### 仪表盘
+
+![仪表盘截图](./docs/screenshots/dashboard.png)
+
+### 任务页
+
+![任务页截图](./docs/screenshots/tasks.png)
+
+### 设置页
+
+![设置页截图](./docs/screenshots/settings.png)
 
 ## 项目亮点
 
-- 中文宋体风格的阅读型界面和统一排版节奏
+- 蓝白轻量任务工作台风格，兼顾清晰、轻盈和数据感
 - Next.js App Router 架构
 - Supabase Auth + Profiles + Tasks 的真实数据链路
 - Dashboard 支持 URL 同步时间范围
@@ -25,6 +41,7 @@
 - 任务标签系统
 - 到期、今天到期、逾期风险提示
 - Dashboard 图表模块：完成趋势、状态分布、标签分布
+- 任务详情页、设置页、登录注册页都已统一到同一套蓝白视觉语言
 
 ## 核心功能
 
@@ -94,11 +111,11 @@ src/
   store/
   mock/
 
-supabase/
-  tasks.sql
-
 docs/
   screenshots/
+
+supabase/
+  tasks.sql
 ```
 
 ## 本地启动
@@ -130,7 +147,7 @@ http://localhost:3000
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=你的 Supabase Project URL
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=你的 Supabase Publishable Key
-NEXT_PUBLIC_SITE_URL=Vercel给你的网址
+NEXT_PUBLIC_SITE_URL=你的线上可访问地址
 ```
 
 说明：
@@ -146,7 +163,6 @@ NEXT_PUBLIC_SITE_URL=Vercel给你的网址
 1. 打开 `Authentication`
 2. 进入 `URL Configuration`
 3. 将 `Site URL` 设置为你的线上地址
-   - 例如：`https://xx.vercel.app`
 4. 在 `Redirect URLs` 中加入：
    - `http://localhost:3000/auth/callback`
    - `http://localhost:3001/auth/callback`
@@ -160,7 +176,7 @@ NEXT_PUBLIC_SITE_URL=Vercel给你的网址
 2. 进入当前项目
 3. 打开 `SQL Editor`
 4. 新建查询
-5. 执行 [tasks.sql](D:\Studys\Projects\fronted\supabase\tasks.sql)
+5. 执行 `supabase/tasks.sql`
 
 这份 SQL 会创建或补齐：
 
@@ -173,17 +189,7 @@ NEXT_PUBLIC_SITE_URL=Vercel给你的网址
 - 用户注册后自动创建 profile 的 trigger
 - 任务更新时间 trigger
 
-如果你之前已经执行过旧版 SQL，也建议重新执行最新版一次，确保 `tags` 等新增字段已经补齐。
-
 ## Vercel 部署
-
-这次已经通过 CLI 成功部署。
-
-部署结果：
-
-- Project：`fronted`
-- Team：`xx's projects`
-- Production URL：[xx.vercel.app]
 
 如果你要让线上站点接入真实 Supabase，而不是演示模式，请到 Vercel 项目中补环境变量：
 
@@ -195,13 +201,14 @@ NEXT_PUBLIC_SITE_URL=Vercel给你的网址
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
+NEXT_PUBLIC_SITE_URL=...
 ```
 
 5. 重新触发部署
 
 ## 当前适合作为作品展示的页面
 
-- `/`
+- `/login`
 - `/dashboard`
 - `/tasks`
 - `/tasks/[id]`
@@ -214,13 +221,3 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
 - 上传头像而不只是填 URL
 - 补 README 中的技术架构图和数据流图
 - 增加 Vercel 环境变量后的线上真实联调说明
-
-## 开发说明
-
-这个项目目前已经具备：
-
-- 真实 Supabase 接入能力
-- 完整的任务 CRUD
-- 作品级的 Dashboard 和展示页面
-
-从这里继续往下做，最自然的方向已经不再是“从 0 开始搭”，而是“持续把它打磨成一个更完整的产品作品”。

@@ -23,15 +23,21 @@ export function CompletionTrendChart({ points }: CompletionTrendChartProps) {
     .join(" ");
 
   return (
-    <section className="card-surface" style={{ borderRadius: 28, padding: 24 }}>
-      <h2 style={{ margin: 0, fontSize: "1.1rem" }}>完成趋势</h2>
-      <p style={{ margin: "8px 0 0", color: "var(--muted)", lineHeight: 1.7 }}>观察当前范围内最近几天的任务完成节奏。</p>
+    <section className="card-surface dashboard-highlight-card" style={{ borderRadius: 28, padding: 24 }}>
+      <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
+        趋势
+      </p>
+      <h2 style={{ margin: "10px 0 0", fontSize: "1.26rem" }}>完成趋势</h2>
+      <p style={{ margin: "8px 0 0", color: "var(--muted-strong)", lineHeight: 1.74 }}>
+        观察当前范围内最近几天的任务完成节奏。
+      </p>
       <div style={{ marginTop: 18 }}>
         <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} style={{ width: "100%", height: "auto", display: "block" }} aria-hidden="true">
           <defs>
             <linearGradient id="completion-trend-line" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="var(--primary)" />
-              <stop offset="100%" stopColor="#e29f58" />
+              <stop offset="0%" stopColor="var(--data-ink)" />
+              <stop offset="60%" stopColor="var(--primary)" />
+              <stop offset="100%" stopColor="var(--data-cyan)" />
             </linearGradient>
           </defs>
           {[0, 1, 2].map((row) => {
@@ -46,7 +52,7 @@ export function CompletionTrendChart({ points }: CompletionTrendChartProps) {
 
             return (
               <g key={point.label}>
-                <circle cx={x} cy={y} r="4.5" fill="var(--surface-strong)" stroke="var(--primary)" strokeWidth="2.5" />
+                <circle cx={x} cy={y} r="4.5" fill="var(--surface-strong)" stroke="var(--data-ink)" strokeWidth="2.5" />
               </g>
             );
           })}
@@ -54,8 +60,8 @@ export function CompletionTrendChart({ points }: CompletionTrendChartProps) {
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))`, gap: 10, marginTop: 10 }}>
           {points.map((point) => (
             <div key={point.label} style={{ textAlign: "center" }}>
-              <p style={{ margin: 0, fontWeight: 700 }}>{point.value}</p>
-              <p style={{ margin: "4px 0 0", color: "var(--muted)", fontSize: "0.85rem" }}>{point.label}</p>
+              <p className="metric-value" style={{ margin: 0, fontWeight: 700 }}>{point.value}</p>
+              <p className="ui-sans" style={{ margin: "4px 0 0", color: "var(--muted)", fontSize: "0.82rem" }}>{point.label}</p>
             </div>
           ))}
         </div>

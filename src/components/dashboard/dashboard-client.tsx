@@ -101,7 +101,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         label: "进行中",
         value: String(inProgress),
         helper: "把同时推进的任务数量收紧，节奏会更稳。",
-        accent: "#d18a49",
+        accent: "var(--data-cyan)",
       },
       {
         label: completionLabel,
@@ -110,7 +110,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           range === "all"
             ? "整个工作台里已经完成的任务总数。"
             : `${rangeLabel}范围内完成的任务数量。`,
-        accent: "var(--success)",
+        accent: "var(--data-indigo)",
       },
       {
         label: "已逾期",
@@ -143,9 +143,9 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const completionTrend = useMemo(() => buildCompletionTrend(scopedTasks, range), [range, scopedTasks]);
   const statusDistribution = useMemo(
     () => [
-      { label: "待开始", count: scopedTasks.filter((task) => task.status === "todo").length, color: "rgba(183,121,31,0.9)" },
-      { label: "进行中", count: scopedTasks.filter((task) => task.status === "in_progress").length, color: "rgba(199,91,57,0.9)" },
-      { label: "已完成", count: scopedTasks.filter((task) => task.status === "done").length, color: "rgba(44,122,90,0.9)" },
+      { label: "待开始", count: scopedTasks.filter((task) => task.status === "todo").length, color: "rgba(37,99,235,0.82)" },
+      { label: "进行中", count: scopedTasks.filter((task) => task.status === "in_progress").length, color: "rgba(8,145,178,0.88)" },
+      { label: "已完成", count: scopedTasks.filter((task) => task.status === "done").length, color: "rgba(79,70,229,0.86)" },
     ],
     [scopedTasks],
   );
@@ -197,38 +197,86 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           <p style={{ margin: 0, color: "var(--danger)", lineHeight: 1.7 }}>{error}</p>
         </section>
       ) : null}
-      <section
-        className="card-surface"
-        style={{
-          borderRadius: 24,
-          padding: 16,
-        }}
-      >
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ flex: "1 1 240px", minWidth: 0 }}>
-          <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>仪表盘范围</p>
-          <p style={{ margin: "6px 0 0", fontWeight: 700 }}>切换你观察任务数据的时间视角。</p>
-        </div>
-        <div className="dashboard-range-panel">
-          {rangeOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => handleRangeChange(option.value)}
-              style={{
-                border: "1px solid var(--border)",
-                padding: "12px 16px",
-                borderRadius: 999,
-                fontWeight: 700,
-                background: range === option.value ? "var(--primary)" : "rgba(255,255,255,0.7)",
-                color: range === option.value ? "var(--primary-foreground)" : "var(--foreground)",
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        </div>
+      <section className="dashboard-hero">
+        <article
+          className="card-surface dashboard-highlight-card"
+          style={{
+            borderRadius: 30,
+            padding: "26px 26px 30px",
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,250,255,0.86))",
+          }}
+        >
+          <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.84rem" }}>
+            Dashboard
+          </p>
+          <h2 style={{ margin: "14px 0 0", fontSize: "clamp(2rem, 4vw, 3rem)", lineHeight: 1.16 }}>
+            把推进节奏
+            <br />
+            收成一张清晰总览
+          </h2>
+          <p style={{ margin: "14px 0 0", maxWidth: 620, color: "var(--muted-strong)", lineHeight: 1.86 }}>
+            用更轻的蓝白界面，把任务数量、完成走势、截止风险和工作主题整理在一起。先看清局面，再决定今天怎么推进。
+          </p>
+        </article>
+
+        <aside
+          className="card-surface"
+          style={{
+            borderRadius: 30,
+            padding: 24,
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(237,245,255,0.88))",
+            display: "grid",
+            gap: 18,
+            alignContent: "start",
+          }}
+        >
+          <div>
+            <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
+              观察视角
+            </p>
+            <p style={{ margin: "10px 0 0", color: "var(--muted-strong)", lineHeight: 1.82 }}>
+              切换时间范围，比较今天、本周和全部任务的推进状态。
+            </p>
+          </div>
+
+          <div className="dashboard-range-panel">
+            {rangeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleRangeChange(option.value)}
+                className="ui-sans"
+                style={{
+                  border: range === option.value ? "1px solid transparent" : "1px solid var(--border)",
+                  padding: "12px 16px",
+                  borderRadius: 999,
+                  fontWeight: 700,
+                  background: range === option.value ? "linear-gradient(135deg, var(--primary), var(--data-cyan))" : "rgba(255,255,255,0.74)",
+                  color: range === option.value ? "var(--primary-foreground)" : "var(--foreground)",
+                  boxShadow: range === option.value ? "0 10px 24px rgba(37,99,235,0.18)" : "none",
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
+          <div
+            style={{
+              padding: "16px 18px",
+              borderRadius: 20,
+              border: "1px solid var(--border)",
+              background: "rgba(255,255,255,0.78)",
+            }}
+          >
+            <p className="ui-sans" style={{ margin: 0, color: "var(--muted)", fontWeight: 600 }}>
+              当前视角
+            </p>
+            <p style={{ margin: "6px 0 0", fontSize: "1.24rem", fontWeight: 700 }}>{rangeLabel}</p>
+          </div>
+        </aside>
       </section>
       <StatsGrid stats={stats} />
       <section className="dashboard-analytics-grid">
@@ -240,8 +288,11 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         <div className="card-surface" style={{ borderRadius: 28, padding: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.25rem" }}>{prioritiesTitle}</h2>
-              <p style={{ margin: "8px 0 0", color: "var(--muted)" }}>
+              <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
+                优先事项
+              </p>
+              <h2 style={{ margin: "10px 0 0", fontSize: "1.28rem" }}>{prioritiesTitle}</h2>
+              <p style={{ margin: "8px 0 0", color: "var(--muted-strong)" }}>
                 {isLoading ? "正在同步任务..." : `${rangeLabel}范围内最值得优先处理的任务。`}
               </p>
             </div>

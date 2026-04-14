@@ -56,18 +56,18 @@ export function ConfirmDialog({
             }}
           >
             <p
+              className="section-eyebrow"
               style={{
                 margin: 0,
                 color: confirmTone === "danger" ? "var(--danger)" : "var(--primary)",
                 fontWeight: 700,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
+                fontSize: "0.82rem",
               }}
             >
               请确认操作
             </p>
             <h2 style={{ margin: "10px 0 0", fontSize: "1.5rem" }}>{title}</h2>
-            <p style={{ margin: "12px 0 0", color: "var(--muted)", lineHeight: 1.7 }}>{description}</p>
+            <p style={{ margin: "12px 0 0", color: "var(--muted-strong)", lineHeight: 1.7 }}>{description}</p>
             {submitError ? <p style={{ margin: "12px 0 0", color: "var(--danger)", lineHeight: 1.7 }}>{submitError}</p> : null}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 24 }}>
               <button type="button" onClick={() => setOpen(false)} style={secondaryButtonStyle}>
@@ -77,10 +77,18 @@ export function ConfirmDialog({
                 type="button"
                 onClick={handleConfirm}
                 disabled={isSubmitting}
+                className="ui-sans"
                 style={{
                   ...primaryButtonStyle,
-                  background: confirmTone === "danger" ? "var(--danger)" : "var(--primary)",
+                  background:
+                    confirmTone === "danger"
+                      ? "linear-gradient(135deg, var(--danger), #f97316)"
+                      : "linear-gradient(135deg, var(--primary), var(--data-cyan))",
                   opacity: isSubmitting ? 0.8 : 1,
+                  boxShadow:
+                    confirmTone === "danger"
+                      ? "0 10px 24px rgba(239,68,68,0.18)"
+                      : "0 10px 24px rgba(37,99,235,0.18)",
                 }}
               >
                 {isSubmitting ? "处理中..." : confirmLabel}
@@ -113,14 +121,14 @@ function Overlay({ children }: { children: ReactNode }) {
 
 const secondaryButtonStyle = {
   border: "1px solid var(--border)",
-  background: "transparent",
+  background: "rgba(255,255,255,0.86)",
   padding: "12px 16px",
   borderRadius: 999,
   fontWeight: 700,
 } satisfies CSSProperties;
 
 const primaryButtonStyle = {
-  border: 0,
+  border: "1px solid transparent",
   padding: "12px 16px",
   borderRadius: 999,
   color: "var(--primary-foreground)",
