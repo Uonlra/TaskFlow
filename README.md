@@ -12,24 +12,6 @@
 - 如果你还没有在 Vercel 项目设置里补上 Supabase 环境变量，线上站点会以演示模式运行。
 - 本地 `.env.local` 已接入真实 Supabase；线上若要使用真实认证和真实任务数据，需要在 Vercel 项目中同步配置相同环境变量。
 
-## 展示截图
-
-### 首页
-
-![首页截图](./docs/screenshots/landing.png)
-
-### 仪表盘
-
-![仪表盘截图](./docs/screenshots/dashboard.png)
-
-### 任务页
-
-![任务页截图](./docs/screenshots/tasks.png)
-
-### 设置页
-
-![设置页截图](./docs/screenshots/settings.png)
-
 ## 项目亮点
 
 - 蓝白轻量任务工作台风格，兼顾清晰、轻盈和数据感
@@ -119,6 +101,7 @@ supabase/
 ```
 
 ## 本地启动
+
 
 1. 安装依赖
 
