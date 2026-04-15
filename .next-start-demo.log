@@ -6,3 +6,4 @@
 - Local:         http://localhost:3002
 - Network:       http://26.246.82.0:3002
 ✓ Ready in 325ms
+^C ELIFECYCLE  Command failed with exit code 3221225786.
