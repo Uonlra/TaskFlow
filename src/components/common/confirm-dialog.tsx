@@ -1,7 +1,8 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 type ConfirmDialogProps = {
   triggerLabel: string;
@@ -23,8 +24,17 @@ export function ConfirmDialog({
   confirmTone = "default",
 }: ConfirmDialogProps) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+
+    return () => {
+      setMounted(false);
+    };
+  }, []);
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
@@ -45,7 +55,8 @@ export function ConfirmDialog({
       <button type="button" onClick={() => setOpen(true)} style={triggerStyle}>
         {triggerLabel}
       </button>
-      {open ? (
+      {open && mounted
+        ? createPortal(
         <Overlay>
           <section
             className="card-surface"
@@ -96,7 +107,8 @@ export function ConfirmDialog({
             </div>
           </section>
         </Overlay>
-      ) : null}
+      , document.body)
+        : null}
     </>
   );
 }
@@ -108,6 +120,7 @@ function Overlay({ children }: { children: ReactNode }) {
         position: "fixed",
         inset: 0,
         zIndex: 40,
+        overflowY: "auto",
         padding: 20,
         background: "rgba(16, 24, 40, 0.38)",
         display: "grid",

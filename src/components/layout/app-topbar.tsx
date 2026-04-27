@@ -24,10 +24,10 @@ export function AppTopbar() {
     >
       <div className="dashboard-topbar__meta">
         <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.8rem" }}>
-          {isConfigured ? "Supabase 已连接" : "本地演示模式"}
+          {isConfigured ? "Appwrite 已连接" : "本地演示模式"}
         </p>
         <p style={{ margin: "8px 0 0", fontWeight: 600, lineHeight: 1.78, color: "var(--muted-strong)" }}>
-          {isConfigured ? "登录状态与任务数据由 Supabase 支持。" : "配置环境变量后，即可从本地演示切换到真实数据。"}
+          {isConfigured ? "登录状态与任务数据由 Appwrite 支持。" : "配置环境变量后，即可从本地演示切换到真实数据。"}
         </p>
       </div>
       <div className="dashboard-topbar__actions">

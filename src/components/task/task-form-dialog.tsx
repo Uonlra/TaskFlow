@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -25,6 +26,7 @@ export function TaskFormDialog({
   submitLabel = "创建任务",
 }: TaskFormDialogProps) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const {
     register,
@@ -42,6 +44,14 @@ export function TaskFormDialog({
       dueDate: "",
     },
   });
+
+  useEffect(() => {
+    setMounted(true);
+
+    return () => {
+      setMounted(false);
+    };
+  }, []);
 
   const onSubmit = async (values: TaskFormValues) => {
     setSubmitError(null);
@@ -102,7 +112,8 @@ export function TaskFormDialog({
         {triggerLabel}
       </button>
 
-      {open ? (
+      {open && mounted
+        ? createPortal(
         <div
           style={{
             position: "fixed",
@@ -111,15 +122,18 @@ export function TaskFormDialog({
             display: "grid",
             placeItems: "center",
             padding: 20,
-            zIndex: 30,
+            zIndex: 2000,
+            overflowY: "auto",
           }}
         >
           <div
             className="card-surface"
             style={{
               width: "min(620px, 100%)",
+              maxHeight: "min(860px, calc(100vh - 40px))",
               borderRadius: 28,
               padding: 24,
+              overflowY: "auto",
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "start" }}>
@@ -227,8 +241,10 @@ export function TaskFormDialog({
               {submitError ? <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.95rem" }}>{submitError}</p> : null}
             </form>
           </div>
-        </div>
-      ) : null}
+        </div>,
+        document.body,
+      )
+        : null}
     </>
   );
 }
