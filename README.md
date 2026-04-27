@@ -1,77 +1,72 @@
 # U's TaskFlow
 
-一个面向个人日程与任务推进的蓝白任务工作台。它把任务管理、截止风险、标签组织、进度趋势和个人资料整合到同一个前端项目里，适合作为个人作品集中的主项目继续打磨。
-
-## 项目网页
-https://www.uon1ra.top/article/taskflow
+一个面向个人日程与任务推进的蓝白任务工作台。当前版本已经完成从 Supabase 到 Appwrite 的迁移，认证、资料和任务链路都可以在真实 Appwrite 项目上跑通，同时保留了未配置后端时的本地演示模式。
 
 ## 在线地址
 
 - 生产部署：[https://fronted-flame-five.vercel.app/](https://fronted-flame-five.vercel.app/)
+- 项目文章：[https://www.uon1ra.top/article/taskflow](https://www.uon1ra.top/article/taskflow)
 
 说明：
 
-- 当前项目已经成功部署到 Vercel。
-- 如果你还没有在 Vercel 项目设置里补上 Supabase 环境变量，线上站点会以演示模式运行。
-- 本地 `.env.local` 已接入真实 Supabase；线上若要使用真实认证和真实任务数据，需要在 Vercel 项目中同步配置相同环境变量。
+- 如果线上环境变量未配置完整，站点会回退到本地演示数据模式。
+- 本地 `.env.local` 配好 Appwrite 后，可以直接联调真实认证与真实任务数据。
 
-## 项目亮点
+## 当前能力
 
-- 蓝白轻量任务工作台风格，兼顾清晰、轻盈和数据感
 - Next.js App Router 架构
-- Supabase Auth + Profiles + Tasks 的真实数据链路
-- Dashboard 支持 URL 同步时间范围
-- Tasks 页面支持 URL 同步筛选条件
-- 本地持久化与远程数据模式平滑切换
-- 任务标签系统
+- Appwrite Auth + Tasks 真实数据链路
+- Dashboard 时间范围与 URL 同步
+- Tasks 搜索 / 标签 / 状态 / 优先级 / 排序与 URL 同步
+- 本地演示模式与远程真实数据模式平滑切换
+- 任务详情页、设置页、登录注册页共用统一视觉语言
 - 到期、今天到期、逾期风险提示
-- Dashboard 图表模块：完成趋势、状态分布、标签分布
-- 任务详情页、设置页、登录注册页都已统一到同一套蓝白视觉语言
+- Dashboard 图表：完成趋势、状态分布、标签分布
 
-## 核心功能
+## 真实数据架构
 
-### 认证与身份
+当前版本的关键边界如下：
 
-- 注册 / 登录
-- 个人资料编辑
-- 头像地址与昵称展示
-- 服务端鉴权保护 Dashboard 路由
+- 浏览器只调用本站 `Next.js API`
+- `Next.js API` 再调用 Appwrite Cloud
+- 登录态通过站点自己的 `httpOnly` cookie 保持
+- `profile` 使用 Appwrite `Account.name + prefs.avatarUrl`
+- `tasks` 使用 Appwrite table + row-level permissions
+- 未配置 Appwrite 时，任务仍由 Zustand + localStorage 支持 demo 模式
 
-### 任务系统
+主要链路文件：
 
-- 新建、编辑、删除任务
-- 状态切换
-- 优先级管理
-- 标签系统
-- 截止日期与风险提示
-- 任务详情页
+- 认证 API：
+  [src/app/api/auth/login/route.ts](/D:/Studys/Projects/fronted/src/app/api/auth/login/route.ts)
+  [src/app/api/auth/register/route.ts](/D:/Studys/Projects/fronted/src/app/api/auth/register/route.ts)
+  [src/app/api/auth/logout/route.ts](/D:/Studys/Projects/fronted/src/app/api/auth/logout/route.ts)
+  [src/app/api/auth/me/route.ts](/D:/Studys/Projects/fronted/src/app/api/auth/me/route.ts)
+- 资料 API：
+  [src/app/api/profile/route.ts](/D:/Studys/Projects/fronted/src/app/api/profile/route.ts)
+- 任务 API：
+  [src/app/api/tasks/route.ts](/D:/Studys/Projects/fronted/src/app/api/tasks/route.ts)
+  [src/app/api/tasks/[id]/route.ts](/D:/Studys/Projects/fronted/src/app/api/tasks/[id]/route.ts)
+- Appwrite 适配层：
+  [src/lib/appwrite/env.ts](/D:/Studys/Projects/fronted/src/lib/appwrite/env.ts)
+  [src/lib/appwrite/server.ts](/D:/Studys/Projects/fronted/src/lib/appwrite/server.ts)
+  [src/lib/appwrite/session.ts](/D:/Studys/Projects/fronted/src/lib/appwrite/session.ts)
+  [src/lib/appwrite/tasks.ts](/D:/Studys/Projects/fronted/src/lib/appwrite/tasks.ts)
 
-### 列表与筛选
+## 页面清单
 
-- 搜索
-- 标签筛选
-- 状态筛选
-- 优先级筛选
-- 排序
-- URL 参数同步
-
-### Dashboard
-
-- 概览统计卡片
-- 即将到期提醒
-- 进度概览
-- 最近活动流
-- 标签摘要
-- 完成趋势图
-- 状态分布图
-- 标签分布图
+- `/login`
+- `/register`
+- `/dashboard`
+- `/tasks`
+- `/tasks/[id]`
+- `/settings`
 
 ## 技术栈
 
 - Next.js 16
 - React 19
 - TypeScript
-- Supabase
+- Appwrite
 - React Hook Form
 - Zod
 - Zustand
@@ -82,29 +77,27 @@ https://www.uon1ra.top/article/taskflow
 ```txt
 src/
   app/
+    api/
   components/
     auth/
     dashboard/
     layout/
+    settings/
     task/
   features/
     auth/
     tasks/
   lib/
-    supabase/
+    appwrite/
+  mock/
   providers/
   store/
-  mock/
 
 docs/
-  screenshots/
-
-supabase/
-  tasks.sql
+  appwrite-setup.md
 ```
 
 ## 本地启动
-
 
 1. 安装依赖
 
@@ -112,98 +105,78 @@ supabase/
 corepack pnpm install
 ```
 
-2. 启动开发环境
+2. 配置 `.env.local`
+
+```bash
+NEXT_PUBLIC_APPWRITE_ENDPOINT=你的 Appwrite Endpoint
+NEXT_PUBLIC_APPWRITE_PROJECT_ID=你的 Appwrite Project ID
+APPWRITE_API_KEY=你的 Appwrite API Key
+APPWRITE_DATABASE_ID=你的 Appwrite Database ID
+APPWRITE_TASKS_TABLE_ID=你的 Appwrite Tasks Table ID
+APPWRITE_SESSION_COOKIE_NAME=taskflow-session
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+3. 启动开发环境
 
 ```bash
 corepack pnpm dev
 ```
 
-3. 打开浏览器
+4. 打开浏览器
 
 ```txt
 http://localhost:3000
 ```
 
-如果 3000 被占用，Next.js 会自动切换到其他端口。
+## Appwrite 配置
 
-## 环境变量
+你至少需要完成这些配置：
 
-在项目根目录创建 `.env.local`：
+1. 创建 Appwrite Project
+2. 添加本地与线上 Web Platform
+3. 开启邮箱密码认证
+4. 创建 Database
+5. 创建 `tasks` table
+6. 打开 `Row security`
+7. 配置 API key
 
-```bash
-NEXT_PUBLIC_SUPABASE_URL=你的 Supabase Project URL
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=你的 Supabase Publishable Key
-NEXT_PUBLIC_SITE_URL=你的线上可访问地址
-```
+更具体的字段与权限配置请看  
+[docs/appwrite-setup.md](/D:/Studys/Projects/fronted/docs/appwrite-setup.md)
 
-说明：
+## 当前联调结果
 
-- `NEXT_PUBLIC_SITE_URL` 建议填写你的线上可访问地址。
-- 这样注册邮件中的确认链接会回到线上站点，而不是依赖本地 `localhost`。
-- 如果你本地关掉了 `corepack pnpm dev`，邮箱确认仍然可以通过线上地址完成。
+这次迁移已经在本地对真实 Appwrite 项目完成一轮 smoke test，验证通过的链路包括：
 
-## Supabase Auth URL 配置
-
-为了让邮箱确认在本地关闭时也能工作，建议在 Supabase 后台一并设置：
-
-1. 打开 `Authentication`
-2. 进入 `URL Configuration`
-3. 将 `Site URL` 设置为你的线上地址
-4. 在 `Redirect URLs` 中加入：
-   - `http://localhost:3000/auth/callback`
-   - `http://localhost:3001/auth/callback`
-   - `https://fronted-flame-five.vercel.app/auth/callback`
-
-这样无论你是在本地还是线上注册，邮件链接都会有稳定的回调地址。
-
-## Supabase 初始化
-
-1. 打开 Supabase Dashboard
-2. 进入当前项目
-3. 打开 `SQL Editor`
-4. 新建查询
-5. 执行 `supabase/tasks.sql`
-
-这份 SQL 会创建或补齐：
-
-- `profiles` 表
-- `tasks` 表
-- `tags` 字段
-- `updated_at`
-- `completed_at`
-- RLS policy
-- 用户注册后自动创建 profile 的 trigger
-- 任务更新时间 trigger
+- 未登录访问 `/api/auth/me` 返回 `401`
+- 未登录访问 `/dashboard` 重定向到 `/login`
+- 真实账号登录
+- 资料更新
+- 任务创建
+- 任务列表读取
+- 任务状态更新
+- 任务删除
 
 ## Vercel 部署
 
-如果你要让线上站点接入真实 Supabase，而不是演示模式，请到 Vercel 项目中补环境变量：
-
-1. 打开 Vercel 项目 `fronted`
-2. 进入 `Settings`
-3. 进入 `Environment Variables`
-4. 添加：
+如果你要让线上版本接入真实 Appwrite，请在 Vercel 项目中补上这些环境变量：
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
+NEXT_PUBLIC_APPWRITE_ENDPOINT=...
+NEXT_PUBLIC_APPWRITE_PROJECT_ID=...
+APPWRITE_API_KEY=...
+APPWRITE_DATABASE_ID=...
+APPWRITE_TASKS_TABLE_ID=...
+APPWRITE_SESSION_COOKIE_NAME=taskflow-session
 NEXT_PUBLIC_SITE_URL=...
 ```
 
-5. 重新触发部署
+然后重新触发部署。
 
-## 当前适合作为作品展示的页面
-
-- `/login`
-- `/dashboard`
-- `/tasks`
-- `/tasks/[id]`
-- `/settings`
-
-## 下一步路线
+## 后续可继续打磨
 
 - 给任务系统增加子任务与备注
 - 给 Dashboard 增加更细的时间筛选与导出能力
 - 上传头像而不只是填 URL
-- 补 README 中的技术架构图和数据流图
-- 增加 Vercel 环境变量后的线上真实联调说明
+- 给 README 增加架构图和数据流图
+- 整理 Appwrite `tasks` table，去掉为旧 schema 兼容而保留的冗余字段

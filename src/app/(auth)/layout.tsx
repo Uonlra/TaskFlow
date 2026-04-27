@@ -1,25 +1,19 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
-import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { hasAppwriteEnv } from "@/lib/appwrite/env";
+import { getCurrentAuthEnvelope } from "@/lib/appwrite/server";
 
 type AuthLayoutProps = {
   children: ReactNode;
 };
 
 export default async function AuthLayout({ children }: AuthLayoutProps) {
-  if (hasSupabaseEnv) {
-    const supabase = await getSupabaseServerClient();
+  if (hasAppwriteEnv) {
+    const auth = await getCurrentAuthEnvelope();
 
-    if (supabase) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        redirect("/dashboard");
-      }
+    if (auth?.user) {
+      redirect("/dashboard");
     }
   }
 

@@ -46,7 +46,7 @@ export function SettingsClient() {
       {!isConfigured ? (
         <section className="card-surface" style={{ borderRadius: 28, padding: 24 }}>
           <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.76 }}>
-            当前还没有连接 Supabase，所以这里的资料修改只会影响本地演示会话。
+            当前还没有连接 Appwrite，所以这里的资料修改只会影响本地演示会话。
           </p>
         </section>
       ) : null}

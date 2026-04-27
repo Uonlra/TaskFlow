@@ -25,11 +25,11 @@ export const tasks: Task[] = [
   },
   {
     id: "task-3",
-    title: "接通 Supabase 认证流程",
+    title: "接通 Appwrite 认证流程",
     description: "把本地演示登录替换成真实的登录注册链路，完成第一版鉴权接入。",
     status: "todo",
     priority: "high",
-    tags: ["Supabase", "认证"],
+    tags: ["Appwrite", "认证"],
     dueDate: "2026-04-10",
     createdAt: "2026-04-05",
     updatedAt: "2026-04-06T11:05:00.000Z",

@@ -198,7 +198,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       {!isConfigured ? (
         <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
           <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.76 }}>
-            当前还没有连接 Supabase，所以你正在编辑保存在浏览器本地的演示任务。
+            当前还没有连接 Appwrite，所以你正在编辑保存在浏览器本地的演示任务。
           </p>
         </section>
       ) : null}
@@ -283,7 +283,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       )}
       {isConfigured && isLoading ? (
         <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
-          <p style={{ margin: 0, color: "var(--muted-strong)" }}>正在从 Supabase 同步任务...</p>
+          <p style={{ margin: 0, color: "var(--muted-strong)" }}>正在从 Appwrite 同步任务...</p>
         </section>
       ) : null}
       <TaskList

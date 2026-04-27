@@ -41,7 +41,7 @@ export function TaskDetailClient({ id }: { id: string }) {
     return (
       <PageContainer>
         <section className="card-surface" style={{ borderRadius: 28, padding: 28 }}>
-          <p style={{ margin: 0, color: "var(--muted-strong)" }}>正在从 Supabase 加载任务详情...</p>
+          <p style={{ margin: 0, color: "var(--muted-strong)" }}>正在从 Appwrite 加载任务详情...</p>
         </section>
       </PageContainer>
     );

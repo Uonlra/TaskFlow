@@ -8,8 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { loginSchema, type LoginFormValues } from "@/features/auth/schemas/login-schema";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { hasAppwritePublicEnv } from "@/lib/appwrite/env";
 import { useToast } from "@/providers/toast-provider";
 
 export function LoginForm() {
@@ -42,7 +41,7 @@ export function LoginForm() {
   const onSubmit = async (values: LoginFormValues) => {
     setSubmitError(null);
 
-    if (!hasSupabaseEnv) {
+    if (!hasAppwritePublicEnv) {
       await new Promise((resolve) => setTimeout(resolve, 300));
       setSubmittedEmail(values.email);
       showToast({
@@ -54,29 +53,24 @@ export function LoginForm() {
       return;
     }
 
-    const client = getSupabaseBrowserClient();
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
 
-    if (!client) {
-      const message = "Supabase 客户端不可用，请检查环境变量配置。";
+    const payload = (await response.json().catch(() => null)) as
+      | { message?: string }
+      | null;
+
+    if (!response.ok) {
+      const message = payload?.message || "登录失败，请稍后再试。";
       setSubmitError(message);
       showToast({
         title: "登录失败",
         description: message,
-        tone: "error",
-      });
-      return;
-    }
-
-    const { error } = await client.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-
-    if (error) {
-      setSubmitError(error.message);
-      showToast({
-        title: "登录失败",
-        description: error.message,
         tone: "error",
       });
       return;
@@ -96,9 +90,9 @@ export function LoginForm() {
       eyebrow="登录"
       title="回到你的工作台"
       description={
-        hasSupabaseEnv
-          ? "使用 Supabase 账号登录后，就会载入你的真实任务数据与个人资料。"
-          : "你还没有完成 Supabase 环境变量配置，所以这里会先以本地演示模式运行。"
+        hasAppwritePublicEnv
+          ? "使用 Appwrite 账号登录后，就会载入你的真实任务数据与个人资料。"
+          : "你还没有完成 Appwrite 环境变量配置，所以这里会先以本地演示模式运行。"
       }
       footer={
         <>
@@ -143,7 +137,7 @@ export function LoginForm() {
         </button>
         {submittedEmail ? (
           <p style={{ margin: 0, color: "var(--success)", fontSize: "0.95rem" }}>
-            {hasSupabaseEnv ? `已登录 ${submittedEmail}。` : `演示模式已接受 ${submittedEmail} 的登录。`}
+            {hasAppwritePublicEnv ? `已登录 ${submittedEmail}。` : `演示模式已接受 ${submittedEmail} 的登录。`}
           </p>
         ) : null}
         {submitError ? <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.95rem" }}>{submitError}</p> : null}

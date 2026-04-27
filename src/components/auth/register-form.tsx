@@ -8,8 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { registerSchema, type RegisterFormValues } from "@/features/auth/schemas/register-schema";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { getPublicSiteUrl, hasSupabaseEnv } from "@/lib/supabase/env";
+import { hasAppwritePublicEnv } from "@/lib/appwrite/env";
 import { useToast } from "@/providers/toast-provider";
 
 export function RegisterForm() {
@@ -46,7 +45,7 @@ export function RegisterForm() {
     setSubmitError(null);
     setSubmitMessage(null);
 
-    if (!hasSupabaseEnv) {
+    if (!hasAppwritePublicEnv) {
       await new Promise((resolve) => setTimeout(resolve, 300));
       setSubmittedName(values.name);
       showToast({
@@ -58,10 +57,20 @@ export function RegisterForm() {
       return;
     }
 
-    const client = getSupabaseBrowserClient();
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
 
-    if (!client) {
-      const message = "Supabase 客户端不可用，请检查环境变量配置。";
+    const payload = (await response.json().catch(() => null)) as
+      | { message?: string; verificationRequested?: boolean }
+      | null;
+
+    if (!response.ok) {
+      const message = payload?.message || "注册失败，请稍后再试。";
       setSubmitError(message);
       showToast({
         title: "注册失败",
@@ -71,46 +80,18 @@ export function RegisterForm() {
       return;
     }
 
-    const { data, error } = await client.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        data: {
-          name: values.name,
-        },
-        emailRedirectTo: getPublicSiteUrl("/auth/callback?next=/dashboard"),
-      },
-    });
-
-    if (error) {
-      setSubmitError(error.message);
-      showToast({
-        title: "注册失败",
-        description: error.message,
-        tone: "error",
-      });
-      return;
-    }
-
     setSubmittedName(values.name);
-
-    if (data.session) {
-      showToast({
-        title: "账号已创建",
-        description: `当前已登录 ${values.email}。`,
-        tone: "success",
-      });
-      navigateToDashboard();
-      return;
-    }
-
-    const message = "账号已创建。请先去邮箱完成验证，然后再回来登录。";
+    const message =
+      payload?.verificationRequested
+        ? "账号已创建，验证邮件已发出。你现在也可以直接进入工作台继续体验。"
+        : `账号已创建，当前已登录 ${values.email}。`;
     setSubmitMessage(message);
     showToast({
-      title: "请查收邮箱",
+      title: payload?.verificationRequested ? "请查收邮箱" : "账号已创建",
       description: message,
-      tone: "info",
+      tone: payload?.verificationRequested ? "info" : "success",
     });
+    navigateToDashboard();
   };
 
   return (
@@ -118,9 +99,9 @@ export function RegisterForm() {
       eyebrow="注册"
       title="创建你的中文工作台"
       description={
-        hasSupabaseEnv
-          ? "注册后会创建真实的 Supabase 账号。如果项目开启了邮箱验证，我们会先提醒你完成确认。"
-          : "你还没有完成 Supabase 环境变量配置，所以这里会先以本地演示模式运行。"
+        hasAppwritePublicEnv
+          ? "注册后会创建真实的 Appwrite 账号。如果项目开启了邮箱验证，我们会先提醒你完成确认。"
+          : "你还没有完成 Appwrite 环境变量配置，所以这里会先以本地演示模式运行。"
       }
       footer={
         <>
@@ -179,7 +160,7 @@ export function RegisterForm() {
         </button>
         {submittedName ? (
           <p style={{ margin: 0, color: "var(--success)", fontSize: "0.95rem" }}>
-            {hasSupabaseEnv ? `已为 ${submittedName} 创建账号。` : `已为 ${submittedName} 创建演示工作台。`}
+            {hasAppwritePublicEnv ? `已为 ${submittedName} 创建账号。` : `已为 ${submittedName} 创建演示工作台。`}
           </p>
         ) : null}
         {submitMessage ? <p style={{ margin: 0, color: "var(--success)", fontSize: "0.95rem" }}>{submitMessage}</p> : null}
