@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(getLoginRedirectUrl(request, "missing-config"));
   }
 
-  const nextPath = request.nextUrl.searchParams.get("next") || "/dashboard";
   const userId = request.nextUrl.searchParams.get("userId");
   const secret = request.nextUrl.searchParams.get("secret");
 
@@ -33,7 +32,7 @@ export async function GET(request: NextRequest) {
       request,
     });
 
-    return NextResponse.redirect(new URL(nextPath, request.url));
+    return NextResponse.redirect(getLoginRedirectUrl(request, "email-verified"));
   } catch {
     return NextResponse.redirect(getLoginRedirectUrl(request, "auth-callback-failed"));
   }

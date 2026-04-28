@@ -7,12 +7,13 @@ import { createTask, listTasks } from "@/lib/appwrite/tasks";
 
 export async function GET(request: NextRequest) {
   const sessionSecret = await getAppwriteSessionSecret();
+  const auth = await getCurrentAuthEnvelope();
 
-  if (!sessionSecret) {
+  if (!sessionSecret || !auth?.user) {
     return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
   }
 
-  const tasks = await listTasks(sessionSecret, request);
+  const tasks = await listTasks(sessionSecret, auth.user.id, request);
   return NextResponse.json({ tasks });
 }
 

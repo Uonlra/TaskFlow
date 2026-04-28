@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import type { AuthSession, AuthUser } from "@/features/auth/types/auth.types";
 import type { Profile, ProfileFormValues } from "@/features/auth/types/profile.types";
 import { hasAppwritePublicEnv } from "@/lib/appwrite/env";
+import { useTaskStore } from "@/store/task-store";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const demoStorageKey = "taskflow-demo-profile";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const clearTasks = useTaskStore((state) => state.clearTasks);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -111,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(null);
         setUser(null);
         setProfile(null);
+        clearTasks();
       },
       refreshProfile: async () => {
         if (!hasAppwritePublicEnv) {
@@ -219,7 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
     }),
-    [isLoading, isProfileLoading, profile, session, user],
+    [clearTasks, isLoading, isProfileLoading, profile, session, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

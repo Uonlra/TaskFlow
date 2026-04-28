@@ -14,6 +14,7 @@ type TaskStore = {
   isLoading: boolean;
   error: string | null;
   lastLoadedUserId: string | null;
+  clearTasks: () => void;
   syncTasks: (userId?: string) => Promise<void>;
   createTask: (input: TaskFormValues) => string;
   createTaskAsync: (input: TaskFormValues, userId?: string) => Promise<string>;
@@ -35,6 +36,13 @@ export const useTaskStore = create<TaskStore>()(
       isLoading: false,
       error: null,
       lastLoadedUserId: null,
+      clearTasks: () => {
+        set({
+          tasks: hasAppwritePublicEnv ? [] : initialTasks,
+          error: null,
+          lastLoadedUserId: null,
+        });
+      },
       syncTasks: async (userId?: string): Promise<void> => {
         if (!hasAppwritePublicEnv) {
           return;

@@ -3,8 +3,9 @@ import { z } from "zod";
 
 import { taskSchema } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
+import { getCurrentAuthEnvelope } from "@/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/lib/appwrite/session";
-import { deleteTask, updateTask, updateTaskStatus } from "@/lib/appwrite/tasks";
+import { deleteTask, getTask, updateTask, updateTaskStatus } from "@/lib/appwrite/tasks";
 
 const taskStatusSchema = z.object({
   status: z.enum(["todo", "in_progress", "done"]),
@@ -15,12 +16,19 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> },
 ) {
   const sessionSecret = await getAppwriteSessionSecret();
+  const auth = await getCurrentAuthEnvelope();
 
-  if (!sessionSecret) {
+  if (!sessionSecret || !auth?.user) {
     return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
   }
 
   const { id } = await context.params;
+  const currentTask = await getTask(sessionSecret, id, request);
+
+  if (currentTask.assignedTo !== auth.user.id) {
+    return NextResponse.json({ message: "Task not found." }, { status: 404 });
+  }
+
   const payload = await request.json().catch(() => null);
   const parsedStatus = taskStatusSchema.safeParse(payload);
 
@@ -53,12 +61,19 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> },
 ) {
   const sessionSecret = await getAppwriteSessionSecret();
+  const auth = await getCurrentAuthEnvelope();
 
-  if (!sessionSecret) {
+  if (!sessionSecret || !auth?.user) {
     return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
   }
 
   const { id } = await context.params;
+  const currentTask = await getTask(sessionSecret, id, request);
+
+  if (currentTask.assignedTo !== auth.user.id) {
+    return NextResponse.json({ message: "Task not found." }, { status: 404 });
+  }
+
   await deleteTask(sessionSecret, id, request);
   return NextResponse.json({ ok: true });
 }
