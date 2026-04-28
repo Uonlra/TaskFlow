@@ -87,6 +87,11 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
         <TaskStatusBadge status={task.status} />
       </div>
 
+      <div className="ui-sans" style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 12, color: "var(--muted)", fontSize: "0.88rem" }}>
+        <span>创建于 {formatDateLabel(task.createdAt)}</span>
+        {task.updatedAt ? <span>最近更新 {formatDateLabel(task.updatedAt)}</span> : null}
+      </div>
+
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
         <TaskPriorityBadge priority={task.priority} />
         <MetaPill label={dueMeta.label} tone={dueMeta.tone} />
@@ -101,14 +106,16 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
           href={`/tasks/${task.id}`}
           className="ui-sans"
           style={{
-            padding: "10px 14px",
+            padding: "10px 16px",
             borderRadius: 999,
-            background: "rgba(255,255,255,0.84)",
-            border: "1px solid var(--border)",
+            background: "linear-gradient(135deg, rgba(37,99,235,0.92), rgba(8,145,178,0.9))",
+            border: "1px solid transparent",
+            color: "var(--primary-foreground)",
             fontWeight: 700,
+            boxShadow: "0 10px 24px rgba(37,99,235,0.16)",
           }}
         >
-          查看
+          查看详情
         </Link>
         <button
           type="button"
@@ -179,3 +186,16 @@ const actionButtonStyle = {
   borderRadius: 999,
   fontWeight: 700,
 } satisfies CSSProperties;
+
+function formatDateLabel(value: string) {
+  const timestamp = new Date(value);
+
+  if (Number.isNaN(timestamp.getTime())) {
+    return value;
+  }
+
+  return timestamp.toLocaleDateString("zh-CN", {
+    month: "numeric",
+    day: "numeric",
+  });
+}

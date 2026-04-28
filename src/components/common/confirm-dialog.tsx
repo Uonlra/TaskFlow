@@ -36,6 +36,28 @@ export function ConfirmDialog({
     };
   }, []);
 
+  useEffect(() => {
+    if (!open || !mounted) {
+      document.body.style.removeProperty("overflow");
+      return;
+    }
+
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isSubmitting) {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.removeProperty("overflow");
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSubmitting, mounted, open]);
+
   const handleConfirm = async () => {
     setIsSubmitting(true);
     setSubmitError(null);
@@ -57,7 +79,13 @@ export function ConfirmDialog({
       </button>
       {open && mounted
         ? createPortal(
-        <Overlay>
+        <Overlay
+          onDismiss={() => {
+            if (!isSubmitting) {
+              setOpen(false);
+            }
+          }}
+        >
           <section
             className="card-surface"
             style={{
@@ -113,9 +141,20 @@ export function ConfirmDialog({
   );
 }
 
-function Overlay({ children }: { children: ReactNode }) {
+function Overlay({
+  children,
+  onDismiss,
+}: {
+  children: ReactNode;
+  onDismiss: () => void;
+}) {
   return (
     <div
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onDismiss();
+        }
+      }}
       style={{
         position: "fixed",
         inset: 0,
