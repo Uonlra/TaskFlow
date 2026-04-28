@@ -102,6 +102,13 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     );
   }, [tasks]);
 
+  const hasActiveFilters =
+    filters.query.trim() !== "" ||
+    filters.tag.trim() !== "" ||
+    filters.status !== "all" ||
+    filters.priority !== "all" ||
+    filters.sort !== "due_asc";
+
   const handleCreateTask = async (values: TaskFormValues) => {
     try {
       if (isConfigured) {
@@ -193,6 +200,16 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
+  const handleResetFilters = () => {
+    handleFiltersChange(initialFilters);
+  };
+
+  const summaryLabel = !tasks.length
+    ? "先创建第一条任务，把今天要推进的事情收进工作台。"
+    : hasActiveFilters
+      ? `当前视图筛出 ${filteredTasks.length} 条任务，方便你先聚焦眼前最重要的一组。`
+      : `当前共有 ${tasks.length} 条任务，先从最接近截止日期或正在推进的事项开始。`;
+
   return (
     <section className="tasks-toolbar">
       {!isConfigured ? (
@@ -253,8 +270,50 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       </section>
 
       <div style={{ display: "grid", gap: 16 }}>
-        <TaskFilterBar filters={filters} onChange={handleFiltersChange} />
+        <TaskFilterBar
+          filters={filters}
+          resultCount={filteredTasks.length}
+          totalCount={tasks.length}
+          onChange={handleFiltersChange}
+          onReset={handleResetFilters}
+        />
       </div>
+      <section
+        className="card-surface"
+        style={{
+          borderRadius: 24,
+          padding: "18px 20px",
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 16,
+          alignItems: "center",
+          flexWrap: "wrap",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(244,248,255,0.84))",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.8rem" }}>
+            当前任务视图
+          </p>
+          <p style={{ margin: "8px 0 0", color: "var(--muted-strong)", lineHeight: 1.76 }}>{summaryLabel}</p>
+        </div>
+        {hasActiveFilters ? (
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            className="ui-sans"
+            style={{
+              border: "1px solid var(--border)",
+              background: "rgba(255,255,255,0.84)",
+              padding: "12px 16px",
+              borderRadius: 999,
+              fontWeight: 700,
+            }}
+          >
+            回到全部任务
+          </button>
+        ) : null}
+      </section>
       {(deadlineSummary.overdue > 0 || deadlineSummary.today > 0 || deadlineSummary.upcoming > 0) && (
         <section
           className="card-surface"
@@ -288,6 +347,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       ) : null}
       <TaskList
         tasks={filteredTasks}
+        emptyAction={<TaskFormDialog onSubmitTask={handleCreateTask} triggerLabel="新增一条任务" />}
         onUpdateTask={handleUpdateTask}
         onUpdateStatus={handleUpdateStatus}
         onDeleteTask={handleDeleteTask}

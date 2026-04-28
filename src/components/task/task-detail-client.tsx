@@ -94,9 +94,28 @@ export function TaskDetailClient({ id }: { id: string }) {
 
   return (
     <PageContainer>
-      <Link href="/tasks" className="ui-sans" style={{ display: "inline-block", marginBottom: 4, color: "var(--muted)" }}>
-        返回任务列表
-      </Link>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+        <Link
+          href="/tasks"
+          className="ui-sans"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "10px 14px",
+            borderRadius: 999,
+            border: "1px solid var(--border)",
+            background: "rgba(255,255,255,0.84)",
+            color: "var(--muted-strong)",
+            fontWeight: 700,
+          }}
+        >
+          返回任务列表
+        </Link>
+        <p className="ui-sans" style={{ margin: 0, color: "var(--muted)", fontSize: "0.92rem" }}>
+          进入详情后，优先确认状态、截止时间和说明是否仍然准确。
+        </p>
+      </div>
       <section
         className="card-surface dashboard-highlight-card"
         style={{

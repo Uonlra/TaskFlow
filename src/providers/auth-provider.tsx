@@ -69,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(null);
           setUser(null);
           setProfile(null);
+          clearTasks();
           setIsLoading(false);
           return;
         }
@@ -92,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [clearTasks]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

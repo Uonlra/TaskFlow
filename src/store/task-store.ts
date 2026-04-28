@@ -32,7 +32,7 @@ const fallbackStorage = {
 export const useTaskStore = create<TaskStore>()(
   persist(
     (set, get): TaskStore => ({
-      tasks: initialTasks,
+      tasks: hasAppwritePublicEnv ? [] : initialTasks,
       isLoading: false,
       error: null,
       lastLoadedUserId: null,
@@ -226,16 +226,22 @@ export const useTaskStore = create<TaskStore>()(
       ),
       merge: (persistedState, currentState) => {
         const nextState = persistedState as Partial<TaskStore>;
+        const mergedTasks = hasAppwritePublicEnv
+          ? currentState.tasks
+          : nextState.tasks ?? currentState.tasks;
 
         return {
           ...currentState,
           ...nextState,
-          tasks: (nextState.tasks ?? currentState.tasks).map(normalizeTask),
+          tasks: mergedTasks.map(normalizeTask),
         };
       },
-      partialize: (state) => ({
-        tasks: state.tasks,
-      }),
+      partialize: (state) =>
+        hasAppwritePublicEnv
+          ? {}
+          : {
+              tasks: state.tasks,
+            },
     },
   ),
 );
