@@ -26,6 +26,7 @@ type AppwriteTaskRow = {
   completedAt?: string | null;
   taskName?: string | null;
   taskId?: number | null;
+  assignedTo?: string | null;
 };
 
 type AppwriteRowsList = {
@@ -34,6 +35,7 @@ type AppwriteRowsList = {
 
 export async function listTasks(
   sessionSecret: string,
+  userId: string,
   request?: NextRequest,
 ) {
   const payload = await appwriteTaskRequest<AppwriteRowsList>("", {
@@ -41,7 +43,9 @@ export async function listTasks(
     request,
   });
 
-  return (payload.rows ?? []).map(mapTaskRow);
+  return (payload.rows ?? [])
+    .filter((row) => row.assignedTo === userId)
+    .map(mapTaskRow);
 }
 
 export async function createTask(
@@ -58,7 +62,7 @@ export async function createTask(
     request,
     body: {
       rowId,
-      data: buildTaskData(input, taskKey),
+      data: buildTaskData(input, taskKey, userId),
       permissions: buildTaskPermissions(userId),
     },
   });
@@ -117,6 +121,19 @@ export async function deleteTask(
   });
 }
 
+export async function getTask(
+  sessionSecret: string,
+  taskId: string,
+  request?: NextRequest,
+) {
+  const row = await appwriteTaskRequest<AppwriteTaskRow>(`/${taskId}`, {
+    sessionSecret,
+    request,
+  });
+
+  return row;
+}
+
 export function mapTaskRow(row: AppwriteTaskRow): Task {
   return {
     id: row.$id,
@@ -140,7 +157,11 @@ function buildTaskPermissions(userId: string) {
   ];
 }
 
-function buildTaskData(input: TaskFormValues, taskKey?: number) {
+function buildTaskData(
+  input: TaskFormValues,
+  taskKey?: number,
+  userId?: string,
+) {
   const tags = Array.from(
     new Set(
       (input.tags ?? "")
@@ -160,6 +181,7 @@ function buildTaskData(input: TaskFormValues, taskKey?: number) {
     dueDate: toAppwriteDateTime(input.dueDate),
     completedAt: input.status === "done" ? new Date().toISOString() : null,
     ...(typeof taskKey === "number" ? { taskId: taskKey } : {}),
+    ...(userId ? { assignedTo: userId } : {}),
   };
 }
 

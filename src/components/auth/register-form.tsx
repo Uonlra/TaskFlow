@@ -66,7 +66,11 @@ export function RegisterForm() {
     });
 
     const payload = (await response.json().catch(() => null)) as
-      | { message?: string; verificationRequested?: boolean }
+      | {
+          message?: string;
+          verificationRequested?: boolean;
+          requiresEmailVerification?: boolean;
+        }
       | null;
 
     if (!response.ok) {
@@ -81,17 +85,22 @@ export function RegisterForm() {
     }
 
     setSubmittedName(values.name);
+    const requiresEmailVerification = Boolean(payload?.requiresEmailVerification);
     const message =
-      payload?.verificationRequested
-        ? "账号已创建，验证邮件已发出。你现在也可以直接进入工作台继续体验。"
-        : `账号已创建，当前已登录 ${values.email}。`;
+      payload?.message ||
+      (requiresEmailVerification
+        ? "账号已创建，请先完成邮箱验证后再登录。"
+        : `账号已创建，当前已登录 ${values.email}。`);
     setSubmitMessage(message);
     showToast({
-      title: payload?.verificationRequested ? "请查收邮箱" : "账号已创建",
+      title: requiresEmailVerification ? "请查收邮箱" : "账号已创建",
       description: message,
-      tone: payload?.verificationRequested ? "info" : "success",
+      tone: requiresEmailVerification ? "info" : "success",
     });
-    navigateToDashboard();
+
+    if (!requiresEmailVerification) {
+      navigateToDashboard();
+    }
   };
 
   return (

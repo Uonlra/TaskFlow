@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -13,6 +13,7 @@ import { useToast } from "@/providers/toast-provider";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -27,6 +28,24 @@ export function LoginForm() {
       password: "",
     },
   });
+
+  useEffect(() => {
+    const reason = searchParams.get("reason");
+
+    if (reason === "email-verified") {
+      setSubmitError(null);
+      showToast({
+        title: "邮箱验证完成",
+        description: "你的邮箱已经验证成功，现在可以登录进入工作台。",
+        tone: "success",
+      });
+      return;
+    }
+
+    if (reason === "verify-email") {
+      setSubmitError("请先完成邮箱验证后再进入工作台。");
+    }
+  }, [searchParams, showToast]);
 
   const navigateToDashboard = () => {
     if (typeof window !== "undefined") {
@@ -62,7 +81,7 @@ export function LoginForm() {
     });
 
     const payload = (await response.json().catch(() => null)) as
-      | { message?: string }
+      | { message?: string; requiresEmailVerification?: boolean }
       | null;
 
     if (!response.ok) {

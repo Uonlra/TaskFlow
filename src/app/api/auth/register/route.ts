@@ -4,9 +4,13 @@ import { registerSchema } from "@/features/auth/schemas/register-schema";
 import { hasAppwriteAuthEnv } from "@/lib/appwrite/env";
 import {
   AppwriteRequestError,
+  destroyCurrentSession,
   registerEmailPasswordAccount,
 } from "@/lib/appwrite/server";
-import { attachAppwriteSessionCookie } from "@/lib/appwrite/session";
+import {
+  attachAppwriteSessionCookie,
+  clearAppwriteSessionCookie,
+} from "@/lib/appwrite/session";
 
 export async function POST(request: NextRequest) {
   const payload = await request.json().catch(() => null);
@@ -31,14 +35,33 @@ export async function POST(request: NextRequest) {
       ...parsed.data,
       request,
     });
-    const response = NextResponse.json({
-      ...result.envelope,
-      verificationRequested: result.verificationRequested,
-    });
-    attachAppwriteSessionCookie(response, {
-      secret: result.secret,
-      expire: result.expire,
-    });
+
+    const isVerified = result.envelope.user.emailVerified;
+    const status = isVerified ? 200 : 202;
+    const response = NextResponse.json(
+      {
+        ...result.envelope,
+        verificationRequested: result.verificationRequested,
+        requiresEmailVerification: !isVerified,
+        message: !isVerified
+          ? result.verificationRequested
+            ? "账号已创建，请先完成邮箱验证后再登录。"
+            : "账号已创建，但验证邮件发送失败，请稍后在登录页重试。"
+          : undefined,
+      },
+      { status },
+    );
+
+    if (isVerified) {
+      attachAppwriteSessionCookie(response, {
+        secret: result.secret,
+        expire: result.expire,
+      });
+    } else {
+      await destroyCurrentSession(result.secret, request).catch(() => undefined);
+      clearAppwriteSessionCookie(response);
+    }
+
     return response;
   } catch (error) {
     return NextResponse.json(

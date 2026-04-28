@@ -12,7 +12,7 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
   if (hasAppwriteEnv) {
     const auth = await getCurrentAuthEnvelope();
 
-    if (auth?.user) {
+    if (auth?.user?.emailVerified) {
       redirect("/dashboard");
     }
   }

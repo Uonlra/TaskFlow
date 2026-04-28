@@ -8,3 +8,4 @@ dist
 tsconfig.tsbuildinfo
 \docs*
 \skills*
+.env.local.testbak
