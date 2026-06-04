@@ -5,5 +5,5 @@ type PageContainerProps = {
 };
 
 export function PageContainer({ children }: PageContainerProps) {
-  return <div style={{ display: "grid", gap: 28, paddingBottom: 36 }}>{children}</div>;
+  return <div className="page-stack">{children}</div>;
 }

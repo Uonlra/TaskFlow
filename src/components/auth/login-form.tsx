@@ -1,19 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { loginSchema, type LoginFormValues } from "@/features/auth/schemas/login-schema";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { hasAppwritePublicEnv } from "@/lib/appwrite/env";
 import { useToast } from "@/providers/toast-provider";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -29,10 +29,38 @@ export function LoginForm() {
     },
   });
 
+  useEffect(() => {
+    const reason = searchParams.get("reason");
+
+    if (reason === "email-verified") {
+      setSubmitError(null);
+      showToast({
+        title: "邮箱验证完成",
+        description: "你的邮箱已经验证成功，现在可以登录进入工作台。",
+        tone: "success",
+      });
+      return;
+    }
+
+    if (reason === "verify-email") {
+      setSubmitError("请先完成邮箱验证后再进入工作台。");
+    }
+  }, [searchParams, showToast]);
+
+  const navigateToDashboard = () => {
+    if (typeof window !== "undefined") {
+      window.location.assign("/dashboard");
+      return;
+    }
+
+    router.replace("/dashboard");
+    router.refresh();
+  };
+
   const onSubmit = async (values: LoginFormValues) => {
     setSubmitError(null);
 
-    if (!hasSupabaseEnv) {
+    if (!hasAppwritePublicEnv) {
       await new Promise((resolve) => setTimeout(resolve, 300));
       setSubmittedEmail(values.email);
       showToast({
@@ -40,33 +68,28 @@ export function LoginForm() {
         description: `已用本地模式登录 ${values.email}。`,
         tone: "success",
       });
-      router.push("/dashboard");
+      navigateToDashboard();
       return;
     }
 
-    const client = getSupabaseBrowserClient();
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
 
-    if (!client) {
-      const message = "Supabase 客户端不可用，请检查环境变量配置。";
+    const payload = (await response.json().catch(() => null)) as
+      | { message?: string; requiresEmailVerification?: boolean }
+      | null;
+
+    if (!response.ok) {
+      const message = payload?.message || "登录失败，请稍后再试。";
       setSubmitError(message);
       showToast({
         title: "登录失败",
         description: message,
-        tone: "error",
-      });
-      return;
-    }
-
-    const { error } = await client.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-
-    if (error) {
-      setSubmitError(error.message);
-      showToast({
-        title: "登录失败",
-        description: error.message,
         tone: "error",
       });
       return;
@@ -78,7 +101,7 @@ export function LoginForm() {
       description: `当前已登录 ${values.email}。`,
       tone: "success",
     });
-    router.push("/dashboard");
+    navigateToDashboard();
   };
 
   return (
@@ -86,9 +109,9 @@ export function LoginForm() {
       eyebrow="登录"
       title="回到你的工作台"
       description={
-        hasSupabaseEnv
-          ? "使用 Supabase 账号登录后，就会载入你的真实任务数据与个人资料。"
-          : "你还没有完成 Supabase 环境变量配置，所以这里会先以本地演示模式运行。"
+        hasAppwritePublicEnv
+          ? "使用 Appwrite 账号登录后，就会载入你的真实任务数据与个人资料。"
+          : "你还没有完成 Appwrite 环境变量配置，所以这里会先以本地演示模式运行。"
       }
       footer={
         <>
@@ -117,21 +140,14 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          style={{
-            border: 0,
-            padding: "14px 18px",
-            borderRadius: 999,
-            background: "var(--primary)",
-            color: "var(--primary-foreground)",
-            fontWeight: 700,
-            opacity: isSubmitting ? 0.8 : 1,
-          }}
+          className="ui-sans auth-submit"
+          style={{ opacity: isSubmitting ? 0.8 : 1 }}
         >
           {isSubmitting ? "登录中..." : "进入仪表盘"}
         </button>
         {submittedEmail ? (
           <p style={{ margin: 0, color: "var(--success)", fontSize: "0.95rem" }}>
-            {hasSupabaseEnv ? `已登录 ${submittedEmail}。` : `演示模式已接受 ${submittedEmail} 的登录。`}
+            {hasAppwritePublicEnv ? `已登录 ${submittedEmail}。` : `演示模式已接受 ${submittedEmail} 的登录。`}
           </p>
         ) : null}
         {submitError ? <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.95rem" }}>{submitError}</p> : null}
@@ -151,17 +167,12 @@ type AuthInputProps = {
 function AuthInput({ label, type, placeholder, error, registration }: AuthInputProps) {
   return (
     <label style={{ display: "grid", gap: 8 }}>
-      <span style={{ fontSize: "0.95rem", fontWeight: 600 }}>{label}</span>
+      <span className="ui-sans" style={{ fontSize: "0.95rem", fontWeight: 600 }}>{label}</span>
       <input
         type={type}
         placeholder={placeholder}
         {...registration}
-        style={{
-          borderRadius: 16,
-          border: `1px solid ${error ? "rgba(178,64,55,0.48)" : "var(--border)"}`,
-          padding: "14px 16px",
-          background: "rgba(255,255,255,0.9)",
-        }}
+        className={`ui-sans auth-input${error ? " auth-input--invalid" : ""}`}
       />
       {error ? <span style={{ color: "var(--danger)", fontSize: "0.9rem" }}>{error}</span> : null}
     </label>

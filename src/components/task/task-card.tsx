@@ -32,14 +32,15 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
           display: "block",
           padding: 18,
           borderRadius: 24,
-          background: "rgba(255,255,255,0.8)",
-          border: `1px solid ${dueMeta.isOverdue ? "rgba(178,64,55,0.28)" : "var(--border)"}`,
+          background: "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(247,250,255,0.8))",
+          border: `1px solid ${dueMeta.isOverdue ? "rgba(239,68,68,0.3)" : "var(--border)"}`,
+          boxShadow: dueMeta.isOverdue ? "0 12px 28px rgba(239,68,68,0.08)" : "0 12px 28px rgba(37,99,235,0.06)",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "start" }}>
           <div>
             <h3 style={{ margin: 0, fontSize: "1rem" }}>{task.title}</h3>
-            <p style={{ margin: "10px 0 0", color: "var(--muted)", lineHeight: 1.6 }}>{task.description}</p>
+            <p style={{ margin: "10px 0 0", color: "var(--muted-strong)", lineHeight: 1.7 }}>{task.description}</p>
           </div>
           <TaskStatusBadge status={task.status} />
         </div>
@@ -71,18 +72,24 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
       style={{
         padding: 20,
         borderRadius: 24,
-        background: "rgba(255,255,255,0.8)",
-        border: `1px solid ${dueMeta.isOverdue ? "rgba(178,64,55,0.28)" : "var(--border)"}`,
+        background: "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(247,250,255,0.8))",
+        border: `1px solid ${dueMeta.isOverdue ? "rgba(239,68,68,0.3)" : "var(--border)"}`,
+        boxShadow: dueMeta.isOverdue ? "0 14px 30px rgba(239,68,68,0.08)" : "0 14px 30px rgba(37,99,235,0.06)",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "start" }}>
         <div>
           <h3 style={{ margin: 0, fontSize: "1.1rem" }}>{task.title}</h3>
-          <p style={{ margin: "10px 0 0", color: "var(--muted)", lineHeight: 1.6 }}>
+          <p style={{ margin: "10px 0 0", color: "var(--muted-strong)", lineHeight: 1.7 }}>
             {task.description}
           </p>
         </div>
         <TaskStatusBadge status={task.status} />
+      </div>
+
+      <div className="ui-sans" style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 12, color: "var(--muted)", fontSize: "0.88rem" }}>
+        <span>创建于 {formatDateLabel(task.createdAt)}</span>
+        {task.updatedAt ? <span>最近更新 {formatDateLabel(task.updatedAt)}</span> : null}
       </div>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
@@ -97,15 +104,18 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
         <Link
           href={`/tasks/${task.id}`}
+          className="ui-sans"
           style={{
-            padding: "10px 14px",
+            padding: "10px 16px",
             borderRadius: 999,
-            background: "rgba(255,255,255,0.7)",
-            border: "1px solid var(--border)",
+            background: "linear-gradient(135deg, rgba(37,99,235,0.92), rgba(8,145,178,0.9))",
+            border: "1px solid transparent",
+            color: "var(--primary-foreground)",
             fontWeight: 700,
+            boxShadow: "0 10px 24px rgba(37,99,235,0.16)",
           }}
         >
-          查看
+          查看详情
         </Link>
         <button
           type="button"
@@ -144,15 +154,16 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
 function MetaPill({ label, tone = "muted" }: { label: string; tone?: "danger" | "warning" | "success" | "muted" }) {
   const toneStyles =
     tone === "danger"
-      ? { background: "rgba(178, 64, 55, 0.12)", color: "var(--danger)" }
+      ? { background: "rgba(239, 68, 68, 0.1)", color: "var(--danger)" }
       : tone === "warning"
-        ? { background: "rgba(183, 121, 31, 0.12)", color: "var(--warning)" }
+        ? { background: "rgba(59, 130, 246, 0.1)", color: "var(--data-ink)" }
         : tone === "success"
-          ? { background: "rgba(44, 122, 90, 0.12)", color: "var(--success)" }
-          : { background: "rgba(31, 41, 55, 0.06)", color: "var(--muted)" };
+          ? { background: "rgba(79, 70, 229, 0.12)", color: "var(--data-indigo)" }
+          : { background: "rgba(37, 99, 235, 0.08)", color: "var(--muted-strong)" };
 
   return (
     <span
+      className="ui-sans"
       style={{
         display: "inline-flex",
         padding: "8px 12px",
@@ -170,8 +181,21 @@ function MetaPill({ label, tone = "muted" }: { label: string; tone?: "danger" | 
 
 const actionButtonStyle = {
   border: "1px solid var(--border)",
-  background: "rgba(255,255,255,0.7)",
+  background: "rgba(255,255,255,0.84)",
   padding: "10px 14px",
   borderRadius: 999,
   fontWeight: 700,
 } satisfies CSSProperties;
+
+function formatDateLabel(value: string) {
+  const timestamp = new Date(value);
+
+  if (Number.isNaN(timestamp.getTime())) {
+    return value;
+  }
+
+  return timestamp.toLocaleDateString("zh-CN", {
+    month: "numeric",
+    day: "numeric",
+  });
+}

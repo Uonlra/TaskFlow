@@ -1,74 +1,96 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
-import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { hasAppwriteEnv } from "@/lib/appwrite/env";
+import { getCurrentAuthEnvelope } from "@/lib/appwrite/server";
 
 type AuthLayoutProps = {
   children: ReactNode;
 };
 
 export default async function AuthLayout({ children }: AuthLayoutProps) {
-  if (hasSupabaseEnv) {
-    const supabase = await getSupabaseServerClient();
+  if (hasAppwriteEnv) {
+    const auth = await getCurrentAuthEnvelope();
 
-    if (supabase) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        redirect("/dashboard");
-      }
+    if (auth?.user?.emailVerified) {
+      redirect("/dashboard");
     }
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        gridTemplateColumns: "1.2fr 1fr",
-        gap: 24,
-        padding: 24,
-      }}
-    >
-      <section
-        className="card-surface"
-        style={{
-          borderRadius: 32,
-          padding: 40,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          background:
-            "radial-gradient(circle at top left, rgba(199,91,57,0.2), transparent 30%), rgba(255,255,255,0.78)",
-        }}
-      >
-        <div>
-          <p style={{ margin: 0, color: "var(--primary)", fontWeight: 800, letterSpacing: "0.08em" }}>
-            清衡任务台
-          </p>
-          <h1 style={{ margin: "18px 0 0", fontSize: "clamp(2.4rem, 4vw, 4rem)", lineHeight: 1.02 }}>
-            一个更安静的
-            <br />
-            中文任务空间。
-          </h1>
+    <main className="auth-shell">
+      <section className="card-surface auth-product-panel">
+        <div className="auth-shell__panel">
+          <div className="auth-product-copy">
+            <p className="section-eyebrow auth-product-kicker">U's TaskFlow</p>
+            <h1>
+              把今天、截止日
+              <br />
+              和长期目标
+              <br />
+              放回清晰工作台。
+            </h1>
+            <p>
+              登录后继续推进你的任务节奏。左侧预览保留真实产品语言，让进入工作台之前也能看见下一步。
+            </p>
+          </div>
+
+          <div className="auth-preview" aria-label="TaskFlow dashboard preview">
+            <div className="auth-preview__topbar">
+              <div>
+                <span className="auth-preview__dot" />
+                <span className="auth-preview__dot auth-preview__dot--cyan" />
+                <span className="auth-preview__dot auth-preview__dot--indigo" />
+              </div>
+              <span className="ui-sans">今日工作台</span>
+            </div>
+
+            <div className="auth-preview__hero">
+              <div>
+                <p className="section-eyebrow">Focus</p>
+                <strong>6 个任务正在推进</strong>
+                <span>2 个将在今天到期</span>
+              </div>
+              <div className="auth-preview__ring">
+                <span>72%</span>
+              </div>
+            </div>
+
+            <div className="auth-preview__stats">
+              <div>
+                <span className="metric-value">12</span>
+                <p>本周完成</p>
+              </div>
+              <div>
+                <span className="metric-value">4</span>
+                <p>高优先级</p>
+              </div>
+              <div>
+                <span className="metric-value">3</span>
+                <p>标签分组</p>
+              </div>
+            </div>
+
+            <div className="auth-preview__tasks">
+              {[
+                ["完善登录页视觉", "今天 18:00", "high"],
+                ["整理 Appwrite 数据链路", "明天", "normal"],
+                ["复盘 Dashboard 图表", "周五", "calm"],
+              ].map(([title, time, tone]) => (
+                <div className="auth-preview__task" key={title}>
+                  <span className={`auth-preview__task-dot auth-preview__task-dot--${tone}`} />
+                  <div>
+                    <strong>{title}</strong>
+                    <p>{time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-        <p style={{ margin: 0, maxWidth: 520, color: "var(--muted)", lineHeight: 1.8 }}>
-          把优先级放在眼前，把噪音留在外面，让你在中文环境下也能自然地阅读、规划与推进工作。
-        </p>
       </section>
-      <section
-        className="card-surface"
-        style={{
-          borderRadius: 32,
-          padding: 32,
-          display: "grid",
-          alignItems: "center",
-        }}
-      >
-        {children}
+      <section className="card-surface auth-shell__form">
+        <div className="auth-form-card">{children}</div>
       </section>
     </main>
   );

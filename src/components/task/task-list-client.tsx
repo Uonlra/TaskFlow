@@ -102,6 +102,13 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     );
   }, [tasks]);
 
+  const hasActiveFilters =
+    filters.query.trim() !== "" ||
+    filters.tag.trim() !== "" ||
+    filters.status !== "all" ||
+    filters.priority !== "all" ||
+    filters.sort !== "due_asc";
+
   const handleCreateTask = async (values: TaskFormValues) => {
     try {
       if (isConfigured) {
@@ -193,12 +200,22 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
+  const handleResetFilters = () => {
+    handleFiltersChange(initialFilters);
+  };
+
+  const summaryLabel = !tasks.length
+    ? "先创建第一条任务，把今天要推进的事情收进工作台。"
+    : hasActiveFilters
+      ? `当前视图筛出 ${filteredTasks.length} 条任务，方便你先聚焦眼前最重要的一组。`
+      : `当前共有 ${tasks.length} 条任务，先从最接近截止日期或正在推进的事项开始。`;
+
   return (
-    <section style={{ display: "grid", gap: 20 }}>
+    <section className="tasks-toolbar">
       {!isConfigured ? (
         <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
-          <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
-            当前还没有连接 Supabase，所以你正在编辑保存在浏览器本地的演示任务。
+          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.76 }}>
+            当前还没有连接 Appwrite，所以你正在编辑保存在浏览器本地的演示任务。
           </p>
         </section>
       ) : null}
@@ -207,10 +224,96 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
           <p style={{ margin: 0, color: "var(--danger)", lineHeight: 1.7 }}>{error}</p>
         </section>
       ) : null}
+      <section className="tasks-highlight-grid">
+        <article
+          className="card-surface dashboard-highlight-card"
+          style={{
+            borderRadius: 28,
+            padding: "24px 24px 28px",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,250,255,0.86))",
+          }}
+        >
+          <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
+            Task View
+          </p>
+          <h2 style={{ margin: "12px 0 0", fontSize: "clamp(1.8rem, 3vw, 2.5rem)", lineHeight: 1.18 }}>
+            把零散事项
+            <br />
+            收成一列清晰工作流
+          </h2>
+          <p style={{ margin: "14px 0 0", maxWidth: 560, color: "var(--muted-strong)", lineHeight: 1.82 }}>
+            用筛选、排序和标签把任务列表整理成一个可执行的视图。先看清，后推进，减少来回切换的耗损。
+          </p>
+        </article>
+
+        <aside
+          className="card-surface"
+          style={{
+            borderRadius: 28,
+            padding: 22,
+            background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(237,245,255,0.88))",
+            display: "grid",
+            gap: 16,
+            alignContent: "start",
+          }}
+        >
+          <div>
+            <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
+              新建任务
+            </p>
+            <p style={{ margin: "10px 0 0", color: "var(--muted-strong)", lineHeight: 1.8 }}>
+              用一条明确标题、标签和截止日期，把新的事项快速纳入当前工作流。
+            </p>
+          </div>
+          <TaskFormDialog onSubmitTask={handleCreateTask} />
+        </aside>
+      </section>
+
       <div style={{ display: "grid", gap: 16 }}>
-        <TaskFilterBar filters={filters} onChange={handleFiltersChange} />
-        <TaskFormDialog onSubmitTask={handleCreateTask} />
+        <TaskFilterBar
+          filters={filters}
+          resultCount={filteredTasks.length}
+          totalCount={tasks.length}
+          onChange={handleFiltersChange}
+          onReset={handleResetFilters}
+        />
       </div>
+      <section
+        className="card-surface"
+        style={{
+          borderRadius: 24,
+          padding: "18px 20px",
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 16,
+          alignItems: "center",
+          flexWrap: "wrap",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(244,248,255,0.84))",
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.8rem" }}>
+            当前任务视图
+          </p>
+          <p style={{ margin: "8px 0 0", color: "var(--muted-strong)", lineHeight: 1.76 }}>{summaryLabel}</p>
+        </div>
+        {hasActiveFilters ? (
+          <button
+            type="button"
+            onClick={handleResetFilters}
+            className="ui-sans"
+            style={{
+              border: "1px solid var(--border)",
+              background: "rgba(255,255,255,0.84)",
+              padding: "12px 16px",
+              borderRadius: 999,
+              fontWeight: 700,
+            }}
+          >
+            回到全部任务
+          </button>
+        ) : null}
+      </section>
       {(deadlineSummary.overdue > 0 || deadlineSummary.today > 0 || deadlineSummary.upcoming > 0) && (
         <section
           className="card-surface"
@@ -221,12 +324,14 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
             gap: 10,
             background:
               deadlineSummary.overdue > 0
-                ? "linear-gradient(135deg, rgba(178,64,55,0.12), rgba(255,255,255,0.76))"
-                : "rgba(255,255,255,0.76)",
+                ? "linear-gradient(135deg, rgba(239,68,68,0.1), rgba(255,255,255,0.84))"
+                : "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(237,245,255,0.8))",
           }}
         >
-          <p style={{ margin: 0, color: "var(--foreground)", fontWeight: 700 }}>截止提醒</p>
-          <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.8 }}>
+          <p className="section-eyebrow" style={{ margin: 0, color: deadlineSummary.overdue > 0 ? "var(--danger)" : "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
+            截止提醒
+          </p>
+          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.8 }}>
             {deadlineSummary.overdue > 0
               ? `当前有 ${deadlineSummary.overdue} 条任务已经逾期，建议优先收口。`
               : deadlineSummary.today > 0
@@ -237,11 +342,12 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       )}
       {isConfigured && isLoading ? (
         <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
-          <p style={{ margin: 0, color: "var(--muted)" }}>正在从 Supabase 同步任务...</p>
+          <p style={{ margin: 0, color: "var(--muted-strong)" }}>正在从 Appwrite 同步任务...</p>
         </section>
       ) : null}
       <TaskList
         tasks={filteredTasks}
+        emptyAction={<TaskFormDialog onSubmitTask={handleCreateTask} triggerLabel="新增一条任务" />}
         onUpdateTask={handleUpdateTask}
         onUpdateStatus={handleUpdateStatus}
         onDeleteTask={handleDeleteTask}

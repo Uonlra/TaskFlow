@@ -63,22 +63,24 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             style={{
               borderRadius: 22,
               padding: 16,
+              background: "linear-gradient(180deg, rgba(255,255,255,0.94), rgba(247,250,255,0.88))",
               borderColor:
                 toast.tone === "success"
-                  ? "rgba(44,122,90,0.28)"
+                  ? "rgba(79,70,229,0.26)"
                   : toast.tone === "error"
-                    ? "rgba(178,64,55,0.3)"
-                    : "rgba(199,91,57,0.22)",
+                    ? "rgba(239,68,68,0.3)"
+                    : "rgba(37,99,235,0.24)",
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "start" }}>
               <div>
                 <p
+                  className="ui-sans"
                   style={{
                     margin: 0,
                     color:
                       toast.tone === "success"
-                        ? "var(--success)"
+                        ? "var(--data-indigo)"
                         : toast.tone === "error"
                           ? "var(--danger)"
                           : "var(--primary)",
@@ -88,12 +90,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   {toast.title}
                 </p>
                 {toast.description ? (
-                  <p style={{ margin: "8px 0 0", color: "var(--muted)", lineHeight: 1.6 }}>{toast.description}</p>
+                  <p style={{ margin: "8px 0 0", color: "var(--muted-strong)", lineHeight: 1.6 }}>{toast.description}</p>
                 ) : null}
               </div>
               <button
                 type="button"
                 onClick={() => dismissToast(toast.id)}
+                className="ui-sans"
                 style={{
                   border: 0,
                   background: "transparent",

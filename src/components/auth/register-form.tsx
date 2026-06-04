@@ -8,8 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { registerSchema, type RegisterFormValues } from "@/features/auth/schemas/register-schema";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { hasAppwritePublicEnv } from "@/lib/appwrite/env";
 import { useToast } from "@/providers/toast-provider";
 
 export function RegisterForm() {
@@ -32,11 +31,21 @@ export function RegisterForm() {
     },
   });
 
+  const navigateToDashboard = () => {
+    if (typeof window !== "undefined") {
+      window.location.assign("/dashboard");
+      return;
+    }
+
+    router.replace("/dashboard");
+    router.refresh();
+  };
+
   const onSubmit = async (values: RegisterFormValues) => {
     setSubmitError(null);
     setSubmitMessage(null);
 
-    if (!hasSupabaseEnv) {
+    if (!hasAppwritePublicEnv) {
       await new Promise((resolve) => setTimeout(resolve, 300));
       setSubmittedName(values.name);
       showToast({
@@ -44,14 +53,28 @@ export function RegisterForm() {
         description: `${values.name} 的本地工作台已经准备好了。`,
         tone: "success",
       });
-      router.push("/dashboard");
+      navigateToDashboard();
       return;
     }
 
-    const client = getSupabaseBrowserClient();
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
 
-    if (!client) {
-      const message = "Supabase 客户端不可用，请检查环境变量配置。";
+    const payload = (await response.json().catch(() => null)) as
+      | {
+          message?: string;
+          verificationRequested?: boolean;
+          requiresEmailVerification?: boolean;
+        }
+      | null;
+
+    if (!response.ok) {
+      const message = payload?.message || "注册失败，请稍后再试。";
       setSubmitError(message);
       showToast({
         title: "注册失败",
@@ -61,45 +84,23 @@ export function RegisterForm() {
       return;
     }
 
-    const { data, error } = await client.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        data: {
-          name: values.name,
-        },
-      },
-    });
-
-    if (error) {
-      setSubmitError(error.message);
-      showToast({
-        title: "注册失败",
-        description: error.message,
-        tone: "error",
-      });
-      return;
-    }
-
     setSubmittedName(values.name);
-
-    if (data.session) {
-      showToast({
-        title: "账号已创建",
-        description: `当前已登录 ${values.email}。`,
-        tone: "success",
-      });
-      router.push("/dashboard");
-      return;
-    }
-
-    const message = "账号已创建。请先去邮箱完成验证，然后再回来登录。";
+    const requiresEmailVerification = Boolean(payload?.requiresEmailVerification);
+    const message =
+      payload?.message ||
+      (requiresEmailVerification
+        ? "账号已创建，请先完成邮箱验证后再登录。"
+        : `账号已创建，当前已登录 ${values.email}。`);
     setSubmitMessage(message);
     showToast({
-      title: "请查收邮箱",
+      title: requiresEmailVerification ? "请查收邮箱" : "账号已创建",
       description: message,
-      tone: "info",
+      tone: requiresEmailVerification ? "info" : "success",
     });
+
+    if (!requiresEmailVerification) {
+      navigateToDashboard();
+    }
   };
 
   return (
@@ -107,9 +108,9 @@ export function RegisterForm() {
       eyebrow="注册"
       title="创建你的中文工作台"
       description={
-        hasSupabaseEnv
-          ? "注册后会创建真实的 Supabase 账号。如果项目开启了邮箱验证，我们会先提醒你完成确认。"
-          : "你还没有完成 Supabase 环境变量配置，所以这里会先以本地演示模式运行。"
+        hasAppwritePublicEnv
+          ? "注册后会创建真实的 Appwrite 账号。如果项目开启了邮箱验证，我们会先提醒你完成确认。"
+          : "你还没有完成 Appwrite 环境变量配置，所以这里会先以本地演示模式运行。"
       }
       footer={
         <>
@@ -152,21 +153,14 @@ export function RegisterForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          style={{
-            border: 0,
-            padding: "14px 18px",
-            borderRadius: 999,
-            background: "var(--primary)",
-            color: "var(--primary-foreground)",
-            fontWeight: 700,
-            opacity: isSubmitting ? 0.8 : 1,
-          }}
+          className="ui-sans auth-submit"
+          style={{ opacity: isSubmitting ? 0.8 : 1 }}
         >
           {isSubmitting ? "创建中..." : "创建工作台"}
         </button>
         {submittedName ? (
           <p style={{ margin: 0, color: "var(--success)", fontSize: "0.95rem" }}>
-            {hasSupabaseEnv ? `已为 ${submittedName} 创建账号。` : `已为 ${submittedName} 创建演示工作台。`}
+            {hasAppwritePublicEnv ? `已为 ${submittedName} 创建账号。` : `已为 ${submittedName} 创建演示工作台。`}
           </p>
         ) : null}
         {submitMessage ? <p style={{ margin: 0, color: "var(--success)", fontSize: "0.95rem" }}>{submitMessage}</p> : null}
@@ -187,17 +181,12 @@ type AuthInputProps = {
 function AuthInput({ label, type, placeholder, error, registration }: AuthInputProps) {
   return (
     <label style={{ display: "grid", gap: 8 }}>
-      <span style={{ fontSize: "0.95rem", fontWeight: 600 }}>{label}</span>
+      <span className="ui-sans" style={{ fontSize: "0.95rem", fontWeight: 600 }}>{label}</span>
       <input
         type={type}
         placeholder={placeholder}
         {...registration}
-        style={{
-          borderRadius: 16,
-          border: `1px solid ${error ? "rgba(178,64,55,0.48)" : "var(--border)"}`,
-          padding: "14px 16px",
-          background: "rgba(255,255,255,0.9)",
-        }}
+        className={`ui-sans auth-input${error ? " auth-input--invalid" : ""}`}
       />
       {error ? <span style={{ color: "var(--danger)", fontSize: "0.9rem" }}>{error}</span> : null}
     </label>

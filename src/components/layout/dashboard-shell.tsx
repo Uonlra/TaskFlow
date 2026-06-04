@@ -9,15 +9,7 @@ type DashboardShellProps = {
 
 export function DashboardShell({ children }: DashboardShellProps) {
   return (
-    <div
-      className="app-shell"
-      style={{
-        display: "grid",
-        gridTemplateColumns: "280px 1fr",
-        gap: 24,
-        padding: 20,
-      }}
-    >
+    <div className="app-shell dashboard-shell">
       <AppSidebar />
       <div style={{ minWidth: 0 }}>
         <AppTopbar />

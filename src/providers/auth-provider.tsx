@@ -1,16 +1,15 @@
 "use client";
 
-import type { Session, User } from "@supabase/supabase-js";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
+import type { AuthSession, AuthUser } from "@/features/auth/types/auth.types";
 import type { Profile, ProfileFormValues } from "@/features/auth/types/profile.types";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { fetchProfile, upsertProfile } from "@/lib/supabase/profile";
+import { hasAppwritePublicEnv } from "@/lib/appwrite/env";
+import { useTaskStore } from "@/store/task-store";
 
 type AuthContextValue = {
-  user: User | null;
-  session: Session | null;
+  user: AuthUser | null;
+  session: AuthSession | null;
   profile: Profile | null;
   isLoading: boolean;
   isProfileLoading: boolean;
@@ -22,82 +21,79 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const demoStorageKey = "taskflow-demo-profile";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const clearTasks = useTaskStore((state) => state.clearTasks);
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState(hasSupabaseEnv);
+  const [isLoading, setIsLoading] = useState(hasAppwritePublicEnv);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
 
-  const loadProfile = async (nextUser: User | null) => {
-    if (!nextUser) {
-      setProfile(null);
-      setIsProfileLoading(false);
-      return;
-    }
-
-    if (!hasSupabaseEnv) {
-      setProfile({
-        id: nextUser.id,
-        fullName: (nextUser.user_metadata?.name as string | undefined) ?? "演示用户",
-        email: nextUser.email ?? "",
-      });
-      setIsProfileLoading(false);
-      return;
-    }
-
-    setIsProfileLoading(true);
-
-    try {
-      const nextProfile = await fetchProfile(nextUser.id);
-
-      setProfile(
-        nextProfile ?? {
-          id: nextUser.id,
-          fullName: (nextUser.user_metadata?.name as string | undefined) ?? "",
-          email: nextUser.email ?? "",
-        },
-      );
-    } finally {
-      setIsProfileLoading(false);
-    }
-  };
-
   useEffect(() => {
-    const client = getSupabaseBrowserClient();
+    if (!hasAppwritePublicEnv) {
+      const demoProfile = readDemoProfile();
+      const nextProfile =
+        demoProfile ?? {
+          id: "demo-user",
+          fullName: "演示用户",
+          email: "demo@example.com",
+        };
 
-    if (!client) {
+      setUser({
+        id: nextProfile.id,
+        email: nextProfile.email,
+        name: nextProfile.fullName,
+        emailVerified: true,
+      });
+      setProfile(nextProfile);
+      setSession(null);
       setIsLoading(false);
       return;
     }
 
     let mounted = true;
 
-    client.auth.getSession().then(({ data }) => {
-      if (!mounted) {
-        return;
+    void (async () => {
+      try {
+        const response = await fetch("/api/auth/me", {
+          cache: "no-store",
+        });
+
+        if (!mounted) {
+          return;
+        }
+
+        if (!response.ok) {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          clearTasks();
+          setIsLoading(false);
+          return;
+        }
+
+        const payload = (await response.json()) as {
+          user: AuthUser;
+          profile: Profile;
+          session: AuthSession | null;
+        };
+
+        setSession(payload.session ?? null);
+        setUser(payload.user);
+        setProfile(payload.profile);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setIsLoading(false);
-      void loadProfile(data.session?.user ?? null);
-    });
-
-    const {
-      data: { subscription },
-    } = client.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
-      setIsLoading(false);
-      void loadProfile(nextSession?.user ?? null);
-    });
+    })();
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
     };
-  }, []);
+  }, [clearTasks]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -106,43 +102,128 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       isLoading,
       isProfileLoading,
-      isConfigured: hasSupabaseEnv,
+      isConfigured: hasAppwritePublicEnv,
       signOut: async () => {
-        const client = getSupabaseBrowserClient();
-
-        if (!client) {
+        if (!hasAppwritePublicEnv) {
           return;
         }
 
-        await client.auth.signOut();
+        await fetch("/api/auth/logout", {
+          method: "POST",
+        });
+        setSession(null);
+        setUser(null);
         setProfile(null);
+        clearTasks();
       },
       refreshProfile: async () => {
-        await loadProfile(user);
+        if (!hasAppwritePublicEnv) {
+          const nextProfile = readDemoProfile();
+
+          if (nextProfile) {
+            setProfile(nextProfile);
+            setUser({
+              id: nextProfile.id,
+              email: nextProfile.email,
+              name: nextProfile.fullName,
+              emailVerified: true,
+            });
+          }
+
+          return;
+        }
+
+        if (!user) {
+          return;
+        }
+
+        setIsProfileLoading(true);
+
+        try {
+          const response = await fetch("/api/profile", {
+            cache: "no-store",
+          });
+
+          if (!response.ok) {
+            throw new Error("无法刷新当前资料。");
+          }
+
+          const payload = (await response.json()) as { profile: Profile };
+          setProfile(payload.profile);
+          setUser((current) =>
+            current
+              ? {
+                  ...current,
+                  name: payload.profile.fullName,
+                  email: payload.profile.email,
+                }
+              : current,
+          );
+        } finally {
+          setIsProfileLoading(false);
+        }
       },
       saveProfile: async (values) => {
+        if (!hasAppwritePublicEnv) {
+          const nextProfile = {
+            id: user?.id ?? "demo-user",
+            fullName: values.fullName,
+            email: user?.email ?? "demo@example.com",
+            avatarUrl: values.avatarUrl || undefined,
+          };
+
+          writeDemoProfile(nextProfile);
+          setProfile(nextProfile);
+          setUser({
+            id: nextProfile.id,
+            email: nextProfile.email,
+            name: nextProfile.fullName,
+            emailVerified: true,
+          });
+          return nextProfile;
+        }
+
         if (!user) {
           return null;
         }
 
-        if (!hasSupabaseEnv) {
-          const nextProfile = {
-            id: user.id,
-            fullName: values.fullName,
-            email: user.email ?? "",
-            avatarUrl: values.avatarUrl || undefined,
-          };
+        setIsProfileLoading(true);
 
-          setProfile(nextProfile);
-          return nextProfile;
+        try {
+          const response = await fetch("/api/profile", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(values),
+          });
+
+          const payload = (await response.json().catch(() => null)) as
+            | { profile?: Profile; message?: string }
+            | null;
+
+          if (!response.ok || !payload?.profile) {
+            throw new Error(payload?.message || "资料保存失败。");
+          }
+
+          setProfile(payload.profile);
+          setUser((current) =>
+            current
+              ? {
+                  ...current,
+                  name: payload.profile?.fullName ?? current.name,
+                  email: payload.profile?.email ?? current.email,
+                }
+              : current,
+          );
+
+          return payload.profile;
+        } finally {
+          setIsProfileLoading(false);
         }
-
-        const nextProfile = await upsertProfile(user.id, user.email ?? "", values);
-        setProfile(nextProfile);
-        return nextProfile;
       },
     }),
-    [isLoading, isProfileLoading, profile, session, user],
+    [clearTasks, isLoading, isProfileLoading, profile, session, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -156,4 +237,30 @@ export function useAuth() {
   }
 
   return context;
+}
+
+function readDemoProfile(): Profile | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const rawValue = window.localStorage.getItem(demoStorageKey);
+
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawValue) as Profile;
+  } catch {
+    return null;
+  }
+}
+
+function writeDemoProfile(profile: Profile) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(demoStorageKey, JSON.stringify(profile));
 }

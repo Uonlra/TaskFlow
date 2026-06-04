@@ -1,8 +1,8 @@
 import type { TaskPriority } from "@/features/tasks/types/task.types";
 
 const styles: Record<TaskPriority, { background: string; color: string }> = {
-  low: { background: "rgba(44, 122, 90, 0.12)", color: "var(--success)" },
-  medium: { background: "rgba(183, 121, 31, 0.12)", color: "var(--warning)" },
+  low: { background: "rgba(79,70,229,0.12)", color: "var(--data-indigo)" },
+  medium: { background: "rgba(37,99,235,0.1)", color: "var(--data-ink)" },
   high: { background: "rgba(178, 64, 55, 0.12)", color: "var(--danger)" },
 };
 
@@ -11,6 +11,7 @@ export function TaskPriorityBadge({ priority }: { priority: TaskPriority }) {
 
   return (
     <span
+      className="ui-sans"
       style={{
         display: "inline-flex",
         padding: "8px 12px",
