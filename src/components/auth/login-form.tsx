@@ -140,17 +140,8 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="ui-sans"
-          style={{
-            border: "1px solid transparent",
-            padding: "14px 18px",
-            borderRadius: 999,
-            background: "linear-gradient(135deg, var(--primary), var(--data-cyan))",
-            color: "var(--primary-foreground)",
-            fontWeight: 700,
-            opacity: isSubmitting ? 0.8 : 1,
-            boxShadow: "0 12px 24px rgba(37,99,235,0.18)",
-          }}
+          className="ui-sans auth-submit"
+          style={{ opacity: isSubmitting ? 0.8 : 1 }}
         >
           {isSubmitting ? "登录中..." : "进入仪表盘"}
         </button>
@@ -181,13 +172,7 @@ function AuthInput({ label, type, placeholder, error, registration }: AuthInputP
         type={type}
         placeholder={placeholder}
         {...registration}
-        className="ui-sans"
-        style={{
-          borderRadius: 16,
-          border: `1px solid ${error ? "rgba(178,64,55,0.48)" : "var(--border)"}`,
-          padding: "14px 16px",
-          background: "rgba(255,255,255,0.92)",
-        }}
+        className={`ui-sans auth-input${error ? " auth-input--invalid" : ""}`}
       />
       {error ? <span style={{ color: "var(--danger)", fontSize: "0.9rem" }}>{error}</span> : null}
     </label>
