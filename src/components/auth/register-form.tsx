@@ -109,7 +109,7 @@ export function RegisterForm() {
       eyebrow="注册"
       title="创建账号"
       description={
-        hasSupabaseEnv
+        hasAppwritePublicEnv
           ? "填写信息后即可开启你的任务管理空间。"
           : "当前以本地演示模式运行，创建后会直接进入工作台。"
       }
@@ -164,7 +164,7 @@ export function RegisterForm() {
         </button>
         {submittedName ? (
           <p className="auth-form-message auth-form-message--success">
-            {hasSupabaseEnv ? `已为 ${submittedName} 创建账号。` : `已为 ${submittedName} 创建演示工作台。`}
+            {hasAppwritePublicEnv ? `已为 ${submittedName} 创建账号。` : `已为 ${submittedName} 创建演示工作台。`}
           </p>
         ) : null}
         {submitMessage ? <p className="auth-form-message auth-form-message--success">{submitMessage}</p> : null}

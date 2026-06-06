@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -110,7 +110,7 @@ export function LoginForm() {
       eyebrow="登录"
       title="欢迎回来"
       description={
-        hasSupabaseEnv
+        hasAppwritePublicEnv
           ? "登录以继续你的任务管理之旅。"
           : "当前以本地演示模式运行，登录后即可进入工作台。"
       }
@@ -162,7 +162,7 @@ export function LoginForm() {
         </div>
         {submittedEmail ? (
           <p className="auth-form-message auth-form-message--success">
-            {hasSupabaseEnv ? `已登录 ${submittedEmail}。` : `演示模式已接受 ${submittedEmail} 的登录。`}
+            {hasAppwritePublicEnv ? `已登录 ${submittedEmail}。` : `演示模式已接受 ${submittedEmail} 的登录。`}
           </p>
         ) : null}
         {submitError ? <p className="auth-form-message auth-form-message--error">{submitError}</p> : null}
