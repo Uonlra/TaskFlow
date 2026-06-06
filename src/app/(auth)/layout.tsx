@@ -24,57 +24,77 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
   }
 
   return (
-    <main className="auth-shell">
-      <section
-        className="card-surface"
-        style={{
-          borderRadius: 32,
-          padding: 40,
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.94), rgba(237,245,255,0.88))",
-        }}
-      >
-        <div className="auth-shell__panel">
-          <div>
-            <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.84rem" }}>
-              U's Task
-            </p>
-            <h1 style={{ margin: "18px 0 0", fontSize: "clamp(2.4rem, 4vw, 4rem)", lineHeight: 1.04 }}>
-              一个更轻、
-              <br />
-              更清楚的
-              <br />
-              中文任务空间。
+    <main className="auth-page">
+      <section className="auth-frame">
+        <aside className="auth-brand-panel">
+          <div className="auth-brand-copy">
+            <div className="auth-brand-row">
+              <span className="auth-brand-mark" aria-hidden="true">
+                ✓
+              </span>
+              <span className="section-eyebrow auth-brand-name">U&apos;s TaskFlow</span>
+            </div>
+            <h1 className="auth-brand-title">
+              专注当下，
+              <span>掌控未来</span>
             </h1>
-          </div>
-          <div
-            className="dashboard-highlight-card"
-            style={{
-              padding: 22,
-              borderRadius: 28,
-              border: "1px solid var(--border)",
-              background: "rgba(255,255,255,0.84)",
-            }}
-          >
-            <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.8rem" }}>
-              Why TaskFlow
-            </p>
-            <p style={{ margin: "12px 0 0", color: "var(--muted-strong)", lineHeight: 1.84 }}>
-              把优先级、截止时间和工作节奏整理在同一张蓝白工作台上，让你在中文环境下也能自然地规划、推进与回看。
+            <p className="auth-brand-description">
+              清晰规划，高效执行，让每一件任务都推动你向前。
             </p>
           </div>
-        </div>
-      </section>
-      <section
-        className="card-surface auth-shell__form"
-        style={{
-          borderRadius: 32,
-          padding: 32,
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.94), rgba(249,251,255,0.88))",
-        }}
-      >
-        {children}
+
+          <div className="auth-product-preview" aria-hidden="true">
+            <div className="auth-preview-sidebar">
+              <div className="auth-preview-logo">
+                <span className="auth-preview-logo-mark">✓</span>
+                <span>TaskFlow</span>
+              </div>
+              <div className="auth-preview-nav auth-preview-nav--active">今日工作台</div>
+              <div className="auth-preview-nav">任务</div>
+              <div className="auth-preview-nav">日历视图</div>
+              <div className="auth-preview-nav">统计分析</div>
+              <div className="auth-preview-profile">
+                <span />
+                <div>
+                  <strong>uon1ra</strong>
+                  <small>个人账户</small>
+                </div>
+              </div>
+            </div>
+            <div className="auth-preview-main">
+              <p className="auth-preview-heading">今日工作台</p>
+              <div className="auth-preview-grid">
+                <div className="auth-preview-focus">
+                  <span>今日专注</span>
+                  <strong>72%</strong>
+                  <small>进度保持，继续前进！</small>
+                </div>
+                <div className="auth-preview-summary">
+                  <strong>任务概览</strong>
+                  <span>全部任务</span>
+                  <span>进行中</span>
+                  <span>已完成</span>
+                </div>
+              </div>
+              <div className="auth-preview-list">
+                <div>
+                  <strong>完善登录页预览</strong>
+                  <span>今天 18:00</span>
+                </div>
+                <div>
+                  <strong>整理 Supabase 数据链路</strong>
+                  <span>明天</span>
+                </div>
+                <div>
+                  <strong>复盘 Dashboard 图表</strong>
+                  <span>周五</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <section className="auth-form-panel">{children}</section>
       </section>
     </main>
   );
