@@ -1,37 +1,33 @@
 # Dependencies
 node_modules/
-
 # Next.js
 .next/
 out/
-
 # Production build output
 dist/
 build/
-
 # TypeScript
 *.tsbuildinfo
-
 # Environment variables
 .env
 .env.*
 !.env.example
-
 # Deployment
 .vercel/
-
 # Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-
 # Local browser/test profiles
 .tmp-edge-profile/
+.tmp-chrome-auth-check*/
 playwright-report/
 test-results/
 
+# Visual verification artifacts
+auth-*.png
 # OS/editor
 .DS_Store
 Thumbs.db

@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm, type UseFormRegisterReturn } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { AuthInput } from "@/components/auth/auth-input";
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { registerSchema, type RegisterFormValues } from "@/features/auth/schemas/register-schema";
 import { hasAppwritePublicEnv } from "@/lib/appwrite/env";
@@ -106,42 +107,45 @@ export function RegisterForm() {
   return (
     <AuthFormShell
       eyebrow="注册"
-      title="创建你的中文工作台"
+      title="创建账号"
       description={
-        hasAppwritePublicEnv
-          ? "注册后会创建真实的 Appwrite 账号。如果项目开启了邮箱验证，我们会先提醒你完成确认。"
-          : "你还没有完成 Appwrite 环境变量配置，所以这里会先以本地演示模式运行。"
+        hasSupabaseEnv
+          ? "填写信息后即可开启你的任务管理空间。"
+          : "当前以本地演示模式运行，创建后会直接进入工作台。"
       }
       footer={
         <>
           已经有账号了？{" "}
-          <Link href="/login" style={{ color: "var(--primary)", fontWeight: 700 }}>
+          <Link href="/login" className="auth-form-footer-link">
             去登录
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit(onSubmit)} style={{ display: "grid", gap: 14 }}>
+      <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
         <AuthInput
           label="姓名"
           type="text"
           placeholder="请输入你的昵称"
           error={errors.name?.message}
           registration={register("name")}
+          icon="U"
         />
         <AuthInput
           label="邮箱"
           type="email"
-          placeholder="name@example.com"
+          placeholder="请输入邮箱地址"
           error={errors.email?.message}
           registration={register("email")}
+          icon="@"
         />
         <AuthInput
           label="密码"
           type="password"
-          placeholder="至少 8 位"
+          placeholder="请输入密码"
           error={errors.password?.message}
           registration={register("password")}
+          icon="*"
         />
         <AuthInput
           label="确认密码"
@@ -149,46 +153,23 @@ export function RegisterForm() {
           placeholder="请再次输入密码"
           error={errors.confirmPassword?.message}
           registration={register("confirmPassword")}
+          icon="*"
         />
         <button
           type="submit"
           disabled={isSubmitting}
-          className="ui-sans auth-submit"
-          style={{ opacity: isSubmitting ? 0.8 : 1 }}
+          className="auth-submit-button"
         >
           {isSubmitting ? "创建中..." : "创建工作台"}
         </button>
         {submittedName ? (
-          <p style={{ margin: 0, color: "var(--success)", fontSize: "0.95rem" }}>
-            {hasAppwritePublicEnv ? `已为 ${submittedName} 创建账号。` : `已为 ${submittedName} 创建演示工作台。`}
+          <p className="auth-form-message auth-form-message--success">
+            {hasSupabaseEnv ? `已为 ${submittedName} 创建账号。` : `已为 ${submittedName} 创建演示工作台。`}
           </p>
         ) : null}
-        {submitMessage ? <p style={{ margin: 0, color: "var(--success)", fontSize: "0.95rem" }}>{submitMessage}</p> : null}
-        {submitError ? <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.95rem" }}>{submitError}</p> : null}
+        {submitMessage ? <p className="auth-form-message auth-form-message--success">{submitMessage}</p> : null}
+        {submitError ? <p className="auth-form-message auth-form-message--error">{submitError}</p> : null}
       </form>
     </AuthFormShell>
-  );
-}
-
-type AuthInputProps = {
-  label: string;
-  type: string;
-  placeholder: string;
-  error?: string;
-  registration: UseFormRegisterReturn;
-};
-
-function AuthInput({ label, type, placeholder, error, registration }: AuthInputProps) {
-  return (
-    <label style={{ display: "grid", gap: 8 }}>
-      <span className="ui-sans" style={{ fontSize: "0.95rem", fontWeight: 600 }}>{label}</span>
-      <input
-        type={type}
-        placeholder={placeholder}
-        {...registration}
-        className={`ui-sans auth-input${error ? " auth-input--invalid" : ""}`}
-      />
-      {error ? <span style={{ color: "var(--danger)", fontSize: "0.9rem" }}>{error}</span> : null}
-    </label>
   );
 }

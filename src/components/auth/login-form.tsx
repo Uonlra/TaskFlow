@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm, type UseFormRegisterReturn } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { AuthInput } from "@/components/auth/auth-input";
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { loginSchema, type LoginFormValues } from "@/features/auth/schemas/login-schema";
 import { hasAppwritePublicEnv } from "@/lib/appwrite/env";
@@ -107,74 +108,65 @@ export function LoginForm() {
   return (
     <AuthFormShell
       eyebrow="登录"
-      title="回到你的工作台"
+      title="欢迎回来"
       description={
-        hasAppwritePublicEnv
-          ? "使用 Appwrite 账号登录后，就会载入你的真实任务数据与个人资料。"
-          : "你还没有完成 Appwrite 环境变量配置，所以这里会先以本地演示模式运行。"
+        hasSupabaseEnv
+          ? "登录以继续你的任务管理之旅。"
+          : "当前以本地演示模式运行，登录后即可进入工作台。"
       }
       footer={
         <>
           还没有账号？{" "}
-          <Link href="/register" style={{ color: "var(--primary)", fontWeight: 700 }}>
+          <Link href="/register" className="auth-form-footer-link">
             立即注册
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit(onSubmit)} style={{ display: "grid", gap: 14 }}>
+      <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
         <AuthInput
           label="邮箱"
           type="email"
-          placeholder="name@example.com"
+          placeholder="请输入邮箱地址"
           error={errors.email?.message}
           registration={register("email")}
+          icon="@"
         />
         <AuthInput
           label="密码"
           type="password"
-          placeholder="至少 8 位"
+          placeholder="请输入密码"
           error={errors.password?.message}
           registration={register("password")}
+          icon="*"
         />
+        <div className="auth-form-options">
+          <label className="auth-remember-option">
+            <input type="checkbox" name="remember" />
+            <span aria-hidden="true" />
+            <strong>记住我</strong>
+          </label>
+          <button type="button" className="auth-forgot-button" title="密码找回功能将在后续版本接入">
+            忘记密码？
+          </button>
+        </div>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="ui-sans auth-submit"
-          style={{ opacity: isSubmitting ? 0.8 : 1 }}
+          className="auth-submit-button"
         >
           {isSubmitting ? "登录中..." : "进入仪表盘"}
         </button>
+        <div className="auth-form-divider">
+          <span>安全登录</span>
+        </div>
         {submittedEmail ? (
-          <p style={{ margin: 0, color: "var(--success)", fontSize: "0.95rem" }}>
-            {hasAppwritePublicEnv ? `已登录 ${submittedEmail}。` : `演示模式已接受 ${submittedEmail} 的登录。`}
+          <p className="auth-form-message auth-form-message--success">
+            {hasSupabaseEnv ? `已登录 ${submittedEmail}。` : `演示模式已接受 ${submittedEmail} 的登录。`}
           </p>
         ) : null}
-        {submitError ? <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.95rem" }}>{submitError}</p> : null}
+        {submitError ? <p className="auth-form-message auth-form-message--error">{submitError}</p> : null}
       </form>
     </AuthFormShell>
-  );
-}
-
-type AuthInputProps = {
-  label: string;
-  type: string;
-  placeholder: string;
-  error?: string;
-  registration: UseFormRegisterReturn;
-};
-
-function AuthInput({ label, type, placeholder, error, registration }: AuthInputProps) {
-  return (
-    <label style={{ display: "grid", gap: 8 }}>
-      <span className="ui-sans" style={{ fontSize: "0.95rem", fontWeight: 600 }}>{label}</span>
-      <input
-        type={type}
-        placeholder={placeholder}
-        {...registration}
-        className={`ui-sans auth-input${error ? " auth-input--invalid" : ""}`}
-      />
-      {error ? <span style={{ color: "var(--danger)", fontSize: "0.9rem" }}>{error}</span> : null}
-    </label>
   );
 }
