@@ -1,8 +1,7 @@
-import { createServerClient } from "@supabase/ssr";
-import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { supabasePublishableKey, supabaseUrl } from "@/lib/supabase/env";
+import { hasAppwriteAuthEnv } from "@/lib/appwrite/env";
+import { verifyEmailAddress } from "@/lib/appwrite/server";
 
 function getLoginRedirectUrl(request: NextRequest, reason?: string) {
   const redirectUrl = new URL("/login", request.url);
@@ -15,52 +14,26 @@ function getLoginRedirectUrl(request: NextRequest, reason?: string) {
 }
 
 export async function GET(request: NextRequest) {
-  if (!supabaseUrl || !supabasePublishableKey) {
+  if (!hasAppwriteAuthEnv) {
     return NextResponse.redirect(getLoginRedirectUrl(request, "missing-config"));
   }
 
-  const nextPath = request.nextUrl.searchParams.get("next") || "/dashboard";
-  const code = request.nextUrl.searchParams.get("code");
-  const tokenHash = request.nextUrl.searchParams.get("token_hash");
-  const type = request.nextUrl.searchParams.get("type") as EmailOtpType | null;
+  const userId = request.nextUrl.searchParams.get("userId");
+  const secret = request.nextUrl.searchParams.get("secret");
 
-  let response = NextResponse.redirect(new URL(nextPath, request.url));
-
-  const supabase = createServerClient(supabaseUrl, supabasePublishableKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-
-        response = NextResponse.redirect(new URL(nextPath, request.url));
-
-        cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
-        });
-      },
-    },
-  });
-
-  if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-    if (!error) {
-      return response;
-    }
+  if (!userId || !secret) {
+    return NextResponse.redirect(getLoginRedirectUrl(request, "missing-verification"));
   }
 
-  if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({
-      type,
-      token_hash: tokenHash,
+  try {
+    await verifyEmailAddress({
+      userId,
+      secret,
+      request,
     });
 
-    if (!error) {
-      return response;
-    }
+    return NextResponse.redirect(getLoginRedirectUrl(request, "email-verified"));
+  } catch {
+    return NextResponse.redirect(getLoginRedirectUrl(request, "auth-callback-failed"));
   }
-
-  return NextResponse.redirect(getLoginRedirectUrl(request, "auth-callback-failed"));
 }

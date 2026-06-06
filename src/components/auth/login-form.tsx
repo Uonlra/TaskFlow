@@ -9,12 +9,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthInput } from "@/components/auth/auth-input";
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { loginSchema, type LoginFormValues } from "@/features/auth/schemas/login-schema";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { hasAppwritePublicEnv } from "@/lib/appwrite/env";
 import { useToast } from "@/providers/toast-provider";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -30,6 +30,24 @@ export function LoginForm() {
     },
   });
 
+  useEffect(() => {
+    const reason = searchParams.get("reason");
+
+    if (reason === "email-verified") {
+      setSubmitError(null);
+      showToast({
+        title: "邮箱验证完成",
+        description: "你的邮箱已经验证成功，现在可以登录进入工作台。",
+        tone: "success",
+      });
+      return;
+    }
+
+    if (reason === "verify-email") {
+      setSubmitError("请先完成邮箱验证后再进入工作台。");
+    }
+  }, [searchParams, showToast]);
+
   const navigateToDashboard = () => {
     if (typeof window !== "undefined") {
       window.location.assign("/dashboard");
@@ -43,7 +61,7 @@ export function LoginForm() {
   const onSubmit = async (values: LoginFormValues) => {
     setSubmitError(null);
 
-    if (!hasSupabaseEnv) {
+    if (!hasAppwritePublicEnv) {
       await new Promise((resolve) => setTimeout(resolve, 300));
       setSubmittedEmail(values.email);
       showToast({
@@ -55,29 +73,24 @@ export function LoginForm() {
       return;
     }
 
-    const client = getSupabaseBrowserClient();
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
 
-    if (!client) {
-      const message = "Supabase 客户端不可用，请检查环境变量配置。";
+    const payload = (await response.json().catch(() => null)) as
+      | { message?: string; requiresEmailVerification?: boolean }
+      | null;
+
+    if (!response.ok) {
+      const message = payload?.message || "登录失败，请稍后再试。";
       setSubmitError(message);
       showToast({
         title: "登录失败",
         description: message,
-        tone: "error",
-      });
-      return;
-    }
-
-    const { error } = await client.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-
-    if (error) {
-      setSubmitError(error.message);
-      showToast({
-        title: "登录失败",
-        description: error.message,
         tone: "error",
       });
       return;

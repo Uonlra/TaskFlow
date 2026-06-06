@@ -92,8 +92,8 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         helper:
           range === "all"
             ? isConfigured
-              ? "已从你的 Supabase 项目同步。"
-              : "当前仍是演示模式，连接 Supabase 后会切换为真实数据。"
+              ? "已从你的 Appwrite 项目同步。"
+              : "当前仍是演示模式，连接 Appwrite 后会切换为真实数据。"
             : `${rangeLabel}范围内仍未完成的任务。`,
         accent: "var(--primary)",
       },
@@ -188,7 +188,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       {!isConfigured ? (
         <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
           <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
-            当前还没有连接 Supabase，所以仪表盘仍以本地演示数据模式运行。
+            当前还没有连接 Appwrite，所以仪表盘仍以本地演示数据模式运行。
           </p>
         </section>
       ) : null}

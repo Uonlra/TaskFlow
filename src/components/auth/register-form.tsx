@@ -9,8 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthInput } from "@/components/auth/auth-input";
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
 import { registerSchema, type RegisterFormValues } from "@/features/auth/schemas/register-schema";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { getPublicSiteUrl, hasSupabaseEnv } from "@/lib/supabase/env";
+import { hasAppwritePublicEnv } from "@/lib/appwrite/env";
 import { useToast } from "@/providers/toast-provider";
 
 export function RegisterForm() {
@@ -47,7 +46,7 @@ export function RegisterForm() {
     setSubmitError(null);
     setSubmitMessage(null);
 
-    if (!hasSupabaseEnv) {
+    if (!hasAppwritePublicEnv) {
       await new Promise((resolve) => setTimeout(resolve, 300));
       setSubmittedName(values.name);
       showToast({
@@ -59,10 +58,24 @@ export function RegisterForm() {
       return;
     }
 
-    const client = getSupabaseBrowserClient();
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
 
-    if (!client) {
-      const message = "Supabase 客户端不可用，请检查环境变量配置。";
+    const payload = (await response.json().catch(() => null)) as
+      | {
+          message?: string;
+          verificationRequested?: boolean;
+          requiresEmailVerification?: boolean;
+        }
+      | null;
+
+    if (!response.ok) {
+      const message = payload?.message || "注册失败，请稍后再试。";
       setSubmitError(message);
       showToast({
         title: "注册失败",
@@ -72,46 +85,23 @@ export function RegisterForm() {
       return;
     }
 
-    const { data, error } = await client.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        data: {
-          name: values.name,
-        },
-        emailRedirectTo: getPublicSiteUrl("/auth/callback?next=/dashboard"),
-      },
-    });
-
-    if (error) {
-      setSubmitError(error.message);
-      showToast({
-        title: "注册失败",
-        description: error.message,
-        tone: "error",
-      });
-      return;
-    }
-
     setSubmittedName(values.name);
-
-    if (data.session) {
-      showToast({
-        title: "账号已创建",
-        description: `当前已登录 ${values.email}。`,
-        tone: "success",
-      });
-      navigateToDashboard();
-      return;
-    }
-
-    const message = "账号已创建。请先去邮箱完成验证，然后再回来登录。";
+    const requiresEmailVerification = Boolean(payload?.requiresEmailVerification);
+    const message =
+      payload?.message ||
+      (requiresEmailVerification
+        ? "账号已创建，请先完成邮箱验证后再登录。"
+        : `账号已创建，当前已登录 ${values.email}。`);
     setSubmitMessage(message);
     showToast({
-      title: "请查收邮箱",
+      title: requiresEmailVerification ? "请查收邮箱" : "账号已创建",
       description: message,
-      tone: "info",
+      tone: requiresEmailVerification ? "info" : "success",
     });
+
+    if (!requiresEmailVerification) {
+      navigateToDashboard();
+    }
   };
 
   return (

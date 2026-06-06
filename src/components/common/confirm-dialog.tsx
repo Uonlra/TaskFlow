@@ -1,7 +1,8 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 type ConfirmDialogProps = {
   triggerLabel: string;
@@ -23,8 +24,39 @@ export function ConfirmDialog({
   confirmTone = "default",
 }: ConfirmDialogProps) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+
+    return () => {
+      setMounted(false);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open || !mounted) {
+      document.body.style.removeProperty("overflow");
+      return;
+    }
+
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isSubmitting) {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.removeProperty("overflow");
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSubmitting, mounted, open]);
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
@@ -45,8 +77,15 @@ export function ConfirmDialog({
       <button type="button" onClick={() => setOpen(true)} style={triggerStyle}>
         {triggerLabel}
       </button>
-      {open ? (
-        <Overlay>
+      {open && mounted
+        ? createPortal(
+        <Overlay
+          onDismiss={() => {
+            if (!isSubmitting) {
+              setOpen(false);
+            }
+          }}
+        >
           <section
             className="card-surface"
             style={{
@@ -96,18 +135,31 @@ export function ConfirmDialog({
             </div>
           </section>
         </Overlay>
-      ) : null}
+      , document.body)
+        : null}
     </>
   );
 }
 
-function Overlay({ children }: { children: ReactNode }) {
+function Overlay({
+  children,
+  onDismiss,
+}: {
+  children: ReactNode;
+  onDismiss: () => void;
+}) {
   return (
     <div
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onDismiss();
+        }
+      }}
       style={{
         position: "fixed",
         inset: 0,
         zIndex: 40,
+        overflowY: "auto",
         padding: 20,
         background: "rgba(16, 24, 40, 0.38)",
         display: "grid",

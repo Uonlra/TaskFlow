@@ -1,26 +1,24 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
+import { hasAppwriteEnv } from "@/lib/appwrite/env";
+import { getCurrentAuthEnvelope } from "@/lib/appwrite/server";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
 
 type DashboardLayoutProps = {
   children: ReactNode;
 };
 
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {
-  if (hasSupabaseEnv) {
-    const supabase = await getSupabaseServerClient();
+  if (hasAppwriteEnv) {
+    const auth = await getCurrentAuthEnvelope();
 
-    if (supabase) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    if (!auth?.user) {
+      redirect("/login");
+    }
 
-      if (!user) {
-        redirect("/login");
-      }
+    if (!auth.user.emailVerified) {
+      redirect("/login?reason=verify-email");
     }
   }
 
