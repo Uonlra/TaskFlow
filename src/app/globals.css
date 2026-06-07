@@ -658,6 +658,61 @@ textarea:focus {
   object-fit: cover;
 }
 
+.dashboard-avatar-button {
+  padding: 0;
+  cursor: pointer;
+}
+
+.dashboard-avatar-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.dashboard-avatar-menu__panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 30;
+  width: 156px;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.dashboard-avatar-menu__name {
+  margin: 0;
+  padding: 4px 6px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-strong);
+  font-size: 13px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-avatar-menu__panel button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 4px;
+  padding: 6px 8px;
+  background: transparent;
+  color: var(--foreground);
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.dashboard-avatar-menu__panel button:hover,
+.dashboard-avatar-menu__panel button:focus-visible {
+  background: #f4f4f4;
+}
+
 .dashboard-topbar--mobile {
   display: none;
 }
@@ -735,6 +790,49 @@ textarea:focus {
   grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.4fr);
   gap: 24px;
   align-items: start;
+}
+
+.settings-danger-zone {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.settings-danger-zone__title,
+.settings-danger-zone__description {
+  margin: 0;
+}
+
+.settings-danger-zone__title {
+  font-weight: 700;
+}
+
+.settings-danger-zone__description {
+  margin-top: 6px;
+  color: var(--muted-strong);
+  line-height: 1.6;
+}
+
+.settings-signout-button {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 10px 16px;
+  color: var(--danger);
+  background: #ffffff;
+  font-family: var(--font-text);
+  font-weight: 700;
+}
+
+.settings-signout-button:hover,
+.settings-signout-button:focus-visible {
+  border-color: var(--danger);
+  background: rgba(220, 38, 38, 0.06);
 }
 
 .auth-page {
@@ -2069,7 +2167,8 @@ textarea:focus {
     grid-template-columns: 1fr;
     gap: 14px;
     padding: 14px 0 12px;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: visible;
   }
 
   .dashboard-sidebar-head {

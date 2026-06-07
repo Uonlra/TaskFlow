@@ -2,13 +2,15 @@
 
 import type { CSSProperties } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 
 import type { ProfileFormValues } from "@/features/auth/types/profile.types";
 import { useAuth } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
 
 export function SettingsClient() {
-  const { profile, user, isConfigured, isProfileLoading, saveProfile } = useAuth();
+  const router = useRouter();
+  const { profile, user, isConfigured, isProfileLoading, saveProfile, signOut } = useAuth();
   const { showToast } = useToast();
   const {
     register,
@@ -39,6 +41,15 @@ export function SettingsClient() {
         tone: "error",
       });
     }
+  };
+  const handleSignOut = async () => {
+    await signOut();
+    showToast({
+      title: "已退出登录",
+      description: "当前会话已结束，可以换个账号继续。",
+      tone: "success",
+    });
+    router.push("/login");
   };
 
   return (
@@ -192,6 +203,22 @@ export function SettingsClient() {
               </button>
             </div>
           </form>
+
+          <section className="settings-danger-zone">
+            <div>
+              <p className="settings-danger-zone__title">退出当前账号</p>
+              <p className="settings-danger-zone__description">
+                结束当前会话并返回登录页。下次进入真实数据前，需要重新登录。
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="settings-signout-button"
+            >
+              退出登录
+            </button>
+          </section>
         </section>
       </section>
     </section>

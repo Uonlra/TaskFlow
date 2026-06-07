@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/providers/auth-provider";
 
@@ -11,15 +12,48 @@ type AppTopbarProps = {
 export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
   const router = useRouter();
   const { user, profile, isConfigured, signOut } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
 
-  const handleSignOut = async () => {
+  const handleSignOut = async (redirectTo = "/login") => {
     await signOut();
-    router.push("/login");
+    router.push(redirectTo);
+  };
+  const handleSwitchAccount = async () => {
+    await handleSignOut("/login");
   };
   const statusLabel = isConfigured ? "Appwrite 已连接" : "本地演示模式";
   const description = isConfigured
     ? "登录状态与任务数据由 Appwrite 支持。"
     : "配置环境变量后，即可从本地演示切换到真实数据。";
+  const displayName = profile?.fullName || user?.email || "演示用户";
+  const avatarContent = profile?.avatarUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={profile.avatarUrl}
+      alt={displayName || "头像"}
+    />
+  ) : (
+    <span>{(displayName || "演").slice(0, 1).toUpperCase()}</span>
+  );
+
+  useEffect(() => {
+    if (variant !== "mobile" || !mobileMenuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!mobileMenuRef.current?.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [mobileMenuOpen, variant]);
 
   return (
     <header className={variant === "mobile" ? "dashboard-topbar dashboard-topbar--mobile" : "dashboard-topbar"}>
@@ -32,27 +66,46 @@ export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
         </p>
       </div>
       <div className="dashboard-topbar__actions">
-        <div className="dashboard-avatar">
-          {profile?.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={profile.avatarUrl}
-              alt={profile.fullName || user?.email || "头像"}
-            />
-          ) : (
-            <span>{(profile?.fullName || user?.email || "演").slice(0, 1).toUpperCase()}</span>
-          )}
-        </div>
+        {variant === "mobile" ? (
+          <div className="dashboard-avatar-menu" ref={mobileMenuRef}>
+            <button
+              type="button"
+              className="dashboard-avatar dashboard-avatar-button"
+              aria-label="打开账号菜单"
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen((current) => !current)}
+            >
+              {avatarContent}
+            </button>
+            {mobileMenuOpen ? (
+              <div className="dashboard-avatar-menu__panel" role="menu">
+                <p className="dashboard-avatar-menu__name">{displayName}</p>
+                <button type="button" role="menuitem" onClick={handleSwitchAccount}>
+                  切换账号
+                </button>
+                {isConfigured && user ? (
+                  <button type="button" role="menuitem" onClick={() => handleSignOut()}>
+                    退出登录
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="dashboard-avatar">
+            {avatarContent}
+          </div>
+        )}
         <div
           className="dashboard-topbar__profile"
-          title={profile?.fullName || user?.email || "演示用户"}
+          title={displayName}
         >
-          {profile?.fullName || user?.email || "演示用户"}
+          {displayName}
         </div>
         {isConfigured && user ? (
           <button
             type="button"
-            onClick={handleSignOut}
+            onClick={() => handleSignOut()}
             className="dashboard-signout-button"
           >
             退出登录
