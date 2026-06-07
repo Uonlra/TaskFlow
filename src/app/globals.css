@@ -920,6 +920,7 @@ textarea:focus {
 .auth-preview-profile strong,
 .auth-preview-profile small {
   display: block;
+  overflow-wrap: anywhere;
 }
 
 .auth-preview-profile small {
@@ -1029,6 +1030,7 @@ textarea:focus {
 
 .auth-preview-list strong {
   color: var(--foreground);
+  overflow-wrap: anywhere;
 }
 
 .auth-form-panel {
@@ -1372,6 +1374,10 @@ textarea:focus {
 .auth-post-login-actions {
   display: grid;
   gap: 14px;
+}
+
+.auth-post-login-actions .auth-submit-button {
+  width: 100%;
 }
 
 .auth-form-footer {
@@ -2131,7 +2137,11 @@ textarea:focus {
     width: 100%;
     max-width: 100%;
     min-width: 0;
-    padding: 28px 22px;
+    padding: 18px 18px 28px;
+  }
+
+  .auth-brand-copy {
+    display: none;
   }
 
   .auth-brand-title {
@@ -2146,24 +2156,52 @@ textarea:focus {
   }
 
   .auth-product-preview {
-    display: none;
+    display: grid;
+    width: 100%;
+    min-height: auto;
     border-radius: 18px;
   }
 
   .auth-preview-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .auth-preview-main {
-    padding: 22px;
+    padding: 18px;
+  }
+
+  .auth-preview-heading {
+    margin-bottom: 14px;
+    font-size: 1rem;
   }
 
   .auth-preview-focus {
-    min-height: 132px;
+    min-height: 118px;
+    padding: 18px;
+  }
+
+  .auth-preview-focus strong {
+    margin-top: 6px;
+    font-size: 2rem;
+  }
+
+  .auth-preview-summary {
+    gap: 6px;
+    padding: 16px;
   }
 
   .auth-preview-list > div {
     display: grid;
+    gap: 6px;
+    min-height: 0;
+    padding: 13px 15px;
+  }
+
+  .auth-preview-empty {
+    margin-top: 14px;
+    padding: 14px 15px;
+    border-radius: 14px;
   }
 
   .auth-form-options {
@@ -2176,7 +2214,7 @@ textarea:focus {
     max-width: 100%;
     min-width: 0;
     justify-items: stretch;
-    padding: 30px 22px 26px;
+    padding: 28px 18px 20px;
   }
 
   .auth-form-shell,
@@ -2195,6 +2233,11 @@ textarea:focus {
 
   .auth-form {
     gap: 15px;
+  }
+
+  .auth-form-options {
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   .auth-input-field {
