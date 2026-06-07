@@ -6,7 +6,7 @@ export function UpcomingDeadlines({ tasks }: { tasks: Task[] }) {
       <p className="section-eyebrow" style={{ margin: 0, color: "var(--warning)", fontWeight: 700, fontSize: "0.82rem" }}>
         截止
       </p>
-      <h2 style={{ margin: "10px 0 0", fontSize: "1.18rem" }}>即将到期</h2>
+      <h2 style={{ margin: "10px 0 0", fontSize: "1.18rem" }}>快到点了</h2>
       <div style={{ marginTop: 18, display: "grid", gap: 16 }}>
         {tasks.length ? (
           tasks.map((task) => (
@@ -24,7 +24,7 @@ export function UpcomingDeadlines({ tasks }: { tasks: Task[] }) {
             </article>
           ))
         ) : (
-          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.7 }}>当前范围内还没有临近截止的任务。</p>
+          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.7 }}>暂时没有快到期的任务，可以先松一口气。</p>
         )}
       </div>
     </section>

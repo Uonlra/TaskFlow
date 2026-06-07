@@ -92,15 +92,15 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         helper:
           range === "all"
             ? isConfigured
-              ? "已从你的 Appwrite 项目同步。"
-              : "当前仍是演示模式，连接 Appwrite 后会切换为真实数据。"
-            : `${rangeLabel}范围内仍未完成的任务。`,
+              ? "Appwrite 那边的数据已经同步过来了。"
+              : "现在先用演示数据，接上 Appwrite 后就看真家伙。"
+            : `${rangeLabel}还有这些没做完，先放在眼前。`,
         accent: "var(--primary)",
       },
       {
         label: "进行中",
         value: String(inProgress),
-        helper: "把同时推进的任务数量收紧，节奏会更稳。",
+        helper: "别同时开太多坑，少一点会更稳。",
         accent: "var(--data-cyan)",
       },
       {
@@ -108,26 +108,26 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         value: String(completed),
         helper:
           range === "all"
-            ? "整个工作台里已经完成的任务总数。"
-            : `${rangeLabel}范围内完成的任务数量。`,
+            ? "这些任务已经处理完，可以安心放过它们。"
+            : `${rangeLabel}完成了这些，挺好，继续。`,
         accent: "var(--data-indigo)",
       },
       {
         label: "已逾期",
         value: String(dueSummary.overdue),
-        helper: `${rangeLabel}范围内已经错过截止时间的任务。`,
+        helper: `${rangeLabel}有些任务已经晚了，先把它们捞回来。`,
         accent: "var(--danger)",
       },
       {
         label: "今天到期",
         value: String(dueSummary.today),
-        helper: `${rangeLabel}范围内需要今天收口的任务。`,
+        helper: `${rangeLabel}今天要处理的，别拖到睡前再想起。`,
         accent: "var(--warning)",
       },
       {
         label: "3 天内到期",
         value: String(dueSummary.upcoming),
-        helper: `${rangeLabel}范围内接下来 3 天要提早安排的任务。`,
+        helper: `${rangeLabel}这几天会靠近的任务，提前看一眼比较省心。`,
         accent: "var(--warning)",
       },
     ];
@@ -163,8 +163,8 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       overdueCount,
       streakMessage:
         completed > 0
-          ? `${rangeLabel}范围内已经完成 ${completed} 条任务，继续保持这个推进节奏。`
-          : `${rangeLabel}范围内还没有完成记录，先收掉一条最重要的任务就能把节奏拉起来。`,
+          ? `${rangeLabel}完成了 ${completed} 条，节奏还不错，先别被临时事带跑。`
+          : `${rangeLabel}还没完成记录，先挑一条最重要的做掉就行。`,
     };
   }, [rangeLabel, scopedTasks]);
 
@@ -188,7 +188,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       {!isConfigured ? (
         <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
           <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
-            当前还没有连接 Appwrite，所以仪表盘仍以本地演示数据模式运行。
+            还没连 Appwrite，所以这里先用演示数据顶一下。
           </p>
         </section>
       ) : null}
@@ -211,12 +211,12 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
             Dashboard
           </p>
           <h2 style={{ margin: "14px 0 0", fontSize: "clamp(2rem, 4vw, 3rem)", lineHeight: 1.16 }}>
-            把推进节奏
+            今天先看哪儿
             <br />
-            收成一张清晰总览
+            一眼就知道
           </h2>
           <p style={{ margin: "14px 0 0", maxWidth: 620, color: "var(--muted-strong)", lineHeight: 1.86 }}>
-            用更轻的蓝白界面，把任务数量、完成走势、截止风险和工作主题整理在一起。先看清局面，再决定今天怎么推进。
+            这里把任务数量、完成情况和快到期的事放到一起。先扫一眼，再决定今天从哪儿下手。
           </p>
         </article>
 
@@ -237,7 +237,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
               观察视角
             </p>
             <p style={{ margin: "10px 0 0", color: "var(--muted-strong)", lineHeight: 1.82 }}>
-              切换时间范围，比较今天、本周和全部任务的推进状态。
+              想看今天、本周，还是全部，都在这儿切。别靠记忆硬扛。
             </p>
           </div>
 
@@ -292,8 +292,8 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
                 优先事项
               </p>
               <h2 style={{ margin: "10px 0 0", fontSize: "1.28rem" }}>{prioritiesTitle}</h2>
-              <p style={{ margin: "8px 0 0", color: "var(--muted-strong)" }}>
-                {isLoading ? "正在同步任务..." : `${rangeLabel}范围内最值得优先处理的任务。`}
+            <p style={{ margin: "8px 0 0", color: "var(--muted-strong)" }}>
+                {isLoading ? "正在同步任务，稍等一下..." : `${rangeLabel}先看这几条，别一上来就全量开打。`}
               </p>
             </div>
           </div>

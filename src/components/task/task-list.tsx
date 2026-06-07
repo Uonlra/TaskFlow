@@ -24,15 +24,15 @@ export function TaskList({
   if (!tasks.length) {
     return (
       <EmptyState
-        title="当前条件下没有任务"
-        description="可以调整筛选条件，或者先新增一条任务继续推进。"
+        title="这里暂时很安静"
+        description="可以放宽筛选条件，或者新建一条任务，先让列表动起来。"
         action={emptyAction}
       />
     );
   }
 
   return (
-    <div style={{ display: "grid", gap: compact ? 14 : 18 }}>
+    <div className={compact ? "task-list task-list--compact" : "task-list"}>
       {tasks.map((task) => (
         <TaskCard
           key={task.id}

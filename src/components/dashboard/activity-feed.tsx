@@ -12,7 +12,7 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
       <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
         轨迹
       </p>
-      <h2 style={{ margin: "10px 0 0", fontSize: "1.18rem" }}>最近活动</h2>
+      <h2 style={{ margin: "10px 0 0", fontSize: "1.18rem" }}>最近动静</h2>
       <div style={{ marginTop: 18, display: "grid", gap: 14 }}>
         {items.length ? (
           items.map((item) => (
@@ -48,7 +48,7 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
           ))
         ) : (
           <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.7 }}>
-            当任务开始创建、更新或完成后，这里会逐步出现最近活动记录。
+            还没有新的操作记录。等你创建、更新或完成任务，这里就会有动静。
           </p>
         )}
       </div>

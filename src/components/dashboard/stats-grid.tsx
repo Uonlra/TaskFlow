@@ -12,13 +12,7 @@ type StatsGridProps = {
 
 export function StatsGrid({ stats }: StatsGridProps) {
   return (
-    <section
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: 20,
-      }}
-    >
+    <section className="stats-grid">
       {stats.map((stat) => (
         <StatsCard key={stat.label} label={stat.label} value={stat.value} helper={stat.helper} accent={stat.accent} />
       ))}
