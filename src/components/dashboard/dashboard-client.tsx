@@ -92,15 +92,15 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         helper:
           range === "all"
             ? isConfigured
-              ? "已从 Appwrite 同步，数据不是凭空变出来的。"
-              : "当前仍是演示模式，接上 Appwrite 后就能拿真数据上桌。"
-            : `${rangeLabel}还有这些任务没收口，先别急着假装没看见。`,
+              ? "Appwrite 那边的数据已经同步过来了。"
+              : "现在先用演示数据，接上 Appwrite 后就看真家伙。"
+            : `${rangeLabel}还有这些没做完，先放在眼前。`,
         accent: "var(--primary)",
       },
       {
         label: "进行中",
         value: String(inProgress),
-        helper: "同时推进太多容易手忙脚乱，少一点，稳一点。",
+        helper: "别同时开太多坑，少一点会更稳。",
         accent: "var(--data-cyan)",
       },
       {
@@ -108,26 +108,26 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         value: String(completed),
         helper:
           range === "all"
-            ? "整个工作台里已经被你正式送下班的任务。"
-            : `${rangeLabel}已经完成的任务，值得给自己点个头。`,
+            ? "这些任务已经处理完，可以安心放过它们。"
+            : `${rangeLabel}完成了这些，挺好，继续。`,
         accent: "var(--data-indigo)",
       },
       {
         label: "已逾期",
         value: String(dueSummary.overdue),
-        helper: `${rangeLabel}已经越过截止线的任务，建议优先请回来。`,
+        helper: `${rangeLabel}有些任务已经晚了，先把它们捞回来。`,
         accent: "var(--danger)",
       },
       {
         label: "今天到期",
         value: String(dueSummary.today),
-        helper: `${rangeLabel}今天就要交卷的任务，别让它们留级。`,
+        helper: `${rangeLabel}今天要处理的，别拖到睡前再想起。`,
         accent: "var(--warning)",
       },
       {
         label: "3 天内到期",
         value: String(dueSummary.upcoming),
-        helper: `${rangeLabel}未来 3 天会冒头的任务，提前安排比较体面。`,
+        helper: `${rangeLabel}这几天会靠近的任务，提前看一眼比较省心。`,
         accent: "var(--warning)",
       },
     ];
@@ -163,8 +163,8 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       overdueCount,
       streakMessage:
         completed > 0
-          ? `${rangeLabel}已经完成 ${completed} 条任务，节奏不错，别被临时插队带跑。`
-          : `${rangeLabel}还没有完成记录，先收掉一条最重要的任务，局面就会开始听话。`,
+          ? `${rangeLabel}完成了 ${completed} 条，节奏还不错，先别被临时事带跑。`
+          : `${rangeLabel}还没完成记录，先挑一条最重要的做掉就行。`,
     };
   }, [rangeLabel, scopedTasks]);
 
@@ -188,7 +188,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       {!isConfigured ? (
         <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
           <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
-            当前还没连接 Appwrite，所以仪表盘先用演示数据热身。
+            还没连 Appwrite，所以这里先用演示数据顶一下。
           </p>
         </section>
       ) : null}
@@ -211,12 +211,12 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
             Dashboard
           </p>
           <h2 style={{ margin: "14px 0 0", fontSize: "clamp(2rem, 4vw, 3rem)", lineHeight: 1.16 }}>
-            让任务别乱跑
+            今天先看哪儿
             <br />
-            让节奏有据可查
+            一眼就知道
           </h2>
           <p style={{ margin: "14px 0 0", maxWidth: 620, color: "var(--muted-strong)", lineHeight: 1.86 }}>
-            任务数量、完成走势、截止风险和标签主题都放在这里。先看清局面，再决定今天先处理谁，不靠直觉硬猜。
+            这里把任务数量、完成情况和快到期的事放到一起。先扫一眼，再决定今天从哪儿下手。
           </p>
         </article>
 
@@ -237,7 +237,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
               观察视角
             </p>
             <p style={{ margin: "10px 0 0", color: "var(--muted-strong)", lineHeight: 1.82 }}>
-              换个时间视角看看，别让本周的任务偷偷长出第二个本周。
+              想看今天、本周，还是全部，都在这儿切。别靠记忆硬扛。
             </p>
           </div>
 
@@ -293,7 +293,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
               </p>
               <h2 style={{ margin: "10px 0 0", fontSize: "1.28rem" }}>{prioritiesTitle}</h2>
             <p style={{ margin: "8px 0 0", color: "var(--muted-strong)" }}>
-                {isLoading ? "正在同步任务，稍等，它们正在排队进场..." : `${rangeLabel}最值得优先处理的任务，已经替你摆到前排。`}
+                {isLoading ? "正在同步任务，稍等一下..." : `${rangeLabel}先看这几条，别一上来就全量开打。`}
               </p>
             </div>
           </div>

@@ -57,7 +57,7 @@ export function TaskFilterBar({
               筛选工具
             </p>
             <p className="task-filter__description">
-              关键词、标签、状态和排序都在这里。让任务列表安静一点，别一股脑全冲上来。
+              搜关键词、看标签、挑状态都在这里。任务多的时候，先筛一筛会舒服很多。
             </p>
           </div>
           <div className="task-filter__meta">
@@ -135,22 +135,22 @@ function FilterField({ label, children }: { label: string; children: ReactNode }
 }
 
 const statusOptions: Array<CustomSelectOption<TaskStatus | "all">> = [
-  { value: "all", label: "全部状态", description: "不偏心，全部都看" },
-  { value: "todo", label: "待开始", description: "还在起跑线旁边热身" },
-  { value: "in_progress", label: "进行中", description: "正在路上，别让它迷路" },
-  { value: "done", label: "已完成", description: "已经顺利下班" },
+  { value: "all", label: "全部状态", description: "先全部看一遍" },
+  { value: "todo", label: "待开始", description: "还没动手的" },
+  { value: "in_progress", label: "进行中", description: "正在处理的" },
+  { value: "done", label: "已完成", description: "已经收掉的" },
 ];
 
 const priorityOptions: Array<CustomSelectOption<TaskPriority | "all">> = [
-  { value: "all", label: "全部优先级", description: "先不论资排辈" },
-  { value: "high", label: "高", description: "它在认真举手" },
-  { value: "medium", label: "中", description: "常规推进，稳住就好" },
-  { value: "low", label: "低", description: "可以稍后，但别彻底遗忘" },
+  { value: "all", label: "全部优先级", description: "先不挑" },
+  { value: "high", label: "高", description: "先处理会更踏实" },
+  { value: "medium", label: "中", description: "正常推进就行" },
+  { value: "low", label: "低", description: "可以晚点看" },
 ];
 
 const sortOptions: Array<CustomSelectOption<TaskSort>> = [
-  { value: "due_asc", label: "按截止时间", description: "先看快到点的" },
-  { value: "updated_desc", label: "按最近更新", description: "谁刚动过谁靠前" },
-  { value: "created_desc", label: "按创建时间", description: "新来的先露个脸" },
-  { value: "priority_desc", label: "按优先级", description: "先处理认真举手的" },
+  { value: "due_asc", label: "按截止时间", description: "快到期的排前面" },
+  { value: "updated_desc", label: "按最近更新", description: "最近改过的排前面" },
+  { value: "created_desc", label: "按创建时间", description: "新加的排前面" },
+  { value: "priority_desc", label: "按优先级", description: "重要的先看" },
 ];

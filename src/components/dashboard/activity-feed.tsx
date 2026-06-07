@@ -48,7 +48,7 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
           ))
         ) : (
           <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.7 }}>
-            任务创建、更新或完成后，这里会留下脚印。目前还很干净。
+            还没有新的操作记录。等你创建、更新或完成任务，这里就会有动静。
           </p>
         )}
       </div>
