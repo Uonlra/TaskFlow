@@ -1360,6 +1360,20 @@ textarea:focus {
   color: var(--danger);
 }
 
+.auth-form-message--hint {
+  margin-top: -8px;
+  color: var(--muted-strong);
+}
+
+.auth-form-message--hint-login {
+  color: #334155;
+}
+
+.auth-post-login-actions {
+  display: grid;
+  gap: 14px;
+}
+
 .auth-form-footer {
   margin-top: 22px;
   color: var(--muted-strong);

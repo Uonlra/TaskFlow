@@ -14,9 +14,16 @@ type AuthContextValue = {
   isLoading: boolean;
   isProfileLoading: boolean;
   isConfigured: boolean;
+  applyAuthEnvelope: (envelope: AuthEnvelope) => void;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   saveProfile: (values: ProfileFormValues) => Promise<Profile | null>;
+};
+
+export type AuthEnvelope = {
+  user: AuthUser;
+  profile: Profile;
+  session: AuthSession | null;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -103,6 +110,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       isProfileLoading,
       isConfigured: hasAppwritePublicEnv,
+      applyAuthEnvelope: (envelope) => {
+        setSession(envelope.session ?? null);
+        setUser(envelope.user);
+        setProfile(envelope.profile);
+      },
       signOut: async () => {
         if (!hasAppwritePublicEnv) {
           return;
