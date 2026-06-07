@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { AppTopbar } from "@/components/layout/app-topbar";
 import { ROUTES } from "@/lib/constants/routes";
 
 const navItems = [
@@ -20,12 +21,17 @@ export function AppSidebar() {
       aria-label="主导航"
     >
       <div className="dashboard-sidebar-head">
-        <p className="dashboard-brand">
-          U's Task
-        </p>
-        <h1 className="dashboard-sidebar-title">
-          工作模式
-        </h1>
+        <div className="dashboard-sidebar-title-row">
+          <div className="dashboard-sidebar-title-copy">
+            <p className="dashboard-brand">
+              U's Task
+            </p>
+            <h1 className="dashboard-sidebar-title">
+              工作模式
+            </h1>
+          </div>
+          <AppTopbar variant="mobile" />
+        </div>
         <p className="dashboard-sidebar-subtitle">
           在总览、任务和设置之间快速切换。
         </p>

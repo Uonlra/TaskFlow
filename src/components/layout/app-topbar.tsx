@@ -4,7 +4,11 @@ import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/providers/auth-provider";
 
-export function AppTopbar() {
+type AppTopbarProps = {
+  variant?: "desktop" | "mobile";
+};
+
+export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
   const router = useRouter();
   const { user, profile, isConfigured, signOut } = useAuth();
 
@@ -12,15 +16,19 @@ export function AppTopbar() {
     await signOut();
     router.push("/login");
   };
+  const statusLabel = isConfigured ? "Appwrite 已连接" : "本地演示模式";
+  const description = isConfigured
+    ? "登录状态与任务数据由 Appwrite 支持。"
+    : "配置环境变量后，即可从本地演示切换到真实数据。";
 
   return (
-    <header className="dashboard-topbar">
+    <header className={variant === "mobile" ? "dashboard-topbar dashboard-topbar--mobile" : "dashboard-topbar"}>
       <div className="dashboard-topbar__meta">
         <p className="dashboard-topbar__status">
-          {isConfigured ? "Appwrite 已连接" : "本地演示模式"}
+          {statusLabel}
         </p>
         <p className="dashboard-topbar__description">
-          {isConfigured ? "登录状态与任务数据由 Appwrite 支持。" : "配置环境变量后，即可从本地演示切换到真实数据。"}
+          {description}
         </p>
       </div>
       <div className="dashboard-topbar__actions">
