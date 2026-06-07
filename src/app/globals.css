@@ -2078,8 +2078,8 @@ textarea:focus {
 
   .dashboard-sidebar-title-row {
     display: grid;
-    grid-template-columns: minmax(96px, 0.8fr) minmax(0, 1.35fr);
-    gap: 10px;
+    grid-template-columns: minmax(96px, 1fr) auto auto;
+    gap: 8px;
     align-items: center;
   }
 
@@ -2090,7 +2090,7 @@ textarea:focus {
   .dashboard-sidebar-title-row .dashboard-topbar--mobile {
     min-width: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto auto;
     gap: 8px;
     align-items: center;
   }
@@ -2114,8 +2114,7 @@ textarea:focus {
   }
 
   .dashboard-topbar--mobile .dashboard-topbar__status {
-    width: max-content;
-    max-width: 100%;
+    max-width: 128px;
     min-height: 32px;
     display: inline-flex;
     align-items: center;
@@ -2136,7 +2135,6 @@ textarea:focus {
     min-width: 0;
     display: flex;
     justify-content: flex-end;
-    gap: 6px;
     flex-wrap: nowrap;
   }
 
@@ -2146,18 +2144,9 @@ textarea:focus {
     flex: 0 0 auto;
   }
 
-  .dashboard-topbar--mobile .dashboard-topbar__profile {
-    max-width: 96px;
-    min-height: 32px;
-    padding: 4px 9px;
-    font-size: 13px;
-  }
-
+  .dashboard-topbar--mobile .dashboard-topbar__profile,
   .dashboard-topbar--mobile .dashboard-signout-button {
-    min-height: 32px;
-    padding: 4px 10px;
-    white-space: nowrap;
-    font-size: 13px;
+    display: none;
   }
 
   .dashboard-sidebar-nav {
