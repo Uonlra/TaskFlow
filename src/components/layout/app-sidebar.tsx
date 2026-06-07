@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { ROUTES } from "@/lib/constants/routes";
 
 const navItems = [
-  { label: "总览", description: "进度与风险", href: ROUTES.dashboard, icon: "overview" },
+  { label: "总览", description: "进度与预警", href: ROUTES.dashboard, icon: "overview" },
   { label: "任务", description: "筛选与推进", href: ROUTES.tasks, icon: "tasks" },
   { label: "设置", description: "账号偏好", href: ROUTES.settings, icon: "settings" },
 ];

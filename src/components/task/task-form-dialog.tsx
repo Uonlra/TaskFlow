@@ -156,7 +156,7 @@ export function TaskFormDialog({
                 </p>
                 <h2 id={headingId} className="task-dialog__title">{dialogTitle}</h2>
                 <p className="task-dialog__description">
-                  先写清楚任务结果，再补状态、优先级和标签，这样列表会更容易被整理和回看。
+                  先写清楚结果，再补状态、优先级和标签。任务有了身份证，就不容易在列表里走丢。
                 </p>
               </div>
               <button
@@ -187,7 +187,7 @@ export function TaskFormDialog({
                 <textarea
                   {...register("description")}
                   className="task-field task-textarea"
-                  placeholder="写清楚这项任务要达到什么结果，以及它为什么重要。"
+                  placeholder="写清楚要达到什么结果，以及它为什么值得占用你的宝贵注意力。"
                   rows={4}
                   aria-invalid={Boolean(errors.description)}
                 />
@@ -246,7 +246,7 @@ export function TaskFormDialog({
               </Field>
 
               <div className="task-dialog__hint">
-                标签支持中英文逗号分隔；截止日期可留空，稍后在列表里再排序整理。
+                标签支持中英文逗号分隔；截止日期可以留空，但它会因此少一点时间观念。
               </div>
 
               <div className="task-dialog__actions">
@@ -288,13 +288,13 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 }
 
 const taskStatusOptions: Array<CustomSelectOption<TaskFormValues["status"]>> = [
-  { value: "todo", label: "待开始", description: "还没有进入执行阶段" },
-  { value: "in_progress", label: "进行中", description: "已经开始推进这条任务" },
-  { value: "done", label: "已完成", description: "这条任务已经收口" },
+  { value: "todo", label: "待开始", description: "还在起跑线旁边热身" },
+  { value: "in_progress", label: "进行中", description: "已经开始推进，别让它半路停车" },
+  { value: "done", label: "已完成", description: "这条任务可以安心下班" },
 ];
 
 const taskPriorityOptions: Array<CustomSelectOption<TaskFormValues["priority"]>> = [
-  { value: "low", label: "低", description: "可以晚一点处理" },
-  { value: "medium", label: "中", description: "当前常规推进事项" },
-  { value: "high", label: "高", description: "应该优先安排和处理" },
+  { value: "low", label: "低", description: "可以晚一点，但别放进失物招领处" },
+  { value: "medium", label: "中", description: "常规推进，稳稳处理" },
+  { value: "high", label: "高", description: "它在前排举手，建议优先安排" },
 ];

@@ -119,7 +119,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 
       showToast({
         title: "任务已创建",
-        description: `“${values.title}” 已加入当前工作台。`,
+        description: `“${values.title}” 已加入队列，接下来就看你发挥。`,
         tone: "success",
       });
     } catch (error) {
@@ -137,7 +137,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       await updateTask(id, values, user?.id);
       showToast({
         title: "任务已更新",
-        description: `“${values.title}” 的修改已经保存。`,
+        description: `“${values.title}” 已更新，记录很老实地存好了。`,
         tone: "success",
       });
     } catch (error) {
@@ -155,7 +155,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       await updateTaskStatus(id, status, user?.id);
       showToast({
         title: "状态已更新",
-        description: `任务已切换为${status === "todo" ? "待开始" : status === "in_progress" ? "进行中" : "已完成"}。`,
+        description: `任务已切换为${status === "todo" ? "待开始" : status === "in_progress" ? "进行中" : "已完成"}，流程没有偷懒。`,
         tone: "success",
       });
     } catch (error) {
@@ -172,7 +172,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       await deleteTask(id, user?.id);
       showToast({
         title: "任务已删除",
-        description: "这条任务已经从当前工作台中移除。",
+        description: "这条任务已经从工作台撤下，现场已清理。",
         tone: "success",
       });
     } catch (error) {
@@ -205,17 +205,17 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
   };
 
   const summaryLabel = !tasks.length
-    ? "先创建第一条任务，把今天要推进的事情收进工作台。"
+    ? "先创建第一条任务，让今天的工作别在脑子里散步。"
     : hasActiveFilters
-      ? `当前视图筛出 ${filteredTasks.length} 条任务，方便你先聚焦眼前最重要的一组。`
-      : `当前共有 ${tasks.length} 条任务，先从最接近截止日期或正在推进的事项开始。`;
+      ? `当前筛出 ${filteredTasks.length} 条任务，已经把无关项请到旁边休息。`
+      : `当前共有 ${tasks.length} 条任务，建议先从快到期或正在推进的事项下手。`;
 
   return (
     <section className="tasks-toolbar">
       {!isConfigured ? (
         <section className="notice-card card-surface">
           <p>
-            当前还没有连接 Appwrite，所以你正在编辑保存在浏览器本地的演示任务。
+            当前还没连接 Appwrite，所以这些任务先住在浏览器本地，低调但能用。
           </p>
         </section>
       ) : null}
@@ -230,12 +230,12 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
             Task View
           </p>
           <h2 className="panel-title panel-title--large">
-            把零散事项
+            把乱跑的事项
             <br />
-            收成一列清晰工作流
+            排成一列工作流
           </h2>
           <p className="panel-description">
-            用筛选、排序和标签把任务列表整理成一个可执行的视图。先看清，后推进，减少来回切换的耗损。
+            用筛选、排序和标签把任务整理成可执行的视图。先看清，再推进，少一点来回横跳。
           </p>
         </article>
 
@@ -245,7 +245,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
               新建任务
             </p>
             <p className="panel-description panel-description--compact">
-              用一条明确标题、标签和截止日期，把新的事项快速纳入当前工作流。
+              给事项一个标题、优先级和截止日期，它就不容易在角落里装作不存在。
             </p>
           </div>
           <TaskFormDialog onSubmitTask={handleCreateTask} />
@@ -285,16 +285,16 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
           </p>
           <p>
             {deadlineSummary.overdue > 0
-              ? `当前有 ${deadlineSummary.overdue} 条任务已经逾期，建议优先收口。`
+              ? `当前有 ${deadlineSummary.overdue} 条任务已经逾期，建议先把它们请回正轨。`
               : deadlineSummary.today > 0
-                ? `当前有 ${deadlineSummary.today} 条任务今天到期，适合优先处理。`
-                : `接下来 3 天内还有 ${deadlineSummary.upcoming} 条任务即将到期，可以提前安排节奏。`}
+                ? `当前有 ${deadlineSummary.today} 条任务今天到期，它们正在认真看表。`
+                : `接下来 3 天还有 ${deadlineSummary.upcoming} 条任务会冒头，提前安排会显得很从容。`}
           </p>
         </section>
       )}
       {isConfigured && isLoading ? (
         <section className="notice-card card-surface">
-          <p>正在从 Appwrite 同步任务...</p>
+          <p>正在从 Appwrite 同步任务，它们正在排队进场...</p>
         </section>
       ) : null}
       <TaskList

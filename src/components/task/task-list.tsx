@@ -24,8 +24,8 @@ export function TaskList({
   if (!tasks.length) {
     return (
       <EmptyState
-        title="当前条件下没有任务"
-        description="可以调整筛选条件，或者先新增一条任务继续推进。"
+        title="这里暂时很安静"
+        description="可以放宽筛选条件，或者新增一条任务，让工作台有点正事可做。"
         action={emptyAction}
       />
     );
