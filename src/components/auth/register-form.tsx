@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { AuthInput } from "@/components/auth/auth-input";
 import { AuthFormShell } from "@/components/auth/auth-form-shell";
+import { useAuthPreviewState } from "@/components/auth/auth-preview-state";
+import { useAuthAccountLookup } from "@/components/auth/use-auth-account-lookup";
 import { registerSchema, type RegisterFormValues } from "@/features/auth/schemas/register-schema";
 import { hasAppwritePublicEnv } from "@/lib/appwrite/env";
 import { useToast } from "@/providers/toast-provider";
@@ -15,12 +17,19 @@ import { useToast } from "@/providers/toast-provider";
 export function RegisterForm() {
   const router = useRouter();
   const { showToast } = useToast();
+  const {
+    preloginAccountStatus,
+    setPreloginAccountStatus,
+    setPreloginEmail,
+    setPreloginName,
+  } = useAuthPreviewState();
   const [submittedName, setSubmittedName] = useState<string | null>(null);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -31,6 +40,20 @@ export function RegisterForm() {
       confirmPassword: "",
     },
   });
+  const watchedName = watch("name");
+  const watchedEmail = watch("email");
+  useAuthAccountLookup(watchedEmail);
+
+  useEffect(() => {
+    setPreloginName(watchedName.trim());
+    setPreloginEmail(watchedEmail.trim());
+
+    return () => {
+      setPreloginAccountStatus("idle");
+      setPreloginName("");
+      setPreloginEmail("");
+    };
+  }, [setPreloginAccountStatus, setPreloginEmail, setPreloginName, watchedEmail, watchedName]);
 
   const navigateToDashboard = () => {
     if (typeof window !== "undefined") {
@@ -49,6 +72,8 @@ export function RegisterForm() {
     if (!hasAppwritePublicEnv) {
       await new Promise((resolve) => setTimeout(resolve, 300));
       setSubmittedName(values.name);
+      setPreloginName(values.name.trim());
+      setPreloginEmail(values.email.trim());
       showToast({
         title: "本地账号已创建",
         description: `${values.name} 的本地工作台已经准备好了。`,
@@ -86,6 +111,8 @@ export function RegisterForm() {
     }
 
     setSubmittedName(values.name);
+    setPreloginName(values.name.trim());
+    setPreloginEmail(values.email.trim());
     const requiresEmailVerification = Boolean(payload?.requiresEmailVerification);
     const message =
       payload?.message ||
@@ -139,6 +166,7 @@ export function RegisterForm() {
           registration={register("email")}
           icon="@"
         />
+        <AccountLookupMessage status={preloginAccountStatus} />
         <AuthInput
           label="密码"
           type="password"
@@ -172,4 +200,25 @@ export function RegisterForm() {
       </form>
     </AuthFormShell>
   );
+}
+
+function AccountLookupMessage({
+  status,
+}: {
+  status: ReturnType<typeof useAuthPreviewState>["preloginAccountStatus"];
+}) {
+  if (status === "idle") {
+    return null;
+  }
+
+  const message =
+    status === "checking"
+      ? "正在确认邮箱状态..."
+      : status === "registered"
+        ? "这个邮箱已经有工作台了，直接登录会更快。"
+        : status === "available"
+          ? "这个邮箱可以创建新工作台，进度会从 0 开始。"
+          : "暂时无法确认邮箱状态，可以继续填写注册信息。";
+
+  return <p className="auth-form-message auth-form-message--hint">{message}</p>;
 }

@@ -9,7 +9,7 @@ import { deleteTask, getTask, updateTask, updateTaskStatus } from "@/lib/appwrit
 
 const taskStatusSchema = z.object({
   status: z.enum(["todo", "in_progress", "done"]),
-});
+}).strict();
 
 export async function PATCH(
   request: NextRequest,
@@ -54,6 +54,16 @@ export async function PATCH(
 
   const task = await updateTask(sessionSecret, id, parsedTask.data, request);
   return NextResponse.json({ task });
+}
+
+function isStatusOnlyPatch(payload: unknown) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return false;
+  }
+
+  const keys = Object.keys(payload);
+
+  return keys.length === 1 && keys[0] === "status";
 }
 
 export async function DELETE(

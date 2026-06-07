@@ -881,16 +881,24 @@ textarea:focus {
 }
 
 .auth-preview-nav {
+  border: 0;
   border-radius: 12px;
   padding: 10px 12px;
   color: var(--muted-strong);
+  background: transparent;
   font-size: 0.82rem;
   font-weight: 700;
+  text-align: left;
 }
 
 .auth-preview-nav--active {
   color: var(--primary);
   background: rgba(219, 234, 254, 0.66);
+}
+
+.auth-preview-nav-list {
+  display: grid;
+  gap: 12px;
 }
 
 .auth-preview-profile {
@@ -997,6 +1005,16 @@ textarea:focus {
   display: grid;
   gap: 13px;
   margin-top: 20px;
+}
+
+.auth-preview-empty {
+  margin: 20px 0 0;
+  padding: 16px 18px;
+  border: 1px solid rgba(191, 219, 254, 0.62);
+  border-radius: 18px;
+  color: var(--muted-strong);
+  background: rgba(255, 255, 255, 0.86);
+  line-height: 1.7;
 }
 
 .auth-preview-list > div {
@@ -1340,6 +1358,20 @@ textarea:focus {
 
 .auth-form-message--error {
   color: var(--danger);
+}
+
+.auth-form-message--hint {
+  margin-top: -8px;
+  color: var(--muted-strong);
+}
+
+.auth-form-message--hint-login {
+  color: #334155;
+}
+
+.auth-post-login-actions {
+  display: grid;
+  gap: 14px;
 }
 
 .auth-form-footer {

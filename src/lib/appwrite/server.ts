@@ -33,6 +33,11 @@ type AppwriteErrorResponse = {
   code?: number;
 };
 
+type AppwriteUsersListResponse = {
+  total?: number;
+  users?: AppwriteAccountResponse[];
+};
+
 type AppwriteRequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
@@ -233,6 +238,32 @@ export async function getCurrentAccount(
     sessionSecret,
     request,
   });
+}
+
+export async function getPublicAccountStatusByEmail(email: string, request?: NextRequest) {
+  if (!hasAppwriteAuthEnv) {
+    return "unknown" as const;
+  }
+
+  try {
+    const result = await appwriteRequest<AppwriteUsersListResponse>("/users", {
+      request,
+      useAdminKey: true,
+      searchParams: {
+        search: email,
+      },
+    });
+
+    const hasExactMatch = (result.users ?? []).some(
+      (user) => user.email?.toLowerCase() === email.toLowerCase(),
+    );
+
+    return hasExactMatch
+      ? ("registered" as const)
+      : ("available" as const);
+  } catch {
+    return "unknown" as const;
+  }
 }
 
 export function toProfile(account: AppwriteAccountResponse, fallbackEmail = ""): Profile {
