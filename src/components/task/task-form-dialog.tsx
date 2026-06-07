@@ -124,20 +124,11 @@ export function TaskFormDialog({
       <button
         type="button"
         onClick={openDialog}
-        className="ui-sans"
-        style={{
-          border: triggerLabel === "新建任务" ? "1px solid transparent" : "1px solid var(--border)",
-          padding: "14px 18px",
-          borderRadius: 999,
-          background:
-            triggerLabel === "新建任务"
-              ? "linear-gradient(135deg, var(--primary), var(--data-cyan))"
-              : "rgba(255,255,255,0.82)",
-          color: triggerLabel === "新建任务" ? "var(--primary-foreground)" : "var(--foreground)",
-          fontWeight: 700,
-          justifySelf: "start",
-          boxShadow: triggerLabel === "新建任务" ? "0 12px 28px rgba(37,99,235,0.18)" : "none",
-        }}
+        className={
+          triggerLabel === "新建任务"
+            ? "tesla-action tesla-action--primary"
+            : "tesla-action tesla-action--secondary"
+        }
       >
         {triggerLabel}
       </button>
@@ -150,37 +141,21 @@ export function TaskFormDialog({
               setOpen(false);
             }
           }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(16, 24, 40, 0.38)",
-            display: "grid",
-            placeItems: "center",
-            padding: 20,
-            zIndex: 2000,
-            overflowY: "auto",
-          }}
+          className="dialog-overlay"
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby={headingId}
-            className="card-surface"
-            style={{
-              width: "min(620px, 100%)",
-              maxHeight: "min(860px, calc(100vh - 40px))",
-              borderRadius: 28,
-              padding: 24,
-              overflowY: "auto",
-            }}
+            className="task-dialog card-surface"
           >
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "start" }}>
+            <div className="task-dialog__header">
               <div>
-                <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
+                <p className="section-eyebrow task-dialog__eyebrow">
                   {dialogEyebrow}
                 </p>
-                <h2 id={headingId} style={{ margin: "10px 0 0", fontSize: "1.6rem" }}>{dialogTitle}</h2>
-                <p style={{ margin: "8px 0 0", color: "var(--muted-strong)", lineHeight: 1.72 }}>
+                <h2 id={headingId} className="task-dialog__title">{dialogTitle}</h2>
+                <p className="task-dialog__description">
                   先写清楚任务结果，再补状态、优先级和标签，这样列表会更容易被整理和回看。
                 </p>
               </div>
@@ -188,20 +163,13 @@ export function TaskFormDialog({
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="关闭任务表单"
-                style={{
-                    border: "1px solid var(--border)",
-                    background: "rgba(255,255,255,0.8)",
-                    width: 40,
-                    height: 40,
-                    borderRadius: 999,
-                  fontSize: "1.1rem",
-                }}
+                className="dialog-close-button"
               >
                 x
               </button>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} style={{ display: "grid", gap: 16, marginTop: 20 }}>
+            <form onSubmit={handleSubmit(onSubmit)} className="task-dialog__form">
               <Field label="标题" error={errors.title?.message}>
                 <input
                   {...register("title")}
@@ -211,7 +179,7 @@ export function TaskFormDialog({
                     titleInputRef.current = node;
                   }}
                   placeholder="例如：整理入职说明文档"
-                  style={inputStyle(Boolean(errors.title))}
+                  aria-invalid={Boolean(errors.title)}
                 />
               </Field>
 
@@ -221,11 +189,11 @@ export function TaskFormDialog({
                   className="task-field task-textarea"
                   placeholder="写清楚这项任务要达到什么结果，以及它为什么重要。"
                   rows={4}
-                  style={{ ...inputStyle(Boolean(errors.description)), resize: "vertical" }}
+                  aria-invalid={Boolean(errors.description)}
                 />
               </Field>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+              <div className="task-dialog__grid">
                 <Field label="状态" error={errors.status?.message}>
                   <Controller
                     control={control}
@@ -264,7 +232,7 @@ export function TaskFormDialog({
                   {...register("tags")}
                   className="task-field"
                   placeholder="例如：设计，首屏，移动端"
-                  style={inputStyle(Boolean(errors.tags))}
+                  aria-invalid={Boolean(errors.tags)}
                 />
               </Field>
 
@@ -273,57 +241,32 @@ export function TaskFormDialog({
                   type="date"
                   {...register("dueDate")}
                   className="task-field task-date"
-                  style={inputStyle(Boolean(errors.dueDate))}
+                  aria-invalid={Boolean(errors.dueDate)}
                 />
               </Field>
 
-              <div
-                className="ui-sans"
-                style={{
-                  padding: "14px 16px",
-                  borderRadius: 18,
-                  border: "1px solid var(--border)",
-                  background: "rgba(37,99,235,0.05)",
-                  color: "var(--muted-strong)",
-                  fontSize: "0.92rem",
-                }}
-              >
+              <div className="task-dialog__hint">
                 标签支持中英文逗号分隔；截止日期可留空，稍后在列表里再排序整理。
               </div>
 
-              <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 8 }}>
+              <div className="task-dialog__actions">
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
                   disabled={isSubmitting}
-                  style={{
-                    border: "1px solid var(--border)",
-                    background: "rgba(255,255,255,0.84)",
-                    padding: "12px 16px",
-                    borderRadius: 999,
-                    fontWeight: 700,
-                  }}
+                  className="tesla-action tesla-action--secondary"
                 >
                   取消
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  style={{
-                    border: "1px solid transparent",
-                    padding: "12px 16px",
-                    borderRadius: 999,
-                    background: "linear-gradient(135deg, var(--primary), var(--data-cyan))",
-                    color: "var(--primary-foreground)",
-                    fontWeight: 700,
-                    opacity: isSubmitting ? 0.8 : 1,
-                    boxShadow: "0 10px 22px rgba(37,99,235,0.18)",
-                  }}
+                  className="tesla-action tesla-action--primary"
                 >
                   {isSubmitting ? "保存中..." : submitLabel}
                 </button>
               </div>
-              {submitError ? <p style={{ margin: 0, color: "var(--danger)", fontSize: "0.95rem" }}>{submitError}</p> : null}
+              {submitError ? <p className="task-dialog__error">{submitError}</p> : null}
             </form>
           </div>
         </div>,
@@ -336,19 +279,12 @@ export function TaskFormDialog({
 
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
-    <label style={{ display: "grid", gap: 8 }}>
-      <span className="ui-sans" style={{ fontSize: "0.95rem", fontWeight: 600 }}>{label}</span>
+    <label className="task-dialog__field">
+      <span className="task-dialog__label">{label}</span>
       {children}
-      {error ? <span style={{ color: "var(--danger)", fontSize: "0.9rem" }}>{error}</span> : null}
+      {error ? <span className="task-dialog__error">{error}</span> : null}
     </label>
   );
-}
-
-function inputStyle(hasError: boolean) {
-  return {
-    width: "100%",
-    ...(hasError ? { borderColor: "rgba(178,64,55,0.48)" } : {}),
-  };
 }
 
 const taskStatusOptions: Array<CustomSelectOption<TaskFormValues["status"]>> = [

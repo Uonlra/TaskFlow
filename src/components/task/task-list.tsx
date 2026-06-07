@@ -32,7 +32,7 @@ export function TaskList({
   }
 
   return (
-    <div style={{ display: "grid", gap: compact ? 14 : 18 }}>
+    <div className={compact ? "task-list task-list--compact" : "task-list"}>
       {tasks.map((task) => (
         <TaskCard
           key={task.id}

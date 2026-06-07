@@ -10,6 +10,7 @@ type ConfirmDialogProps = {
   description: string;
   confirmLabel?: string;
   onConfirm: () => void | Promise<void>;
+  triggerClassName?: string;
   triggerStyle?: CSSProperties;
   confirmTone?: "default" | "danger";
 };
@@ -20,6 +21,7 @@ export function ConfirmDialog({
   description,
   confirmLabel = "确认",
   onConfirm,
+  triggerClassName,
   triggerStyle,
   confirmTone = "default",
 }: ConfirmDialogProps) {
@@ -74,7 +76,7 @@ export function ConfirmDialog({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} style={triggerStyle}>
+      <button type="button" onClick={() => setOpen(true)} className={triggerClassName} style={triggerStyle}>
         {triggerLabel}
       </button>
       {open && mounted
@@ -87,48 +89,33 @@ export function ConfirmDialog({
           }}
         >
           <section
-            className="card-surface"
-            style={{
-              width: "min(520px, 100%)",
-              borderRadius: 28,
-              padding: 24,
-            }}
+            className="confirm-dialog card-surface"
           >
             <p
-              className="section-eyebrow"
-              style={{
-                margin: 0,
-                color: confirmTone === "danger" ? "var(--danger)" : "var(--primary)",
-                fontWeight: 700,
-                fontSize: "0.82rem",
-              }}
+              className={
+                confirmTone === "danger"
+                  ? "section-eyebrow confirm-dialog__eyebrow confirm-dialog__eyebrow--danger"
+                  : "section-eyebrow confirm-dialog__eyebrow"
+              }
             >
               请确认操作
             </p>
-            <h2 style={{ margin: "10px 0 0", fontSize: "1.5rem" }}>{title}</h2>
-            <p style={{ margin: "12px 0 0", color: "var(--muted-strong)", lineHeight: 1.7 }}>{description}</p>
-            {submitError ? <p style={{ margin: "12px 0 0", color: "var(--danger)", lineHeight: 1.7 }}>{submitError}</p> : null}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 24 }}>
-              <button type="button" onClick={() => setOpen(false)} style={secondaryButtonStyle}>
+            <h2 className="confirm-dialog__title">{title}</h2>
+            <p className="confirm-dialog__description">{description}</p>
+            {submitError ? <p className="confirm-dialog__error">{submitError}</p> : null}
+            <div className="confirm-dialog__actions">
+              <button type="button" onClick={() => setOpen(false)} className="tesla-action tesla-action--secondary">
                 取消
               </button>
               <button
                 type="button"
                 onClick={handleConfirm}
                 disabled={isSubmitting}
-                className="ui-sans"
-                style={{
-                  ...primaryButtonStyle,
-                  background:
-                    confirmTone === "danger"
-                      ? "linear-gradient(135deg, var(--danger), #f97316)"
-                      : "linear-gradient(135deg, var(--primary), var(--data-cyan))",
-                  opacity: isSubmitting ? 0.8 : 1,
-                  boxShadow:
-                    confirmTone === "danger"
-                      ? "0 10px 24px rgba(239,68,68,0.18)"
-                      : "0 10px 24px rgba(37,99,235,0.18)",
-                }}
+                className={
+                  confirmTone === "danger"
+                    ? "tesla-action tesla-action--danger confirm-dialog__confirm-danger"
+                    : "tesla-action tesla-action--primary"
+                }
               >
                 {isSubmitting ? "处理中..." : confirmLabel}
               </button>
@@ -155,34 +142,9 @@ function Overlay({
           onDismiss();
         }
       }}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 40,
-        overflowY: "auto",
-        padding: 20,
-        background: "rgba(16, 24, 40, 0.38)",
-        display: "grid",
-        placeItems: "center",
-      }}
+      className="dialog-overlay"
     >
       {children}
     </div>
   );
 }
-
-const secondaryButtonStyle = {
-  border: "1px solid var(--border)",
-  background: "rgba(255,255,255,0.86)",
-  padding: "12px 16px",
-  borderRadius: 999,
-  fontWeight: 700,
-} satisfies CSSProperties;
-
-const primaryButtonStyle = {
-  border: "1px solid transparent",
-  padding: "12px 16px",
-  borderRadius: 999,
-  color: "var(--primary-foreground)",
-  fontWeight: 700,
-} satisfies CSSProperties;

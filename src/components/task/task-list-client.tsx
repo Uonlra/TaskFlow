@@ -213,55 +213,38 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
   return (
     <section className="tasks-toolbar">
       {!isConfigured ? (
-        <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
-          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.76 }}>
+        <section className="notice-card card-surface">
+          <p>
             当前还没有连接 Appwrite，所以你正在编辑保存在浏览器本地的演示任务。
           </p>
         </section>
       ) : null}
       {error ? (
-        <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
-          <p style={{ margin: 0, color: "var(--danger)", lineHeight: 1.7 }}>{error}</p>
+        <section className="notice-card notice-card--error card-surface">
+          <p>{error}</p>
         </section>
       ) : null}
       <section className="tasks-highlight-grid">
-        <article
-          className="card-surface dashboard-highlight-card"
-          style={{
-            borderRadius: 28,
-            padding: "24px 24px 28px",
-            background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,250,255,0.86))",
-          }}
-        >
-          <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
+        <article className="tasks-hero-card card-surface">
+          <p className="section-eyebrow panel-eyebrow">
             Task View
           </p>
-          <h2 style={{ margin: "12px 0 0", fontSize: "clamp(1.8rem, 3vw, 2.5rem)", lineHeight: 1.18 }}>
+          <h2 className="panel-title panel-title--large">
             把零散事项
             <br />
             收成一列清晰工作流
           </h2>
-          <p style={{ margin: "14px 0 0", maxWidth: 560, color: "var(--muted-strong)", lineHeight: 1.82 }}>
+          <p className="panel-description">
             用筛选、排序和标签把任务列表整理成一个可执行的视图。先看清，后推进，减少来回切换的耗损。
           </p>
         </article>
 
-        <aside
-          className="card-surface"
-          style={{
-            borderRadius: 28,
-            padding: 22,
-            background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(237,245,255,0.88))",
-            display: "grid",
-            gap: 16,
-            alignContent: "start",
-          }}
-        >
+        <aside className="tasks-create-card card-surface">
           <div>
-            <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
+            <p className="section-eyebrow panel-eyebrow">
               新建任务
             </p>
-            <p style={{ margin: "10px 0 0", color: "var(--muted-strong)", lineHeight: 1.8 }}>
+            <p className="panel-description panel-description--compact">
               用一条明确标题、标签和截止日期，把新的事项快速纳入当前工作流。
             </p>
           </div>
@@ -269,7 +252,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
         </aside>
       </section>
 
-      <div style={{ display: "grid", gap: 16 }}>
+      <div className="tasks-filter-area">
         <TaskFilterBar
           filters={filters}
           resultCount={filteredTasks.length}
@@ -278,60 +261,29 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
           onReset={handleResetFilters}
         />
       </div>
-      <section
-        className="card-surface"
-        style={{
-          borderRadius: 24,
-          padding: "18px 20px",
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 16,
-          alignItems: "center",
-          flexWrap: "wrap",
-          background: "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(244,248,255,0.84))",
-        }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.8rem" }}>
+      <section className="tasks-view-summary card-surface">
+        <div className="tasks-view-summary__copy">
+          <p className="section-eyebrow panel-eyebrow">
             当前任务视图
           </p>
-          <p style={{ margin: "8px 0 0", color: "var(--muted-strong)", lineHeight: 1.76 }}>{summaryLabel}</p>
+          <p>{summaryLabel}</p>
         </div>
         {hasActiveFilters ? (
           <button
             type="button"
             onClick={handleResetFilters}
-            className="ui-sans"
-            style={{
-              border: "1px solid var(--border)",
-              background: "rgba(255,255,255,0.84)",
-              padding: "12px 16px",
-              borderRadius: 999,
-              fontWeight: 700,
-            }}
+            className="tesla-action tesla-action--secondary"
           >
             回到全部任务
           </button>
         ) : null}
       </section>
       {(deadlineSummary.overdue > 0 || deadlineSummary.today > 0 || deadlineSummary.upcoming > 0) && (
-        <section
-          className="card-surface"
-          style={{
-            borderRadius: 24,
-            padding: 20,
-            display: "grid",
-            gap: 10,
-            background:
-              deadlineSummary.overdue > 0
-                ? "linear-gradient(135deg, rgba(239,68,68,0.1), rgba(255,255,255,0.84))"
-                : "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(237,245,255,0.8))",
-          }}
-        >
-          <p className="section-eyebrow" style={{ margin: 0, color: deadlineSummary.overdue > 0 ? "var(--danger)" : "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
+        <section className={deadlineSummary.overdue > 0 ? "tasks-deadline-card tasks-deadline-card--danger card-surface" : "tasks-deadline-card card-surface"}>
+          <p className={deadlineSummary.overdue > 0 ? "section-eyebrow panel-eyebrow panel-eyebrow--danger" : "section-eyebrow panel-eyebrow"}>
             截止提醒
           </p>
-          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.8 }}>
+          <p>
             {deadlineSummary.overdue > 0
               ? `当前有 ${deadlineSummary.overdue} 条任务已经逾期，建议优先收口。`
               : deadlineSummary.today > 0
@@ -341,8 +293,8 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
         </section>
       )}
       {isConfigured && isLoading ? (
-        <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
-          <p style={{ margin: 0, color: "var(--muted-strong)" }}>正在从 Appwrite 同步任务...</p>
+        <section className="notice-card card-surface">
+          <p>正在从 Appwrite 同步任务...</p>
         </section>
       ) : null}
       <TaskList

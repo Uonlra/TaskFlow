@@ -11,9 +11,9 @@ export function DashboardShell({ children }: DashboardShellProps) {
   return (
     <div className="app-shell dashboard-shell">
       <AppSidebar />
-      <div style={{ minWidth: 0 }}>
+      <div className="dashboard-main">
         <AppTopbar />
-        <main style={{ marginTop: 20 }}>{children}</main>
+        <main className="dashboard-content">{children}</main>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent, CSSProperties, ReactNode } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 
 import {
   CustomSelect,
@@ -49,29 +49,23 @@ export function TaskFilterBar({
     };
 
   return (
-    <section
-      className="card-surface"
-      style={{
-        borderRadius: 28,
-        padding: 22,
-      }}
-    >
-      <div style={{ display: "grid", gap: 8, marginBottom: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "start", flexWrap: "wrap" }}>
-          <div style={{ display: "grid", gap: 8 }}>
-            <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
+    <section className="task-filter card-surface">
+      <div className="task-filter__header">
+        <div className="task-filter__copy">
+          <div>
+            <p className="section-eyebrow task-filter__eyebrow">
               筛选工具
             </p>
-            <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.75 }}>
+            <p className="task-filter__description">
               通过关键词、标签、优先级和排序方式，把当前任务列表收束成清楚的工作视图。
             </p>
           </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <span className="ui-sans" style={summaryPillStyle}>
+          <div className="task-filter__meta">
+            <span className="task-filter__count">
               当前结果 {resultCount} / {totalCount}
             </span>
             {hasActiveFilters ? (
-              <button type="button" onClick={onReset} className="ui-sans" style={resetButtonStyle}>
+              <button type="button" onClick={onReset} className="tesla-action tesla-action--secondary">
                 清空筛选
               </button>
             ) : null}
@@ -86,7 +80,6 @@ export function TaskFilterBar({
             onChange={updateField("query")}
             className="task-field"
             placeholder="搜索任务关键词"
-            style={controlStyle}
           />
         </FilterField>
 
@@ -96,7 +89,6 @@ export function TaskFilterBar({
             onChange={updateField("tag")}
             className="task-field"
             placeholder="按标签筛选"
-            style={controlStyle}
           />
         </FilterField>
 
@@ -133,38 +125,14 @@ export function TaskFilterBar({
 
 function FilterField({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label style={{ display: "grid", gap: 8 }}>
-      <span className="ui-sans" style={{ fontSize: "0.9rem", color: "var(--muted)", fontWeight: 600 }}>
+    <label className="task-filter__field">
+      <span className="task-filter__label">
         {label}
       </span>
       {children}
     </label>
   );
 }
-
-const controlStyle = {
-  width: "100%",
-} satisfies CSSProperties;
-
-const summaryPillStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  padding: "10px 14px",
-  borderRadius: 999,
-  background: "rgba(37,99,235,0.08)",
-  color: "var(--data-ink)",
-  fontWeight: 700,
-  fontSize: "0.92rem",
-} satisfies CSSProperties;
-
-const resetButtonStyle = {
-  border: "1px solid var(--border)",
-  background: "rgba(255,255,255,0.84)",
-  color: "var(--foreground)",
-  padding: "10px 14px",
-  borderRadius: 999,
-  fontWeight: 700,
-} satisfies CSSProperties;
 
 const statusOptions: Array<CustomSelectOption<TaskStatus | "all">> = [
   { value: "all", label: "全部状态", description: "查看所有任务" },
