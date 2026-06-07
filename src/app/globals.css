@@ -377,6 +377,14 @@ textarea:focus {
   padding: 0 8px;
 }
 
+.dashboard-sidebar-title-row {
+  display: block;
+}
+
+.dashboard-sidebar-title-row .dashboard-topbar--mobile {
+  display: none;
+}
+
 .dashboard-sidebar-title {
   margin: 16px 0 0;
   color: var(--foreground);
@@ -648,6 +656,10 @@ textarea:focus {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.dashboard-topbar--mobile {
+  display: none;
 }
 
 .dashboard-signout-button {
@@ -2049,26 +2061,110 @@ textarea:focus {
     padding: 12px;
   }
 
+  .dashboard-main > .dashboard-topbar {
+    display: none;
+  }
+
   .dashboard-sidebar {
     grid-template-columns: 1fr;
     gap: 14px;
-    padding: 16px 0;
+    padding: 14px 0 12px;
     overflow: hidden;
   }
 
   .dashboard-sidebar-head {
-    padding: 0 16px;
+    padding: 0 4px;
+  }
+
+  .dashboard-sidebar-title-row {
+    display: grid;
+    grid-template-columns: minmax(96px, 0.8fr) minmax(0, 1.35fr);
+    gap: 10px;
+    align-items: center;
+  }
+
+  .dashboard-sidebar-title-copy {
+    min-width: 0;
+  }
+
+  .dashboard-sidebar-title-row .dashboard-topbar--mobile {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .dashboard-brand {
+    font-size: 13px;
+  }
+
+  .dashboard-sidebar-title {
+    margin-top: 6px;
+    font-size: 24px;
   }
 
   .dashboard-sidebar-subtitle {
     display: none;
   }
 
+  .dashboard-topbar--mobile .dashboard-topbar__meta {
+    min-width: 0;
+    flex: initial;
+  }
+
+  .dashboard-topbar--mobile .dashboard-topbar__status {
+    width: max-content;
+    max-width: 100%;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: #f4f4f4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  .dashboard-topbar--mobile .dashboard-topbar__description {
+    display: none;
+  }
+
+  .dashboard-topbar--mobile .dashboard-topbar__actions {
+    min-width: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .dashboard-topbar--mobile .dashboard-avatar {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+  }
+
+  .dashboard-topbar--mobile .dashboard-topbar__profile {
+    max-width: 96px;
+    min-height: 32px;
+    padding: 4px 9px;
+    font-size: 13px;
+  }
+
+  .dashboard-topbar--mobile .dashboard-signout-button {
+    min-height: 32px;
+    padding: 4px 10px;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
   .dashboard-sidebar-nav {
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    padding: 0 16px 2px;
+    padding: 0 4px 2px;
     scrollbar-width: none;
   }
 
