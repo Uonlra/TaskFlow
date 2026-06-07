@@ -11,9 +11,9 @@ TaskFlow 是一个偏个人工作台风格的任务管理项目，用来把任�
 
 ## 项目截图
 
-| 首页 | Dashboard |
+| 登录 | Dashboard |
 | --- | --- |
-| ![TaskFlow landing page](docs/screenshots/landing.png) | ![TaskFlow dashboard](docs/screenshots/dashboard.png) |
+| ![TaskFlow login page](docs/screenshots/auth-login-review.png) | ![TaskFlow dashboard](docs/screenshots/dashboard.png) |
 
 | 任务列表 | 设置页 |
 | --- | --- |
