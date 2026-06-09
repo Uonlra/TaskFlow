@@ -66,14 +66,14 @@ export function LoginForm() {
       setSubmitError(null);
       showToast({
         title: "邮箱验证完成",
-        description: "你的邮箱已经验证成功，现在可以登录进入工作台。",
+        description: "你的邮箱已经验证成功，现在可以登录进入任务本。",
         tone: "success",
       });
       return;
     }
 
     if (reason === "verify-email") {
-      setSubmitError("请先完成邮箱验证后再进入工作台。");
+      setSubmitError("请先完成邮箱验证后再进入任务本。");
     }
   }, [searchParams, showToast]);
 
@@ -152,7 +152,7 @@ export function LoginForm() {
       setIsPreviewUnlocked(true);
       showToast({
         title: "登录成功",
-        description: "左侧已经自动更新为你的真实任务概览。",
+        description: "左侧已经更新为你的真实任务概览。",
         tone: "success",
       });
     } catch (error) {
@@ -174,8 +174,8 @@ export function LoginForm() {
       title="欢迎回来"
       description={
         hasAppwritePublicEnv
-          ? "登录以继续你的任务管理之旅。"
-          : "当前以本地演示模式运行，登录后即可进入工作台。"
+          ? "登录后继续整理你的任务。"
+          : "当前以本地演示模式运行，登录后即可进入任务本。"
       }
       footer={
         <>
@@ -270,9 +270,9 @@ function AccountLookupMessage({
     status === "checking"
       ? "正在确认邮箱状态..."
       : status === "registered"
-        ? "这个邮箱看起来已有工作台，输入密码后即可登录。"
+        ? "这个邮箱看起来已经有记录，输入密码后即可登录。"
         : status === "available"
-          ? "这个邮箱还没有工作台。可以继续尝试登录，也可以先去注册。"
+          ? "这个邮箱还没有记录。可以继续尝试登录，也可以先去注册。"
           : "暂时无法确认邮箱状态，可以继续登录。";
 
   return (
@@ -303,7 +303,7 @@ function PostLoginActions({
             : `已验证 ${submittedEmail}。`}
       </p>
       <button type="button" className="auth-submit-button" onClick={onEnterDashboard}>
-        进入仪表盘
+        进入总览
       </button>
     </div>
   );

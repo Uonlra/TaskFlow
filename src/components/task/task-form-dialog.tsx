@@ -26,7 +26,7 @@ export function TaskFormDialog({
   initialValues,
   triggerLabel = "新建任务",
   dialogEyebrow = "创建任务",
-  dialogTitle = "补上一条新的工作事项",
+  dialogTitle = "记下一条新的任务",
   submitLabel = "创建任务",
 }: TaskFormDialogProps) {
   const headingId = useId();
@@ -101,7 +101,7 @@ export function TaskFormDialog({
       );
       setOpen(false);
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "保存任务时出了点问题，请稍后再试。");
+      setSubmitError(error instanceof Error ? error.message : "保存任务时出了点问题，稍后再试。");
     }
   };
 
@@ -156,7 +156,7 @@ export function TaskFormDialog({
                 </p>
                 <h2 id={headingId} className="task-dialog__title">{dialogTitle}</h2>
                 <p className="task-dialog__description">
-                  先把要做什么写清楚，再补状态、优先级和标签。以后回来看，也不用猜当时的自己在想什么。
+                  先写清楚要做什么，再补状态、优先级和标签。以后回看，也不用猜当时的自己在想什么。
                 </p>
               </div>
               <button
@@ -178,7 +178,7 @@ export function TaskFormDialog({
                     register("title").ref(node);
                     titleInputRef.current = node;
                   }}
-                  placeholder="例如：整理入职说明文档"
+                  placeholder="例如：整理项目说明文档"
                   aria-invalid={Boolean(errors.title)}
                 />
               </Field>
@@ -187,7 +187,7 @@ export function TaskFormDialog({
                 <textarea
                   {...register("description")}
                   className="task-field task-textarea"
-                  placeholder="写清楚要做到什么程度，顺手补一句为什么要做。"
+                  placeholder="写清楚要做到什么程度，也可以补一句为什么要做。"
                   rows={4}
                   aria-invalid={Boolean(errors.description)}
                 />
@@ -290,7 +290,7 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 const taskStatusOptions: Array<CustomSelectOption<TaskFormValues["status"]>> = [
   { value: "todo", label: "待开始", description: "还没动手" },
   { value: "in_progress", label: "进行中", description: "已经开始处理" },
-  { value: "done", label: "已完成", description: "这条已经收掉" },
+  { value: "done", label: "已完成", description: "这条已经做完" },
 ];
 
 const taskPriorityOptions: Array<CustomSelectOption<TaskFormValues["priority"]>> = [

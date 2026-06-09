@@ -76,7 +76,7 @@ export function RegisterForm() {
       setPreloginEmail(values.email.trim());
       showToast({
         title: "本地账号已创建",
-        description: `${values.name} 的本地工作台已经准备好了。`,
+        description: `${values.name} 的本地任务本已经准备好了。`,
         tone: "success",
       });
       navigateToDashboard();
@@ -117,8 +117,8 @@ export function RegisterForm() {
     const message =
       payload?.message ||
       (requiresEmailVerification
-        ? "账号已创建，请先完成邮箱验证后再登录。"
-        : `账号已创建，当前已登录 ${values.email}。`);
+          ? "账号已创建，请先完成邮箱验证后再登录。"
+          : `账号已创建，当前已登录 ${values.email}。`);
     setSubmitMessage(message);
     showToast({
       title: requiresEmailVerification ? "请查收邮箱" : "账号已创建",
@@ -137,8 +137,8 @@ export function RegisterForm() {
       title="创建账号"
       description={
         hasAppwritePublicEnv
-          ? "填写信息后即可开启你的任务管理空间。"
-          : "当前以本地演示模式运行，创建后会直接进入工作台。"
+          ? "填写信息后，就可以开始保存自己的任务记录。"
+          : "当前以本地演示模式运行，创建后会直接进入任务本。"
       }
       footer={
         <>
@@ -188,11 +188,11 @@ export function RegisterForm() {
           disabled={isSubmitting}
           className="auth-submit-button"
         >
-          {isSubmitting ? "创建中..." : "创建工作台"}
+          {isSubmitting ? "创建中..." : "创建任务本"}
         </button>
         {submittedName ? (
           <p className="auth-form-message auth-form-message--success">
-            {hasAppwritePublicEnv ? `已为 ${submittedName} 创建账号。` : `已为 ${submittedName} 创建演示工作台。`}
+            {hasAppwritePublicEnv ? `已为 ${submittedName} 创建账号。` : `已为 ${submittedName} 创建演示任务本。`}
           </p>
         ) : null}
         {submitMessage ? <p className="auth-form-message auth-form-message--success">{submitMessage}</p> : null}
@@ -215,9 +215,9 @@ function AccountLookupMessage({
     status === "checking"
       ? "正在确认邮箱状态..."
       : status === "registered"
-        ? "这个邮箱已经有工作台了，直接登录会更快。"
+        ? "这个邮箱已经有记录了，直接登录会更快。"
         : status === "available"
-          ? "这个邮箱可以创建新工作台，进度会从 0 开始。"
+          ? "这个邮箱可以创建新记录，进度会从 0 开始。"
           : "暂时无法确认邮箱状态，可以继续填写注册信息。";
 
   return <p className="auth-form-message auth-form-message--hint">{message}</p>;

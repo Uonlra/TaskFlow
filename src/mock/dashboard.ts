@@ -8,7 +8,7 @@ export const dashboardSummary: DashboardStat[] = [
   {
     label: "未完成任务",
     value: "12",
-    helper: "当前队列还算可控，不过仍有几项任务在竞争同一段注意力。",
+    helper: "当前列表还算可控，不过仍有几件事在争同一段注意力。",
   },
   {
     label: "进行中",
@@ -18,7 +18,7 @@ export const dashboardSummary: DashboardStat[] = [
   {
     label: "已完成",
     value: "18",
-    helper: "这是系统正在发挥作用、节奏正在形成的安静证据。",
+    helper: "这是这个小工具正在派上用场的安静证据。",
   },
   {
     label: "即将到期",

@@ -6,8 +6,8 @@ import { AuthProvider } from "@/providers/auth-provider";
 import { ToastProvider } from "@/providers/toast-provider";
 
 export const metadata: Metadata = {
-  title: "U's Task - 个人任务管理工具",
-  description: "一个以阅读体验与专注节奏为中心的任务工作台。",
+  title: "U's Task - 我的任务小本",
+  description: "一个独立打磨的个人任务应用，用来记录、整理和慢慢推进手头的事。",
 };
 
 type RootLayoutProps = {

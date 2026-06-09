@@ -29,14 +29,14 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
                 <span className="auth-brand-mark" aria-hidden="true">
                   ✓
                 </span>
-                <span className="section-eyebrow auth-brand-name">U&apos;s TaskFlow</span>
+                <span className="section-eyebrow auth-brand-name">U&apos;s Task</span>
               </div>
               <h1 className="auth-brand-title">
-                专注当下，
-                <span>掌控未来</span>
+                把事情放好，
+                <span>再慢慢推进</span>
               </h1>
               <p className="auth-brand-description">
-                清晰规划，高效执行，让每一件任务都推动你向前。
+                这是我给自己做的任务小应用，记录、筛选和回看都尽量清楚一点。
               </p>
             </div>
 

@@ -26,7 +26,7 @@ export function DashboardGate({ children }: { children: ReactNode }) {
         }}
       >
         <section className="card-surface" style={{ borderRadius: 28, padding: 28 }}>
-          <p style={{ margin: 0, color: "var(--muted)" }}>Loading your workspace...</p>
+          <p style={{ margin: 0, color: "var(--muted)" }}>正在打开你的任务本...</p>
         </section>
       </main>
     );
@@ -43,7 +43,7 @@ export function DashboardGate({ children }: { children: ReactNode }) {
         }}
       >
         <section className="card-surface" style={{ borderRadius: 28, padding: 28 }}>
-          <p style={{ margin: 0, color: "var(--muted)" }}>Redirecting to login...</p>
+          <p style={{ margin: 0, color: "var(--muted)" }}>正在回到登录页...</p>
         </section>
       </main>
     );

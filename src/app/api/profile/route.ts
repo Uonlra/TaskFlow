@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const sessionSecret = await getAppwriteSessionSecret();
 
   if (!sessionSecret) {
-    return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+    return NextResponse.json({ message: "请先登录后再查看资料。" }, { status: 401 });
   }
 
   const account = await getCurrentAccount(sessionSecret, request);
@@ -24,7 +24,7 @@ export async function PATCH(request: NextRequest) {
   const sessionSecret = await getAppwriteSessionSecret();
 
   if (!sessionSecret) {
-    return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+    return NextResponse.json({ message: "请先登录后再保存资料。" }, { status: 401 });
   }
 
   const payload = await request.json().catch(() => null);
@@ -32,7 +32,7 @@ export async function PATCH(request: NextRequest) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { message: parsed.error.issues[0]?.message ?? "Invalid profile payload." },
+      { message: parsed.error.issues[0]?.message ?? "资料信息格式不正确。" },
       { status: 400 },
     );
   }

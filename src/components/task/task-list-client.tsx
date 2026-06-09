@@ -119,7 +119,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 
       showToast({
         title: "任务已创建",
-        description: `“${values.title}” 加进来了，接下来慢慢收。`,
+        description: `“${values.title}” 已经记下来了。`,
         tone: "success",
       });
     } catch (error) {
@@ -172,7 +172,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       await deleteTask(id, user?.id);
       showToast({
         title: "任务已删除",
-        description: "这条任务已经移出工作台。",
+        description: "这条任务已经从任务本里移除。",
         tone: "success",
       });
     } catch (error) {
@@ -208,7 +208,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     ? "先加一条任务吧，别都放脑子里打转。"
     : hasActiveFilters
       ? `筛出了 ${filteredTasks.length} 条，先看这些就够了。`
-      : `一共有 ${tasks.length} 条任务，先从快到期或者正在做的开始吧。`;
+      : `一共有 ${tasks.length} 条任务，可以先看快到期或正在做的。`;
 
   return (
     <section className="tasks-toolbar">
@@ -227,12 +227,12 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       <section className="tasks-highlight-grid">
         <article className="tasks-hero-card card-surface">
           <p className="section-eyebrow panel-eyebrow">
-            Task View
+            任务列表
           </p>
           <h2 className="panel-title panel-title--large">
-            任务别散着
+            任务别散着放
             <br />
-            先排个队
+            先排成一列
           </h2>
           <p className="panel-description">
             搜索、筛选、排序都在这儿。先把眼前这批理顺，再动手会轻松很多。
@@ -245,7 +245,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
               新建任务
             </p>
             <p className="panel-description panel-description--compact">
-              想到什么就先记下来。标题写清楚一点，后面会少猜很多。
+              想到什么先记下来。标题写清楚一点，之后回看会少猜很多。
             </p>
           </div>
           <TaskFormDialog onSubmitTask={handleCreateTask} />
@@ -285,7 +285,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
           </p>
           <p>
             {deadlineSummary.overdue > 0
-              ? `有 ${deadlineSummary.overdue} 条已经逾期了，先处理它们比较安心。`
+              ? `有 ${deadlineSummary.overdue} 条已经逾期，先处理它们比较安心。`
               : deadlineSummary.today > 0
                 ? `有 ${deadlineSummary.today} 条今天到期，最好别拖到最后一分钟。`
                 : `接下来 3 天有 ${deadlineSummary.upcoming} 条快到了，提前看一眼就好。`}

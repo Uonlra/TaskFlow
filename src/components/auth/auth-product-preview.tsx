@@ -12,10 +12,10 @@ import { useTaskStore } from "@/store/task-store";
 type PreviewTab = "workspace" | "tasks" | "calendar" | "analytics";
 
 const previewTabs: Array<{ value: PreviewTab; label: string }> = [
-  { value: "workspace", label: "今日工作台" },
+  { value: "workspace", label: "今日总览" },
   { value: "tasks", label: "任务" },
-  { value: "calendar", label: "日历视图" },
-  { value: "analytics", label: "统计分析" },
+  { value: "calendar", label: "日期安排" },
+  { value: "analytics", label: "简单统计" },
 ];
 
 export function AuthProductPreview() {
@@ -59,7 +59,7 @@ export function AuthProductPreview() {
       <div className="auth-preview-sidebar">
         <div className="auth-preview-logo">
           <span className="auth-preview-logo-mark">✓</span>
-          <span>TaskFlow</span>
+          <span>U&apos;s Task</span>
         </div>
         <div className="auth-preview-nav-list" role="tablist" aria-label="预览视图">
           {previewTabs.map((tab) => (
@@ -127,26 +127,26 @@ function getWorkspaceHint({
   preloginSubject: string;
 }) {
   if (canPreviewUserData) {
-    return "这些数据会跟工作台一起更新。";
+    return "这些数据会跟任务本一起更新。";
   }
 
   if (accountStatus === "checking") {
-    return "正在确认这个邮箱的账号状态，真实进度先不露脸。";
+    return "正在确认这个邮箱的账号状态，真实进度先不展示。";
   }
 
   if (accountStatus === "registered") {
-    return `${preloginSubject} 看起来已有工作台。登录后再展示真实进度。`;
+    return `${preloginSubject} 看起来已经有记录。登录后再展示真实进度。`;
   }
 
   if (accountStatus === "available") {
-    return `${preloginSubject} 还没有工作台。注册后就从 0 开始认真安排。`;
+    return `${preloginSubject} 还没有记录。注册后就从 0 开始整理。`;
   }
 
   if (hasPreloginIdentity) {
     return `准备为 ${preloginSubject} 接上任务数据。登录成功后再展示真实进度。`;
   }
 
-  return "输入邮箱并登录后，就能预览你的当前进度。";
+  return "输入邮箱并登录后，就能看到你的当前进度。";
 }
 
 function getLockedPreviewMessage({
@@ -193,7 +193,7 @@ function WorkspacePreview({ summary, hint }: { summary: TaskPreviewSummary; hint
           <span>已完成 {summary.doneCount}</span>
         </div>
       </div>
-      <PreviewTaskList tasks={previewTasks} emptyText="登录后，今天要忙什么会乖乖排到这里。" />
+      <PreviewTaskList tasks={previewTasks} emptyText="登录后，今天要做什么会排在这里。" />
     </>
   );
 }
@@ -210,8 +210,8 @@ function TasksPreview({
   hasPreloginIdentity: boolean;
 }) {
   const fallback = hasPreloginIdentity
-    ? "身份先记上了。登录成功后，待办清单会在这里集合。"
-    : "先输入邮箱并登录，待办清单才会露面。";
+    ? "身份先记上了。登录成功后，待办清单会出现在这里。"
+    : "先输入邮箱并登录，待办清单会在这里显示。";
 
   return (
     <PreviewTaskList
@@ -221,9 +221,9 @@ function TasksPreview({
           ? "现在没有待推进任务，挺清爽。"
           : getLockedPreviewMessage({
               accountStatus,
-              available: "这个邮箱还没开工。注册后，第一批待办就在这里排队。",
+              available: "这个邮箱还没有记录。注册后，第一批待办就在这里排队。",
               fallback,
-              registered: "这个邮箱已有工作台。登录后，待办清单会正式集合。",
+              registered: "这个邮箱已有记录。登录后，待办清单会正式显示。",
             })
       }
     />
@@ -243,7 +243,7 @@ function CalendarPreview({
 }) {
   const fallback = hasPreloginIdentity
     ? "账号信息已就位。登录后，日期安排会按顺序排好。"
-    : "登录后再按日期帮你排好，不让事情挤成一团。";
+    : "登录后再按日期排好，不让事情挤成一团。";
 
   return (
     <div className="auth-preview-list">
@@ -257,9 +257,9 @@ function CalendarPreview({
         <p className="auth-preview-empty">
           {getLockedPreviewMessage({
             accountStatus,
-            available: "这个邮箱还没有日程。注册后，日期格子会从空白开始填满。",
+            available: "这个邮箱还没有日期记录。注册后，日期格子会从空白开始填满。",
             fallback,
-            registered: "这个邮箱已有日程数据。登录后再展示，安全第一，安排第二。",
+            registered: "这个邮箱已有日期记录。登录后再展示。",
           })}
         </p>
       ) : null}
@@ -279,8 +279,8 @@ function AnalyticsPreview({
   hasPreloginIdentity: boolean;
 }) {
   const fallback = hasPreloginIdentity
-    ? "先不剧透真实数据。登录后，完成率和优先级会认真算给你看。"
-    : "登录后再看统计，数字会更诚实。";
+    ? "先不展示真实数据。登录后，完成率和优先级会算给你看。"
+    : "登录后再看统计，数字会更准确。";
 
   return (
     <div className="auth-preview-list">
@@ -302,7 +302,7 @@ function AnalyticsPreview({
             accountStatus,
             available: "这个邮箱还没有统计记录。注册后，完成率会从 0 开始累积。",
             fallback,
-            registered: "这个邮箱已有统计数据。登录后再看，数字不会提前泄密。",
+            registered: "这个邮箱已有统计数据。登录后再看。",
           })}
         </p>
       ) : null}

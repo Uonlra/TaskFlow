@@ -19,14 +19,14 @@ export async function PATCH(
   const auth = await getCurrentAuthEnvelope();
 
   if (!sessionSecret || !auth?.user) {
-    return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+    return NextResponse.json({ message: "请先登录后再修改任务。" }, { status: 401 });
   }
 
   const { id } = await context.params;
   const currentTask = await getTask(sessionSecret, id, request);
 
   if (currentTask.assignedTo !== auth.user.id) {
-    return NextResponse.json({ message: "Task not found." }, { status: 404 });
+    return NextResponse.json({ message: "没有找到这条任务。" }, { status: 404 });
   }
 
   const payload = await request.json().catch(() => null);
@@ -47,7 +47,7 @@ export async function PATCH(
 
   if (!parsedTask.success) {
     return NextResponse.json(
-      { message: parsedTask.error.issues[0]?.message ?? "Invalid task payload." },
+      { message: parsedTask.error.issues[0]?.message ?? "任务信息格式不正确。" },
       { status: 400 },
     );
   }
@@ -74,14 +74,14 @@ export async function DELETE(
   const auth = await getCurrentAuthEnvelope();
 
   if (!sessionSecret || !auth?.user) {
-    return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+    return NextResponse.json({ message: "请先登录后再删除任务。" }, { status: 401 });
   }
 
   const { id } = await context.params;
   const currentTask = await getTask(sessionSecret, id, request);
 
   if (currentTask.assignedTo !== auth.user.id) {
-    return NextResponse.json({ message: "Task not found." }, { status: 404 });
+    return NextResponse.json({ message: "没有找到这条任务。" }, { status: 404 });
   }
 
   await deleteTask(sessionSecret, id, request);

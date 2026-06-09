@@ -18,14 +18,14 @@ export async function POST(request: NextRequest) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { message: parsed.error.issues[0]?.message ?? "Invalid register payload." },
+      { message: parsed.error.issues[0]?.message ?? "注册信息格式不正确。" },
       { status: 400 },
     );
   }
 
   if (!hasAppwriteAuthEnv) {
     return NextResponse.json(
-      { message: "Appwrite is not configured." },
+      { message: "Appwrite 还没有配置完成。" },
       { status: 503 },
     );
   }
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         message:
           error instanceof AppwriteRequestError || error instanceof Error
             ? error.message
-            : "Registration failed.",
+            : "注册失败，请稍后再试。",
       },
       { status: 400 },
     );

@@ -10,9 +10,9 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
   return (
     <section className="card-surface" style={{ borderRadius: 28, padding: 24 }}>
       <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
-        轨迹
+        记录
       </p>
-      <h2 style={{ margin: "10px 0 0", fontSize: "1.18rem" }}>最近动静</h2>
+      <h2 style={{ margin: "10px 0 0", fontSize: "1.18rem" }}>最近修改</h2>
       <div style={{ marginTop: 18, display: "grid", gap: 14 }}>
         {items.length ? (
           items.map((item) => (
@@ -48,7 +48,7 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
           ))
         ) : (
           <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.7 }}>
-            还没有新的操作记录。等你创建、更新或完成任务，这里就会有动静。
+            还没有新的记录。创建、更新或完成任务后，这里会留下简单的时间线。
           </p>
         )}
       </div>
