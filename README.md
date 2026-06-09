@@ -15,7 +15,7 @@ TaskFlow 是一个偏个人任务本风格的小应用，用来把任务记录�
 
 | 首页 | 总览 |
 | --- | --- |
-| ![TaskFlow landing page](docs/screenshots/landing.png) | ![TaskFlow dashboard](docs/screenshots/dashboard.png) |
+| ![TaskFlow login page](docs/screenshots/auth-login-review.png) | ![TaskFlow dashboard](docs/screenshots/dashboard.png) |
 
 | 任务列表 | 设置页 |
 | --- | --- |
