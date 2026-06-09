@@ -7,8 +7,8 @@ export default function SettingsPage() {
     <PageContainer>
       <PageHeader
         eyebrow="设置"
-        title="让你的身份信息与工作台风格保持一致"
-        description="统一姓名、头像和账号信息，让导航、顶部信息区和设置页都呈现出一致的个人工作台状态。"
+        title="留一点自己的痕迹"
+        description="设置姓名、头像和账号信息，让这个任务本更像你平时会打开的工具。"
       />
       <SettingsClient />
     </PageContainer>

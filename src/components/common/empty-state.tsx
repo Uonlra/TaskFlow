@@ -18,7 +18,7 @@ export function EmptyState({ title, description, action }: EmptyStateProps) {
       }}
     >
       <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
-        Empty State
+        暂时为空
       </p>
       <h3 style={{ margin: "8px 0 0", fontSize: "1.2rem" }}>{title}</h3>
       <p style={{ margin: "12px auto 0", maxWidth: 520, color: "var(--muted-strong)", lineHeight: 1.7 }}>{description}</p>

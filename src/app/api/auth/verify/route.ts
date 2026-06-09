@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
 
   if (!payload?.userId || !payload.secret) {
     return NextResponse.json(
-      { message: "Missing verification parameters." },
+      { message: "缺少邮箱验证参数。" },
       { status: 400 },
     );
   }
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         message:
           error instanceof AppwriteRequestError || error instanceof Error
             ? error.message
-            : "Verification failed.",
+            : "邮箱验证失败，请稍后再试。",
       },
       { status: 400 },
     );

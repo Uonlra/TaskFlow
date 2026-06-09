@@ -25,7 +25,7 @@ export function TaskList({
     return (
       <EmptyState
         title="这里暂时很安静"
-        description="可以放宽筛选条件，或者新建一条任务，先让列表动起来。"
+        description="可以放宽筛选条件，或者新建一条任务，先把要做的事放进来。"
         action={emptyAction}
       />
     );

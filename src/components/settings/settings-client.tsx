@@ -31,7 +31,7 @@ export function SettingsClient() {
       await saveProfile(values);
       showToast({
         title: "资料已保存",
-        description: "你的工作台身份信息已经更新。",
+        description: "你的个人信息已经更新。",
         tone: "success",
       });
     } catch (error) {
@@ -76,11 +76,11 @@ export function SettingsClient() {
         >
           <div>
             <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
-              Profile
+              个人信息
             </p>
-            <h2 style={{ margin: "12px 0 0", fontSize: "1.5rem" }}>工作台身份卡</h2>
+            <h2 style={{ margin: "12px 0 0", fontSize: "1.5rem" }}>我的小名片</h2>
             <p style={{ margin: "12px 0 0", color: "var(--muted-strong)", lineHeight: 1.82 }}>
-              这里会影响顶部头像、用户昵称和整个工作台里的身份展示方式。
+              这里会影响顶部头像、用户昵称和这个应用里的身份展示方式。
             </p>
           </div>
 
@@ -138,11 +138,11 @@ export function SettingsClient() {
         >
           <div style={{ display: "grid", gap: 8 }}>
             <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
-              Account Settings
+              账号设置
             </p>
-            <h2 style={{ margin: 0, fontSize: "1.28rem" }}>工作台身份信息</h2>
+            <h2 style={{ margin: 0, fontSize: "1.28rem" }}>个人资料</h2>
             <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.74 }}>
-              调整会在顶栏、设置页和其他区域展示的姓名与头像地址。
+              调整会在顶栏、设置页和其他地方显示的姓名与头像地址。
             </p>
           </div>
 

@@ -24,8 +24,8 @@ export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
   };
   const statusLabel = isConfigured ? "Appwrite 已连接" : "本地演示模式";
   const description = isConfigured
-    ? "登录状态与任务数据由 Appwrite 支持。"
-    : "配置环境变量后，即可从本地演示切换到真实数据。";
+    ? "账号和任务会保存到 Appwrite。"
+    : "现在先用浏览器本地数据体验。";
   const displayName = profile?.fullName || user?.email || "演示用户";
   const avatarContent = profile?.avatarUrl ? (
     // eslint-disable-next-line @next/next/no-img-element

@@ -55,7 +55,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const scopedTasks = useMemo(() => filterTasksByRange(tasks, range), [range, tasks]);
   const activeScopedTasks = useMemo(() => scopedTasks.filter((task) => task.status !== "done"), [scopedTasks]);
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "今天";
-  const prioritiesTitle = range === "all" ? "全部重点任务" : `${rangeLabel}重点任务`;
+  const prioritiesTitle = range === "all" ? "所有重点任务" : `${rangeLabel}先看的任务`;
   const dueSummary = useMemo(() => {
     return activeScopedTasks.reduce(
       (summary, task) => {
@@ -92,15 +92,15 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         helper:
           range === "all"
             ? isConfigured
-              ? "Appwrite 那边的数据已经同步过来了。"
-              : "现在先用演示数据，接上 Appwrite 后就看真家伙。"
-            : `${rangeLabel}还有这些没做完，先放在眼前。`,
+              ? "Appwrite 里的任务已经同步到这里。"
+              : "现在展示的是演示数据，适合先看看手感。"
+            : `${rangeLabel}还剩这些，先放在眼前。`,
         accent: "var(--primary)",
       },
       {
         label: "进行中",
         value: String(inProgress),
-        helper: "别同时开太多坑，少一点会更稳。",
+        helper: "同时推进的事情少一点，心里会更稳。",
         accent: "var(--data-cyan)",
       },
       {
@@ -109,25 +109,25 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         helper:
           range === "all"
             ? "这些任务已经处理完，可以安心放过它们。"
-            : `${rangeLabel}完成了这些，挺好，继续。`,
+            : `${rangeLabel}已经完成这些，继续保持这个节奏。`,
         accent: "var(--data-indigo)",
       },
       {
         label: "已逾期",
         value: String(dueSummary.overdue),
-        helper: `${rangeLabel}有些任务已经晚了，先把它们捞回来。`,
+        helper: `${rangeLabel}有些任务已经晚了，先把它们补回来。`,
         accent: "var(--danger)",
       },
       {
         label: "今天到期",
         value: String(dueSummary.today),
-        helper: `${rangeLabel}今天要处理的，别拖到睡前再想起。`,
+        helper: `${rangeLabel}今天到期的事，早点看会轻松些。`,
         accent: "var(--warning)",
       },
       {
         label: "3 天内到期",
         value: String(dueSummary.upcoming),
-        helper: `${rangeLabel}这几天会靠近的任务，提前看一眼比较省心。`,
+        helper: `${rangeLabel}这几天要靠近的任务，提前看一眼比较省心。`,
         accent: "var(--warning)",
       },
     ];
@@ -163,7 +163,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       overdueCount,
       streakMessage:
         completed > 0
-          ? `${rangeLabel}完成了 ${completed} 条，节奏还不错，先别被临时事带跑。`
+          ? `${rangeLabel}完成了 ${completed} 条，节奏还不错，先别急着加太多新事。`
           : `${rangeLabel}还没完成记录，先挑一条最重要的做掉就行。`,
     };
   }, [rangeLabel, scopedTasks]);
@@ -208,15 +208,15 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           }}
         >
           <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.84rem" }}>
-            Dashboard
+            任务总览
           </p>
           <h2 style={{ margin: "14px 0 0", fontSize: "clamp(2rem, 4vw, 3rem)", lineHeight: 1.16 }}>
-            今天先看哪儿
+            今天先看哪里
             <br />
             一眼就知道
           </h2>
           <p style={{ margin: "14px 0 0", maxWidth: 620, color: "var(--muted-strong)", lineHeight: 1.86 }}>
-            这里把任务数量、完成情况和快到期的事放到一起。先扫一眼，再决定今天从哪儿下手。
+            这里把任务数量、完成情况和快到期的事放在一起。先扫一眼，再决定从哪儿下手。
           </p>
         </article>
 
@@ -237,7 +237,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
               观察视角
             </p>
             <p style={{ margin: "10px 0 0", color: "var(--muted-strong)", lineHeight: 1.82 }}>
-              想看今天、本周，还是全部，都在这儿切。别靠记忆硬扛。
+              想看今天、本周，还是全部，都可以在这里切换。别全靠记忆撑着。
             </p>
           </div>
 
@@ -293,7 +293,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
               </p>
               <h2 style={{ margin: "10px 0 0", fontSize: "1.28rem" }}>{prioritiesTitle}</h2>
             <p style={{ margin: "8px 0 0", color: "var(--muted-strong)" }}>
-                {isLoading ? "正在同步任务，稍等一下..." : `${rangeLabel}先看这几条，别一上来就全量开打。`}
+                {isLoading ? "正在同步任务，稍等一下..." : `${rangeLabel}先看这几条，别一开始就把所有事摊开。`}
               </p>
             </div>
           </div>

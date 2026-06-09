@@ -22,7 +22,7 @@ export default function NotFoundPage() {
         <p style={{ margin: 0, color: "var(--primary)", fontWeight: 700, letterSpacing: "0.08em" }}>未找到页面</p>
         <h1 style={{ margin: "12px 0 0", fontSize: "2rem" }}>这个页面暂时不存在</h1>
         <p style={{ margin: "14px 0 0", color: "var(--muted)", lineHeight: 1.7 }}>
-          你打开的路径目前还没有内容，不过主工作台已经准备好了，可以先从仪表盘继续。
+          你打开的路径目前还没有内容，可以先回到总览继续整理任务。
         </p>
         <Link
           href="/dashboard"
@@ -36,7 +36,7 @@ export default function NotFoundPage() {
             fontWeight: 700,
           }}
         >
-          前往仪表盘
+          回到总览
         </Link>
       </section>
     </main>

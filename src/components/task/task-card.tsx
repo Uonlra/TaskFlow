@@ -107,14 +107,14 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
             initialValues={taskValues}
             triggerLabel="编辑"
             dialogEyebrow="编辑任务"
-            dialogTitle="修改任务内容"
+            dialogTitle="调整这条任务"
             submitLabel="保存修改"
           />
         ) : null}
         <ConfirmDialog
           triggerLabel="删除"
           title="确认删除这条任务？"
-          description="删除后会从当前工作台与浏览器本地存储中移除，无法恢复。"
+          description="删除后会从当前任务本与浏览器本地存储中移除，无法恢复。"
           confirmLabel="确认删除"
           confirmTone="danger"
           onConfirm={() => onDeleteTask?.(task.id)}

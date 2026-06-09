@@ -41,7 +41,7 @@ export function TaskDetailClient({ id }: { id: string }) {
     return (
       <PageContainer>
         <section className="card-surface" style={{ borderRadius: 28, padding: 28 }}>
-          <p style={{ margin: 0, color: "var(--muted-strong)" }}>正在从 Appwrite 加载任务详情...</p>
+          <p style={{ margin: 0, color: "var(--muted-strong)" }}>正在从 Appwrite 读取任务详情...</p>
         </section>
       </PageContainer>
     );
@@ -76,9 +76,9 @@ export function TaskDetailClient({ id }: { id: string }) {
   const handleDelete = async () => {
     try {
       await deleteTask(task.id, user?.id);
-      showToast({
-        title: "任务已删除",
-        description: "这条任务已经从当前工作台中移除。",
+        showToast({
+          title: "任务已删除",
+        description: "这条任务已经从当前任务本中移除。",
         tone: "success",
       });
       router.push("/tasks");
@@ -113,7 +113,7 @@ export function TaskDetailClient({ id }: { id: string }) {
           返回任务列表
         </Link>
         <p className="ui-sans" style={{ margin: 0, color: "var(--muted)", fontSize: "0.92rem" }}>
-          进入详情后，优先确认状态、截止时间和说明是否仍然准确。
+          进入详情后，先确认状态、截止时间和说明是否还准确。
         </p>
       </div>
       <section
@@ -128,11 +128,11 @@ export function TaskDetailClient({ id }: { id: string }) {
           <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "start" }}>
             <div>
               <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
-                Task Detail
+                任务详情
               </p>
               <h1 style={{ margin: "12px 0 0", fontSize: "clamp(2rem, 4vw, 2.8rem)", lineHeight: 1.18 }}>{task.title}</h1>
               <p style={{ margin: "12px 0 0", maxWidth: 700, color: "var(--muted-strong)", lineHeight: 1.82 }}>
-                这里整理这条任务的状态、截止信息、标签与说明，让你在进入细节时依然保持清晰的工作视角。
+                这里放着这条任务的状态、截止信息、标签与说明，方便你回到细节时快速接上思路。
               </p>
             </div>
             <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
@@ -186,13 +186,13 @@ export function TaskDetailClient({ id }: { id: string }) {
               initialValues={taskValues}
               triggerLabel="编辑任务"
               dialogEyebrow="编辑任务"
-              dialogTitle="修改这条任务的内容"
+              dialogTitle="调整这条任务"
               submitLabel="保存修改"
             />
             <ConfirmDialog
               triggerLabel="删除任务"
               title="确认删除这条任务？"
-              description="删除后它会从当前工作台中移除，并跳回任务列表。"
+              description="删除后它会从当前任务本中移除，并跳回任务列表。"
               confirmLabel="确认删除"
               confirmTone="danger"
               onConfirm={handleDelete}
@@ -235,8 +235,8 @@ export function TaskDetailClient({ id }: { id: string }) {
         }}
       >
         <InfoCard title="截止日期" value={task.dueDate ?? "未设置"} helper={dueMeta.label} helperTone={dueMeta.tone} />
-        <InfoCard title="归属人" value="你" helper="当前登录身份下的任务详情" />
-        <InfoCard title="创建时间" value={formatDateLabel(task.createdAt)} helper="用于回看任务进入工作台的时间点" />
+        <InfoCard title="归属人" value="你" helper="当前账号下的任务详情" />
+        <InfoCard title="创建时间" value={formatDateLabel(task.createdAt)} helper="用于回看任务被记下的时间点" />
       </section>
 
       <section
@@ -248,7 +248,7 @@ export function TaskDetailClient({ id }: { id: string }) {
         }}
       >
         <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
-          Description
+          说明
         </p>
         <h2 style={{ margin: "10px 0 0", fontSize: "1.18rem" }}>任务说明</h2>
         <p style={{ margin: "14px 0 0", color: "var(--muted-strong)", lineHeight: 1.86 }}>{task.description}</p>

@@ -28,12 +28,12 @@ export async function GET(request: NextRequest) {
 
 function getLookupMessage(status: "registered" | "available" | "unknown") {
   if (status === "registered") {
-    return "这个邮箱看起来已经有工作台了。登录后再展示真实进度。";
+    return "这个邮箱看起来已经有记录了。登录后再展示真实进度。";
   }
 
   if (status === "available") {
-    return "这个邮箱还没有工作台。注册后就从 0 开始认真安排。";
+    return "这个邮箱还没有记录。注册后就从 0 开始整理。";
   }
 
-  return "暂时无法确认账号状态。可以继续登录或注册，真实进度仍会在登录后显示。";
+  return "暂时无法确认账号状态。可以继续登录或注册，真实进度会在登录后显示。";
 }

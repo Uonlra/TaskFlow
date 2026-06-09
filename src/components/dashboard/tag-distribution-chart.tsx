@@ -12,7 +12,7 @@ export function TagDistributionChart({ items }: TagDistributionChartProps) {
       </p>
       <h2 style={{ margin: "10px 0 0", fontSize: "1.26rem" }}>标签分布</h2>
       <p style={{ margin: "8px 0 0", color: "var(--muted-strong)", lineHeight: 1.74 }}>
-        当前范围内最常出现的工作主题。
+        当前范围里最常出现的任务主题。
       </p>
       <div style={{ marginTop: 18, display: "grid", gap: 14 }}>
         {items.length ? (

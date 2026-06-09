@@ -57,7 +57,7 @@ export function TaskFilterBar({
               筛选工具
             </p>
             <p className="task-filter__description">
-              搜关键词、看标签、挑状态都在这里。任务多的时候，先筛一筛会舒服很多。
+              搜关键词、看标签、挑状态都在这里。任务多的时候，先筛一筛会清楚很多。
             </p>
           </div>
           <div className="task-filter__meta">
@@ -138,7 +138,7 @@ const statusOptions: Array<CustomSelectOption<TaskStatus | "all">> = [
   { value: "all", label: "全部状态", description: "先全部看一遍" },
   { value: "todo", label: "待开始", description: "还没动手的" },
   { value: "in_progress", label: "进行中", description: "正在处理的" },
-  { value: "done", label: "已完成", description: "已经收掉的" },
+  { value: "done", label: "已完成", description: "已经做完的" },
 ];
 
 const priorityOptions: Array<CustomSelectOption<TaskPriority | "all">> = [

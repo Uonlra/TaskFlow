@@ -8,7 +8,7 @@ export function TagSummary({ items }: TagSummaryProps) {
       <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-indigo)", fontWeight: 700, fontSize: "0.82rem" }}>
         摘要
       </p>
-      <h2 style={{ margin: "10px 0 0", fontSize: "1.18rem" }}>标签小抄</h2>
+      <h2 style={{ margin: "10px 0 0", fontSize: "1.18rem" }}>标签速览</h2>
       <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
         {items.length ? (
           items.map((item) => (

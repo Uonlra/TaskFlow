@@ -12,7 +12,7 @@ export function StatusDistributionChart({ items }: StatusDistributionChartProps)
       </p>
       <h2 style={{ margin: "10px 0 0", fontSize: "1.26rem" }}>状态分布</h2>
       <p style={{ margin: "8px 0 0", color: "var(--muted-strong)", lineHeight: 1.74 }}>
-        看看当前范围里的任务主要停留在哪个阶段。
+        看看当前范围里的任务都停在哪个阶段。
       </p>
       <div style={{ marginTop: 18, display: "grid", gap: 14 }}>
         {items.map((item) => {

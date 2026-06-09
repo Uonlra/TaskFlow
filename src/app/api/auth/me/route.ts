@@ -7,12 +7,12 @@ export async function GET() {
   const envelope = await getCurrentAuthEnvelope();
 
   if (!envelope) {
-    return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+    return NextResponse.json({ message: "请先登录。" }, { status: 401 });
   }
 
   if (!envelope.user.emailVerified) {
     const response = NextResponse.json(
-      { message: "Email verification required." },
+      { message: "请先完成邮箱验证。" },
       { status: 403 },
     );
     clearAppwriteSessionCookie(response);

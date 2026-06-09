@@ -15,8 +15,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     <PageContainer>
       <PageHeader
         eyebrow="概览"
-        title="把当前节奏看得更清楚"
-        description="从任务状态、到期提醒和最近活动里快速判断今天该先做什么。"
+        title="先看清今天的节奏"
+        description="从任务状态、到期提醒和最近记录里，判断接下来最值得做哪一件。"
       />
       <DashboardClient initialRange={initialRange} />
     </PageContainer>

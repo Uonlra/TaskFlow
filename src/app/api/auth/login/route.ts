@@ -20,14 +20,14 @@ export async function POST(request: NextRequest) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { message: parsed.error.issues[0]?.message ?? "Invalid login payload." },
+      { message: parsed.error.issues[0]?.message ?? "登录信息格式不正确。" },
       { status: 400 },
     );
   }
 
   if (!hasAppwriteAuthEnv) {
     return NextResponse.json(
-      { message: "Appwrite is not configured." },
+      { message: "Appwrite 还没有配置完成。" },
       { status: 503 },
     );
   }
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         message:
           error instanceof AppwriteRequestError || error instanceof Error
             ? error.message
-            : "Login failed.",
+            : "登录失败，请稍后再试。",
       },
       { status: 401 },
     );

@@ -29,7 +29,7 @@ export function CompletionTrendChart({ points }: CompletionTrendChartProps) {
       </p>
       <h2 style={{ margin: "10px 0 0", fontSize: "1.26rem" }}>完成趋势</h2>
       <p style={{ margin: "8px 0 0", color: "var(--muted-strong)", lineHeight: 1.74 }}>
-        观察当前范围内最近几天的任务完成节奏。
+        看看当前范围内最近几天的完成情况。
       </p>
       <div style={{ marginTop: 18 }}>
         <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} style={{ width: "100%", height: "auto", display: "block" }} aria-hidden="true">

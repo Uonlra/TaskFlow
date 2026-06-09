@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const auth = await getCurrentAuthEnvelope();
 
   if (!sessionSecret || !auth?.user) {
-    return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+    return NextResponse.json({ message: "请先登录后再查看任务。" }, { status: 401 });
   }
 
   const tasks = await listTasks(sessionSecret, auth.user.id, request);
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   const auth = await getCurrentAuthEnvelope();
 
   if (!sessionSecret || !auth?.user) {
-    return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+    return NextResponse.json({ message: "请先登录后再创建任务。" }, { status: 401 });
   }
 
   const payload = await request.json().catch(() => null);
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
   if (!parsed.success) {
     return NextResponse.json(
-      { message: parsed.error.issues[0]?.message ?? "Invalid task payload." },
+      { message: parsed.error.issues[0]?.message ?? "任务信息格式不正确。" },
       { status: 400 },
     );
   }

@@ -7,9 +7,9 @@ import { AppTopbar } from "@/components/layout/app-topbar";
 import { ROUTES } from "@/lib/constants/routes";
 
 const navItems = [
-  { label: "总览", description: "进度与预警", href: ROUTES.dashboard, icon: "overview" },
-  { label: "任务", description: "筛选与推进", href: ROUTES.tasks, icon: "tasks" },
-  { label: "设置", description: "账号偏好", href: ROUTES.settings, icon: "settings" },
+  { label: "总览", description: "今天先看这里", href: ROUTES.dashboard, icon: "overview" },
+  { label: "任务", description: "记录与整理", href: ROUTES.tasks, icon: "tasks" },
+  { label: "设置", description: "个人信息", href: ROUTES.settings, icon: "settings" },
 ];
 
 export function AppSidebar() {
@@ -27,13 +27,13 @@ export function AppSidebar() {
               U's Task
             </p>
             <h1 className="dashboard-sidebar-title">
-              工作模式
+              我的任务本
             </h1>
           </div>
           <AppTopbar variant="mobile" />
         </div>
         <p className="dashboard-sidebar-subtitle">
-          在总览、任务和设置之间快速切换。
+          把要做的事放在一个简单、顺手的地方。
         </p>
       </div>
 
@@ -65,11 +65,11 @@ export function AppSidebar() {
 
       <div className="dashboard-sidebar-note">
         <p className="dashboard-sidebar-note__label">
-          本周提醒
+          给自己的提醒
         </p>
-        <p className="dashboard-sidebar-note__title">先把进行中的事情收住。</p>
+        <p className="dashboard-sidebar-note__title">先收住正在做的事。</p>
         <p className="dashboard-sidebar-note__body">
-          先将进行中的任务完成，再继续新增事项，能明显减少上下文切换。
+          少开几个分支，手上的事会更容易做完。
         </p>
       </div>
     </aside>
