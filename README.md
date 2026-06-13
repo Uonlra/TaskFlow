@@ -6,7 +6,7 @@ TaskFlow 是一个偏个人任务本风格的小应用，用来把任务记录�
 
 ## 在线预览
 
-- 公开演示页：[https://raskflow.vercel.app/demo](https://raskflow.vercel.app/demo)
+- 公开演示页：[https://taskflow.vercel.app/demo](https://raskflow.vercel.app/demo)
 - 应用入口：[https://raskflow.vercel.app/](https://raskflow.vercel.app/)
 - 项目文章：[https://www.uon1ra.top/article/taskflow](https://www.uon1ra.top/article/taskflow)
 
@@ -42,7 +42,7 @@ http://localhost:3000/demo
 
 | 首页 | 总览 |
 | --- | --- |
-| ![TaskFlow landing page](docs/screenshots/landing.png) | ![TaskFlow dashboard](docs/screenshots/dashboard.png) |
+| ![TaskFlow login page](docs/screenshots/auth-login-review.png) | ![TaskFlow dashboard](docs/screenshots/dashboard.png) |
 
 | 任务列表 | 设置页 |
 | --- | --- |
