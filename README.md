@@ -6,10 +6,37 @@ TaskFlow 是一个偏个人任务本风格的小应用，用来把任务记录�
 
 ## 在线预览
 
-- 演示地址：[https://taskflow.vercel.app/](https://raskflow.vercel.app/)
+- 公开演示页：[https://taskflow.vercel.app/demo](https://raskflow.vercel.app/demo)
+- 应用入口：[https://raskflow.vercel.app/](https://raskflow.vercel.app/)
 - 项目文章：[https://www.uon1ra.top/article/taskflow](https://www.uon1ra.top/article/taskflow)
 
-> 如果线上环境变量没有配置完整，页面会使用演示数据。想体验完整的登录、资料保存和任务持久化，需要在本地或部署环境配置 Appwrite。
+> `/demo` 是公开演示页，不需要登录，也不会读取真实账号数据。`/` 会尝试进入工作台；如果当前没有登录，会跳转到登录页。
+
+## 公开演示页
+
+如果只是想先看界面和功能手感，直接访问：
+
+```txt
+http://localhost:3000/demo
+```
+
+演示页使用 `src/mock/tasks.ts` 中的本地 mock 数据，展示：
+
+- 任务统计卡片
+- 完成趋势
+- 状态分布
+- 标签摘要
+- 快到期任务
+- 最近活动
+- 任务样例卡片
+
+它和真实工作台的区别：
+
+- 不需要登录
+- 不请求 Appwrite
+- 不会创建、编辑或删除真实任务
+- 不会展示任何真实用户数据
+- 适合用于公开预览、截图和移动端展示
 
 ## 项目截图
 
@@ -33,6 +60,7 @@ TaskFlow 是一个偏个人任务本风格的小应用，用来把任务记录�
 - 逾期、今天到期、3 天内到期等截止风险提示
 - 个人资料设置，支持昵称和头像地址更新
 - Appwrite 真实数据模式和 localStorage 演示模式自动切换
+- `/demo` 公开演示页，可在未登录状态下查看 mock 数据工作台
 
 ## 技术栈
 
@@ -90,7 +118,7 @@ pnpm install
 cp .env.example .env.local
 ```
 
-如果只是看界面，可以先不填 Appwrite，应用会进入演示模式。要跑真实数据，需要补充这些变量：
+如果只是看公开演示页，可以先不填 Appwrite，直接访问 `/demo`。要跑真实账号和真实任务数据，需要补充这些变量：
 
 ```bash
 NEXT_PUBLIC_APPWRITE_ENDPOINT=https://sgp.cloud.appwrite.io/v1
@@ -111,8 +139,10 @@ pnpm dev
 浏览器打开：
 
 ```txt
-http://localhost:3000
+http://localhost:3000/demo
 ```
+
+如果打开 `http://localhost:3000`，应用会尝试进入 `/dashboard`；在 Appwrite 已配置但未登录时，会自动跳转到 `/login`。
 
 构建生产版本：
 
@@ -138,7 +168,8 @@ Appwrite 需要完成以下配置：
 
 ## 页面路由
 
-- `/`：项目首页
+- `/`：应用入口，会尝试进入工作台
+- `/demo`：公开演示页，使用 mock 数据，不需要登录
 - `/login`：登录
 - `/register`：注册
 - `/dashboard`：任务总览

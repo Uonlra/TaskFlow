@@ -24,6 +24,17 @@ const priorityScore: Record<TaskPriority, number> = {
 };
 
 export function getTaskDueMeta(task: Task): TaskDueMeta {
+  if (task.status === "done") {
+    return {
+      label: "已完成",
+      tone: "success",
+      sortWeight: Number.POSITIVE_INFINITY,
+      isOverdue: false,
+      isDueToday: false,
+      isUpcoming: false,
+    };
+  }
+
   if (!task.dueDate) {
     return {
       label: "未设置截止日期",
