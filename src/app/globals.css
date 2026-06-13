@@ -792,6 +792,98 @@ textarea:focus {
   align-items: start;
 }
 
+.demo-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(37, 99, 235, 0.08), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  color: var(--foreground);
+  font-family: var(--font-text);
+}
+
+.demo-shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 24px;
+  padding: 28px 24px 48px;
+}
+
+.demo-topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.demo-brand {
+  margin: 0;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.demo-topbar h1 {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 500;
+  line-height: 1.12;
+}
+
+.demo-topbar p:last-child {
+  max-width: 680px;
+  margin: 14px 0 0;
+  color: var(--muted-strong);
+  line-height: 1.7;
+}
+
+.demo-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.demo-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 24px;
+}
+
+.demo-hero-card,
+.demo-task-panel {
+  border-radius: 4px;
+  padding: 24px;
+}
+
+.demo-hero-card h2,
+.demo-task-panel h2 {
+  margin: 12px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 500;
+  line-height: 1.16;
+}
+
+.demo-hero-card p:last-child,
+.demo-task-panel p:last-child {
+  margin: 14px 0 0;
+  color: var(--muted-strong);
+  line-height: 1.7;
+}
+
+.demo-task-panel,
+.demo-side-stack,
+.demo-task-list {
+  display: grid;
+  gap: 16px;
+}
+
+.demo-side-stack {
+  align-content: start;
+  gap: 24px;
+}
+
 .settings-danger-zone {
   display: flex;
   justify-content: space-between;
@@ -2112,6 +2204,19 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 
+  .demo-topbar,
+  .demo-hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .demo-topbar {
+    display: grid;
+  }
+
+  .demo-actions {
+    justify-content: flex-start;
+  }
+
   .task-filter-grid {
     grid-template-columns: 1fr;
   }
@@ -2298,6 +2403,24 @@ textarea:focus {
   .dashboard-range-panel button {
     flex: 1 1 calc(33.333% - 8px);
     min-width: 84px;
+  }
+
+  .demo-shell {
+    padding: 22px 14px 36px;
+  }
+
+  .demo-topbar h1 {
+    font-size: 2.2rem;
+  }
+
+  .demo-hero-card,
+  .demo-task-panel {
+    padding: 20px;
+  }
+
+  .demo-hero-card h2,
+  .demo-task-panel h2 {
+    font-size: 2rem;
   }
 
   .auth-page {
