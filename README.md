@@ -6,7 +6,7 @@ TaskFlow 是一个偏个人任务本风格的小应用，用来把任务记录�
 
 ## 在线预览
 
-- 演示地址：[https://raskflow.vercel.app/](https://raskflow.vercel.app/)
+- 演示地址：[https://taskflow.vercel.app/](https://raskflow.vercel.app/)
 - 项目文章：[https://www.uon1ra.top/article/taskflow](https://www.uon1ra.top/article/taskflow)
 
 > 如果线上环境变量没有配置完整，页面会使用演示数据。想体验完整的登录、资料保存和任务持久化，需要在本地或部署环境配置 Appwrite。
