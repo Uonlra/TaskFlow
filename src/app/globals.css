@@ -1835,6 +1835,11 @@ textarea:focus {
   border-color: var(--danger);
 }
 
+.task-card--done {
+  border-color: var(--success);
+  background: linear-gradient(180deg, #ffffff, rgba(34, 197, 94, 0.06));
+}
+
 .task-card__header {
   display: flex;
   justify-content: space-between;
@@ -1887,6 +1892,43 @@ textarea:focus {
 .task-card__actions {
   gap: 8px;
   margin-top: 18px;
+}
+
+.task-status-segment {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #f4f4f4;
+}
+
+.task-status-segment__button {
+  min-height: 32px;
+  border: 0;
+  border-radius: 3px;
+  padding: 4px 12px;
+  color: var(--muted-strong);
+  background: transparent;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.task-status-segment__button:hover:not(:disabled),
+.task-status-segment__button:focus-visible {
+  color: var(--foreground);
+  background: #ffffff;
+}
+
+.task-status-segment__button--active,
+.task-status-segment__button:disabled {
+  color: #ffffff;
+  background: var(--primary);
+  cursor: default;
 }
 
 .task-badge,

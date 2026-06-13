@@ -160,9 +160,14 @@ export default function DemoPage() {
 
 function DemoTaskCard({ task }: { task: Task }) {
   const dueMeta = getTaskDueMeta(task);
+  const cardToneClassName = task.status === "done"
+    ? " task-card--done"
+    : dueMeta.isOverdue
+      ? " task-card--attention"
+      : "";
 
   return (
-    <article className={dueMeta.isOverdue ? "task-card task-card--attention" : "task-card"}>
+    <article className={`task-card${cardToneClassName}`}>
       <div className="task-card__header">
         <div>
           <h3 className="task-card__title">{task.title}</h3>

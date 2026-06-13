@@ -17,17 +17,22 @@ type TaskCardProps = {
   onUpdateStatus?: (id: string, status: Task["status"]) => void | Promise<void>;
 };
 
-const statusFlow: Task["status"][] = ["todo", "in_progress", "done"];
+const statusOptions: Array<{ value: Task["status"]; label: string }> = [
+  { value: "todo", label: "待开始" },
+  { value: "in_progress", label: "进行中" },
+  { value: "done", label: "已完成" },
+];
 
 export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, onUpdateStatus }: TaskCardProps) {
   const dueMeta = getTaskDueMeta(task);
   const taskTags = task.tags ?? [];
+  const cardToneClassName = getTaskCardToneClassName(task, dueMeta.isOverdue);
 
   if (compact) {
     return (
       <Link
         href={`/tasks/${task.id}`}
-        className={dueMeta.isOverdue ? "task-card task-card--compact task-card--attention" : "task-card task-card--compact"}
+        className={`task-card task-card--compact${cardToneClassName}`}
       >
         <div className="task-card__header">
           <div>
@@ -49,7 +54,6 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
     );
   }
 
-  const nextStatus = statusFlow[(statusFlow.indexOf(task.status) + 1) % statusFlow.length];
   const taskValues: TaskFormValues = {
     title: task.title,
     description: task.description,
@@ -61,7 +65,7 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
 
   return (
     <article
-      className={dueMeta.isOverdue ? "task-card task-card--attention" : "task-card"}
+      className={`task-card${cardToneClassName}`}
     >
       <div className="task-card__header">
         <div>
@@ -94,13 +98,12 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
         >
           查看详情
         </Link>
-        <button
-          type="button"
-          onClick={() => onUpdateStatus?.(task.id, nextStatus)}
-          className="tesla-action tesla-action--secondary"
-        >
-          切换为{nextStatus === "todo" ? "待开始" : nextStatus === "in_progress" ? "进行中" : "已完成"}
-        </button>
+        {onUpdateStatus ? (
+          <StatusSegmentedControl
+            currentStatus={task.status}
+            onChange={(status) => onUpdateStatus(task.id, status)}
+          />
+        ) : null}
         {onUpdateTask ? (
           <TaskFormDialog
             onSubmitTask={(values) => onUpdateTask(task.id, values)}
@@ -123,6 +126,47 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
       </div>
     </article>
   );
+}
+
+function StatusSegmentedControl({
+  currentStatus,
+  onChange,
+}: {
+  currentStatus: Task["status"];
+  onChange: (status: Task["status"]) => void | Promise<void>;
+}) {
+  return (
+    <div className="task-status-segment" aria-label="切换任务状态">
+      {statusOptions.map((option) => {
+        const isActive = option.value === currentStatus;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            disabled={isActive}
+            aria-pressed={isActive}
+            className={isActive ? "task-status-segment__button task-status-segment__button--active" : "task-status-segment__button"}
+            onClick={() => onChange(option.value)}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function getTaskCardToneClassName(task: Task, isOverdue: boolean) {
+  if (task.status === "done") {
+    return " task-card--done";
+  }
+
+  if (isOverdue) {
+    return " task-card--attention";
+  }
+
+  return "";
 }
 
 function MetaPill({ label, tone = "muted" }: { label: string; tone?: "danger" | "warning" | "success" | "muted" }) {
