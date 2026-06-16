@@ -70,12 +70,22 @@
   }
 
   .auth-frame {
+    height: auto;
+    min-height: 100svh;
+    max-height: none;
     grid-template-columns: 1fr;
   }
 
   .auth-brand-panel {
-    grid-template-rows: minmax(280px, 0.8fr) auto auto;
-    gap: 40px;
+    grid-template-rows: minmax(280px, auto) auto auto;
+    gap: 28px;
+  }
+
+  .auth-page {
+    height: auto;
+    min-height: 100svh;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 }
 

@@ -1730,9 +1730,9 @@
 }
 
 .auth-brand-panel {
-  grid-template-rows: minmax(220px, 0.9fr) auto minmax(220px, 0.78fr);
-  gap: clamp(14px, 2vw, 24px);
-  padding: clamp(16px, 2.2vw, 32px);
+  grid-template-rows: minmax(170px, 0.58fr) auto minmax(278px, 1fr);
+  gap: clamp(12px, 1.7vw, 20px);
+  padding: clamp(14px, 2vw, 28px);
 }
 
 .auth-exhibition-image,
@@ -1754,23 +1754,43 @@
 
 .auth-product-preview {
   height: 100%;
-  min-height: 0;
+  min-height: 278px;
 }
 
 .auth-preview-sidebar {
-  padding: 16px 14px;
+  gap: 8px;
+  padding: 14px 12px;
 }
 
 .auth-preview-logo {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+}
+
+.auth-preview-nav-list {
+  gap: 6px;
+}
+
+.auth-preview-nav {
+  min-height: 34px;
+  padding: 7px 9px;
+}
+
+.auth-preview-profile {
+  gap: 8px;
+  font-size: 0.74rem;
+}
+
+.auth-preview-profile span {
+  width: 28px;
+  height: 28px;
 }
 
 .auth-preview-main {
-  padding: 18px;
+  padding: 16px;
 }
 
 .auth-preview-heading {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .auth-preview-grid {
@@ -1778,28 +1798,28 @@
 }
 
 .auth-preview-focus {
-  min-height: 112px;
-  padding: 16px;
+  min-height: 104px;
+  padding: 14px 16px;
 }
 
 .auth-preview-focus strong {
-  margin-top: 6px;
-  font-size: 1.9rem;
+  margin-top: 4px;
+  font-size: 1.75rem;
 }
 
 .auth-preview-summary {
   gap: 6px;
-  padding: 14px;
+  padding: 12px 14px;
 }
 
 .auth-preview-list {
-  gap: 8px;
-  margin-top: 10px;
+  gap: 7px;
+  margin-top: 8px;
 }
 
 .auth-preview-list > div {
-  min-height: 46px;
-  padding: 10px 12px;
+  min-height: 42px;
+  padding: 9px 12px;
 }
 
 .auth-form-panel {
@@ -1809,6 +1829,33 @@
 
 .auth-form-header {
   margin-bottom: 24px;
+}
+
+@media (max-height: 720px) and (min-width: 1181px) {
+  .auth-brand-panel {
+    grid-template-rows: minmax(142px, 0.48fr) auto minmax(272px, 1fr);
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .auth-brand-title {
+    margin-top: 10px;
+    font-size: clamp(1.88rem, 3vw, 3.25rem);
+  }
+
+  .auth-brand-description {
+    margin-top: 8px;
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+
+  .auth-product-preview {
+    min-height: 272px;
+  }
+
+  .auth-form-panel {
+    padding: clamp(20px, 2.8vw, 42px);
+  }
 }
 
 .auth-custom-cursor__ring {
