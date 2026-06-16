@@ -1,0 +1,300 @@
+:root {
+  --background: #ffffff;
+  --surface: #f4f4f4;
+  --surface-strong: #ffffff;
+  --foreground: #171a20;
+  --muted: #5c5e62;
+  --muted-strong: #393c41;
+  --border: #eeeeee;
+  --border-strong: #d0d1d2;
+  --primary: #3e6ae1;
+  --primary-strong: #3457bd;
+  --primary-soft: #f4f4f4;
+  --primary-foreground: #ffffff;
+  --accent: #f4f4f4;
+  --data-ink: #3e6ae1;
+  --data-cyan: #393c41;
+  --data-indigo: #5c5e62;
+  --data-sky: #8e8e8e;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --shadow: none;
+  --radius-panel: 4px;
+  --radius-pill: 4px;
+  --font-display: "Universal Sans Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --font-text: "Universal Sans Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --font-serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-text);
+  letter-spacing: 0;
+  text-wrap: pretty;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  font-kerning: normal;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+}
+
+button {
+  cursor: pointer;
+  transition:
+    opacity 0.33s,
+    border-color 0.33s,
+    background-color 0.33s,
+    color 0.33s;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  line-height: 1.28;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+p,
+label,
+button,
+input,
+select,
+textarea {
+  line-height: 1.8;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8e8e8e;
+}
+
+input,
+select,
+textarea {
+  transition:
+    border-color 0.33s,
+    background-color 0.33s,
+    color 0.33s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: none;
+}
+
+.task-field {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  background: #ffffff;
+  color: var(--foreground);
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
+  box-shadow: none;
+}
+
+.task-field::placeholder {
+  color: #8e8e8e;
+  font-weight: 400;
+}
+
+.task-field:hover {
+  border-color: var(--border-strong);
+  background: #ffffff;
+}
+
+.task-field:focus {
+  background: #ffffff;
+}
+
+.task-textarea {
+  min-height: 132px;
+  line-height: 1.72;
+}
+
+.custom-select {
+  position: relative;
+}
+
+.task-select-trigger {
+  justify-content: space-between;
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  text-align: left;
+}
+
+.task-field--invalid {
+  border-color: rgba(178, 64, 55, 0.48);
+}
+
+.custom-select__value {
+  min-width: 0;
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.custom-select__caret {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.33s, border-color 0.33s;
+}
+
+.custom-select__menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  width: 100%;
+  z-index: 80;
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.custom-select__option {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  text-align: left;
+  color: var(--foreground);
+  font-family: var(--font-text);
+  font-size: 14px;
+}
+
+.custom-select__option:hover,
+.custom-select__option--highlighted {
+  border-color: transparent;
+  background: #f4f4f4;
+}
+
+.custom-select__option--selected {
+  background: #f4f4f4;
+  border-color: transparent;
+}
+
+.custom-select__option-label {
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.custom-select__option-description {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.task-date {
+  color-scheme: light;
+}
+
+.task-date::-webkit-calendar-picker-indicator {
+  opacity: 0.7;
+  cursor: pointer;
+  filter: saturate(0.85);
+}
+
+.task-date::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.custom-select:has(.custom-select__menu) .custom-select__caret {
+  transform: rotate(225deg) translateY(2px);
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.card-surface {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.ui-sans {
+  font-family: var(--font-text);
+  letter-spacing: 0;
+}
+
+.metric-value {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.section-eyebrow {
+  font-family: var(--font-text);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
