@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { AuthProductPreview } from "@/components/auth/auth-product-preview";
+import { AuthCustomCursor } from "@/components/auth/auth-custom-cursor";
 import { AuthPreviewStateProvider } from "@/components/auth/auth-preview-state";
 import type { AuthPreviewTab } from "@/components/auth/auth-preview-tabs";
 import { useReducedMotion } from "@/components/common/use-reduced-motion";
@@ -22,36 +23,36 @@ const exhibitionScenes: Record<
   }
 > = {
   workspace: {
-    body: "今日重点先摆上台面，进度一眼看清，剩下的慢慢推进。",
-    caption: "今日工作台 / 预览视图",
-    index: "任务 01",
-    metric: "完成率",
-    signal: "工作台",
+    body: "今天最要紧的事先摆上台面，进度、待办和优先级不用来回翻。",
+    caption: "",
+    index: "展片 01",
+    metric: "今日进度",
+    signal: "总览",
     title: "今日工作台",
   },
   tasks: {
-    body: "任务以清单和状态灯展开，待办、推进、完成都各站各位。",
-    caption: "任务列表 / 状态梳理",
-    index: "任务 02",
-    metric: "三种状态",
-    signal: "任务",
-    title: "任务展架",
+    body: "待办、进行中、已完成分层站好，先处理谁、谁卡住了都更清楚。",
+    caption: "",
+    index: "展片 02",
+    metric: "状态分层",
+    signal: "清单",
+    title: "任务列表",
   },
   calendar: {
-    body: "日期安排按时间线展开，今天、明天、之后不会挤成一团。",
-    caption: "日历视图 / 日期展开",
-    index: "任务 03",
-    metric: "日程",
-    signal: "日期",
-    title: "日期安排",
+    body: "时间线顺着日期展开，今天、明天和后续安排不再挤成一团。",
+    caption: "",
+    index: "展片 03",
+    metric: "日期轨道",
+    signal: "日程",
+    title: "日历视图",
   },
   analytics: {
-    body: "统计负责把趋势讲明白，完成率、优先级和逾期都会露面。",
-    caption: "统计分析 / 趋势信号",
-    index: "任务 04",
-    metric: "信号",
-    signal: "统计",
-    title: "简单统计",
+    body: "完成率、优先级和逾期信号一起露面，节奏有没有偏航更好判断。",
+    caption: "",
+    index: "展片 04",
+    metric: "趋势信号",
+    signal: "洞察",
+    title: "统计分析",
   },
 };
 
@@ -171,6 +172,7 @@ export function AuthExhibitionShell({ children }: AuthExhibitionShellProps) {
 
   return (
     <main ref={rootRef} className="auth-page">
+      <AuthCustomCursor />
       <div className="auth-paper-layer" aria-hidden="true" />
       <div className="auth-noise-layer" aria-hidden="true" />
       <AuthPreviewStateProvider>
@@ -196,15 +198,15 @@ export function AuthExhibitionShell({ children }: AuthExhibitionShellProps) {
                 className="auth-exhibition-plate auth-exhibition-plate--metric"
                 data-auth-flip="metric"
               >
-                <span>视图</span>
+                <span>指标</span>
                 <strong>{activeScene.metric}</strong>
               </div>
               <div
                 className="auth-exhibition-plate auth-exhibition-plate--signal"
                 data-auth-flip="signal"
               >
-                <span>展板</span>
-                <strong>{activeScene.index}</strong>
+                <span>视图</span>
+                <strong>{activeScene.signal}</strong>
               </div>
               <span className="auth-image-index">{activeScene.index}</span>
               <span className="auth-image-caption">{activeScene.caption}</span>
@@ -218,11 +220,11 @@ export function AuthExhibitionShell({ children }: AuthExhibitionShellProps) {
                 <span className="section-eyebrow auth-brand-name">U&apos;s Task</span>
               </div>
               <h1 className="auth-brand-title">
-                把日常事务，
-                <span>整理成一场清晰展览</span>
+                把每天的事项，
+                <span>整理成清楚的任务展台</span>
               </h1>
               <p className="auth-brand-description">
-                登录后预览会接上你的真实任务数据；未登录时先保持留白，让进度从 0 开始等待入场。
+                登录后会接上你的真实任务数据；未登录时先保留一张干净展板，让进度从 0 开始等待入场。
               </p>
             </div>
 

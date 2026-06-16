@@ -181,7 +181,10 @@
   }
 
   .auth-exhibition-plate--signal {
-    display: none;
+    right: 20px;
+    bottom: 20px;
+    left: auto;
+    top: auto;
   }
 
   .auth-exhibition-image--tasks .auth-exhibition-photo,
@@ -206,6 +209,15 @@
     top: 20px;
     right: 20px;
     bottom: auto;
+    left: auto;
+  }
+
+  .auth-exhibition-image--tasks .auth-exhibition-plate--signal,
+  .auth-exhibition-image--calendar .auth-exhibition-plate--signal,
+  .auth-exhibition-image--analytics .auth-exhibition-plate--signal {
+    top: auto;
+    right: 20px;
+    bottom: 20px;
     left: auto;
   }
 
@@ -557,6 +569,15 @@
   .auth-exhibition-image--analytics .auth-exhibition-plate--metric {
     top: 16px;
     right: 16px;
+    min-width: 106px;
+  }
+
+  .auth-exhibition-plate--signal,
+  .auth-exhibition-image--tasks .auth-exhibition-plate--signal,
+  .auth-exhibition-image--calendar .auth-exhibition-plate--signal,
+  .auth-exhibition-image--analytics .auth-exhibition-plate--signal {
+    right: 16px;
+    bottom: 16px;
     min-width: 106px;
   }
 
