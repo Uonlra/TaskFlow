@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+
+import { ScrambleText } from "@/components/common/scramble-text";
 import { EmptyState } from "@/components/common/empty-state";
 import { TaskCard } from "@/components/task/task-card";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
@@ -7,6 +9,7 @@ import type { Task } from "@/features/tasks/types/task.types";
 type TaskListProps = {
   tasks: Task[];
   compact?: boolean;
+  motionKey?: string;
   emptyAction?: ReactNode;
   onUpdateTask?: (id: string, values: TaskFormValues) => void | Promise<void>;
   onDeleteTask?: (id: string) => void | Promise<void>;
@@ -16,6 +19,7 @@ type TaskListProps = {
 export function TaskList({
   tasks,
   compact = false,
+  motionKey,
   emptyAction,
   onUpdateTask,
   onDeleteTask,
@@ -24,7 +28,7 @@ export function TaskList({
   if (!tasks.length) {
     return (
       <EmptyState
-        title="这里暂时很安静"
+        title={<ScrambleText text="这里暂时很安静" playKey={motionKey ?? "empty-task-list"} />}
         description="可以放宽筛选条件，或者新建一条任务，先把要做的事放进来。"
         action={emptyAction}
       />
@@ -32,17 +36,22 @@ export function TaskList({
   }
 
   return (
-    <div className={compact ? "task-list task-list--compact" : "task-list"}>
-      {tasks.map((task) => (
-        <TaskCard
-          key={task.id}
-          task={task}
-          compact={compact}
-          onUpdateTask={onUpdateTask}
-          onDeleteTask={onDeleteTask}
-          onUpdateStatus={onUpdateStatus}
-        />
-      ))}
+    <div key={motionKey} className={compact ? "task-list task-list--compact task-list--motion" : "task-list task-list--motion"}>
+      {tasks.map((task, index) => {
+        const animationStyle = { "--task-delay": `${Math.min(index, 8) * 48}ms` } as CSSProperties;
+
+        return (
+          <div key={task.id} className="task-list__item" style={animationStyle}>
+            <TaskCard
+              task={task}
+              compact={compact}
+              onUpdateTask={onUpdateTask}
+              onDeleteTask={onDeleteTask}
+              onUpdateStatus={onUpdateStatus}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

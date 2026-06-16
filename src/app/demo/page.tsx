@@ -1,13 +1,16 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 
+import { AnimatedSection } from "@/components/common/animated-section";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { CompletionTrendChart } from "@/components/dashboard/completion-trend-chart";
-import { ProgressOverview } from "@/components/dashboard/progress-overview";
 import { StatsGrid } from "@/components/dashboard/stats-grid";
 import { StatusDistributionChart } from "@/components/dashboard/status-distribution-chart";
 import { TagSummary } from "@/components/dashboard/tag-summary";
 import { UpcomingDeadlines } from "@/components/dashboard/upcoming-deadlines";
 import { TaskPriorityBadge } from "@/components/task/task-priority-badge";
+import { StatusDot, type TaskSignalTone } from "@/components/task/task-status-lights";
+import { TaskSignalPanel } from "@/components/task/task-signal-panel";
 import { TaskStatusBadge } from "@/components/task/task-status-badge";
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
@@ -33,7 +36,6 @@ export default function DemoPage() {
   const overdueCount = openTasks.filter((task) => getTaskDueMeta(task).isOverdue).length;
   const dueTodayCount = openTasks.filter((task) => getTaskDueMeta(task).isDueToday).length;
   const upcomingCount = openTasks.filter((task) => getTaskDueMeta(task).isUpcoming).length;
-  const completionRate = tasks.length ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
   const topTags = buildTopTags(tasks);
   const activity = buildActivityItems(tasks);
   const upcoming = openTasks
@@ -42,9 +44,9 @@ export default function DemoPage() {
     .slice(0, 3);
   const completionTrend = buildCompletionTrend(tasks);
   const statusDistribution = [
-    { label: "待开始", count: tasks.filter((task) => task.status === "todo").length, color: "rgba(37,99,235,0.82)" },
-    { label: "进行中", count: inProgressTasks.length, color: "rgba(8,145,178,0.88)" },
-    { label: "已完成", count: completedTasks.length, color: "rgba(79,70,229,0.86)" },
+    { label: "待开始", count: tasks.filter((task) => task.status === "todo").length, color: "rgba(92,94,98,0.78)" },
+    { label: "进行中", count: inProgressTasks.length, color: "rgba(62,106,225,0.86)" },
+    { label: "已完成", count: completedTasks.length, color: "rgba(16,185,129,0.88)" },
   ];
   const stats = [
     {
@@ -88,7 +90,7 @@ export default function DemoPage() {
   return (
     <main className="demo-page">
       <section className="demo-shell">
-        <header className="demo-topbar">
+        <AnimatedSection as="header" className="demo-topbar">
           <div>
             <p className="demo-brand">U&apos;s Task</p>
             <h1>公开演示工作台</h1>
@@ -104,36 +106,30 @@ export default function DemoPage() {
               注册
             </Link>
           </div>
-        </header>
+        </AnimatedSection>
 
-        <section className="demo-hero-grid">
-          <article className="card-surface demo-hero-card">
-            <p className="section-eyebrow panel-eyebrow">Demo Preview</p>
-            <h2>
-              先看一眼，
-              <br />
-              再决定要不要开工
-            </h2>
-            <p>
-              这页只负责展示产品手感：任务状态、标签分布、趋势图和最近活动都来自 mock 数据。
-            </p>
-          </article>
-          <ProgressOverview
-            completionRate={completionRate}
-            overdueCount={overdueCount}
-            streakMessage={`演示任务完成率 ${completionRate}%。真正登录后，这里会换成你的任务节奏。`}
+        <AnimatedSection delayMs={80}>
+          <TaskSignalPanel
+            tasks={tasks}
+            eyebrow="Demo Preview"
+            title="演示任务雷达已点亮"
+            description="这页只负责展示产品手感：进度、状态灯、优先任务、标签分布和最近活动都来自 mock 数据。"
+            activeLabel="演示优先处理"
+            variant="demo"
           />
-        </section>
+        </AnimatedSection>
 
-        <StatsGrid stats={stats} />
+        <AnimatedSection delayMs={120}>
+          <StatsGrid stats={stats} />
+        </AnimatedSection>
 
-        <section className="dashboard-analytics-grid">
+        <AnimatedSection className="dashboard-analytics-grid" delayMs={160}>
           <CompletionTrendChart points={completionTrend} />
           <StatusDistributionChart items={statusDistribution} />
           <TagSummary items={topTags} />
-        </section>
+        </AnimatedSection>
 
-        <section className="dashboard-focus-grid">
+        <AnimatedSection className="dashboard-focus-grid" delayMs={200}>
           <section className="card-surface demo-task-panel">
             <div>
               <p className="section-eyebrow panel-eyebrow">任务样例</p>
@@ -141,8 +137,14 @@ export default function DemoPage() {
               <p>这里是只读演示。想创建或编辑任务，可以登录后进入完整工作台。</p>
             </div>
             <div className="demo-task-list">
-              {tasks.map((task) => (
-                <DemoTaskCard key={task.id} task={task} />
+              {tasks.map((task, index) => (
+                <div
+                  key={task.id}
+                  className="task-list__item"
+                  style={{ "--task-delay": `${Math.min(index, 8) * 48}ms` } as CSSProperties}
+                >
+                  <DemoTaskCard task={task} />
+                </div>
               ))}
             </div>
           </section>
@@ -152,7 +154,7 @@ export default function DemoPage() {
             <ActivityFeed items={activity} />
             <TagSummary items={topTags} />
           </aside>
-        </section>
+        </AnimatedSection>
       </section>
     </main>
   );
@@ -160,6 +162,8 @@ export default function DemoPage() {
 
 function DemoTaskCard({ task }: { task: Task }) {
   const dueMeta = getTaskDueMeta(task);
+  const signalTone = getTaskSignalTone(task, dueMeta.isOverdue, dueMeta.isDueToday);
+  const signalActive = task.status !== "todo" || dueMeta.isOverdue || dueMeta.isDueToday;
   const cardToneClassName = task.status === "done"
     ? " task-card--done"
     : dueMeta.isOverdue
@@ -170,7 +174,10 @@ function DemoTaskCard({ task }: { task: Task }) {
     <article className={`task-card${cardToneClassName}`}>
       <div className="task-card__header">
         <div>
-          <h3 className="task-card__title">{task.title}</h3>
+          <div className="task-card__title-row">
+            <StatusDot tone={signalTone} active={signalActive} />
+            <h3 className="task-card__title">{task.title}</h3>
+          </div>
           <p className="task-card__description">{task.description}</p>
         </div>
         <TaskStatusBadge status={task.status} />
@@ -188,6 +195,26 @@ function DemoTaskCard({ task }: { task: Task }) {
       </div>
     </article>
   );
+}
+
+function getTaskSignalTone(task: Task, isOverdue: boolean, isDueToday: boolean): TaskSignalTone {
+  if (task.status === "done") {
+    return "success";
+  }
+
+  if (isOverdue) {
+    return "danger";
+  }
+
+  if (isDueToday) {
+    return "warning";
+  }
+
+  if (task.status === "in_progress") {
+    return "info";
+  }
+
+  return "neutral";
 }
 
 function buildTopTags(inputTasks: Task[]) {

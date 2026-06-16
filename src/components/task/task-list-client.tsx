@@ -3,9 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { AnimatedSection } from "@/components/common/animated-section";
+import { ScrambleText } from "@/components/common/scramble-text";
 import { TaskFilterBar, type TaskFilters } from "@/components/task/task-filter-bar";
 import { TaskFormDialog } from "@/components/task/task-form-dialog";
 import { TaskList } from "@/components/task/task-list";
+import { TaskSignalPanel } from "@/components/task/task-signal-panel";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { getTaskDueMeta, sortTasks } from "@/features/tasks/utils/task-deadline";
 import { useAuth } from "@/providers/auth-provider";
@@ -209,6 +212,11 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     : hasActiveFilters
       ? `筛出了 ${filteredTasks.length} 条，先看这些就够了。`
       : `一共有 ${tasks.length} 条任务，可以先看快到期或正在做的。`;
+  const signalTitle = hasActiveFilters ? "当前筛选视图已锁定" : "任务队列正在待命";
+  const signalDescription = hasActiveFilters
+    ? "下面这批任务已经按你的条件收窄，先处理它们，别让注意力到处散步。"
+    : "搜索、筛选和状态灯一起工作。你只管把任务放进来，剩下的节奏让界面帮你提醒。";
+  const motionKey = `${filters.query}|${filters.tag}|${filters.status}|${filters.priority}|${filters.sort}|${filteredTasks.map((task) => `${task.id}:${task.status}`).join(",")}`;
 
   return (
     <section className="tasks-toolbar">
@@ -224,20 +232,15 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
           <p>{error}</p>
         </section>
       ) : null}
-      <section className="tasks-highlight-grid">
-        <article className="tasks-hero-card card-surface">
-          <p className="section-eyebrow panel-eyebrow">
-            任务列表
-          </p>
-          <h2 className="panel-title panel-title--large">
-            任务别散着放
-            <br />
-            先排成一列
-          </h2>
-          <p className="panel-description">
-            搜索、筛选、排序都在这儿。先把眼前这批理顺，再动手会轻松很多。
-          </p>
-        </article>
+      <AnimatedSection className="tasks-highlight-grid">
+        <TaskSignalPanel
+          tasks={filteredTasks}
+          eyebrow="任务列表"
+          title={signalTitle}
+          description={signalDescription}
+          activeLabel={hasActiveFilters ? "筛选后先看" : "队列优先处理"}
+          variant="tasks"
+        />
 
         <aside className="tasks-create-card card-surface">
           <div>
@@ -250,9 +253,9 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
           </div>
           <TaskFormDialog onSubmitTask={handleCreateTask} />
         </aside>
-      </section>
+      </AnimatedSection>
 
-      <div className="tasks-filter-area">
+      <AnimatedSection as="div" className="tasks-filter-area" delayMs={80}>
         <TaskFilterBar
           filters={filters}
           resultCount={filteredTasks.length}
@@ -260,13 +263,15 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
           onChange={handleFiltersChange}
           onReset={handleResetFilters}
         />
-      </div>
-      <section className="tasks-view-summary card-surface">
+      </AnimatedSection>
+      <AnimatedSection className="tasks-view-summary card-surface" delayMs={120}>
         <div className="tasks-view-summary__copy">
           <p className="section-eyebrow panel-eyebrow">
             当前任务视图
           </p>
-          <p>{summaryLabel}</p>
+          <p>
+            <ScrambleText text={summaryLabel} playKey={motionKey} durationMs={420} />
+          </p>
         </div>
         {hasActiveFilters ? (
           <button
@@ -277,9 +282,12 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
             回到全部任务
           </button>
         ) : null}
-      </section>
+      </AnimatedSection>
       {(deadlineSummary.overdue > 0 || deadlineSummary.today > 0 || deadlineSummary.upcoming > 0) && (
-        <section className={deadlineSummary.overdue > 0 ? "tasks-deadline-card tasks-deadline-card--danger card-surface" : "tasks-deadline-card card-surface"}>
+        <AnimatedSection
+          className={deadlineSummary.overdue > 0 ? "tasks-deadline-card tasks-deadline-card--danger card-surface" : "tasks-deadline-card card-surface"}
+          delayMs={140}
+        >
           <p className={deadlineSummary.overdue > 0 ? "section-eyebrow panel-eyebrow panel-eyebrow--danger" : "section-eyebrow panel-eyebrow"}>
             截止提醒
           </p>
@@ -290,7 +298,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
                 ? `有 ${deadlineSummary.today} 条今天到期，最好别拖到最后一分钟。`
                 : `接下来 3 天有 ${deadlineSummary.upcoming} 条快到了，提前看一眼就好。`}
           </p>
-        </section>
+        </AnimatedSection>
       )}
       {isConfigured && isLoading ? (
         <section className="notice-card card-surface">
@@ -299,6 +307,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       ) : null}
       <TaskList
         tasks={filteredTasks}
+        motionKey={motionKey}
         emptyAction={<TaskFormDialog onSubmitTask={handleCreateTask} triggerLabel="新增一条任务" />}
         onUpdateTask={handleUpdateTask}
         onUpdateStatus={handleUpdateStatus}
