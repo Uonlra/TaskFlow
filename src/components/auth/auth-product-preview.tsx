@@ -1,25 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import { useAuthPreviewState } from "@/components/auth/auth-preview-state";
 import type { AuthAccountLookupStatus } from "@/components/auth/auth-preview-state";
+import type { AuthPreviewTab } from "@/components/auth/auth-preview-tabs";
+import { authPreviewTabs } from "@/components/auth/auth-preview-tabs";
 import type { TaskPreviewSummary } from "@/features/tasks/utils/task-summary";
 import { getEmptyTaskPreviewSummary, getTaskPreviewSummary } from "@/features/tasks/utils/task-summary";
 import { useAuth } from "@/providers/auth-provider";
 import { useTaskStore } from "@/store/task-store";
 
-type PreviewTab = "workspace" | "tasks" | "calendar" | "analytics";
+type AuthProductPreviewProps = {
+  activeTab: AuthPreviewTab;
+  onTabChange: (tab: AuthPreviewTab) => void;
+};
 
-const previewTabs: Array<{ value: PreviewTab; label: string }> = [
-  { value: "workspace", label: "今日总览" },
-  { value: "tasks", label: "任务" },
-  { value: "calendar", label: "日期安排" },
-  { value: "analytics", label: "简单统计" },
-];
-
-export function AuthProductPreview() {
-  const [activeTab, setActiveTab] = useState<PreviewTab>("workspace");
+export function AuthProductPreview({ activeTab, onTabChange }: AuthProductPreviewProps) {
   const { user, profile, isConfigured } = useAuth();
   const { preloginAccountStatus, preloginEmail, preloginName } = useAuthPreviewState();
   const tasks = useTaskStore((state) => state.tasks);
@@ -62,14 +59,15 @@ export function AuthProductPreview() {
           <span>U&apos;s Task</span>
         </div>
         <div className="auth-preview-nav-list" role="tablist" aria-label="预览视图">
-          {previewTabs.map((tab) => (
+          {authPreviewTabs.map((tab) => (
             <button
               key={tab.value}
+              data-auth-preview-tab={tab.value}
               type="button"
               role="tab"
               aria-selected={activeTab === tab.value}
               className={activeTab === tab.value ? "auth-preview-nav auth-preview-nav--active" : "auth-preview-nav"}
-              onClick={() => setActiveTab(tab.value)}
+              onClick={() => onTabChange(tab.value)}
             >
               {tab.label}
             </button>
@@ -84,7 +82,7 @@ export function AuthProductPreview() {
         </div>
       </div>
       <div className="auth-preview-main">
-        <p className="auth-preview-heading">{previewTabs.find((tab) => tab.value === activeTab)?.label}</p>
+        <p className="auth-preview-heading">{authPreviewTabs.find((tab) => tab.value === activeTab)?.label}</p>
         {activeTab === "workspace" ? <WorkspacePreview summary={summary} hint={previewHint} /> : null}
         {activeTab === "tasks" ? (
           <TasksPreview

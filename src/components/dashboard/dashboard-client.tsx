@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { AnimatedSection } from "@/components/common/animated-section";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { CompletionTrendChart } from "@/components/dashboard/completion-trend-chart";
 import { ProgressOverview } from "@/components/dashboard/progress-overview";
@@ -12,6 +13,7 @@ import { TagSummary } from "@/components/dashboard/tag-summary";
 import { TagDistributionChart } from "@/components/dashboard/tag-distribution-chart";
 import { UpcomingDeadlines } from "@/components/dashboard/upcoming-deadlines";
 import { TaskList } from "@/components/task/task-list";
+import { TaskSignalPanel } from "@/components/task/task-signal-panel";
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { useAuth } from "@/providers/auth-provider";
@@ -143,9 +145,9 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const completionTrend = useMemo(() => buildCompletionTrend(scopedTasks, range), [range, scopedTasks]);
   const statusDistribution = useMemo(
     () => [
-      { label: "待开始", count: scopedTasks.filter((task) => task.status === "todo").length, color: "rgba(37,99,235,0.82)" },
-      { label: "进行中", count: scopedTasks.filter((task) => task.status === "in_progress").length, color: "rgba(8,145,178,0.88)" },
-      { label: "已完成", count: scopedTasks.filter((task) => task.status === "done").length, color: "rgba(79,70,229,0.86)" },
+      { label: "待开始", count: scopedTasks.filter((task) => task.status === "todo").length, color: "rgba(92,94,98,0.78)" },
+      { label: "进行中", count: scopedTasks.filter((task) => task.status === "in_progress").length, color: "rgba(62,106,225,0.86)" },
+      { label: "已完成", count: scopedTasks.filter((task) => task.status === "done").length, color: "rgba(16,185,129,0.88)" },
     ],
     [scopedTasks],
   );
@@ -197,28 +199,14 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           <p style={{ margin: 0, color: "var(--danger)", lineHeight: 1.7 }}>{error}</p>
         </section>
       ) : null}
-      <section className="dashboard-hero">
-        <article
-          className="card-surface dashboard-highlight-card"
-          style={{
-            borderRadius: 30,
-            padding: "26px 26px 30px",
-            background:
-              "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,250,255,0.86))",
-          }}
-        >
-          <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.84rem" }}>
-            任务总览
-          </p>
-          <h2 style={{ margin: "14px 0 0", fontSize: "clamp(2rem, 4vw, 3rem)", lineHeight: 1.16 }}>
-            今天先看哪里
-            <br />
-            一眼就知道
-          </h2>
-          <p style={{ margin: "14px 0 0", maxWidth: 620, color: "var(--muted-strong)", lineHeight: 1.86 }}>
-            这里把任务数量、完成情况和快到期的事放在一起。先扫一眼，再决定从哪儿下手。
-          </p>
-        </article>
+      <AnimatedSection className="dashboard-hero">
+        <TaskSignalPanel
+          tasks={scopedTasks}
+          eyebrow="任务总览"
+          title={`${rangeLabel}的任务雷达已打开`}
+          description="进度、状态灯和优先处理项都在这里。扫一眼，就知道先把注意力放到哪儿。"
+          activeLabel={`${rangeLabel}优先处理`}
+        />
 
         <aside
           className="card-surface"
@@ -277,14 +265,16 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
             <p style={{ margin: "6px 0 0", fontSize: "1.24rem", fontWeight: 700 }}>{rangeLabel}</p>
           </div>
         </aside>
-      </section>
-      <StatsGrid stats={stats} />
-      <section className="dashboard-analytics-grid">
+      </AnimatedSection>
+      <AnimatedSection delayMs={80}>
+        <StatsGrid stats={stats} />
+      </AnimatedSection>
+      <AnimatedSection className="dashboard-analytics-grid" delayMs={120}>
         <CompletionTrendChart points={completionTrend} />
         <StatusDistributionChart items={statusDistribution} />
         <TagDistributionChart items={topTags.slice(0, 5)} />
-      </section>
-      <section className="dashboard-focus-grid">
+      </AnimatedSection>
+      <AnimatedSection className="dashboard-focus-grid" delayMs={160}>
         <div className="card-surface" style={{ borderRadius: 28, padding: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
             <div>
@@ -312,7 +302,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           <TagSummary items={topTags} />
           <ActivityFeed items={activity} />
         </aside>
-      </section>
+      </AnimatedSection>
     </>
   );
 }

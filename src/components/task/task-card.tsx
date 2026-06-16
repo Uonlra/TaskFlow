@@ -1,8 +1,12 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { TaskFormDialog } from "@/components/task/task-form-dialog";
 import { TaskPriorityBadge } from "@/components/task/task-priority-badge";
+import { StatusDot, type TaskSignalTone } from "@/components/task/task-status-lights";
 import { TaskStatusBadge } from "@/components/task/task-status-badge";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
@@ -27,16 +31,22 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
   const dueMeta = getTaskDueMeta(task);
   const taskTags = task.tags ?? [];
   const cardToneClassName = getTaskCardToneClassName(task, dueMeta.isOverdue);
+  const signalTone = getTaskSignalTone(task, dueMeta.isOverdue, dueMeta.isDueToday);
+  const signalActive = task.status !== "todo" || dueMeta.isOverdue || dueMeta.isDueToday;
+  const flashClassName = useTaskStatusFlash(task.status);
 
   if (compact) {
     return (
       <Link
         href={`/tasks/${task.id}`}
-        className={`task-card task-card--compact${cardToneClassName}`}
+        className={`task-card task-card--compact${cardToneClassName}${flashClassName}`}
       >
         <div className="task-card__header">
           <div>
-            <h3 className="task-card__title">{task.title}</h3>
+            <div className="task-card__title-row">
+              <StatusDot tone={signalTone} active={signalActive} />
+              <h3 className="task-card__title">{task.title}</h3>
+            </div>
             <p className="task-card__description">{task.description}</p>
           </div>
           <TaskStatusBadge status={task.status} />
@@ -65,11 +75,14 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
 
   return (
     <article
-      className={`task-card${cardToneClassName}`}
+      className={`task-card${cardToneClassName}${flashClassName}`}
     >
       <div className="task-card__header">
         <div>
-          <h3 className="task-card__title">{task.title}</h3>
+          <div className="task-card__title-row">
+            <StatusDot tone={signalTone} active={signalActive} />
+            <h3 className="task-card__title">{task.title}</h3>
+          </div>
           <p className="task-card__description">
             {task.description}
           </p>
@@ -128,6 +141,34 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
   );
 }
 
+function useTaskStatusFlash(status: Task["status"]) {
+  const previousStatusRef = useRef(status);
+  const [flashStatus, setFlashStatus] = useState<Task["status"] | null>(null);
+
+  useEffect(() => {
+    if (previousStatusRef.current === status) {
+      return undefined;
+    }
+
+    previousStatusRef.current = status;
+    setFlashStatus(status);
+
+    const timeoutId = window.setTimeout(() => {
+      setFlashStatus(null);
+    }, 760);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [status]);
+
+  if (!flashStatus) {
+    return "";
+  }
+
+  return ` task-card--status-flash task-card--status-flash-${flashStatus}`;
+}
+
 function StatusSegmentedControl({
   currentStatus,
   onChange,
@@ -167,6 +208,26 @@ function getTaskCardToneClassName(task: Task, isOverdue: boolean) {
   }
 
   return "";
+}
+
+function getTaskSignalTone(task: Task, isOverdue: boolean, isDueToday: boolean): TaskSignalTone {
+  if (task.status === "done") {
+    return "success";
+  }
+
+  if (isOverdue) {
+    return "danger";
+  }
+
+  if (isDueToday) {
+    return "warning";
+  }
+
+  if (task.status === "in_progress") {
+    return "info";
+  }
+
+  return "neutral";
 }
 
 function MetaPill({ label, tone = "muted" }: { label: string; tone?: "danger" | "warning" | "success" | "muted" }) {
