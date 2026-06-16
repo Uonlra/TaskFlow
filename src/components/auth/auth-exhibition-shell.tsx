@@ -22,35 +22,35 @@ const exhibitionScenes: Record<
   }
 > = {
   workspace: {
-    body: "今日重点会被摆上台面，先看进度，再决定从哪一件开始。",
-    caption: "Today workspace / private study",
-    index: "Plate 01",
-    metric: "0-100%",
-    signal: "focus",
+    body: "今日重点先摆上台面，进度一眼看清，剩下的慢慢推进。",
+    caption: "今日工作台 / 预览视图",
+    index: "任务 01",
+    metric: "完成率",
+    signal: "工作台",
     title: "今日工作台",
   },
   tasks: {
-    body: "任务以清单和状态灯呈现，待办、推进、完成都各站各位。",
-    caption: "Task queue / status study",
-    index: "Plate 02",
-    metric: "3 states",
-    signal: "queue",
+    body: "任务以清单和状态灯展开，待办、推进、完成都各站各位。",
+    caption: "任务列表 / 状态梳理",
+    index: "任务 02",
+    metric: "三种状态",
+    signal: "任务",
     title: "任务展架",
   },
   calendar: {
-    body: "日期安排被按时间线展开，今天、明天、之后不再挤作一团。",
-    caption: "Calendar view / sequence study",
-    index: "Plate 03",
-    metric: "due map",
-    signal: "time",
+    body: "日期安排按时间线展开，今天、明天、之后不会挤成一团。",
+    caption: "日历视图 / 日期展开",
+    index: "任务 03",
+    metric: "日程",
+    signal: "日期",
     title: "日期安排",
   },
   analytics: {
-    body: "统计只负责把趋势说清楚，完成率、优先级和逾期都会露面。",
-    caption: "Analytics view / signal study",
-    index: "Plate 04",
-    metric: "signals",
-    signal: "insight",
+    body: "统计负责把趋势讲明白，完成率、优先级和逾期都会露面。",
+    caption: "统计分析 / 趋势信号",
+    index: "任务 04",
+    metric: "信号",
+    signal: "统计",
     title: "简单统计",
   },
 };
@@ -196,14 +196,14 @@ export function AuthExhibitionShell({ children }: AuthExhibitionShellProps) {
                 className="auth-exhibition-plate auth-exhibition-plate--metric"
                 data-auth-flip="metric"
               >
-                <span>measure</span>
+                <span>视图</span>
                 <strong>{activeScene.metric}</strong>
               </div>
               <div
                 className="auth-exhibition-plate auth-exhibition-plate--signal"
                 data-auth-flip="signal"
               >
-                <span>mode</span>
+                <span>展板</span>
                 <strong>{activeScene.index}</strong>
               </div>
               <span className="auth-image-index">{activeScene.index}</span>

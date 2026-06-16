@@ -62,6 +62,7 @@ export function AuthProductPreview({ activeTab, onTabChange }: AuthProductPrevie
           {authPreviewTabs.map((tab) => (
             <button
               key={tab.value}
+              data-auth-preview-tab={tab.value}
               type="button"
               role="tab"
               aria-selected={activeTab === tab.value}
