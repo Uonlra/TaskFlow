@@ -1,0 +1,30 @@
+<svg width="1440" height="1600" viewBox="0 0 1440 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="1600" fill="#F8FBFF"/>
+  <rect x="92" y="92" width="1256" height="1416" rx="18" fill="#EAF4FF"/>
+  <rect x="132" y="132" width="1176" height="1336" rx="14" fill="#FFFFFF"/>
+  <path d="M188 1180C340 1042 489 1015 634 1099C766 1175 904 1165 1036 1067C1120 1004 1192 979 1252 994V1394H188V1180Z" fill="#DBEAFE"/>
+  <path d="M188 232H1252V994C1168 980 1088 1005 1011 1066C884 1167 748 1180 609 1105C474 1032 334 1054 188 1180V232Z" fill="#EFF6FF"/>
+  <circle cx="1038" cy="436" r="178" fill="#BFDBFE"/>
+  <circle cx="1007" cy="410" r="118" fill="#60A5FA" fill-opacity="0.32"/>
+  <path d="M188 816C326 700 461 682 592 755C719 826 852 806 988 704C1087 630 1174 604 1252 628V996C1168 982 1089 1006 1012 1067C884 1168 748 1180 610 1105C474 1032 334 1054 188 1180V816Z" fill="#93C5FD" fill-opacity="0.42"/>
+  <path d="M188 986C326 890 459 871 588 928C733 992 874 962 1010 850C1104 773 1185 742 1252 752V1000C1169 986 1090 1010 1013 1069C884 1169 748 1180 610 1105C474 1032 334 1055 188 1182V986Z" fill="#2563EB" fill-opacity="0.24"/>
+  <rect x="234" y="280" width="248" height="12" rx="6" fill="#2563EB" fill-opacity="0.84"/>
+  <rect x="234" y="312" width="184" height="8" rx="4" fill="#60A5FA" fill-opacity="0.62"/>
+  <rect x="234" y="340" width="312" height="8" rx="4" fill="#93C5FD" fill-opacity="0.46"/>
+  <rect x="234" y="1328" width="420" height="10" rx="5" fill="#1D4ED8" fill-opacity="0.46"/>
+  <rect x="234" y="1360" width="258" height="8" rx="4" fill="#2563EB" fill-opacity="0.28"/>
+  <path d="M856 298L1112 298L1112 314L856 314V298Z" fill="#BFDBFE"/>
+  <path d="M856 342L1172 342L1172 358L856 358V342Z" fill="#DBEAFE"/>
+  <g opacity="0.58">
+    <rect x="132" y="132" width="1176" height="1336" rx="14" stroke="#BFDBFE" stroke-width="2"/>
+    <rect x="188" y="232" width="1064" height="1162" rx="10" stroke="#93C5FD" stroke-width="1"/>
+  </g>
+  <filter id="grain" x="0" y="0" width="1440" height="1600" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="4" seed="11"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer>
+      <feFuncA type="table" tableValues="0 0.12"/>
+    </feComponentTransfer>
+  </filter>
+  <rect width="1440" height="1600" filter="url(#grain)" opacity="0.48"/>
+</svg>

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import { AuthProvider } from "@/providers/auth-provider";
+import { LenisProvider } from "@/providers/lenis-provider";
 import { ToastProvider } from "@/providers/toast-provider";
 
 export const metadata: Metadata = {
@@ -19,7 +20,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="zh-CN">
       <body>
         <AuthProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            <LenisProvider>{children}</LenisProvider>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>
