@@ -14,6 +14,12 @@ APPWRITE_SESSION_COOKIE_NAME=taskflow-session
 NEXT_PUBLIC_SITE_URL=
 ```
 
+For local development, use `http://localhost:3000`. For Vercel or any
+production deployment, set this to the public HTTPS domain, for example
+`https://raskflow.vercel.app`. Appwrite uses this value when generating email
+verification links, so a production environment should not keep the localhost
+value.
+
 ## Auth setup
 
 1. Add your local and production domains as Web platforms in Appwrite.

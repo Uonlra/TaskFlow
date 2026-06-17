@@ -187,7 +187,7 @@ export async function sendEmailVerification(
       sessionSecret,
       request,
       body: {
-        url: getPublicSiteUrl("/auth/callback"),
+        url: getPublicSiteUrl("/auth/callback", request),
       },
     });
 
