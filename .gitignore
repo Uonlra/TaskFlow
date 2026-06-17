@@ -1,33 +1,53 @@
 # Dependencies
 node_modules/
+.pnpm-store/
+
 # Next.js
 .next/
 out/
+
 # Production build output
 dist/
 build/
+
 # TypeScript
 *.tsbuildinfo
+
 # Environment variables
 .env
 .env.*
 !.env.example
+
 # Deployment
 .vercel/
+.netlify/
+
 # Logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Tool and framework caches
+.eslintcache
+.stylelintcache
+.turbo/
+.parcel-cache/
+
 # Local browser/test profiles
 .tmp-edge-profile/
 .tmp-chrome-auth-check*/
+/.tmp-*/
 playwright-report/
 test-results/
+coverage/
+.nyc_output/
 
 # Visual verification artifacts
-auth-*.png
+/auth-*.png
+
 # OS/editor
 .DS_Store
 Thumbs.db
@@ -35,3 +55,7 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# Local skill files
+skills/
+skill/
