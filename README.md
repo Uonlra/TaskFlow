@@ -6,8 +6,8 @@ TaskFlow 是一个偏个人任务本风格的小应用，用来把任务记录�
 
 ## 在线预览
 
-- 公开演示页：[https://raskflow.vercel.app/demo](https://raskflow.vercel.app/demo)
-- 应用入口：[https://raskflow.vercel.app/](https://raskflow.vercel.app/)
+- 公开演示页：[https://www.uta4k.top/demo](https://www.uta4k.top/demo)
+- 应用入口：[https://www.uta4k.top/](https://www.uta4k.top/)
 - 项目文章：[https://www.uon1ra.top/article/taskflow](https://www.uon1ra.top/article/taskflow)
 
 > `/demo` 是公开演示页，不需要登录，也不会读取真实账号数据。`/` 会尝试进入工作台；如果当前没有登录，会跳转到登录页。
@@ -133,7 +133,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 线上部署时，`NEXT_PUBLIC_SITE_URL` 必须换成真实域名，例如：
 
 ```bash
-NEXT_PUBLIC_SITE_URL=https://raskflow.vercel.app
+NEXT_PUBLIC_SITE_URL=https://www.uta4k.top
 ```
 
 这个值会用于 Appwrite 邮箱验证回调链接。如果线上环境仍然写成 `http://localhost:3000`，邮箱里的确认链接会指向本机地址，离开本地开发服务器后就会打不开。
