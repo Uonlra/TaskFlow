@@ -133,7 +133,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 线上部署时，`NEXT_PUBLIC_SITE_URL` 必须换成真实域名，例如：
 
 ```bash
-NEXT_PUBLIC_SITE_URL=https://raskflow.vercel.app
+NEXT_PUBLIC_SITE_URL=https://www.uta4k.top
 ```
 
 这个值会用于 Appwrite 邮箱验证回调链接。如果线上环境仍然写成 `http://localhost:3000`，邮箱里的确认链接会指向本机地址，离开本地开发服务器后就会打不开。
