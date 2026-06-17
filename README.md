@@ -6,8 +6,8 @@ TaskFlow 是一个偏个人任务本风格的小应用，用来把任务记录�
 
 ## 在线预览
 
-- 公开演示页：[https://www.uta4k.top/demo](https://www.uta4k.top/demo)
-- 应用入口：[https://www.uta4k.top/](https://www.uta4k.top/)
+- 公开演示页：[https://taskflow.vercel.app/demo](https://raskflow.vercel.app/demo)
+- 应用入口：[https://www.uta4k.top/](https://www.uta4k.top/login)
 - 项目文章：[https://www.uon1ra.top/article/taskflow](https://www.uon1ra.top/article/taskflow)
 
 > `/demo` 是公开演示页，不需要登录，也不会读取真实账号数据。`/` 会尝试进入工作台；如果当前没有登录，会跳转到登录页。
@@ -42,7 +42,7 @@ http://localhost:3000/demo
 
 | 首页 | 总览 |
 | --- | --- |
-| ![TaskFlow landing page](docs/screenshots/landing.png) | ![TaskFlow dashboard](docs/screenshots/dashboard.png) |
+| ![TaskFlow login page](docs/screenshots/auth-login-review.png) | ![TaskFlow dashboard](docs/screenshots/dashboard.png) |
 
 | 任务列表 | 设置页 |
 | --- | --- |
