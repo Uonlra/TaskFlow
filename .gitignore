@@ -55,3 +55,7 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# Local skill files
+skills/
+skill/
