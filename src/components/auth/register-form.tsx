@@ -55,13 +55,15 @@ export function RegisterForm() {
     };
   }, [setPreloginAccountStatus, setPreloginEmail, setPreloginName, watchedEmail, watchedName]);
 
-  const navigateToDashboard = () => {
+  const navigateToLogin = () => {
+    const loginPath = "/login?reason=registered";
+
     if (typeof window !== "undefined") {
-      window.location.assign("/dashboard");
+      window.location.assign(loginPath);
       return;
     }
 
-    router.replace("/dashboard");
+    router.replace(loginPath);
     router.refresh();
   };
 
@@ -76,10 +78,10 @@ export function RegisterForm() {
       setPreloginEmail(values.email.trim());
       showToast({
         title: "本地账号已创建",
-        description: `${values.name} 的本地任务本已经准备好了。`,
+        description: `${values.name} 的本地任务本已经准备好了，请登录。`,
         tone: "success",
       });
-      navigateToDashboard();
+      navigateToLogin();
       return;
     }
 
@@ -94,8 +96,6 @@ export function RegisterForm() {
     const payload = (await response.json().catch(() => null)) as
       | {
           message?: string;
-          verificationRequested?: boolean;
-          requiresEmailVerification?: boolean;
         }
       | null;
 
@@ -113,22 +113,14 @@ export function RegisterForm() {
     setSubmittedName(values.name);
     setPreloginName(values.name.trim());
     setPreloginEmail(values.email.trim());
-    const requiresEmailVerification = Boolean(payload?.requiresEmailVerification);
-    const message =
-      payload?.message ||
-      (requiresEmailVerification
-          ? "账号已创建，请先完成邮箱验证后再登录。"
-          : `账号已创建，当前已登录 ${values.email}。`);
+    const message = payload?.message || "账号已创建，请登录。";
     setSubmitMessage(message);
     showToast({
-      title: requiresEmailVerification ? "请查收邮箱" : "账号已创建",
+      title: "账号已创建",
       description: message,
-      tone: requiresEmailVerification ? "info" : "success",
+      tone: "success",
     });
-
-    if (!requiresEmailVerification) {
-      navigateToDashboard();
-    }
+    navigateToLogin();
   };
 
   return (
@@ -137,8 +129,8 @@ export function RegisterForm() {
       title="创建账号"
       description={
         hasAppwritePublicEnv
-          ? "填写信息后，就可以开始保存自己的任务记录。"
-          : "当前以本地演示模式运行，创建后会直接进入任务本。"
+          ? "填写信息后，账号会保存到 Appwrite，随后请登录进入任务本。"
+          : "当前以本地演示模式运行，创建后请登录进入任务本。"
       }
       footer={
         <>

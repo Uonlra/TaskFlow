@@ -8,7 +8,6 @@ import {
   appwriteApiKey,
   appwriteEndpoint,
   appwriteProjectId,
-  getPublicSiteUrl,
   hasAppwriteAuthEnv,
 } from "@/lib/appwrite/env";
 import { getAppwriteSessionSecret } from "@/lib/appwrite/session";
@@ -54,9 +53,6 @@ type AuthEnvelope = {
 };
 
 type RegisterResult = {
-  secret: string;
-  expire?: string;
-  verificationRequested: boolean;
   envelope: AuthEnvelope;
 };
 
@@ -83,7 +79,6 @@ export async function createEmailPasswordSession(input: {
   email: string;
   password: string;
   request?: NextRequest;
-  allowUnverified?: boolean;
 }) {
   const session = await appwriteRequest<AppwriteSessionResponse>(
     "/account/sessions/email",
@@ -105,10 +100,6 @@ export async function createEmailPasswordSession(input: {
   const account = await getCurrentAccount(session.secret, input.request);
   const envelope = toAuthEnvelope(account, input.email, session.expire);
 
-  if (!input.allowUnverified && !envelope.user.emailVerified) {
-    throw new UnverifiedEmailError(session.secret, envelope);
-  }
-
   return {
     secret: session.secret,
     expire: session.expire,
@@ -122,7 +113,7 @@ export async function registerEmailPasswordAccount(input: {
   password: string;
   request?: NextRequest;
 }) {
-  await appwriteRequest("/account", {
+  const account = await appwriteRequest<AppwriteAccountResponse>("/account", {
     method: "POST",
     useAdminKey: true,
     request: input.request,
@@ -134,39 +125,9 @@ export async function registerEmailPasswordAccount(input: {
     },
   });
 
-  const session = await createEmailPasswordSession({
-    email: input.email,
-    password: input.password,
-    request: input.request,
-    allowUnverified: true,
-  });
-
-  const verificationRequested = await sendEmailVerification(
-    session.secret,
-    input.request,
-  );
-
   return {
-    secret: session.secret,
-    expire: session.expire,
-    envelope: session.envelope,
-    verificationRequested,
+    envelope: toAuthEnvelope(account, input.email, undefined),
   } satisfies RegisterResult;
-}
-
-export async function verifyEmailAddress(input: {
-  userId: string;
-  secret: string;
-  request?: NextRequest;
-}) {
-  return appwriteRequest("/account/verifications/email", {
-    method: "PUT",
-    request: input.request,
-    body: {
-      userId: input.userId,
-      secret: input.secret,
-    },
-  });
 }
 
 export async function destroyCurrentSession(sessionSecret: string, request?: NextRequest) {
@@ -175,26 +136,6 @@ export async function destroyCurrentSession(sessionSecret: string, request?: Nex
     sessionSecret,
     request,
   });
-}
-
-export async function sendEmailVerification(
-  sessionSecret: string,
-  request?: NextRequest,
-) {
-  try {
-    await appwriteRequest("/account/verifications/email", {
-      method: "POST",
-      sessionSecret,
-      request,
-      body: {
-        url: getPublicSiteUrl("/auth/callback", request),
-      },
-    });
-
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export async function updateCurrentProfile(
@@ -306,20 +247,6 @@ export class AppwriteRequestError extends Error {
     super(message);
     this.name = "AppwriteRequestError";
     this.status = status;
-  }
-}
-
-export class UnverifiedEmailError extends Error {
-  status: number;
-  sessionSecret: string;
-  envelope: AuthEnvelope;
-
-  constructor(sessionSecret: string, envelope: AuthEnvelope) {
-    super("该账号尚未完成邮箱验证。");
-    this.name = "UnverifiedEmailError";
-    this.status = 403;
-    this.sessionSecret = sessionSecret;
-    this.envelope = envelope;
   }
 }
 

@@ -62,19 +62,16 @@ export function LoginForm() {
   useEffect(() => {
     const reason = searchParams.get("reason");
 
-    if (reason === "email-verified") {
+    if (reason === "registered") {
       setSubmitError(null);
       showToast({
-        title: "邮箱验证完成",
-        description: "你的邮箱已经验证成功，现在可以登录进入任务本。",
+        title: "账号已创建",
+        description: "请使用刚才注册的邮箱和密码登录。",
         tone: "success",
       });
       return;
     }
 
-    if (reason === "verify-email") {
-      setSubmitError("请先完成邮箱验证后再进入任务本。");
-    }
   }, [searchParams, showToast]);
 
   const navigateToDashboard = () => {
@@ -115,7 +112,7 @@ export function LoginForm() {
     });
 
     const payload = (await response.json().catch(() => null)) as
-      | { message?: string; requiresEmailVerification?: boolean }
+      | { message?: string }
       | AuthEnvelope
       | null;
 

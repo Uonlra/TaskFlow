@@ -16,10 +16,6 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     if (!auth?.user) {
       redirect("/login");
     }
-
-    if (!auth.user.emailVerified) {
-      redirect("/login?reason=verify-email");
-    }
   }
 
   return (
