@@ -16,15 +16,14 @@ NEXT_PUBLIC_SITE_URL=
 
 For local development, use `http://localhost:3000`. For Vercel or any
 production deployment, set this to the public HTTPS domain, for example
-`https://www.uta4k.top`. Appwrite uses this value when generating email
-verification links, so a production environment should not keep the localhost
+`https://www.uta4k.top`. A production environment should not keep the localhost
 value.
 
 ## Auth setup
 
 1. Add your local and production domains as Web platforms in Appwrite.
 2. Enable email/password auth.
-3. Configure your email provider if you want email verification links to work.
+3. Email verification is not required by the current registration flow.
 
 ## Tasks table
 

@@ -17,10 +17,10 @@ type AuthProductPreviewProps = {
 };
 
 export function AuthProductPreview({ activeTab, onTabChange }: AuthProductPreviewProps) {
-  const { user, profile, isConfigured } = useAuth();
+  const { user, profile } = useAuth();
   const { preloginAccountStatus, preloginEmail, preloginName } = useAuthPreviewState();
   const tasks = useTaskStore((state) => state.tasks);
-  const canPreviewUserData = Boolean(user && (!isConfigured || user.emailVerified));
+  const canPreviewUserData = Boolean(user);
   const normalizedPreloginName = preloginName.trim();
   const normalizedPreloginEmail = preloginEmail.trim();
   const hasPreloginIdentity = (normalizedPreloginName.length > 0 || normalizedPreloginEmail.length > 0) && !canPreviewUserData;

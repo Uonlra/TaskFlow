@@ -136,7 +136,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_SITE_URL=https://www.uta4k.top
 ```
 
-这个值会用于 Appwrite 邮箱验证回调链接。如果线上环境仍然写成 `http://localhost:3000`，邮箱里的确认链接会指向本机地址，离开本地开发服务器后就会打不开。
+这个值用于区分本地和线上站点地址。线上环境不要保留 `http://localhost:3000`，否则部署后的站点仍会带着本地配置运行。
 
 启动开发环境：
 

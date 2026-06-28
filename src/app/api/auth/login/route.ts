@@ -5,14 +5,8 @@ import { hasAppwriteAuthEnv } from "@/lib/appwrite/env";
 import {
   createEmailPasswordSession,
   AppwriteRequestError,
-  destroyCurrentSession,
-  sendEmailVerification,
-  UnverifiedEmailError,
 } from "@/lib/appwrite/server";
-import {
-  attachAppwriteSessionCookie,
-  clearAppwriteSessionCookie,
-} from "@/lib/appwrite/session";
+import { attachAppwriteSessionCookie } from "@/lib/appwrite/session";
 
 export async function POST(request: NextRequest) {
   const payload = await request.json().catch(() => null);
@@ -44,27 +38,6 @@ export async function POST(request: NextRequest) {
     });
     return response;
   } catch (error) {
-    if (error instanceof UnverifiedEmailError) {
-      const verificationRequested = await sendEmailVerification(
-        error.sessionSecret,
-        request,
-      );
-      await destroyCurrentSession(error.sessionSecret, request).catch(() => undefined);
-
-      const response = NextResponse.json(
-        {
-          message: verificationRequested
-            ? "该账号尚未完成邮箱验证，已重新发送验证邮件，请先完成验证。"
-            : "该账号尚未完成邮箱验证，请先完成验证后再登录。",
-          requiresEmailVerification: true,
-          verificationRequested,
-        },
-        { status: 403 },
-      );
-      clearAppwriteSessionCookie(response);
-      return response;
-    }
-
     return NextResponse.json(
       {
         message:
