@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { taskSchema } from "@/features/tasks/schemas/task-schema";
+import { handleApiError } from "@/lib/api/error";
 import { getCurrentAuthEnvelope } from "@/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/lib/appwrite/session";
 import { createTask, listTasks } from "@/lib/appwrite/tasks";
@@ -13,8 +14,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: "请先登录后再查看任务。" }, { status: 401 });
   }
 
-  const tasks = await listTasks(sessionSecret, auth.user.id, request);
-  return NextResponse.json({ tasks });
+  try {
+    const tasks = await listTasks(sessionSecret, auth.user.id, request);
+    return NextResponse.json({ tasks });
+  } catch (error) {
+    return handleApiError(error, "无法加载任务列表，请稍后再试。");
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -35,6 +40,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const task = await createTask(sessionSecret, auth.user.id, parsed.data, request);
-  return NextResponse.json({ task }, { status: 201 });
+  try {
+    const task = await createTask(sessionSecret, auth.user.id, parsed.data, request);
+    return NextResponse.json({ task }, { status: 201 });
+  } catch (error) {
+    return handleApiError(error, "创建任务失败，请稍后再试。");
+  }
 }

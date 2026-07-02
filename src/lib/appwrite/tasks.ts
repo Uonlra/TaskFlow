@@ -41,11 +41,12 @@ export async function listTasks(
   const payload = await appwriteTaskRequest<AppwriteRowsList>("", {
     sessionSecret,
     request,
+    searchParams: {
+      "queries[]": [`equal("assignedTo",${JSON.stringify(userId)})`],
+    },
   });
 
-  return (payload.rows ?? [])
-    .filter((row) => row.assignedTo === userId)
-    .map(mapTaskRow);
+  return (payload.rows ?? []).map(mapTaskRow);
 }
 
 export async function createTask(

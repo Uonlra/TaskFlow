@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
+import { handleApiError } from "@/lib/api/error";
 import { getCurrentAccount, toProfile, updateCurrentProfile } from "@/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/lib/appwrite/session";
 
@@ -16,8 +17,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: "请先登录后再查看资料。" }, { status: 401 });
   }
 
-  const account = await getCurrentAccount(sessionSecret, request);
-  return NextResponse.json({ profile: toProfile(account, account.email ?? "") });
+  try {
+    const account = await getCurrentAccount(sessionSecret, request);
+    return NextResponse.json({ profile: toProfile(account, account.email ?? "") });
+  } catch (error) {
+    return handleApiError(error, "无法加载个人资料，请稍后再试。");
+  }
 }
 
 export async function PATCH(request: NextRequest) {
@@ -37,6 +42,10 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const profile = await updateCurrentProfile(sessionSecret, parsed.data, request);
-  return NextResponse.json({ profile });
+  try {
+    const profile = await updateCurrentProfile(sessionSecret, parsed.data, request);
+    return NextResponse.json({ profile });
+  } catch (error) {
+    return handleApiError(error, "保存资料失败，请稍后再试。");
+  }
 }
