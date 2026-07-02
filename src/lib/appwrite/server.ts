@@ -4,13 +4,11 @@ import type { NextRequest } from "next/server";
 
 import type { AuthSession, AuthUser } from "@/features/auth/types/auth.types";
 import type { Profile } from "@/features/auth/types/profile.types";
-import {
-  appwriteApiKey,
-  appwriteEndpoint,
-  appwriteProjectId,
-  hasAppwriteAuthEnv,
-} from "@/lib/appwrite/env";
+import { hasAppwriteAuthEnv } from "@/lib/appwrite/env";
+import { appwriteFetch } from "@/lib/appwrite/request";
 import { getAppwriteSessionSecret } from "@/lib/appwrite/session";
+
+export { AppwriteRequestError } from "@/lib/appwrite/request";
 
 type AppwriteSessionResponse = {
   $id: string;
@@ -26,24 +24,9 @@ type AppwriteAccountResponse = {
   prefs?: Record<string, unknown>;
 };
 
-type AppwriteErrorResponse = {
-  message?: string;
-  type?: string;
-  code?: number;
-};
-
 type AppwriteUsersListResponse = {
   total?: number;
   users?: AppwriteAccountResponse[];
-};
-
-type AppwriteRequestOptions = {
-  method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
-  body?: unknown;
-  sessionSecret?: string | null;
-  useAdminKey?: boolean;
-  request?: NextRequest;
-  searchParams?: Record<string, string | number | boolean | Array<string>>;
 };
 
 type AuthEnvelope = {
@@ -80,18 +63,16 @@ export async function createEmailPasswordSession(input: {
   password: string;
   request?: NextRequest;
 }) {
-  const session = await appwriteRequest<AppwriteSessionResponse>(
-    "/account/sessions/email",
-    {
-      method: "POST",
-      useAdminKey: true,
-      request: input.request,
-      body: {
-        email: input.email,
-        password: input.password,
-      },
+  const session = await appwriteFetch<AppwriteSessionResponse>({
+    path: "/account/sessions/email",
+    method: "POST",
+    useAdminKey: true,
+    request: input.request,
+    body: {
+      email: input.email,
+      password: input.password,
     },
-  );
+  });
 
   if (!session.secret) {
     throw new Error("Appwrite did not return a session secret.");
@@ -113,7 +94,8 @@ export async function registerEmailPasswordAccount(input: {
   password: string;
   request?: NextRequest;
 }) {
-  const account = await appwriteRequest<AppwriteAccountResponse>("/account", {
+  const account = await appwriteFetch<AppwriteAccountResponse>({
+    path: "/account",
     method: "POST",
     useAdminKey: true,
     request: input.request,
@@ -131,7 +113,8 @@ export async function registerEmailPasswordAccount(input: {
 }
 
 export async function destroyCurrentSession(sessionSecret: string, request?: NextRequest) {
-  return appwriteRequest("/account/sessions/current", {
+  return appwriteFetch({
+    path: "/account/sessions/current",
     method: "DELETE",
     sessionSecret,
     request,
@@ -145,7 +128,8 @@ export async function updateCurrentProfile(
 ) {
   const current = await getCurrentAccount(sessionSecret, request);
 
-  await appwriteRequest("/account/name", {
+  await appwriteFetch({
+    path: "/account/name",
     method: "PATCH",
     sessionSecret,
     request,
@@ -159,7 +143,8 @@ export async function updateCurrentProfile(
     avatarUrl: values.avatarUrl || "",
   };
 
-  const updated = await appwriteRequest<AppwriteAccountResponse>("/account/prefs", {
+  const updated = await appwriteFetch<AppwriteAccountResponse>({
+    path: "/account/prefs",
     method: "PATCH",
     sessionSecret,
     request,
@@ -175,7 +160,8 @@ export async function getCurrentAccount(
   sessionSecret: string,
   request?: NextRequest,
 ) {
-  return appwriteRequest<AppwriteAccountResponse>("/account", {
+  return appwriteFetch<AppwriteAccountResponse>({
+    path: "/account",
     sessionSecret,
     request,
   });
@@ -187,7 +173,8 @@ export async function getPublicAccountStatusByEmail(email: string, request?: Nex
   }
 
   try {
-    const result = await appwriteRequest<AppwriteUsersListResponse>("/users", {
+    const result = await appwriteFetch<AppwriteUsersListResponse>({
+      path: "/users",
       request,
       useAdminKey: true,
       searchParams: {
@@ -238,88 +225,4 @@ export function toAuthEnvelope(
       expire,
     },
   };
-}
-
-export class AppwriteRequestError extends Error {
-  status: number;
-
-  constructor(status: number, message: string) {
-    super(message);
-    this.name = "AppwriteRequestError";
-    this.status = status;
-  }
-}
-
-async function appwriteRequest<T = unknown>(
-  path: string,
-  options: AppwriteRequestOptions = {},
-) {
-  if (!appwriteEndpoint || !appwriteProjectId) {
-    throw new Error("Appwrite endpoint or project ID is missing.");
-  }
-
-  if (options.useAdminKey && !appwriteApiKey) {
-    throw new Error("Appwrite API key is missing.");
-  }
-
-  const url = new URL(`${appwriteEndpoint.replace(/\/$/, "")}${path}`);
-
-  if (options.searchParams) {
-    for (const [key, rawValue] of Object.entries(options.searchParams)) {
-      const values = Array.isArray(rawValue) ? rawValue : [rawValue];
-
-      values.forEach((value) => {
-        url.searchParams.append(key, String(value));
-      });
-    }
-  }
-
-  const headers = new Headers({
-    "Content-Type": "application/json",
-    "X-Appwrite-Project": appwriteProjectId,
-    "X-Appwrite-Response-Format": "1.8.0",
-  });
-
-  if (options.useAdminKey && appwriteApiKey) {
-    headers.set("X-Appwrite-Key", appwriteApiKey);
-  }
-
-  if (options.sessionSecret) {
-    headers.set("X-Appwrite-Session", options.sessionSecret);
-  }
-
-  const userAgent = options.request?.headers.get("user-agent");
-
-  if (userAgent) {
-    headers.set("X-Forwarded-User-Agent", userAgent);
-  }
-
-  const response = await fetch(url, {
-    method: options.method ?? "GET",
-    headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    const errorPayload = (await safeJson<AppwriteErrorResponse>(response)) ?? {};
-    throw new AppwriteRequestError(
-      response.status,
-      errorPayload.message || `Appwrite request failed with status ${response.status}.`,
-    );
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return (await response.json()) as T;
-}
-
-async function safeJson<T>(response: Response) {
-  try {
-    return (await response.json()) as T;
-  } catch {
-    return null;
-  }
 }
