@@ -6,12 +6,10 @@ import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import {
   appwriteDatabaseId,
-  appwriteEndpoint,
-  appwriteProjectId,
   appwriteTasksTableId,
   hasAppwriteDatabaseEnv,
 } from "@/lib/appwrite/env";
-import { AppwriteRequestError } from "@/lib/appwrite/server";
+import { appwriteFetch } from "@/lib/appwrite/request";
 
 type AppwriteTaskRow = {
   $id: string;
@@ -35,15 +33,11 @@ type AppwriteRowsList = {
 
 export async function listTasks(
   sessionSecret: string,
-  userId: string,
   request?: NextRequest,
 ) {
   const payload = await appwriteTaskRequest<AppwriteRowsList>("", {
     sessionSecret,
     request,
-    searchParams: {
-      "queries[]": [`equal("assignedTo",${JSON.stringify(userId)})`],
-    },
   });
 
   return (payload.rows ?? []).map(mapTaskRow);
@@ -63,7 +57,7 @@ export async function createTask(
     request,
     body: {
       rowId,
-      data: buildTaskData(input, taskKey, userId),
+      data: buildTaskData(input, taskKey),
       permissions: buildTaskPermissions(userId),
     },
   });
@@ -161,7 +155,6 @@ function buildTaskPermissions(userId: string) {
 function buildTaskData(
   input: TaskFormValues,
   taskKey?: number,
-  userId?: string,
 ) {
   const tags = Array.from(
     new Set(
@@ -182,7 +175,6 @@ function buildTaskData(
     dueDate: toAppwriteDateTime(input.dueDate),
     completedAt: input.status === "done" ? new Date().toISOString() : null,
     ...(typeof taskKey === "number" ? { taskId: taskKey } : {}),
-    ...(userId ? { assignedTo: userId } : {}),
   };
 }
 
@@ -212,69 +204,19 @@ async function appwriteTaskRequest<T = unknown>(
     searchParams?: Record<string, string | string[]>;
   },
 ) {
-  if (
-    !hasAppwriteDatabaseEnv ||
-    !appwriteEndpoint ||
-    !appwriteProjectId ||
-    !appwriteDatabaseId ||
-    !appwriteTasksTableId
-  ) {
+  if (!hasAppwriteDatabaseEnv || !appwriteDatabaseId || !appwriteTasksTableId) {
     throw new Error("Appwrite database configuration is incomplete.");
   }
 
-  const url = new URL(
-    `${appwriteEndpoint.replace(/\/$/, "")}/tablesdb/${appwriteDatabaseId}/tables/${appwriteTasksTableId}/rows${path}`,
-  );
-
-  if (options.searchParams) {
-    for (const [key, rawValue] of Object.entries(options.searchParams)) {
-      const values = Array.isArray(rawValue) ? rawValue : [rawValue];
-
-      values.forEach((value) => {
-        url.searchParams.append(key, value);
-      });
-    }
-  }
-
-  const headers = new Headers({
-    "Content-Type": "application/json",
-    "X-Appwrite-Project": appwriteProjectId,
-    "X-Appwrite-Response-Format": "1.8.0",
-    "X-Appwrite-Session": options.sessionSecret,
+  return appwriteFetch<T>({
+    path: `/tablesdb/${appwriteDatabaseId}/tables/${appwriteTasksTableId}/rows${path}`,
+    method: options.method,
+    body: options.body,
+    sessionSecret: options.sessionSecret,
+    request: options.request,
+    searchParams: options.searchParams as
+      | Record<string, string | number | boolean | Array<string>>
+      | undefined,
+    errorMessage: "Task request failed.",
   });
-
-  const userAgent = options.request?.headers.get("user-agent");
-
-  if (userAgent) {
-    headers.set("X-Forwarded-User-Agent", userAgent);
-  }
-
-  const response = await fetch(url, {
-    method: options.method ?? "GET",
-    headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    const errorPayload = (await safeJson<{ message?: string }>(response)) ?? {};
-    throw new AppwriteRequestError(
-      response.status,
-      errorPayload.message || `Task request failed with status ${response.status}.`,
-    );
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return (await response.json()) as T;
-}
-
-async function safeJson<T>(response: Response) {
-  try {
-    return (await response.json()) as T;
-  } catch {
-    return null;
-  }
 }

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const tasks = await listTasks(sessionSecret, auth.user.id, request);
+    const tasks = await listTasks(sessionSecret, request);
     return NextResponse.json({ tasks });
   } catch (error) {
     return handleApiError(error, "无法加载任务列表，请稍后再试。");
