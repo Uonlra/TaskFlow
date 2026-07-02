@@ -230,6 +230,49 @@
     bottom: 20px;
     left: auto;
   }
+  .auth-exhibition-image--calendar .auth-exhibition-plate--primary {
+    top: 20px;
+    bottom: auto;
+    left: 20px;
+    right: auto;
+    width: min(320px, calc(100% - 178px));
+  }
+
+  .auth-exhibition-image--calendar .auth-exhibition-plate--signal {
+    top: 20px;
+    right: 20px;
+    bottom: auto;
+    left: auto;
+  }
+
+  .auth-exhibition-image--calendar .auth-exhibition-plate--metric {
+    top: auto;
+    right: 20px;
+    bottom: 20px;
+    left: auto;
+  }
+
+  .auth-exhibition-image--analytics .auth-exhibition-plate--primary {
+    top: 20px;
+    right: 20px;
+    bottom: auto;
+    left: auto;
+    width: min(280px, calc(100% - 178px));
+  }
+
+  .auth-exhibition-image--analytics .auth-exhibition-plate--metric {
+    top: 20px;
+    left: 20px;
+    right: auto;
+    bottom: auto;
+  }
+
+  .auth-exhibition-image--analytics .auth-exhibition-plate--signal {
+    top: auto;
+    right: auto;
+    bottom: 20px;
+    left: 20px;
+  }
 
   .auth-product-preview {
     grid-template-columns: 1fr;
@@ -594,6 +637,17 @@
     right: 16px;
     bottom: 16px;
     min-width: 106px;
+  }
+  .auth-exhibition-image--calendar .auth-exhibition-plate--primary,
+  .auth-exhibition-image--analytics .auth-exhibition-plate--primary {
+    width: min(210px, calc(100% - 136px));
+  }
+
+  .auth-exhibition-image--calendar .auth-exhibition-plate--signal,
+  .auth-exhibition-image--calendar .auth-exhibition-plate--metric,
+  .auth-exhibition-image--analytics .auth-exhibition-plate--signal,
+  .auth-exhibition-image--analytics .auth-exhibition-plate--metric {
+    min-width: 96px;
   }
 
   .auth-brand-title {
