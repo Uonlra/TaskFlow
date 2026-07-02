@@ -61,16 +61,6 @@ export async function PATCH(
   }
 }
 
-function isStatusOnlyPatch(payload: unknown) {
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-    return false;
-  }
-
-  const keys = Object.keys(payload);
-
-  return keys.length === 1 && keys[0] === "status";
-}
-
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
