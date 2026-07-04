@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
@@ -28,12 +28,14 @@ const statusOptions: Array<{ value: Task["status"]; label: string }> = [
 ];
 
 export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, onUpdateStatus }: TaskCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const dueMeta = getTaskDueMeta(task);
   const taskTags = task.tags ?? [];
   const cardToneClassName = getTaskCardToneClassName(task, dueMeta.isOverdue);
   const signalTone = getTaskSignalTone(task, dueMeta.isOverdue, dueMeta.isDueToday);
   const signalActive = task.status !== "todo" || dueMeta.isOverdue || dueMeta.isDueToday;
   const flashClassName = useTaskStatusFlash(task.status);
+  const detailId = `task-card-detail-${task.id}`;
 
   if (compact) {
     return (
@@ -41,16 +43,9 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
         href={`/tasks/${task.id}`}
         className={`task-card task-card--compact${cardToneClassName}${flashClassName}`}
       >
-        <div className="task-card__header">
-          <div>
-            <div className="task-card__title-row">
-              <StatusDot tone={signalTone} active={signalActive} />
-              <h3 className="task-card__title">{task.title}</h3>
-            </div>
-            <p className="task-card__description">{task.description}</p>
-          </div>
+        <TaskCardHeader task={task} signalTone={signalTone} signalActive={signalActive}>
           <TaskStatusBadge status={task.status} />
-        </div>
+        </TaskCardHeader>
 
         <div className="task-card__meta">
           <TaskPriorityBadge priority={task.priority} />
@@ -75,69 +70,109 @@ export function TaskCard({ task, compact = false, onUpdateTask, onDeleteTask, on
 
   return (
     <article
-      className={`task-card${cardToneClassName}${flashClassName}`}
+      className={`task-card task-card--collapsible${isExpanded ? " task-card--expanded" : ""}${cardToneClassName}${flashClassName}`}
     >
-      <div className="task-card__header">
-        <div>
-          <div className="task-card__title-row">
+      <button
+        type="button"
+        className="task-card__summary"
+        aria-expanded={isExpanded}
+        aria-controls={detailId}
+        onClick={() => setIsExpanded((current) => !current)}
+      >
+        <span className="task-card__summary-copy">
+          <span className="task-card__title-row">
             <StatusDot tone={signalTone} active={signalActive} />
-            <h3 className="task-card__title">{task.title}</h3>
-          </div>
-          <p className="task-card__description">
+            <span className="task-card__title">{task.title}</span>
+          </span>
+          <span className="task-card__description">
             {task.description}
-          </p>
+          </span>
+        </span>
+        <span className="task-card__summary-side">
+          <TaskStatusBadge status={task.status} />
+          <span className="task-card__toggle" aria-hidden="true">
+            <span className="task-card__toggle-icon" />
+          </span>
+        </span>
+      </button>
+
+      <div id={detailId} className="task-card__details" aria-hidden={!isExpanded}>
+        <div className="task-card__details-inner">
+          <div className="task-card__timestamps">
+            <span>创建于 {formatDateLabel(task.createdAt)}</span>
+            {task.updatedAt ? <span>最近更新 {formatDateLabel(task.updatedAt)}</span> : null}
+          </div>
+
+          <div className="task-card__meta">
+            <TaskPriorityBadge priority={task.priority} />
+            <MetaPill label={dueMeta.label} tone={dueMeta.tone} />
+            {task.dueDate ? <MetaPill label={`日期：${task.dueDate}`} /> : null}
+            {taskTags.map((tag) => (
+              <MetaPill key={tag} label={`#${tag}`} tone="success" />
+            ))}
+          </div>
+
+          <div className="task-card__actions">
+            <Link
+              href={`/tasks/${task.id}`}
+              className="tesla-action tesla-action--primary"
+            >
+              查看详情
+            </Link>
+            {onUpdateStatus ? (
+              <StatusSegmentedControl
+                currentStatus={task.status}
+                onChange={(status) => onUpdateStatus(task.id, status)}
+              />
+            ) : null}
+            {onUpdateTask ? (
+              <TaskFormDialog
+                onSubmitTask={(values) => onUpdateTask(task.id, values)}
+                initialValues={taskValues}
+                triggerLabel="编辑"
+                dialogEyebrow="编辑任务"
+                dialogTitle="调整这条任务"
+                submitLabel="保存修改"
+              />
+            ) : null}
+            <ConfirmDialog
+              triggerLabel="删除"
+              title="确认删除这条任务？"
+              description="删除后会从当前任务本与浏览器本地存储中移除，无法恢复。"
+              confirmLabel="确认删除"
+              confirmTone="danger"
+              onConfirm={() => onDeleteTask?.(task.id)}
+              triggerClassName="tesla-action tesla-action--danger"
+            />
+          </div>
         </div>
-        <TaskStatusBadge status={task.status} />
-      </div>
-
-      <div className="task-card__timestamps">
-        <span>创建于 {formatDateLabel(task.createdAt)}</span>
-        {task.updatedAt ? <span>最近更新 {formatDateLabel(task.updatedAt)}</span> : null}
-      </div>
-
-      <div className="task-card__meta">
-        <TaskPriorityBadge priority={task.priority} />
-        <MetaPill label={dueMeta.label} tone={dueMeta.tone} />
-        {task.dueDate ? <MetaPill label={`日期：${task.dueDate}`} /> : null}
-        {taskTags.map((tag) => (
-          <MetaPill key={tag} label={`#${tag}`} tone="success" />
-        ))}
-      </div>
-
-      <div className="task-card__actions">
-        <Link
-          href={`/tasks/${task.id}`}
-          className="tesla-action tesla-action--primary"
-        >
-          查看详情
-        </Link>
-        {onUpdateStatus ? (
-          <StatusSegmentedControl
-            currentStatus={task.status}
-            onChange={(status) => onUpdateStatus(task.id, status)}
-          />
-        ) : null}
-        {onUpdateTask ? (
-          <TaskFormDialog
-            onSubmitTask={(values) => onUpdateTask(task.id, values)}
-            initialValues={taskValues}
-            triggerLabel="编辑"
-            dialogEyebrow="编辑任务"
-            dialogTitle="调整这条任务"
-            submitLabel="保存修改"
-          />
-        ) : null}
-        <ConfirmDialog
-          triggerLabel="删除"
-          title="确认删除这条任务？"
-          description="删除后会从当前任务本与浏览器本地存储中移除，无法恢复。"
-          confirmLabel="确认删除"
-          confirmTone="danger"
-          onConfirm={() => onDeleteTask?.(task.id)}
-          triggerClassName="tesla-action tesla-action--danger"
-        />
       </div>
     </article>
+  );
+}
+
+function TaskCardHeader({
+  task,
+  signalTone,
+  signalActive,
+  children,
+}: {
+  task: Task;
+  signalTone: TaskSignalTone;
+  signalActive: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div className="task-card__header">
+      <div>
+        <div className="task-card__title-row">
+          <StatusDot tone={signalTone} active={signalActive} />
+          <h3 className="task-card__title">{task.title}</h3>
+        </div>
+        <p className="task-card__description">{task.description}</p>
+      </div>
+      {children}
+    </div>
   );
 }
 
@@ -259,3 +294,4 @@ function formatDateLabel(value: string) {
     day: "numeric",
   });
 }
+
