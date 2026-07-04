@@ -46,25 +46,25 @@ export function TaskSignalPanel({
     {
       label: "进行中",
       value: inProgressCount,
-      helper: "正在推进，别同时开太多窗口。",
+      helper: "当前推进",
       tone: "info",
     },
     {
       label: "待开始",
       value: todoCount,
-      helper: "还没动手，先挑最重要的一条。",
+      helper: "待处理",
       tone: "neutral",
     },
     {
       label: "已完成",
       value: doneCount,
-      helper: "已经收尾，可以安心划掉。",
+      helper: "已完成",
       tone: "success",
     },
     {
       label: "需要盯住",
       value: overdueCount + todayCount,
-      helper: overdueCount ? "有逾期任务，先救火。" : todayCount ? "今天到期，别拖太晚。" : "暂时没有红灯。",
+      helper: overdueCount ? "存在逾期" : todayCount ? "今日到期" : "无风险",
       tone: overdueCount ? "danger" : todayCount ? "warning" : "neutral",
       active: overdueCount + todayCount > 0,
     },
@@ -90,8 +90,8 @@ export function TaskSignalPanel({
             </>
           ) : (
             <>
-              <strong>{total ? "这组任务已经收得很干净" : "还没有任务进入雷达"}</strong>
-              <span>{total ? "可以复盘一下，或者放心切到下一组。" : "先加一条任务，系统就能开始帮你看节奏。"}</span>
+              <strong>{total ? "无待办任务" : "暂无任务"}</strong>
+              <span>{total ? "当前范围已清空" : "新建任务后显示"}</span>
             </>
           )}
         </div>
@@ -102,7 +102,7 @@ export function TaskSignalPanel({
       <div className="task-signal-panel__visual">
         <TaskProgressRing
           value={completionRate}
-          helper={total ? `${doneCount} / ${total} 条已完成` : "没有任务时，进度先归零。"}
+          helper={total ? `${doneCount} / ${total} 条已完成` : "暂无任务"}
         />
         <TaskStatusLights items={lights} />
       </div>
@@ -129,3 +129,4 @@ function pickFocusTask(tasks: Task[]) {
       return new Date(right.updatedAt ?? right.createdAt).getTime() - new Date(left.updatedAt ?? left.createdAt).getTime();
     })[0];
 }
+

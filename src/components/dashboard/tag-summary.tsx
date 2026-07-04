@@ -30,9 +30,10 @@ export function TagSummary({ items }: TagSummaryProps) {
             </div>
           ))
         ) : (
-          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.7 }}>还没有可统计的标签。加几个标签后，这里会更有用。</p>
+          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.7 }}>暂无标签数据</p>
         )}
       </div>
     </section>
   );
 }
+

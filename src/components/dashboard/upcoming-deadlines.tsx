@@ -24,9 +24,10 @@ export function UpcomingDeadlines({ tasks }: { tasks: Task[] }) {
             </article>
           ))
         ) : (
-          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.7 }}>暂时没有快到期的任务，可以先松一口气。</p>
+          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.7 }}>暂无临近截止</p>
         )}
       </div>
     </section>
   );
 }
+

@@ -91,45 +91,37 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       {
         label: "未完成任务",
         value: String(open),
-        helper:
-          range === "all"
-            ? isConfigured
-              ? "Appwrite 里的任务已经同步到这里。"
-              : "现在展示的是演示数据，适合先看看手感。"
-            : `${rangeLabel}还剩这些，先放在眼前。`,
+        helper: range === "all" ? (isConfigured ? "已同步" : "演示数据") : `${rangeLabel}剩余`,
         accent: "var(--primary)",
       },
       {
         label: "进行中",
         value: String(inProgress),
-        helper: "同时推进的事情少一点，心里会更稳。",
+        helper: "当前推进",
         accent: "var(--data-cyan)",
       },
       {
         label: completionLabel,
         value: String(completed),
-        helper:
-          range === "all"
-            ? "这些任务已经处理完，可以安心放过它们。"
-            : `${rangeLabel}已经完成这些，继续保持这个节奏。`,
+        helper: range === "all" ? "累计完成" : `${rangeLabel}完成`,
         accent: "var(--data-indigo)",
       },
       {
         label: "已逾期",
         value: String(dueSummary.overdue),
-        helper: `${rangeLabel}有些任务已经晚了，先把它们补回来。`,
+        helper: "需要处理",
         accent: "var(--danger)",
       },
       {
         label: "今天到期",
         value: String(dueSummary.today),
-        helper: `${rangeLabel}今天到期的事，早点看会轻松些。`,
+        helper: "今日截止",
         accent: "var(--warning)",
       },
       {
         label: "3 天内到期",
         value: String(dueSummary.upcoming),
-        helper: `${rangeLabel}这几天要靠近的任务，提前看一眼比较省心。`,
+        helper: "近期截止",
         accent: "var(--warning)",
       },
     ];
@@ -163,10 +155,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     return {
       completionRate,
       overdueCount,
-      streakMessage:
-        completed > 0
-          ? `${rangeLabel}完成了 ${completed} 条，节奏还不错，先别急着加太多新事。`
-          : `${rangeLabel}还没完成记录，先挑一条最重要的做掉就行。`,
+      streakMessage: completed > 0 ? `${rangeLabel}完成 ${completed} 条` : `${rangeLabel}暂无完成`,
     };
   }, [rangeLabel, scopedTasks]);
 
@@ -190,7 +179,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       {!isConfigured ? (
         <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
           <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
-            还没连 Appwrite，所以这里先用演示数据顶一下。
+            当前为演示数据。
           </p>
         </section>
       ) : null}
@@ -203,8 +192,8 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         <TaskSignalPanel
           tasks={scopedTasks}
           eyebrow="任务总览"
-          title={`${rangeLabel}的任务雷达已打开`}
-          description="进度、状态灯和优先处理项都在这里。扫一眼，就知道先把注意力放到哪儿。"
+          title={range === "today" ? "今日总览" : `${rangeLabel}总览`}
+          description="进度 / 状态 / 优先级"
           activeLabel={`${rangeLabel}优先处理`}
         />
 
@@ -225,7 +214,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
               观察视角
             </p>
             <p style={{ margin: "10px 0 0", color: "var(--muted-strong)", lineHeight: 1.82 }}>
-              想看今天、本周，还是全部，都可以在这里切换。别全靠记忆撑着。
+              切换统计范围
             </p>
           </div>
 
@@ -283,7 +272,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
               </p>
               <h2 style={{ margin: "10px 0 0", fontSize: "1.28rem" }}>{prioritiesTitle}</h2>
             <p style={{ margin: "8px 0 0", color: "var(--muted-strong)" }}>
-                {isLoading ? "正在同步任务，稍等一下..." : `${rangeLabel}先看这几条，别一开始就把所有事摊开。`}
+                {isLoading ? "正在同步..." : "优先处理"}
               </p>
             </div>
           </div>
@@ -463,3 +452,4 @@ function parseDashboardRange(value: string | null | undefined): DashboardRange {
 
   return "today";
 }
+
