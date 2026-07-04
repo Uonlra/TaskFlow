@@ -48,10 +48,11 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
           ))
         ) : (
           <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.7 }}>
-            还没有新的记录。创建、更新或完成任务后，这里会留下简单的时间线。
+            暂无活动记录
           </p>
         )}
       </div>
     </section>
   );
 }
+
