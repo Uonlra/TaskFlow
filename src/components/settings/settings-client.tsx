@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
+import { MobileSettingsView } from "@/components/settings/mobile-settings-view";
 import type { ProfileFormValues } from "@/features/auth/types/profile.types";
 import { useAuth } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
@@ -52,8 +53,21 @@ export function SettingsClient() {
     router.push("/login");
   };
 
+  const displayName = namePreview || profile?.fullName || user?.email || "演示用户";
+  const displayEmail = profile?.email || user?.email || "暂无邮箱信息";
+
   return (
-    <section style={{ display: "grid", gap: 24 }}>
+    <>
+      <div className="settings-mobile-only">
+        <MobileSettingsView
+          displayName={displayName}
+          email={displayEmail}
+          avatarUrl={avatarPreview}
+          isConfigured={isConfigured}
+          onSignOut={handleSignOut}
+        />
+      </div>
+      <section className="settings-desktop-only" style={{ display: "grid", gap: 24 }}>
       {!isConfigured ? (
         <section className="card-surface" style={{ borderRadius: 28, padding: 24 }}>
           <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.76 }}>
@@ -221,7 +235,8 @@ export function SettingsClient() {
           </section>
         </section>
       </section>
-    </section>
+      </section>
+    </>
   );
 }
 
