@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatedSection } from "@/components/common/animated-section";
 import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { CompletionTrendChart } from "@/components/dashboard/completion-trend-chart";
+import { MobileDashboardOverview } from "@/components/dashboard/mobile-dashboard-overview";
 import { ProgressOverview } from "@/components/dashboard/progress-overview";
 import { StatsGrid } from "@/components/dashboard/stats-grid";
 import { StatusDistributionChart } from "@/components/dashboard/status-distribution-chart";
@@ -188,6 +189,19 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           <p style={{ margin: 0, color: "var(--danger)", lineHeight: 1.7 }}>{error}</p>
         </section>
       ) : null}
+      <div className="dashboard-mobile-only">
+        <MobileDashboardOverview
+          tasks={scopedTasks}
+          activeTasks={activeScopedTasks}
+          range={range}
+          rangeLabel={rangeLabel}
+          completionRate={progress.completionRate}
+          dueSummary={dueSummary}
+          isLoading={isLoading}
+          onRangeChange={handleRangeChange}
+        />
+      </div>
+      <div className="dashboard-desktop-only">
       <AnimatedSection className="dashboard-hero">
         <TaskSignalPanel
           tasks={scopedTasks}
@@ -292,6 +306,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           <ActivityFeed items={activity} />
         </aside>
       </AnimatedSection>
+      </div>
     </>
   );
 }

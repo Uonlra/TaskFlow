@@ -7,6 +7,7 @@ import { AnimatedSection } from "@/components/common/animated-section";
 import { ScrambleText } from "@/components/common/scramble-text";
 import { TaskFilterBar, type TaskFilters } from "@/components/task/task-filter-bar";
 import { TaskFormDialog } from "@/components/task/task-form-dialog";
+import { MobileTaskListView } from "@/components/task/mobile-task-list-view";
 import { TaskList } from "@/components/task/task-list";
 import { TaskSignalPanel } from "@/components/task/task-signal-panel";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
@@ -219,7 +220,19 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
   const motionKey = `${filters.query}|${filters.tag}|${filters.status}|${filters.priority}|${filters.sort}|${filteredTasks.map((task) => `${task.id}:${task.status}`).join(",")}`;
 
   return (
-    <section className="tasks-toolbar">
+    <>
+      <div className="tasks-mobile-only">
+        <MobileTaskListView
+          tasks={filteredTasks}
+          totalCount={tasks.length}
+          filters={filters}
+          isLoading={isConfigured && isLoading}
+          onFiltersChange={handleFiltersChange}
+          onCreateTask={handleCreateTask}
+          onUpdateStatus={handleUpdateStatus}
+        />
+      </div>
+      <section className="tasks-toolbar tasks-desktop-only">
       {!isConfigured ? (
         <section className="notice-card card-surface">
           <p>
@@ -313,7 +326,8 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
         onUpdateStatus={handleUpdateStatus}
         onDeleteTask={handleDeleteTask}
       />
-    </section>
+      </section>
+    </>
   );
 }
 
