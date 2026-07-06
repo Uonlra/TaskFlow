@@ -181,11 +181,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
 
     const params = new URLSearchParams(searchParams.toString());
 
-    if (nextRange === "today") {
-      params.delete("range");
-    } else {
-      params.set("range", nextRange);
-    }
+    params.set("range", nextRange);
 
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
@@ -209,6 +205,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         <div className="dashboard-desktop-only dashboard-v2-draft">
           <DashboardV2Shell
             stats={dashboardV2Stats}
+            range={range}
             rangeLabel={rangeLabel}
             isLoading={isLoading}
             isEmpty={isDashboardV2RangeEmpty}
@@ -216,6 +213,8 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
             isSyncing={isDashboardV2Syncing}
             isPreview={isDashboardV2Previewing}
             totalTaskCount={dashboardV2Tasks.length}
+            rangeOptions={rangeOptions}
+            onRangeChange={handleRangeChange}
           />
         </div>
       ) : null}

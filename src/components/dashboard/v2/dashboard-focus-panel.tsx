@@ -1,30 +1,35 @@
 import Link from "next/link";
 
-import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
+import type { DashboardAnalyticsRange, DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
 import { buildTasksHref } from "@/lib/constants/query-params";
 
 type DashboardFocusPanelProps = {
   tasks: DashboardTaskPreview[];
   deadlines: DashboardTaskPreview[];
+  range: DashboardAnalyticsRange;
 };
 
-export function DashboardFocusPanel({ tasks, deadlines }: DashboardFocusPanelProps) {
+export function DashboardFocusPanel({ tasks, deadlines, range }: DashboardFocusPanelProps) {
+  const copy = getFocusCopy(range);
+  const taskIds = new Set(tasks.map((task) => task.id));
+  const visibleDeadlines = deadlines.filter((task) => !taskIds.has(task.id));
+
   return (
     <>
       <section className="dashboard-v2-panel">
         <div className="dashboard-v2-panel__head">
-          <h2>重点任务</h2>
+          <h2>{copy.focusTitle}</h2>
           <Link href={buildTasksHref({ priority: "high" })}>查看全部</Link>
         </div>
-        <TaskPreviewList tasks={tasks} emptyLabel="暂无重点任务" />
+        <TaskPreviewList tasks={tasks} emptyLabel={copy.focusEmpty} />
       </section>
 
       <section className="dashboard-v2-panel">
         <div className="dashboard-v2-panel__head">
-          <h2>近期截止</h2>
-          <Link href={buildTasksHref({ due: "upcoming" })}>查看全部</Link>
+          <h2>{copy.deadlineTitle}</h2>
+          <Link href={buildTasksHref({ due: range === "today" ? "today" : "upcoming" })}>查看全部</Link>
         </div>
-        <TaskPreviewList tasks={deadlines} emptyLabel="暂无临近截止" />
+        <TaskPreviewList tasks={visibleDeadlines} emptyLabel={copy.deadlineEmpty} />
       </section>
     </>
   );
@@ -54,4 +59,31 @@ function TaskPreviewList({ tasks, emptyLabel }: { tasks: DashboardTaskPreview[];
       ))}
     </div>
   );
+}
+
+function getFocusCopy(range: DashboardAnalyticsRange) {
+  if (range === "today") {
+    return {
+      focusTitle: "今日重点",
+      deadlineTitle: "今日截止",
+      focusEmpty: "暂无今日重点",
+      deadlineEmpty: "暂无今日截止",
+    };
+  }
+
+  if (range === "week") {
+    return {
+      focusTitle: "本周重点",
+      deadlineTitle: "本周截止",
+      focusEmpty: "暂无本周重点",
+      deadlineEmpty: "暂无本周截止",
+    };
+  }
+
+  return {
+    focusTitle: "重点任务",
+    deadlineTitle: "近期截止",
+    focusEmpty: "暂无重点任务",
+    deadlineEmpty: "暂无近期截止",
+  };
 }

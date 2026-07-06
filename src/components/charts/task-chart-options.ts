@@ -7,7 +7,12 @@ import type {
 } from "@/features/tasks/utils/task-analytics";
 import type { TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
 
-export function buildTaskTrendOption(trend: DashboardTrendPoint[]): EChartsOption {
+export function buildTaskTrendOption(
+  trend: DashboardTrendPoint[],
+  options: { sparse?: boolean } = {},
+): EChartsOption {
+  const maxValue = Math.max(0, ...trend.flatMap((point) => [point.completed, point.created]));
+
   return {
     color: ["#3e6ae1", "#aeb8c8"],
     grid: {
@@ -50,6 +55,7 @@ export function buildTaskTrendOption(trend: DashboardTrendPoint[]): EChartsOptio
     yAxis: {
       type: "value",
       minInterval: 1,
+      max: maxValue <= 1 ? 2 : undefined,
       splitLine: {
         lineStyle: {
           color: "rgba(226,232,240,0.72)",
@@ -64,21 +70,21 @@ export function buildTaskTrendOption(trend: DashboardTrendPoint[]): EChartsOptio
       {
         name: "完成任务",
         type: "line",
-        smooth: true,
-        symbolSize: 7,
+        smooth: options.sparse ? false : 0.28,
+        symbol: "circle",
+        symbolSize: options.sparse ? 8 : 7,
         lineStyle: {
           width: 2.5,
         },
-        areaStyle: {
-          color: "rgba(62,106,225,0.1)",
-        },
+        areaStyle: options.sparse ? undefined : { color: "rgba(62,106,225,0.1)" },
         data: trend.map((point) => point.completed),
       },
       {
         name: "新增任务",
         type: "line",
-        smooth: true,
-        symbolSize: 6,
+        smooth: options.sparse ? false : 0.28,
+        symbol: "circle",
+        symbolSize: options.sparse ? 7 : 6,
         lineStyle: {
           width: 2,
         },
@@ -172,6 +178,7 @@ export function buildTaskPriorityOption(items: Array<DashboardDistributionItem<T
           value: item.count,
           itemStyle: {
             color: item.color,
+            opacity: item.count > 0 ? 1 : 0.24,
           },
         })),
       },
@@ -180,6 +187,8 @@ export function buildTaskPriorityOption(items: Array<DashboardDistributionItem<T
 }
 
 export function buildTaskTagTopOption(items: DashboardTagTopItem[]): EChartsOption {
+  const maxCount = Math.max(1, ...items.map((item) => item.count));
+
   return {
     tooltip: {
       trigger: "item",
@@ -194,6 +203,7 @@ export function buildTaskTagTopOption(items: DashboardTagTopItem[]): EChartsOpti
     xAxis: {
       type: "value",
       show: false,
+      max: Math.max(3, maxCount + 1),
     },
     yAxis: {
       type: "category",

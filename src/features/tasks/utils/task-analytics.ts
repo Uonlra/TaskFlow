@@ -113,9 +113,10 @@ export function buildDashboardStats(tasks: Task[], options: DashboardAnalyticsOp
   const activeTasks = scopedTasks.filter((task) => task.status !== "done");
   const completedCount = scopedTasks.filter((task) => task.status === "done").length;
   const inProgressCount = scopedTasks.filter((task) => task.status === "in_progress").length;
-  const dueCounts = buildDueCounts(activeTasks);
+  const dueCounts = buildDueCounts(activeTasks, range, referenceDate);
   const totalCount = scopedTasks.length;
   const completionRate = totalCount ? Math.round((completedCount / totalCount) * 100) : 0;
+  const focusTasks = buildFocusTasks(scopedTasks);
 
   return {
     range,
@@ -133,6 +134,8 @@ export function buildDashboardStats(tasks: Task[], options: DashboardAnalyticsOp
       inProgressCount,
       overdueCount: dueCounts.overdue,
       upcomingCount: dueCounts.upcoming,
+      dueRangeCount: dueCounts.rangeDue,
+      activeCount: activeTasks.length,
       range,
     }),
     trend: buildTrendData(scopedTasks, {
@@ -143,8 +146,8 @@ export function buildDashboardStats(tasks: Task[], options: DashboardAnalyticsOp
     priorityDistribution: buildPriorityDistribution(scopedTasks),
     tagTop: buildTagTop(scopedTasks, options.tagLimit ?? 5),
     overdueRisk: buildOverdueRisk(activeTasks),
-    focusTasks: buildFocusTasks(scopedTasks),
-    upcomingDeadlines: buildUpcomingDeadlines(activeTasks),
+    focusTasks,
+    upcomingDeadlines: buildUpcomingDeadlines(activeTasks, new Set(focusTasks.map((task) => task.id))),
   };
 }
 
@@ -290,16 +293,24 @@ function buildMetricCards(input: {
   inProgressCount: number;
   overdueCount: number;
   upcomingCount: number;
+  dueRangeCount: number;
+  activeCount: number;
   range: DashboardAnalyticsRange;
 }): DashboardMetric[] {
   const rangeLabel = input.range === "today" ? "今日" : input.range === "week" ? "本周" : "全部";
+  const lastMetric =
+    input.range === "all"
+      ? { label: "待处理", value: String(input.activeCount), helper: "未完成任务" }
+      : input.range === "week"
+        ? { label: "本周到期", value: String(input.dueRangeCount), helper: "范围内截止" }
+        : { label: "即将到期", value: String(input.upcomingCount), helper: "3 天内到期" };
 
   return [
     { id: "todayTotal", label: `${rangeLabel}任务`, value: String(input.totalCount), helper: "当前视图", tone: "blue" },
     { id: "completionRate", label: "完成率", value: `${input.completionRate}%`, helper: "已完成占比", tone: "green" },
     { id: "inProgress", label: "进行中", value: String(input.inProgressCount), helper: "正在推进", tone: "orange" },
     { id: "overdue", label: "已逾期", value: String(input.overdueCount), helper: "需要处理", tone: "red" },
-    { id: "upcoming", label: "即将到期", value: String(input.upcomingCount), helper: "3 天内到期", tone: "purple" },
+    { id: "upcoming", label: lastMetric.label, value: lastMetric.value, helper: lastMetric.helper, tone: "purple" },
   ];
 }
 
@@ -310,9 +321,9 @@ function buildFocusTasks(tasks: Task[]) {
     .map(toDashboardTaskPreview);
 }
 
-function buildUpcomingDeadlines(tasks: Task[]) {
+function buildUpcomingDeadlines(tasks: Task[], excludedIds = new Set<string>()) {
   return sortTasks(tasks, "due_asc")
-    .filter((task) => task.dueDate)
+    .filter((task) => task.dueDate && !excludedIds.has(task.id))
     .slice(0, 5)
     .map(toDashboardTaskPreview);
 }
@@ -329,10 +340,15 @@ function toDashboardTaskPreview(task: Task): DashboardTaskPreview {
   };
 }
 
-function buildDueCounts(tasks: Task[]) {
+function buildDueCounts(tasks: Task[], range: DashboardAnalyticsRange, referenceDate: Date) {
+  const start = startOfDay(referenceDate);
+  const end = new Date(start);
+  end.setDate(start.getDate() + (range === "week" ? 7 : 1));
+
   return tasks.reduce(
     (summary, task) => {
       const dueMeta = getTaskDueMeta(task);
+      const dueTimestamp = task.dueDate ? new Date(task.dueDate).getTime() : Number.NaN;
 
       if (dueMeta.isOverdue) {
         summary.overdue += 1;
@@ -346,9 +362,18 @@ function buildDueCounts(tasks: Task[]) {
         summary.upcoming += 1;
       }
 
+      if (
+        range !== "all" &&
+        !Number.isNaN(dueTimestamp) &&
+        dueTimestamp >= start.getTime() &&
+        dueTimestamp < end.getTime()
+      ) {
+        summary.rangeDue += 1;
+      }
+
       return summary;
     },
-    { overdue: 0, today: 0, upcoming: 0 },
+    { overdue: 0, today: 0, upcoming: 0, rangeDue: 0 },
   );
 }
 

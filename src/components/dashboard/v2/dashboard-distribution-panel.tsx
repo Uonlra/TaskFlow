@@ -5,6 +5,7 @@ import {
   buildTaskTagTopOption,
 } from "@/components/charts/task-chart-options";
 import type {
+  DashboardAnalyticsRange,
   DashboardDistributionItem,
   DashboardTagTopItem,
 } from "@/features/tasks/utils/task-analytics";
@@ -15,6 +16,8 @@ type DashboardDistributionPanelProps = {
   statusDistribution: Array<DashboardDistributionItem<TaskStatus>>;
   priorityDistribution: Array<DashboardDistributionItem<TaskPriority>>;
   tagTop: DashboardTagTopItem[];
+  range: DashboardAnalyticsRange;
+  rangeLabel: string;
   isEmpty?: boolean;
 };
 
@@ -22,22 +25,26 @@ export function DashboardDistributionPanel({
   statusDistribution,
   priorityDistribution,
   tagTop,
+  range,
+  rangeLabel,
   isEmpty = false,
 }: DashboardDistributionPanelProps) {
   return (
     <section className="dashboard-v2-distribution-grid">
-      <StatusDistributionCard items={statusDistribution} isEmpty={isEmpty} />
-      <PriorityDistributionCard items={priorityDistribution} isEmpty={isEmpty} />
-      <TagTopCard items={tagTop} isEmpty={isEmpty} />
+      <StatusDistributionCard items={statusDistribution} rangeLabel={rangeLabel} isEmpty={isEmpty} />
+      <PriorityDistributionCard items={priorityDistribution} rangeLabel={rangeLabel} isEmpty={isEmpty} />
+      <TagTopCard items={tagTop} range={range} rangeLabel={rangeLabel} isEmpty={isEmpty} />
     </section>
   );
 }
 
 function StatusDistributionCard({
   items,
+  rangeLabel,
   isEmpty = false,
 }: {
   items: Array<DashboardDistributionItem<TaskStatus>>;
+  rangeLabel: string;
   isEmpty?: boolean;
 }) {
   const hasData = !isEmpty && items.some((item) => item.count > 0);
@@ -46,18 +53,21 @@ function StatusDistributionCard({
   return (
     <article className="dashboard-v2-panel dashboard-v2-distribution-card">
       <div className="dashboard-v2-panel__head">
-        <h2>任务状态分布</h2>
+        <h2>{rangeLabel}状态分布</h2>
       </div>
       {hasData ? (
-        <EChartsClient
-          className="dashboard-v2-echart dashboard-v2-echart--compact"
-          ariaLabel="任务状态分布图"
-          option={option}
-          getClickHref={(params) => {
-            const item = findDistributionItemByChartName(items, params);
-            return item ? buildTasksHref({ status: item.value }) : undefined;
-          }}
-        />
+        <div className="dashboard-v2-donut-layout">
+          <EChartsClient
+            className="dashboard-v2-echart dashboard-v2-echart--donut"
+            ariaLabel="任务状态分布图"
+            option={option}
+            getClickHref={(params) => {
+              const item = findDistributionItemByChartName(items, params);
+              return item ? buildTasksHref({ status: item.value }) : undefined;
+            }}
+          />
+          <DistributionLegend items={items} />
+        </div>
       ) : (
         <DashboardV2EmptyBlock label="暂无状态" />
       )}
@@ -67,9 +77,11 @@ function StatusDistributionCard({
 
 function PriorityDistributionCard({
   items,
+  rangeLabel,
   isEmpty = false,
 }: {
   items: Array<DashboardDistributionItem<TaskPriority>>;
+  rangeLabel: string;
   isEmpty?: boolean;
 }) {
   const hasData = !isEmpty && items.some((item) => item.count > 0);
@@ -78,7 +90,7 @@ function PriorityDistributionCard({
   return (
     <article className="dashboard-v2-panel dashboard-v2-distribution-card">
       <div className="dashboard-v2-panel__head">
-        <h2>优先级分布</h2>
+        <h2>{rangeLabel}优先级</h2>
       </div>
       {hasData ? (
         <EChartsClient
@@ -97,18 +109,28 @@ function PriorityDistributionCard({
   );
 }
 
-function TagTopCard({ items, isEmpty = false }: { items: DashboardTagTopItem[]; isEmpty?: boolean }) {
+function TagTopCard({
+  items,
+  range,
+  rangeLabel,
+  isEmpty = false,
+}: {
+  items: DashboardTagTopItem[];
+  range: DashboardAnalyticsRange;
+  rangeLabel: string;
+  isEmpty?: boolean;
+}) {
   const hasData = !isEmpty && items.length > 0;
   const option = buildTaskTagTopOption(items);
 
   return (
     <article className="dashboard-v2-panel dashboard-v2-distribution-card">
       <div className="dashboard-v2-panel__head">
-        <h2>标签 Top 5</h2>
+        <h2>{range === "all" ? "标签 Top 5" : `${rangeLabel}标签 Top 5`}</h2>
       </div>
       {hasData ? (
         <EChartsClient
-          className="dashboard-v2-echart dashboard-v2-echart--compact"
+          className="dashboard-v2-echart dashboard-v2-echart--compact dashboard-v2-echart--tags"
           ariaLabel="标签 Top 5 图"
           option={option}
           getClickHref={(params) => {
@@ -120,6 +142,20 @@ function TagTopCard({ items, isEmpty = false }: { items: DashboardTagTopItem[]; 
         <DashboardV2EmptyBlock label="暂无标签" />
       )}
     </article>
+  );
+}
+
+function DistributionLegend<TValue extends string>({ items }: { items: Array<DashboardDistributionItem<TValue>> }) {
+  return (
+    <div className="dashboard-v2-distribution-legend" aria-label="分布图例">
+      {items.map((item) => (
+        <div key={item.value} className={item.count === 0 ? "is-muted" : ""}>
+          <span style={{ background: item.color }} aria-hidden="true" />
+          <strong>{item.label}</strong>
+          <b>{item.count}</b>
+        </div>
+      ))}
+    </div>
   );
 }
 
