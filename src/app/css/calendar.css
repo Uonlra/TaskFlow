@@ -1,11 +1,9 @@
-.calendar-shell,
-.stats-shell {
+.calendar-shell {
   display: grid;
   gap: 24px;
 }
 
-.calendar-overview,
-.stats-overview {
+.calendar-overview {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
@@ -13,8 +11,7 @@
   border-radius: 8px;
 }
 
-.calendar-overview article,
-.stats-overview article {
+.calendar-overview article {
   min-width: 0;
   display: grid;
   gap: 8px;
@@ -25,33 +22,27 @@
 }
 
 .calendar-overview span,
-.stats-overview span,
 .calendar-task-row small,
-.calendar-empty,
-.stats-panel__head span,
-.stats-empty {
+.calendar-empty {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.35;
 }
 
-.calendar-overview strong,
-.stats-overview strong {
+.calendar-overview strong {
   color: var(--foreground);
   font-size: 28px;
   line-height: 1;
 }
 
-.calendar-layout-grid,
-.stats-layout-grid {
+.calendar-layout-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   align-items: start;
 }
 
-.calendar-panel,
-.stats-panel {
+.calendar-panel {
   min-width: 0;
   display: grid;
   gap: 18px;
@@ -59,32 +50,21 @@
   border-radius: 8px;
 }
 
-.calendar-panel__head h2,
-.stats-panel__head h2 {
+.calendar-panel__head h2 {
   margin: 8px 0 0;
   color: var(--foreground);
   font-size: 20px;
   font-weight: 500;
 }
 
-.stats-panel__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-}
-
 .calendar-task-list,
-.calendar-timeline,
-.stats-placeholder-bars,
-.stats-risk-list {
+.calendar-timeline {
   display: grid;
   gap: 10px;
 }
 
 .calendar-task-row,
-.calendar-timeline__item,
-.stats-risk-list article {
+.calendar-timeline__item {
   min-width: 0;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -95,13 +75,11 @@
 }
 
 .calendar-task-row:last-child,
-.calendar-timeline__item:last-child,
-.stats-risk-list article:last-child {
+.calendar-timeline__item:last-child {
   border-bottom: 0;
 }
 
-.calendar-task-row > span,
-.stats-risk-list article > span {
+.calendar-task-row > span {
   width: 8px;
   height: 8px;
   border-radius: 999px;
@@ -109,8 +87,7 @@
 }
 
 .calendar-task-row strong,
-.calendar-timeline__item span,
-.stats-risk-list strong {
+.calendar-timeline__item span {
   overflow: hidden;
   color: var(--foreground);
   font-size: 14px;
@@ -127,21 +104,4 @@
   color: var(--primary);
   font-size: 13px;
   font-weight: 600;
-}
-
-.stats-placeholder-row {
-  display: grid;
-  gap: 8px;
-}
-
-.stats-placeholder-row span {
-  color: var(--muted-strong);
-  font-size: 13px;
-}
-
-.stats-placeholder-row i {
-  display: block;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--primary);
 }
