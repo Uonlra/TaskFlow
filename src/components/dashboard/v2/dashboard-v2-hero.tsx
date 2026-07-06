@@ -70,13 +70,33 @@ export function DashboardV2Hero({
 
       <div className="dashboard-v2-scene" aria-label="数据网络背景层">
         <DashboardAtmosphereLayer enabled variant="dom" />
-        <div className="dashboard-v2-floating-card">
-          <span>完成率</span>
-          <strong>{isSyncing ? "--" : `${stats.completionRate}%`}</strong>
+        <div className="dashboard-v2-floating-card dashboard-v2-floating-card--completion">
+          <span className="dashboard-v2-floating-card__icon" aria-hidden="true" />
+          <div className="dashboard-v2-floating-card__body">
+            <span>完成率</span>
+            <strong>{isSyncing ? "--" : `${stats.completionRate}%`}</strong>
+          </div>
+          <span className="dashboard-v2-floating-card__spark" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
+          </span>
         </div>
-        <div className="dashboard-v2-floating-card dashboard-v2-floating-card--secondary">
-          <span>风险</span>
-          <strong>{isSyncing ? "--" : stats.overdueCount}</strong>
+        <div className="dashboard-v2-floating-card dashboard-v2-floating-card--progress">
+          <span className="dashboard-v2-floating-card__icon dashboard-v2-floating-card__icon--purple" aria-hidden="true" />
+          <div className="dashboard-v2-floating-card__body">
+            <span>{rangeLabel}进度</span>
+            <strong>{isSyncing ? "--" : `${stats.completedCount} / ${stats.totalCount}`}</strong>
+          </div>
+          <span className="dashboard-v2-floating-card__spark dashboard-v2-floating-card__spark--purple" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
+          </span>
         </div>
       </div>
     </section>
