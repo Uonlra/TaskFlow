@@ -18,7 +18,7 @@ export function DashboardMetricGrid({ metrics, isLoading = false, isEmpty = fals
           <div>
             <p>{metric.label}</p>
             <strong>{isLoading ? "--" : metric.value}</strong>
-            <small>{isEmpty ? "等待任务" : metric.helper}</small>
+            <small>{isEmpty ? "当前范围" : metric.helper}</small>
           </div>
         </article>
       ))}

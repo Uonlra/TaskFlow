@@ -1,6 +1,9 @@
-import type { EChartsOption } from "echarts";
-
 import { EChartsClient } from "@/components/charts/echarts-client";
+import {
+  buildTaskPriorityOption,
+  buildTaskStatusOption,
+  buildTaskTagTopOption,
+} from "@/components/charts/task-chart-options";
 import type {
   DashboardDistributionItem,
   DashboardTagTopItem,
@@ -38,7 +41,7 @@ function StatusDistributionCard({
   isEmpty?: boolean;
 }) {
   const hasData = !isEmpty && items.some((item) => item.count > 0);
-  const option = buildStatusOption(items);
+  const option = buildTaskStatusOption(items);
 
   return (
     <article className="dashboard-v2-panel dashboard-v2-distribution-card">
@@ -70,7 +73,7 @@ function PriorityDistributionCard({
   isEmpty?: boolean;
 }) {
   const hasData = !isEmpty && items.some((item) => item.count > 0);
-  const option = buildPriorityOption(items);
+  const option = buildTaskPriorityOption(items);
 
   return (
     <article className="dashboard-v2-panel dashboard-v2-distribution-card">
@@ -96,7 +99,7 @@ function PriorityDistributionCard({
 
 function TagTopCard({ items, isEmpty = false }: { items: DashboardTagTopItem[]; isEmpty?: boolean }) {
   const hasData = !isEmpty && items.length > 0;
-  const option = buildTagTopOption(items);
+  const option = buildTaskTagTopOption(items);
 
   return (
     <article className="dashboard-v2-panel dashboard-v2-distribution-card">
@@ -118,158 +121,6 @@ function TagTopCard({ items, isEmpty = false }: { items: DashboardTagTopItem[]; 
       )}
     </article>
   );
-}
-
-function buildStatusOption(items: Array<DashboardDistributionItem<TaskStatus>>): EChartsOption {
-  return {
-    color: items.map((item) => item.color),
-    tooltip: buildTooltip(),
-    series: [
-      {
-        name: "任务状态",
-        type: "pie",
-        radius: ["58%", "78%"],
-        center: ["50%", "52%"],
-        avoidLabelOverlap: true,
-        label: {
-          show: false,
-        },
-        emphasis: {
-          scaleSize: 4,
-        },
-        data: items.map((item) => ({
-          name: item.label,
-          value: item.count,
-        })),
-      },
-    ],
-  };
-}
-
-function buildPriorityOption(items: Array<DashboardDistributionItem<TaskPriority>>): EChartsOption {
-  return {
-    color: items.map((item) => item.color),
-    tooltip: buildTooltip(),
-    grid: {
-      top: 10,
-      right: 8,
-      bottom: 28,
-      left: 28,
-    },
-    xAxis: {
-      type: "category",
-      data: items.map((item) => item.label.replace("优先级", "")),
-      axisTick: {
-        show: false,
-      },
-      axisLine: {
-        lineStyle: {
-          color: "#e5e7eb",
-        },
-      },
-      axisLabel: {
-        color: "#64748b",
-        fontSize: 12,
-      },
-    },
-    yAxis: {
-      type: "value",
-      minInterval: 1,
-      splitLine: {
-        lineStyle: {
-          color: "rgba(226,232,240,0.72)",
-        },
-      },
-      axisLabel: {
-        color: "#64748b",
-        fontSize: 12,
-      },
-    },
-    series: [
-      {
-        name: "任务数",
-        type: "bar",
-        barWidth: 22,
-        itemStyle: {
-          borderRadius: [6, 6, 2, 2],
-        },
-        data: items.map((item) => ({
-          name: item.label.replace("优先级", ""),
-          value: item.count,
-          itemStyle: {
-            color: item.color,
-          },
-        })),
-      },
-    ],
-  };
-}
-
-function buildTagTopOption(items: DashboardTagTopItem[]): EChartsOption {
-  return {
-    tooltip: buildTooltip(),
-    grid: {
-      top: 8,
-      right: 16,
-      bottom: 8,
-      left: 48,
-    },
-    xAxis: {
-      type: "value",
-      show: false,
-    },
-    yAxis: {
-      type: "category",
-      inverse: true,
-      data: items.map((item) => item.tag),
-      axisTick: {
-        show: false,
-      },
-      axisLine: {
-        show: false,
-      },
-      axisLabel: {
-        color: "#334155",
-        fontSize: 12,
-      },
-    },
-    series: [
-      {
-        name: "任务数",
-        type: "bar",
-        barWidth: 9,
-        label: {
-          show: true,
-          position: "right",
-          color: "#64748b",
-          fontSize: 12,
-        },
-        itemStyle: {
-          borderRadius: 999,
-        },
-        data: items.map((item) => ({
-          name: item.tag,
-          value: item.count,
-          itemStyle: {
-            color: item.color,
-          },
-        })),
-      },
-    ],
-  };
-}
-
-function buildTooltip() {
-  return {
-    trigger: "item",
-    backgroundColor: "rgba(255,255,255,0.96)",
-    borderColor: "rgba(226,232,240,0.9)",
-    borderWidth: 1,
-    textStyle: {
-      color: "#111827",
-      fontSize: 12,
-    },
-  } as const;
 }
 
 function findDistributionItemByChartName<TValue extends string>(

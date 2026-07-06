@@ -39,7 +39,7 @@ type DashboardClientProps = {
 };
 
 export function DashboardClient({ initialRange = "today" }: DashboardClientProps) {
-  const { user, isConfigured } = useAuth();
+  const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -47,13 +47,14 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const tasks = useTaskStore((state) => state.tasks);
   const isLoading = useTaskStore((state) => state.isLoading);
   const error = useTaskStore((state) => state.error);
+  const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
   const syncTasks = useTaskStore((state) => state.syncTasks);
 
   useEffect(() => {
-    if (isConfigured && user?.id) {
+    if (isConfigured && user?.id && lastLoadedUserId !== user.id) {
       void syncTasks(user.id);
     }
-  }, [isConfigured, syncTasks, user?.id]);
+  }, [isConfigured, lastLoadedUserId, syncTasks, user?.id]);
 
   useEffect(() => {
     const nextRange = parseDashboardRange(searchParams.get("range"));
@@ -68,7 +69,9 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     [isDashboardV2Previewing, tasks],
   );
   const dashboardV2Stats = useMemo(() => buildDashboardStats(dashboardV2Tasks, { range }), [dashboardV2Tasks, range]);
-  const isDashboardV2Empty = dashboardV2Tasks.length === 0;
+  const isDashboardV2Syncing = isConfigured && (isAuthLoading || isLoading);
+  const isDashboardV2AccountEmpty = !isDashboardV2Syncing && dashboardV2Tasks.length === 0;
+  const isDashboardV2RangeEmpty = !isDashboardV2Syncing && dashboardV2Stats.totalCount === 0;
   const activeScopedTasks = useMemo(() => scopedTasks.filter((task) => task.status !== "done"), [scopedTasks]);
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "今天";
   const prioritiesTitle = range === "all" ? "所有重点任务" : `${rangeLabel}先看的任务`;
@@ -208,8 +211,11 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
             stats={dashboardV2Stats}
             rangeLabel={rangeLabel}
             isLoading={isLoading}
-            isEmpty={isDashboardV2Empty}
+            isEmpty={isDashboardV2RangeEmpty}
+            isAccountEmpty={isDashboardV2AccountEmpty}
+            isSyncing={isDashboardV2Syncing}
             isPreview={isDashboardV2Previewing}
+            totalTaskCount={dashboardV2Tasks.length}
           />
         </div>
       ) : null}

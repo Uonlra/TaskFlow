@@ -9,14 +9,14 @@
 }
 
 .dashboard-v2-hero {
-  min-height: 214px;
+  min-height: 206px;
   position: relative;
   overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(270px, 0.7fr) minmax(420px, 1.3fr);
-  gap: 20px;
+  grid-template-columns: minmax(320px, 0.88fr) minmax(420px, 1.12fr);
+  gap: 18px;
   align-items: center;
-  padding: 26px 28px;
+  padding: 24px 28px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background:
@@ -24,6 +24,12 @@
     radial-gradient(circle at 34% 100%, rgba(125, 92, 255, 0.06), transparent 32%),
     linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,249,255,0.9));
   box-shadow: 0 22px 60px rgba(15, 23, 42, 0.06);
+}
+
+.dashboard-v2-hero--empty {
+  background:
+    radial-gradient(circle at 78% 10%, rgba(62, 106, 225, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.92));
 }
 
 .dashboard-v2-kicker,
@@ -116,7 +122,7 @@
 }
 
 .dashboard-v2-scene {
-  min-height: 154px;
+  min-height: 166px;
   position: relative;
   border-radius: 8px;
   isolation: isolate;
@@ -124,9 +130,10 @@
 
 .dashboard-v2-atmosphere {
   position: absolute;
-  inset: -34px -18px -18px;
+  inset: -8px 0;
   overflow: hidden;
   pointer-events: none;
+  opacity: 0.72;
   z-index: 0;
 }
 
@@ -142,7 +149,7 @@
 .dashboard-v2-atmosphere__line {
   position: absolute;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.42), transparent);
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.24), transparent);
   transform-origin: left center;
 }
 
@@ -178,12 +185,12 @@
   position: absolute;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   border: 1px solid rgba(255, 255, 255, 0.74);
   border-radius: 8px;
   color: #ffffff;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
 }
 
 .dashboard-v2-atmosphere__node span {
@@ -197,26 +204,26 @@
 }
 
 .dashboard-v2-atmosphere__node--primary {
-  left: 16%;
-  top: 14%;
+  left: 18%;
+  top: 22%;
   background: linear-gradient(135deg, #3e6ae1, #7aa7ff);
 }
 
 .dashboard-v2-atmosphere__node--success {
-  left: 48%;
-  top: 40%;
+  left: 50%;
+  top: 38%;
   background: linear-gradient(135deg, #16a34a, #86efac);
 }
 
 .dashboard-v2-atmosphere__node--warning {
-  right: 18%;
-  top: 18%;
+  right: 22%;
+  top: 20%;
   background: linear-gradient(135deg, #f59e0b, #fdba74);
 }
 
 .dashboard-v2-atmosphere__node--danger {
-  right: 8%;
-  bottom: 18%;
+  right: 12%;
+  bottom: 22%;
   background: linear-gradient(135deg, #ef4444, #fca5a5);
 }
 
@@ -294,23 +301,23 @@
 
 .dashboard-v2-floating-card {
   position: absolute;
-  right: 30%;
-  top: 12%;
+  right: 28%;
+  top: 18%;
   z-index: 1;
   display: grid;
   gap: 4px;
-  min-width: 118px;
-  padding: 14px 16px;
+  min-width: 112px;
+  padding: 13px 15px;
   border: 1px solid rgba(226,232,240,0.86);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.09);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
   backdrop-filter: blur(14px);
 }
 
 .dashboard-v2-floating-card--secondary {
   right: 8%;
-  top: 50%;
+  top: 48%;
 }
 
 .dashboard-v2-floating-card--tertiary {

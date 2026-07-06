@@ -11,7 +11,10 @@ type DashboardV2ShellProps = {
   rangeLabel: string;
   isLoading?: boolean;
   isEmpty?: boolean;
+  isAccountEmpty?: boolean;
+  isSyncing?: boolean;
   isPreview?: boolean;
+  totalTaskCount?: number;
 };
 
 export function DashboardV2Shell({
@@ -19,11 +22,22 @@ export function DashboardV2Shell({
   rangeLabel,
   isLoading = false,
   isEmpty = false,
+  isAccountEmpty = false,
+  isSyncing = false,
   isPreview = false,
+  totalTaskCount = 0,
 }: DashboardV2ShellProps) {
   return (
     <section className="dashboard-v2-shell" aria-label="新版数据看板骨架">
-      <DashboardV2Hero stats={stats} rangeLabel={rangeLabel} isEmpty={isEmpty} isPreview={isPreview} />
+      <DashboardV2Hero
+        stats={stats}
+        rangeLabel={rangeLabel}
+        isEmpty={isEmpty}
+        isAccountEmpty={isAccountEmpty}
+        isSyncing={isSyncing}
+        isPreview={isPreview}
+        totalTaskCount={totalTaskCount}
+      />
       <DashboardMetricGrid metrics={stats.metrics} isLoading={isLoading} isEmpty={isEmpty} />
       <div className="dashboard-v2-grid">
         <div className="dashboard-v2-grid__main">
