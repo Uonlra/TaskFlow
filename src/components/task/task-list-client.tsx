@@ -11,7 +11,15 @@ import { MobileTaskListView } from "@/components/task/mobile-task-list-view";
 import { TaskList } from "@/components/task/task-list";
 import { TaskSignalPanel } from "@/components/task/task-signal-panel";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
+import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta, sortTasks } from "@/features/tasks/utils/task-deadline";
+import {
+  TASK_DUE_FILTERS,
+  TASK_QUERY_KEYS,
+  TASK_RISK_FILTERS,
+  type TaskDueFilter,
+  type TaskRiskFilter,
+} from "@/lib/constants/query-params";
 import { useAuth } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
 import { useTaskStore } from "@/store/task-store";
@@ -21,6 +29,8 @@ const initialFilters: TaskFilters = {
   tag: "",
   status: "all",
   priority: "all",
+  due: "",
+  risk: "",
   sort: "due_asc",
 };
 
@@ -58,6 +68,8 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       tag: searchParams.get("tag"),
       status: searchParams.get("status"),
       priority: searchParams.get("priority"),
+      due: searchParams.get("due"),
+      risk: searchParams.get("risk"),
       sort: searchParams.get("sort"),
     });
 
@@ -76,8 +88,10 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 
       const matchStatus = filters.status === "all" || task.status === filters.status;
       const matchPriority = filters.priority === "all" || task.priority === filters.priority;
+      const matchDue = !filters.due || matchesDueFilter(task, filters.due);
+      const matchRisk = !filters.risk || matchesRiskFilter(task, filters.risk);
 
-      return matchQuery && matchTag && matchStatus && matchPriority;
+      return matchQuery && matchTag && matchStatus && matchPriority && matchDue && matchRisk;
     });
 
     return sortTasks(nextTasks, filters.sort);
@@ -111,7 +125,10 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     filters.tag.trim() !== "" ||
     filters.status !== "all" ||
     filters.priority !== "all" ||
+    filters.due !== "" ||
+    filters.risk !== "" ||
     filters.sort !== "due_asc";
+  const activeFilterLabels = useMemo(() => buildActiveFilterLabels(filters), [filters]);
 
   const handleCreateTask = async (values: TaskFormValues) => {
     try {
@@ -194,11 +211,13 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 
     const params = new URLSearchParams(searchParams.toString());
 
-    syncParam(params, "query", nextFilters.query, "");
-    syncParam(params, "tag", nextFilters.tag, "");
-    syncParam(params, "status", nextFilters.status, "all");
-    syncParam(params, "priority", nextFilters.priority, "all");
-    syncParam(params, "sort", nextFilters.sort, "due_asc");
+    syncParam(params, TASK_QUERY_KEYS.query, nextFilters.query, "");
+    syncParam(params, TASK_QUERY_KEYS.tag, nextFilters.tag, "");
+    syncParam(params, TASK_QUERY_KEYS.status, nextFilters.status, "all");
+    syncParam(params, TASK_QUERY_KEYS.priority, nextFilters.priority, "all");
+    syncParam(params, TASK_QUERY_KEYS.due, nextFilters.due, "");
+    syncParam(params, TASK_QUERY_KEYS.risk, nextFilters.risk, "");
+    syncParam(params, TASK_QUERY_KEYS.sort, nextFilters.sort, "due_asc");
 
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
@@ -217,7 +236,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
   const signalDescription = hasActiveFilters
     ? "下面这批任务已经按你的条件收窄，先处理它们，别让注意力到处散步。"
     : "搜索、筛选和状态灯一起工作。你只管把任务放进来，剩下的节奏让界面帮你提醒。";
-  const motionKey = `${filters.query}|${filters.tag}|${filters.status}|${filters.priority}|${filters.sort}|${filteredTasks.map((task) => `${task.id}:${task.status}`).join(",")}`;
+  const motionKey = `${filters.query}|${filters.tag}|${filters.status}|${filters.priority}|${filters.due}|${filters.risk}|${filters.sort}|${filteredTasks.map((task) => `${task.id}:${task.status}`).join(",")}`;
 
   return (
     <>
@@ -269,6 +288,20 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       </AnimatedSection>
 
       <AnimatedSection as="div" className="tasks-filter-area" delayMs={80}>
+        {activeFilterLabels.length ? (
+          <div className="task-url-filters card-surface" aria-label="当前 URL 筛选">
+            <div className="task-url-filters__chips">
+              {activeFilterLabels.map((label) => (
+                <span key={label} className="task-url-filters__chip">
+                  {label}
+                </span>
+              ))}
+            </div>
+            <button type="button" onClick={handleResetFilters} className="task-url-filters__clear">
+              清除筛选
+            </button>
+          </div>
+        ) : null}
         <TaskFilterBar
           filters={filters}
           resultCount={filteredTasks.length}
@@ -334,6 +367,19 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null | undefined>>): TaskFilters {
   const status = input.status === "todo" || input.status === "in_progress" || input.status === "done" ? input.status : "all";
   const priority = input.priority === "low" || input.priority === "medium" || input.priority === "high" ? input.priority : "all";
+  const due =
+    input.due === TASK_DUE_FILTERS.today ||
+    input.due === TASK_DUE_FILTERS.upcoming ||
+    input.due === TASK_DUE_FILTERS.overdue
+      ? input.due
+      : "";
+  const risk =
+    input.risk === TASK_RISK_FILTERS.overdue ||
+    input.risk === TASK_RISK_FILTERS.high ||
+    input.risk === TASK_RISK_FILTERS.medium ||
+    input.risk === TASK_RISK_FILTERS.low
+      ? input.risk
+      : "";
   const sort =
     input.sort === "created_desc" ||
     input.sort === "updated_desc" ||
@@ -347,6 +393,8 @@ function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null
     tag: input.tag ?? "",
     status,
     priority,
+    due,
+    risk,
     sort,
   };
 }
@@ -366,6 +414,136 @@ function areFiltersEqual(left: TaskFilters, right: TaskFilters) {
     left.tag === right.tag &&
     left.status === right.status &&
     left.priority === right.priority &&
+    left.due === right.due &&
+    left.risk === right.risk &&
     left.sort === right.sort
   );
 }
+
+function matchesDueFilter(task: Task, due: TaskDueFilter) {
+  if (task.status === "done") {
+    return false;
+  }
+
+  const dueMeta = getTaskDueMeta(task);
+
+  if (due === TASK_DUE_FILTERS.today) {
+    return dueMeta.isDueToday;
+  }
+
+  if (due === TASK_DUE_FILTERS.upcoming) {
+    return dueMeta.isUpcoming;
+  }
+
+  return dueMeta.isOverdue;
+}
+
+function matchesRiskFilter(task: Task, risk: TaskRiskFilter) {
+  if (task.status === "done") {
+    return false;
+  }
+
+  if (risk === TASK_RISK_FILTERS.overdue) {
+    return getTaskDueMeta(task).isOverdue;
+  }
+
+  const offset = getDueDayOffset(task.dueDate);
+
+  if (risk === TASK_RISK_FILTERS.high) {
+    return task.priority === "high" || getTaskDueMeta(task).isOverdue;
+  }
+
+  if (risk === TASK_RISK_FILTERS.medium) {
+    return task.priority === "medium" || (offset !== null && offset >= 0 && offset <= 1);
+  }
+
+  return task.priority === "low" || (offset !== null && offset >= 0 && offset <= 3);
+}
+
+function buildActiveFilterLabels(filters: TaskFilters) {
+  const labels: string[] = [];
+
+  if (filters.query.trim()) {
+    labels.push(`搜索：${filters.query.trim()}`);
+  }
+
+  if (filters.tag.trim()) {
+    labels.push(`标签：${filters.tag.trim()}`);
+  }
+
+  if (filters.status !== "all") {
+    labels.push(statusFilterLabels[filters.status]);
+  }
+
+  if (filters.priority !== "all") {
+    labels.push(priorityFilterLabels[filters.priority]);
+  }
+
+  if (filters.due) {
+    labels.push(dueFilterLabels[filters.due]);
+  }
+
+  if (filters.risk) {
+    labels.push(riskFilterLabels[filters.risk]);
+  }
+
+  if (filters.sort !== "due_asc") {
+    labels.push(sortFilterLabels[filters.sort]);
+  }
+
+  return labels;
+}
+
+function getDueDayOffset(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const dueDate = startOfDay(new Date(value));
+
+  if (Number.isNaN(dueDate.getTime())) {
+    return null;
+  }
+
+  const today = startOfDay(new Date());
+
+  return Math.round((dueDate.getTime() - today.getTime()) / 86400000);
+}
+
+function startOfDay(value: Date) {
+  const next = new Date(value);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+const statusFilterLabels = {
+  todo: "待开始",
+  in_progress: "进行中",
+  done: "已完成",
+} as const;
+
+const priorityFilterLabels = {
+  high: "高优先级",
+  medium: "中优先级",
+  low: "低优先级",
+} as const;
+
+const dueFilterLabels = {
+  today: "今天到期",
+  upcoming: "即将到期",
+  overdue: "已逾期",
+} as const;
+
+const riskFilterLabels = {
+  overdue: "已逾期",
+  high: "高风险",
+  medium: "中风险",
+  low: "低风险",
+} as const;
+
+const sortFilterLabels = {
+  created_desc: "最新创建",
+  updated_desc: "最近更新",
+  priority_desc: "优先级排序",
+  due_asc: "截止时间",
+} as const;

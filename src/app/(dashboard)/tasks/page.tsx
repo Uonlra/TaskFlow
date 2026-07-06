@@ -1,5 +1,6 @@
 import { TaskListClient } from "@/components/task/task-list-client";
 import { PageContainer } from "@/components/layout/page-container";
+import { TASK_DUE_FILTERS, TASK_RISK_FILTERS } from "@/lib/constants/query-params";
 
 type TasksPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -22,6 +23,19 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
       resolvedSearchParams?.priority === "high"
         ? resolvedSearchParams.priority
         : "all",
+    due:
+      resolvedSearchParams?.due === TASK_DUE_FILTERS.today ||
+      resolvedSearchParams?.due === TASK_DUE_FILTERS.upcoming ||
+      resolvedSearchParams?.due === TASK_DUE_FILTERS.overdue
+        ? resolvedSearchParams.due
+        : "",
+    risk:
+      resolvedSearchParams?.risk === TASK_RISK_FILTERS.overdue ||
+      resolvedSearchParams?.risk === TASK_RISK_FILTERS.high ||
+      resolvedSearchParams?.risk === TASK_RISK_FILTERS.medium ||
+      resolvedSearchParams?.risk === TASK_RISK_FILTERS.low
+        ? resolvedSearchParams.risk
+        : "",
     sort:
       resolvedSearchParams?.sort === "created_desc" ||
       resolvedSearchParams?.sort === "updated_desc" ||

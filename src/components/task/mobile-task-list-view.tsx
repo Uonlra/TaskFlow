@@ -68,6 +68,8 @@ export function MobileTaskListView({
       query: item.key === "project" ? filters.query : "",
       tag: item.key === "project" ? filters.tag : "",
       priority: "all",
+      due: "",
+      risk: "",
       ...item.filters,
     });
   };

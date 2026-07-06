@@ -19,6 +19,7 @@ import { TaskSignalPanel } from "@/components/task/task-signal-panel";
 import type { Task } from "@/features/tasks/types/task.types";
 import { buildDashboardStats } from "@/features/tasks/utils/task-analytics";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
+import { buildDashboardPreviewTasks } from "@/features/tasks/utils/dashboard-preview-data";
 import { useAuth } from "@/providers/auth-provider";
 import { useTaskStore } from "@/store/task-store";
 
@@ -30,7 +31,8 @@ const rangeOptions: Array<{ value: DashboardRange; label: string }> = [
   { value: "all", label: "全部" },
 ];
 
-const showDashboardV2Draft = false;
+const showDashboardV2Draft = true;
+const useDashboardPreviewData = false;
 
 type DashboardClientProps = {
   initialRange?: DashboardRange;
@@ -60,7 +62,13 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   }, [searchParams]);
 
   const scopedTasks = useMemo(() => filterTasksByRange(tasks, range), [range, tasks]);
-  const dashboardV2Stats = useMemo(() => buildDashboardStats(tasks, { range }), [range, tasks]);
+  const isDashboardV2Previewing = showDashboardV2Draft && useDashboardPreviewData && tasks.length === 0;
+  const dashboardV2Tasks = useMemo(
+    () => (isDashboardV2Previewing ? buildDashboardPreviewTasks() : tasks),
+    [isDashboardV2Previewing, tasks],
+  );
+  const dashboardV2Stats = useMemo(() => buildDashboardStats(dashboardV2Tasks, { range }), [dashboardV2Tasks, range]);
+  const isDashboardV2Empty = dashboardV2Tasks.length === 0;
   const activeScopedTasks = useMemo(() => scopedTasks.filter((task) => task.status !== "done"), [scopedTasks]);
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "今天";
   const prioritiesTitle = range === "all" ? "所有重点任务" : `${rangeLabel}先看的任务`;
@@ -195,8 +203,14 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         </section>
       ) : null}
       {showDashboardV2Draft ? (
-        <div className="dashboard-v2-draft">
-          <DashboardV2Shell stats={dashboardV2Stats} rangeLabel={rangeLabel} isLoading={isLoading} />
+        <div className="dashboard-desktop-only dashboard-v2-draft">
+          <DashboardV2Shell
+            stats={dashboardV2Stats}
+            rangeLabel={rangeLabel}
+            isLoading={isLoading}
+            isEmpty={isDashboardV2Empty}
+            isPreview={isDashboardV2Previewing}
+          />
         </div>
       ) : null}
       <div className="dashboard-mobile-only">
@@ -211,6 +225,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           onRangeChange={handleRangeChange}
         />
       </div>
+      {!showDashboardV2Draft ? (
       <div className="dashboard-desktop-only">
       <AnimatedSection className="dashboard-hero">
         <TaskSignalPanel
@@ -317,6 +332,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         </aside>
       </AnimatedSection>
       </div>
+      ) : null}
     </>
   );
 }
