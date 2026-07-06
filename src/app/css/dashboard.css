@@ -230,6 +230,60 @@
   top: 20px;
 }
 
+.dashboard-sidebar-link__icon--calendar span {
+  width: 16px;
+  height: 15px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+
+.dashboard-sidebar-link__icon--calendar::before {
+  top: 11px;
+  width: 16px;
+  height: 1.5px;
+  background: currentColor;
+}
+
+.dashboard-sidebar-link__icon--calendar::after {
+  top: 8px;
+  left: 12px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 9px 0 0 currentColor;
+}
+
+.dashboard-sidebar-link__icon--stats span {
+  left: 10px;
+  bottom: 10px;
+  width: 3px;
+  height: 9px;
+  border-radius: 1px;
+  background: currentColor;
+  box-shadow:
+    7px -5px 0 currentColor,
+    14px -9px 0 currentColor;
+}
+
+.dashboard-sidebar-link__icon--stats::before {
+  left: 9px;
+  bottom: 9px;
+  width: 20px;
+  height: 1.5px;
+  background: currentColor;
+}
+
+.dashboard-sidebar-link__icon--stats::after {
+  top: 10px;
+  left: 11px;
+  width: 16px;
+  height: 10px;
+  border-top: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  transform: skewY(-18deg);
+}
+
 .dashboard-sidebar-link__icon--settings span {
   width: 16px;
   height: 16px;

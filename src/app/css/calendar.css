@@ -1,0 +1,147 @@
+.calendar-shell,
+.stats-shell {
+  display: grid;
+  gap: 24px;
+}
+
+.calendar-overview,
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.calendar-overview article,
+.stats-overview article {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.calendar-overview span,
+.stats-overview span,
+.calendar-task-row small,
+.calendar-empty,
+.stats-panel__head span,
+.stats-empty {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.calendar-overview strong,
+.stats-overview strong {
+  color: var(--foreground);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.calendar-layout-grid,
+.stats-layout-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.calendar-panel,
+.stats-panel {
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  border-radius: 8px;
+}
+
+.calendar-panel__head h2,
+.stats-panel__head h2 {
+  margin: 8px 0 0;
+  color: var(--foreground);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.stats-panel__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.calendar-task-list,
+.calendar-timeline,
+.stats-placeholder-bars,
+.stats-risk-list {
+  display: grid;
+  gap: 10px;
+}
+
+.calendar-task-row,
+.calendar-timeline__item,
+.stats-risk-list article {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.calendar-task-row:last-child,
+.calendar-timeline__item:last-child,
+.stats-risk-list article:last-child {
+  border-bottom: 0;
+}
+
+.calendar-task-row > span,
+.stats-risk-list article > span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.calendar-task-row strong,
+.calendar-timeline__item span,
+.stats-risk-list strong {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-timeline__item {
+  grid-template-columns: 54px minmax(0, 1fr);
+}
+
+.calendar-timeline__item time {
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stats-placeholder-row {
+  display: grid;
+  gap: 8px;
+}
+
+.stats-placeholder-row span {
+  color: var(--muted-strong);
+  font-size: 13px;
+}
+
+.stats-placeholder-row i {
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--primary);
+}

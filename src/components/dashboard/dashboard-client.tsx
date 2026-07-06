@@ -13,9 +13,11 @@ import { StatusDistributionChart } from "@/components/dashboard/status-distribut
 import { TagSummary } from "@/components/dashboard/tag-summary";
 import { TagDistributionChart } from "@/components/dashboard/tag-distribution-chart";
 import { UpcomingDeadlines } from "@/components/dashboard/upcoming-deadlines";
+import { DashboardV2Shell } from "@/components/dashboard/v2/dashboard-v2-shell";
 import { TaskList } from "@/components/task/task-list";
 import { TaskSignalPanel } from "@/components/task/task-signal-panel";
 import type { Task } from "@/features/tasks/types/task.types";
+import { buildDashboardStats } from "@/features/tasks/utils/task-analytics";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { useAuth } from "@/providers/auth-provider";
 import { useTaskStore } from "@/store/task-store";
@@ -27,6 +29,8 @@ const rangeOptions: Array<{ value: DashboardRange; label: string }> = [
   { value: "week", label: "本周" },
   { value: "all", label: "全部" },
 ];
+
+const showDashboardV2Draft = false;
 
 type DashboardClientProps = {
   initialRange?: DashboardRange;
@@ -56,6 +60,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   }, [searchParams]);
 
   const scopedTasks = useMemo(() => filterTasksByRange(tasks, range), [range, tasks]);
+  const dashboardV2Stats = useMemo(() => buildDashboardStats(tasks, { range }), [range, tasks]);
   const activeScopedTasks = useMemo(() => scopedTasks.filter((task) => task.status !== "done"), [scopedTasks]);
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "今天";
   const prioritiesTitle = range === "all" ? "所有重点任务" : `${rangeLabel}先看的任务`;
@@ -188,6 +193,11 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
           <p style={{ margin: 0, color: "var(--danger)", lineHeight: 1.7 }}>{error}</p>
         </section>
+      ) : null}
+      {showDashboardV2Draft ? (
+        <div className="dashboard-v2-draft">
+          <DashboardV2Shell stats={dashboardV2Stats} rangeLabel={rangeLabel} isLoading={isLoading} />
+        </div>
       ) : null}
       <div className="dashboard-mobile-only">
         <MobileDashboardOverview
