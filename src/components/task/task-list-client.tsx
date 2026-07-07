@@ -3,12 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { AnimatedSection } from "@/components/common/animated-section";
-import { ScrambleText } from "@/components/common/scramble-text";
-import { TaskFilterBar, type TaskFilters } from "@/components/task/task-filter-bar";
-import { TaskFormDialog } from "@/components/task/task-form-dialog";
+import { DesktopTaskWorkbench } from "@/components/task/desktop-task-workbench";
+import type { TaskFilters } from "@/components/task/task-filter-bar";
 import { MobileTaskListView } from "@/components/task/mobile-task-list-view";
-import { TaskList } from "@/components/task/task-list";
 import { TaskSignalPanel } from "@/components/task/task-signal-panel";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
@@ -252,113 +249,28 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
         />
       </div>
       <section className="tasks-toolbar tasks-desktop-only">
-      {!isConfigured ? (
-        <section className="notice-card card-surface">
-          <p>
-            还没连 Appwrite，所以任务先存在浏览器本地，够用，但别太飘。
-          </p>
-        </section>
-      ) : null}
-      {error ? (
-        <section className="notice-card notice-card--error card-surface">
-          <p>{error}</p>
-        </section>
-      ) : null}
-      <AnimatedSection className="tasks-highlight-grid">
-        <TaskSignalPanel
+        {!isConfigured ? (
+          <section className="notice-card card-surface">
+            <p>还没连 Appwrite，所以任务先存在浏览器本地，够用，但别太飘。</p>
+          </section>
+        ) : null}
+        {error ? (
+          <section className="notice-card notice-card--error card-surface">
+            <p>{error}</p>
+          </section>
+        ) : null}
+        <DesktopTaskWorkbench
           tasks={filteredTasks}
-          eyebrow="任务列表"
-          title={signalTitle}
-          description={signalDescription}
-          activeLabel={hasActiveFilters ? "筛选后先看" : "队列优先处理"}
-          variant="tasks"
-        />
-
-        <aside className="tasks-create-card card-surface">
-          <div>
-            <p className="section-eyebrow panel-eyebrow">
-              新建任务
-            </p>
-            <p className="panel-description panel-description--compact">
-              想到什么先记下来。标题写清楚一点，之后回看会少猜很多。
-            </p>
-          </div>
-          <TaskFormDialog onSubmitTask={handleCreateTask} />
-        </aside>
-      </AnimatedSection>
-
-      <AnimatedSection as="div" className="tasks-filter-area" delayMs={80}>
-        {activeFilterLabels.length ? (
-          <div className="task-url-filters card-surface" aria-label="当前 URL 筛选">
-            <div className="task-url-filters__chips">
-              {activeFilterLabels.map((label) => (
-                <span key={label} className="task-url-filters__chip">
-                  {label}
-                </span>
-              ))}
-            </div>
-            <button type="button" onClick={handleResetFilters} className="task-url-filters__clear">
-              清除筛选
-            </button>
-          </div>
-        ) : null}
-        <TaskFilterBar
+          totalTasks={tasks}
           filters={filters}
-          resultCount={filteredTasks.length}
-          totalCount={tasks.length}
-          onChange={handleFiltersChange}
-          onReset={handleResetFilters}
+          isLoading={isConfigured && isLoading}
+          onFiltersChange={handleFiltersChange}
+          onResetFilters={handleResetFilters}
+          onCreateTask={handleCreateTask}
+          onUpdateTask={handleUpdateTask}
+          onUpdateStatus={handleUpdateStatus}
+          onDeleteTask={handleDeleteTask}
         />
-      </AnimatedSection>
-      <AnimatedSection className="tasks-view-summary card-surface" delayMs={120}>
-        <div className="tasks-view-summary__copy">
-          <p className="section-eyebrow panel-eyebrow">
-            当前任务视图
-          </p>
-          <p>
-            <ScrambleText text={summaryLabel} playKey={motionKey} durationMs={420} />
-          </p>
-        </div>
-        {hasActiveFilters ? (
-          <button
-            type="button"
-            onClick={handleResetFilters}
-            className="tesla-action tesla-action--secondary"
-          >
-            回到全部任务
-          </button>
-        ) : null}
-      </AnimatedSection>
-      {(deadlineSummary.overdue > 0 || deadlineSummary.today > 0 || deadlineSummary.upcoming > 0) && (
-        <AnimatedSection
-          className={deadlineSummary.overdue > 0 ? "tasks-deadline-card tasks-deadline-card--danger card-surface" : "tasks-deadline-card card-surface"}
-          delayMs={140}
-        >
-          <p className={deadlineSummary.overdue > 0 ? "section-eyebrow panel-eyebrow panel-eyebrow--danger" : "section-eyebrow panel-eyebrow"}>
-            截止提醒
-          </p>
-          <p>
-            {deadlineSummary.overdue > 0
-              ? `有 ${deadlineSummary.overdue} 条已经逾期，先处理它们比较安心。`
-              : deadlineSummary.today > 0
-                ? `有 ${deadlineSummary.today} 条今天到期，最好别拖到最后一分钟。`
-                : `接下来 3 天有 ${deadlineSummary.upcoming} 条快到了，提前看一眼就好。`}
-          </p>
-        </AnimatedSection>
-      )}
-      {isConfigured && isLoading ? (
-        <section className="notice-card card-surface">
-          <p>正在从 Appwrite 同步任务，稍等一下...</p>
-        </section>
-      ) : null}
-      <TaskList
-        tasks={filteredTasks}
-        motionKey={motionKey}
-        emptyAction={<TaskFormDialog onSubmitTask={handleCreateTask} triggerLabel="新增一条任务" />}
-        onUpdateTask={handleUpdateTask}
-        onUpdateStatus={handleUpdateStatus}
-        onDeleteTask={handleDeleteTask}
-      />
       </section>
     </>
   );

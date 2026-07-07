@@ -1,13 +1,73 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { getTaskDueMeta, sortTasks } from "@/features/tasks/utils/task-deadline";
+import type { Task, TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
+import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
+import {
+  buildCalendarHref,
+  buildTasksHref,
+  CALENDAR_QUERY_KEYS,
+  DASHBOARD_RANGE_VALUES,
+  type DashboardRangeValue,
+} from "@/lib/constants/query-params";
 import { useAuth } from "@/providers/auth-provider";
 import { useTaskStore } from "@/store/task-store";
 
-export function CalendarClient() {
-  const { user, isConfigured } = useAuth();
+type CalendarClientProps = {
+  initialDate: string;
+  initialRange: DashboardRangeValue;
+};
+
+type CalendarMetric = {
+  label: string;
+  value: string;
+  helper: string;
+  tone: "blue" | "green" | "orange" | "red" | "purple";
+  href: string;
+};
+
+type CalendarDay = {
+  date: Date;
+  dateParam: string;
+  weekday: string;
+  dayLabel: string;
+  isToday: boolean;
+  isSelected: boolean;
+  taskCount: number;
+};
+
+const rangeOptions: Array<{ value: DashboardRangeValue; label: string }> = [
+  { value: DASHBOARD_RANGE_VALUES.today, label: "今天" },
+  { value: DASHBOARD_RANGE_VALUES.week, label: "本周" },
+  { value: DASHBOARD_RANGE_VALUES.all, label: "全部" },
+];
+
+const statusLabels: Record<TaskStatus, string> = {
+  todo: "待开始",
+  in_progress: "进行中",
+  done: "已完成",
+};
+
+const priorityLabels: Record<TaskPriority, string> = {
+  high: "高",
+  medium: "中",
+  low: "低",
+};
+
+const priorityScore: Record<TaskPriority, number> = {
+  high: 3,
+  medium: 2,
+  low: 1,
+};
+
+export function CalendarClient({ initialDate, initialRange }: CalendarClientProps) {
+  const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const tasks = useTaskStore((state) => state.tasks);
   const isLoading = useTaskStore((state) => state.isLoading);
   const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
@@ -19,115 +79,495 @@ export function CalendarClient() {
     }
   }, [isConfigured, lastLoadedUserId, syncTasks, user?.id]);
 
-  const activeTasks = useMemo(() => tasks.filter((task) => task.status !== "done"), [tasks]);
-  const dueToday = useMemo(
-    () => activeTasks.filter((task) => getTaskDueMeta(task).isDueToday),
-    [activeTasks],
+  const dateParam = parseCalendarDate(searchParams.get(CALENDAR_QUERY_KEYS.date) ?? initialDate);
+  const range = parseCalendarRange(searchParams.get(CALENDAR_QUERY_KEYS.range) ?? initialRange);
+  const selectedDate = useMemo(() => parseDateParam(dateParam), [dateParam]);
+  const isSyncing = isConfigured && (isAuthLoading || isLoading);
+  const dueTasks = useMemo(() => tasks.filter(hasValidDueDate), [tasks]);
+  const scopedTasks = useMemo(() => filterTasksByRange(dueTasks, range, selectedDate), [dueTasks, range, selectedDate]);
+  const selectedDayTasks = useMemo(
+    () => sortCalendarTasks(dueTasks.filter((task) => isSameDay(parseTaskDueDate(task), selectedDate))),
+    [dueTasks, selectedDate],
   );
-  const upcoming = useMemo(
-    () => sortTasks(activeTasks, "due_asc").filter((task) => task.dueDate).slice(0, 6),
-    [activeTasks],
-  );
-  const timeline = useMemo(
-    () => sortTasks(activeTasks, "due_asc").filter((task) => task.dueDate).slice(0, 8),
-    [activeTasks],
-  );
+  const weekDays = useMemo(() => buildWeekDays(selectedDate, dueTasks), [dueTasks, selectedDate]);
+  const upcomingTasks = useMemo(() => buildUpcomingTasks(dueTasks, selectedDate, range), [dueTasks, range, selectedDate]);
+  const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "本周";
+  const metrics = useMemo(() => buildCalendarMetrics(dueTasks, scopedTasks, selectedDate), [dueTasks, scopedTasks, selectedDate]);
+  const isAccountEmpty = !isSyncing && tasks.length === 0;
+  const isRangeEmpty = !isSyncing && scopedTasks.length === 0;
+
+  const updateCalendar = (input: { date?: string; range?: DashboardRangeValue }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set(CALENDAR_QUERY_KEYS.date, input.date ?? dateParam);
+    params.set(CALENDAR_QUERY_KEYS.range, input.range ?? range);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <section className="calendar-shell">
-      <CalendarOverview todayCount={dueToday.length} upcomingCount={upcoming.length} isLoading={isLoading} />
+      <CalendarToolbar
+        date={selectedDate}
+        dateParam={dateParam}
+        range={range}
+        rangeLabel={rangeLabel}
+        isSyncing={isSyncing}
+        isAccountEmpty={isAccountEmpty}
+        onDateChange={(nextDate) => updateCalendar({ date: formatDateParam(nextDate) })}
+        onRangeChange={(nextRange) => updateCalendar({ range: nextRange })}
+      />
+      <CalendarSummaryGrid metrics={metrics} isLoading={isSyncing} isRangeEmpty={isRangeEmpty} />
       <div className="calendar-layout-grid">
-        <CalendarUpcomingPanel tasks={upcoming} />
-        <CalendarTimeline tasks={timeline} />
+        <main className="calendar-main-stack">
+          <CalendarWeekStrip days={weekDays} />
+          <CalendarTimeline
+            tasks={selectedDayTasks}
+            selectedDate={selectedDate}
+            isAccountEmpty={isAccountEmpty}
+            isSyncing={isSyncing}
+          />
+        </main>
+        <aside className="calendar-side-stack">
+          <CalendarUpcomingPanel tasks={upcomingTasks} rangeLabel={rangeLabel} isSyncing={isSyncing} />
+          <CalendarQuickLinks />
+        </aside>
       </div>
     </section>
   );
 }
 
-function CalendarOverview({
-  todayCount,
-  upcomingCount,
-  isLoading,
+function CalendarToolbar({
+  date,
+  dateParam,
+  range,
+  rangeLabel,
+  isSyncing,
+  isAccountEmpty,
+  onDateChange,
+  onRangeChange,
 }: {
-  todayCount: number;
-  upcomingCount: number;
+  date: Date;
+  dateParam: string;
+  range: DashboardRangeValue;
+  rangeLabel: string;
+  isSyncing: boolean;
+  isAccountEmpty: boolean;
+  onDateChange: (date: Date) => void;
+  onRangeChange: (range: DashboardRangeValue) => void;
+}) {
+  const statusLabel = isSyncing ? "同步中" : isAccountEmpty ? "暂无任务" : "已同步";
+
+  return (
+    <section className="calendar-toolbar card-surface">
+      <div className="calendar-toolbar__copy">
+        <span className="calendar-eyebrow">{statusLabel}</span>
+        <h2>日历</h2>
+        <p>{formatReadableDate(date)} · {rangeLabel}</p>
+      </div>
+      <div className="calendar-toolbar__controls">
+        <div className="calendar-range-tabs" aria-label="日历范围">
+          {rangeOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={range === option.value ? "calendar-range-tabs__button is-active" : "calendar-range-tabs__button"}
+              onClick={() => onRangeChange(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <div className="calendar-date-nav" aria-label="日期切换">
+          <button type="button" onClick={() => onDateChange(addDays(date, -1))} aria-label="上一天">
+            <span aria-hidden="true">‹</span>
+          </button>
+          <button type="button" onClick={() => onDateChange(new Date())}>
+            今天
+          </button>
+          <button type="button" onClick={() => onDateChange(addDays(date, 1))} aria-label="下一天">
+            <span aria-hidden="true">›</span>
+          </button>
+        </div>
+        <Link className="calendar-toolbar__date-link" href={buildCalendarHref({ date: dateParam, range })}>
+          {dateParam}
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function CalendarSummaryGrid({
+  metrics,
+  isLoading,
+  isRangeEmpty,
+}: {
+  metrics: CalendarMetric[];
   isLoading: boolean;
+  isRangeEmpty: boolean;
 }) {
   return (
-    <section className="calendar-overview card-surface">
-      <article>
-        <span>今天到期</span>
-        <strong>{isLoading ? "--" : todayCount}</strong>
-      </article>
-      <article>
-        <span>即将到期</span>
-        <strong>{isLoading ? "--" : upcomingCount}</strong>
-      </article>
-      <article>
-        <span>时间线</span>
-        <strong>占位</strong>
-      </article>
+    <section className="calendar-overview card-surface" aria-label="日历摘要">
+      {metrics.map((metric) => (
+        <Link key={metric.label} href={metric.href} className={`calendar-metric calendar-metric--${metric.tone}`}>
+          <span className="calendar-metric__icon" aria-hidden="true" />
+          <div>
+            <span>{metric.label}</span>
+            <strong>{isLoading ? "--" : metric.value}</strong>
+            <small>{isRangeEmpty ? "当前范围" : metric.helper}</small>
+          </div>
+        </Link>
+      ))}
     </section>
   );
 }
 
-function CalendarUpcomingPanel({ tasks }: { tasks: Array<{ id: string; title: string; dueDate?: string }> }) {
+function CalendarWeekStrip({ days }: { days: CalendarDay[] }) {
   return (
-    <section className="calendar-panel card-surface">
-      <div className="calendar-panel__head">
-        <p className="section-eyebrow panel-eyebrow">截止日期</p>
-        <h2>即将到期</h2>
+    <section className="calendar-panel calendar-week-panel card-surface">
+      <div className="calendar-panel__head calendar-panel__head--inline">
+        <div>
+          <span className="calendar-eyebrow">周视图</span>
+          <h2>7 天任务分布</h2>
+        </div>
+        <Link href={buildTasksHref({ due: "upcoming" })}>查看任务</Link>
       </div>
-      <div className="calendar-task-list">
-        {tasks.length ? (
-          tasks.map((task) => (
-            <article key={task.id} className="calendar-task-row">
-              <span />
-              <strong>{task.title}</strong>
-              <small>{formatShortDate(task.dueDate)}</small>
-            </article>
-          ))
-        ) : (
-          <p className="calendar-empty">暂无临近截止任务</p>
-        )}
+      <div className="calendar-week-strip" aria-label="周视图日期">
+        {days.map((day) => (
+          <Link
+            key={day.dateParam}
+            href={buildCalendarHref({ date: day.dateParam, range: DASHBOARD_RANGE_VALUES.week })}
+            className={[
+              "calendar-day",
+              day.isSelected ? "is-selected" : "",
+              day.isToday ? "is-today" : "",
+            ].filter(Boolean).join(" ")}
+          >
+            <span>{day.weekday}</span>
+            <strong>{day.dayLabel}</strong>
+            <small>{day.taskCount} 截止</small>
+          </Link>
+        ))}
       </div>
     </section>
   );
 }
 
-function CalendarTimeline({ tasks }: { tasks: Array<{ id: string; title: string; dueDate?: string }> }) {
+function CalendarTimeline({
+  tasks,
+  selectedDate,
+  isAccountEmpty,
+  isSyncing,
+}: {
+  tasks: Task[];
+  selectedDate: Date;
+  isAccountEmpty: boolean;
+  isSyncing: boolean;
+}) {
   return (
     <section className="calendar-panel card-surface">
-      <div className="calendar-panel__head">
-        <p className="section-eyebrow panel-eyebrow">任务时间线</p>
-        <h2>日程占位</h2>
+      <div className="calendar-panel__head calendar-panel__head--inline">
+        <div>
+          <span className="calendar-eyebrow">任务时间线</span>
+          <h2>{formatMonthDay(selectedDate)} 截止</h2>
+        </div>
+        <Link href={buildTasksHref({ due: isSameDay(selectedDate, new Date()) ? "today" : "upcoming" })}>筛选任务</Link>
       </div>
       <div className="calendar-timeline">
         {tasks.length ? (
-          tasks.map((task) => (
-            <article key={task.id} className="calendar-timeline__item">
-              <time>{formatShortDate(task.dueDate)}</time>
-              <span>{task.title}</span>
-            </article>
-          ))
+          tasks.map((task) => <CalendarTimelineItem key={task.id} task={task} />)
         ) : (
-          <p className="calendar-empty">时间线等待任务数据</p>
+          <CalendarEmptyState label={isSyncing ? "同步中" : isAccountEmpty ? "添加任务后显示日历" : "今天暂无截止"} />
         )}
       </div>
     </section>
   );
 }
 
-function formatShortDate(value: string | undefined) {
-  if (!value) {
-    return "--";
+function CalendarTimelineItem({ task }: { task: Task }) {
+  const dueMeta = getTaskDueMeta(task);
+
+  return (
+    <Link href={getTaskCalendarHref(task)} className={`calendar-timeline__item calendar-timeline__item--${task.priority}${task.status === "done" ? " is-done" : ""}`}>
+      <time>全天</time>
+      <span className="calendar-timeline__flag" aria-hidden="true" />
+      <div className="calendar-timeline__body">
+        <strong>{task.title}</strong>
+        <div className="calendar-timeline__meta">
+          <span>{priorityLabels[task.priority]}优先级</span>
+          <span>{statusLabels[task.status]}</span>
+          <span>{dueMeta.label}</span>
+          {task.tags.slice(0, 2).map((tag) => (
+            <span key={tag}>#{tag}</span>
+          ))}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function CalendarUpcomingPanel({
+  tasks,
+  rangeLabel,
+  isSyncing,
+}: {
+  tasks: Task[];
+  rangeLabel: string;
+  isSyncing: boolean;
+}) {
+  return (
+    <section className="calendar-panel card-surface">
+      <div className="calendar-panel__head calendar-panel__head--inline">
+        <div>
+          <span className="calendar-eyebrow">截止提醒</span>
+          <h2>{rangeLabel}即将到期</h2>
+        </div>
+        <Link href={buildTasksHref({ due: "upcoming" })}>查看全部</Link>
+      </div>
+      <div className="calendar-task-list">
+        {tasks.length ? (
+          tasks.map((task) => {
+            const dueMeta = getTaskDueMeta(task);
+            return (
+              <Link key={task.id} href={getTaskCalendarHref(task)} className={`calendar-task-row calendar-task-row--${task.priority}`}>
+                <span aria-hidden="true" />
+                <div>
+                  <strong>{task.title}</strong>
+                  <small>{dueMeta.label}</small>
+                </div>
+                <b>{priorityLabels[task.priority]}</b>
+              </Link>
+            );
+          })
+        ) : (
+          <CalendarEmptyState label={isSyncing ? "同步中" : "暂无近期截止"} compact />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function CalendarQuickLinks() {
+  return (
+    <section className="calendar-panel calendar-quick-panel card-surface">
+      <div className="calendar-panel__head">
+        <span className="calendar-eyebrow">快捷入口</span>
+        <h2>任务筛选</h2>
+      </div>
+      <div className="calendar-quick-links">
+        <Link href={buildTasksHref({ due: "today" })}>今日截止</Link>
+        <Link href={buildTasksHref({ due: "overdue" })}>已逾期</Link>
+        <Link href={buildTasksHref({ due: "upcoming" })}>即将到期</Link>
+        <Link href={buildTasksHref({ priority: "high" })}>高优先级</Link>
+      </div>
+    </section>
+  );
+}
+
+function CalendarEmptyState({ label, compact = false }: { label: string; compact?: boolean }) {
+  return (
+    <div className={compact ? "calendar-empty-state calendar-empty-state--compact" : "calendar-empty-state"}>
+      <span aria-hidden="true" />
+      <strong>{label}</strong>
+      <p>添加截止日期后显示</p>
+    </div>
+  );
+}
+
+function buildCalendarMetrics(dueTasks: Task[], scopedTasks: Task[], selectedDate: Date): CalendarMetric[] {
+  const activeDueTasks = dueTasks.filter((task) => task.status !== "done");
+  const activeScopedTasks = scopedTasks.filter((task) => task.status !== "done");
+  const selectedDayCount = activeDueTasks.filter((task) => isSameDay(parseTaskDueDate(task), selectedDate)).length;
+  const weekCount = activeDueTasks.filter((task) => isWithinRange(parseTaskDueDate(task), getWeekStart(selectedDate), addDays(getWeekStart(selectedDate), 7))).length;
+  const overdueCount = activeDueTasks.filter((task) => getTaskDueMeta(task).isOverdue).length;
+  const highCount = activeScopedTasks.filter((task) => task.priority === "high").length;
+  const completedCount = scopedTasks.filter((task) => task.status === "done").length;
+
+  return [
+    { label: "当日截止", value: String(selectedDayCount), helper: "选中日期", tone: "blue", href: buildTasksHref({ due: "today" }) },
+    { label: "本周到期", value: String(weekCount), helper: "7 天分布", tone: "green", href: buildTasksHref({ due: "upcoming" }) },
+    { label: "已逾期", value: String(overdueCount), helper: "需要处理", tone: "red", href: buildTasksHref({ due: "overdue" }) },
+    { label: "高优先级", value: String(highCount), helper: "当前范围", tone: "orange", href: buildTasksHref({ priority: "high" }) },
+    { label: "已完成", value: String(completedCount), helper: "当前范围", tone: "purple", href: buildTasksHref({ status: "done" }) },
+  ];
+}
+
+function buildWeekDays(selectedDate: Date, dueTasks: Task[]): CalendarDay[] {
+  const start = getWeekStart(selectedDate);
+  const today = startOfDay(new Date());
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = addDays(start, index);
+    return {
+      date,
+      dateParam: formatDateParam(date),
+      weekday: formatWeekday(date),
+      dayLabel: String(date.getDate()),
+      isToday: isSameDay(date, today),
+      isSelected: isSameDay(date, selectedDate),
+      taskCount: dueTasks.filter((task) => task.status !== "done" && isSameDay(parseTaskDueDate(task), date)).length,
+    };
+  });
+}
+
+function buildUpcomingTasks(dueTasks: Task[], selectedDate: Date, range: DashboardRangeValue) {
+  const activeTasks = dueTasks.filter((task) => task.status !== "done");
+  const start = startOfDay(selectedDate);
+  const end = range === DASHBOARD_RANGE_VALUES.all ? addDays(start, 30) : addDays(start, range === DASHBOARD_RANGE_VALUES.today ? 1 : 7);
+
+  return sortCalendarTasks(
+    activeTasks.filter((task) => {
+      const dueDate = parseTaskDueDate(task);
+      return dueDate && dueDate >= start && dueDate < end;
+    }),
+  ).slice(0, 6);
+}
+
+function filterTasksByRange(tasks: Task[], range: DashboardRangeValue, selectedDate: Date) {
+  if (range === DASHBOARD_RANGE_VALUES.all) {
+    return sortCalendarTasks(tasks);
   }
 
-  const date = new Date(value);
+  const start = range === DASHBOARD_RANGE_VALUES.today ? startOfDay(selectedDate) : getWeekStart(selectedDate);
+  const end = addDays(start, range === DASHBOARD_RANGE_VALUES.today ? 1 : 7);
 
-  if (Number.isNaN(date.getTime())) {
+  return sortCalendarTasks(
+    tasks.filter((task) => {
+      const dueDate = parseTaskDueDate(task);
+      return dueDate && dueDate >= start && dueDate < end;
+    }),
+  );
+}
+
+function sortCalendarTasks(tasks: Task[]) {
+  return [...tasks].sort((left, right) => {
+    if (left.status === "done" && right.status !== "done") return 1;
+    if (left.status !== "done" && right.status === "done") return -1;
+
+    const leftDueMeta = getTaskDueMeta(left);
+    const rightDueMeta = getTaskDueMeta(right);
+
+    if (leftDueMeta.isOverdue !== rightDueMeta.isOverdue) {
+      return leftDueMeta.isOverdue ? -1 : 1;
+    }
+
+    const priorityDiff = priorityScore[right.priority] - priorityScore[left.priority];
+    if (priorityDiff !== 0) {
+      return priorityDiff;
+    }
+
+    return (parseTaskDueDate(left)?.getTime() ?? Number.POSITIVE_INFINITY) - (parseTaskDueDate(right)?.getTime() ?? Number.POSITIVE_INFINITY);
+  });
+}
+
+function getTaskCalendarHref(task: Task) {
+  const dueMeta = getTaskDueMeta(task);
+
+  if (dueMeta.isOverdue) {
+    return buildTasksHref({ due: "overdue" });
+  }
+
+  if (dueMeta.isDueToday) {
+    return buildTasksHref({ due: "today" });
+  }
+
+  return buildTasksHref({ due: "upcoming" });
+}
+
+function hasValidDueDate(task: Task) {
+  return Boolean(parseTaskDueDate(task));
+}
+
+function parseTaskDueDate(task: Task) {
+  if (!task.dueDate) {
+    return null;
+  }
+
+  const date = startOfDay(new Date(task.dueDate));
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function parseCalendarRange(value: string | null | undefined): DashboardRangeValue {
+  if (value === DASHBOARD_RANGE_VALUES.today || value === DASHBOARD_RANGE_VALUES.all) {
     return value;
   }
 
-  return `${date.getMonth() + 1}/${date.getDate()}`;
+  return DASHBOARD_RANGE_VALUES.week;
+}
+
+function parseCalendarDate(value: string | null | undefined) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return formatDateParam(new Date());
+  }
+
+  const date = parseDateParam(value);
+
+  if (Number.isNaN(date.getTime()) || formatDateParam(date) !== value) {
+    return formatDateParam(new Date());
+  }
+
+  return value;
+}
+
+function parseDateParam(value: string) {
+  return startOfDay(new Date(`${value}T00:00:00`));
+}
+
+function formatReadableDate(value: Date) {
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short",
+  }).format(value);
+}
+
+function formatMonthDay(value: Date) {
+  return `${value.getMonth() + 1}/${value.getDate()}`;
+}
+
+function formatWeekday(value: Date) {
+  return new Intl.DateTimeFormat("zh-CN", { weekday: "short" }).format(value).replace("周", "");
+}
+
+function formatDateParam(value: Date) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const date = String(value.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${date}`;
+}
+
+function getWeekStart(value: Date) {
+  const date = startOfDay(value);
+  const day = date.getDay();
+  const offset = day === 0 ? -6 : 1 - day;
+  return addDays(date, offset);
+}
+
+function addDays(value: Date, days: number) {
+  const date = new Date(value);
+  date.setDate(date.getDate() + days);
+  return startOfDay(date);
+}
+
+function startOfDay(value: Date) {
+  const next = new Date(value);
+  next.setHours(0, 0, 0, 0);
+  return next;
+}
+
+function isSameDay(left: Date | null, right: Date | null) {
+  if (!left || !right) {
+    return false;
+  }
+
+  return startOfDay(left).getTime() === startOfDay(right).getTime();
+}
+
+function isWithinRange(value: Date | null, start: Date, end: Date) {
+  if (!value) {
+    return false;
+  }
+
+  const timestamp = value.getTime();
+  return timestamp >= start.getTime() && timestamp < end.getTime();
 }
