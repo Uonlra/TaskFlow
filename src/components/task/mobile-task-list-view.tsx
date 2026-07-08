@@ -70,6 +70,8 @@ export function MobileTaskListView({
       priority: "all",
       due: "",
       risk: "",
+      date: "",
+      range: "",
       ...item.filters,
     });
   };

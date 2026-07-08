@@ -70,6 +70,8 @@ export function DesktopTaskWorkbench({
       due: "",
       status: "all",
       risk: "",
+      date: "",
+      range: "",
       sort: value === "done" ? "updated_desc" : "due_asc",
     };
 

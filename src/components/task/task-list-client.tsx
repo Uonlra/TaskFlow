@@ -11,9 +11,11 @@ import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta, sortTasks } from "@/features/tasks/utils/task-deadline";
 import {
+  DASHBOARD_RANGE_VALUES,
   TASK_DUE_FILTERS,
   TASK_QUERY_KEYS,
   TASK_RISK_FILTERS,
+  type DashboardRangeValue,
   type TaskDueFilter,
   type TaskRiskFilter,
 } from "@/lib/constants/query-params";
@@ -28,6 +30,8 @@ const initialFilters: TaskFilters = {
   priority: "all",
   due: "",
   risk: "",
+  date: "",
+  range: "",
   sort: "due_asc",
 };
 
@@ -67,6 +71,8 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       priority: searchParams.get("priority"),
       due: searchParams.get("due"),
       risk: searchParams.get("risk"),
+      date: searchParams.get("date"),
+      range: searchParams.get("range"),
       sort: searchParams.get("sort"),
     });
 
@@ -85,10 +91,12 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 
       const matchStatus = filters.status === "all" || task.status === filters.status;
       const matchPriority = filters.priority === "all" || task.priority === filters.priority;
-      const matchDue = !filters.due || matchesDueFilter(task, filters.due);
+      const hasDateRangeFilter = hasActiveDateRangeFilter(filters.date, filters.range);
+      const matchDateRange = matchesDateRangeFilter(task, filters.date, filters.range);
+      const matchDue = hasDateRangeFilter || !filters.due || matchesDueFilter(task, filters.due);
       const matchRisk = !filters.risk || matchesRiskFilter(task, filters.risk);
 
-      return matchQuery && matchTag && matchStatus && matchPriority && matchDue && matchRisk;
+      return matchQuery && matchTag && matchStatus && matchPriority && matchDateRange && matchDue && matchRisk;
     });
 
     return sortTasks(nextTasks, filters.sort);
@@ -124,6 +132,8 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     filters.priority !== "all" ||
     filters.due !== "" ||
     filters.risk !== "" ||
+    filters.date !== "" ||
+    filters.range !== "" ||
     filters.sort !== "due_asc";
   const activeFilterLabels = useMemo(() => buildActiveFilterLabels(filters), [filters]);
 
@@ -214,6 +224,8 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     syncParam(params, TASK_QUERY_KEYS.priority, nextFilters.priority, "all");
     syncParam(params, TASK_QUERY_KEYS.due, nextFilters.due, "");
     syncParam(params, TASK_QUERY_KEYS.risk, nextFilters.risk, "");
+    syncParam(params, TASK_QUERY_KEYS.date, nextFilters.date, "");
+    syncParam(params, TASK_QUERY_KEYS.range, nextFilters.range, "");
     syncParam(params, TASK_QUERY_KEYS.sort, nextFilters.sort, "due_asc");
 
     const query = params.toString();
@@ -233,7 +245,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
   const signalDescription = hasActiveFilters
     ? "下面这批任务已经按你的条件收窄，先处理它们，别让注意力到处散步。"
     : "搜索、筛选和状态灯一起工作。你只管把任务放进来，剩下的节奏让界面帮你提醒。";
-  const motionKey = `${filters.query}|${filters.tag}|${filters.status}|${filters.priority}|${filters.due}|${filters.risk}|${filters.sort}|${filteredTasks.map((task) => `${task.id}:${task.status}`).join(",")}`;
+  const motionKey = `${filters.query}|${filters.tag}|${filters.status}|${filters.priority}|${filters.due}|${filters.risk}|${filters.date}|${filters.range}|${filters.sort}|${filteredTasks.map((task) => `${task.id}:${task.status}`).join(",")}`;
 
   return (
     <>
@@ -249,6 +261,18 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
         />
       </div>
       <section className="tasks-toolbar tasks-desktop-only">
+        {activeFilterLabels.length ? (
+          <section className="task-url-filters card-surface" aria-label="当前筛选">
+            <div className="task-url-filters__chips">
+              {activeFilterLabels.map((label) => (
+                <span key={label} className="task-url-filters__chip">{label}</span>
+              ))}
+            </div>
+            <button type="button" className="task-url-filters__clear" onClick={handleResetFilters}>
+              清除筛选
+            </button>
+          </section>
+        ) : null}
         {!isConfigured ? (
           <section className="notice-card card-surface">
             <p>还没连 Appwrite，所以任务先存在浏览器本地，够用，但别太飘。</p>
@@ -300,6 +324,9 @@ function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null
     input.sort === "due_asc"
       ? input.sort
       : "due_asc";
+  const date = parseTaskDateParam(input.date);
+  const parsedRange = parseTaskRange(input.range);
+  const range = date || parsedRange === DASHBOARD_RANGE_VALUES.all ? parsedRange : "";
 
   return {
     query: input.query ?? "",
@@ -308,6 +335,8 @@ function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null
     priority,
     due,
     risk,
+    date,
+    range,
     sort,
   };
 }
@@ -329,6 +358,8 @@ function areFiltersEqual(left: TaskFilters, right: TaskFilters) {
     left.priority === right.priority &&
     left.due === right.due &&
     left.risk === right.risk &&
+    left.date === right.date &&
+    left.range === right.range &&
     left.sort === right.sort
   );
 }
@@ -377,6 +408,105 @@ function matchesRiskFilter(task: Task, risk: TaskRiskFilter) {
   return task.priority === "low" || (offset !== null && offset >= 0 && offset <= 3);
 }
 
+function hasActiveDateRangeFilter(date: string, range: DashboardRangeValue | "") {
+  return Boolean(date) && range !== DASHBOARD_RANGE_VALUES.all;
+}
+
+function matchesDateRangeFilter(task: Task, date: string, range: DashboardRangeValue | "") {
+  if (!hasActiveDateRangeFilter(date, range)) {
+    return true;
+  }
+
+  const selectedDate = parseDateParam(date);
+  const dueDate = parseTaskDueDate(task);
+
+  if (!selectedDate || !dueDate) {
+    return false;
+  }
+
+  if (range === DASHBOARD_RANGE_VALUES.week) {
+    const start = getWeekStart(selectedDate);
+    return isWithinRange(dueDate, start, addDays(start, 7));
+  }
+
+  return isSameTaskDay(dueDate, selectedDate);
+}
+
+function parseTaskRange(value: string | null | undefined): DashboardRangeValue | "" {
+  if (
+    value === DASHBOARD_RANGE_VALUES.today ||
+    value === DASHBOARD_RANGE_VALUES.week ||
+    value === DASHBOARD_RANGE_VALUES.all
+  ) {
+    return value;
+  }
+
+  return "";
+}
+
+function parseTaskDateParam(value: string | null | undefined) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return "";
+  }
+
+  const date = parseDateParam(value);
+
+  if (!date || formatDateParam(date) !== value) {
+    return "";
+  }
+
+  return value;
+}
+
+function parseDateParam(value: string) {
+  const date = startOfDay(new Date(`${value}T00:00:00`));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function parseTaskDueDate(task: Task) {
+  if (!task.dueDate) {
+    return null;
+  }
+
+  const date = startOfDay(new Date(task.dueDate));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getWeekStart(value: Date) {
+  const date = startOfDay(value);
+  const day = date.getDay();
+  const offset = day === 0 ? -6 : 1 - day;
+  return addDays(date, offset);
+}
+
+function addDays(value: Date, days: number) {
+  const date = new Date(value);
+  date.setDate(date.getDate() + days);
+  return startOfDay(date);
+}
+
+function isSameTaskDay(left: Date, right: Date) {
+  return startOfDay(left).getTime() === startOfDay(right).getTime();
+}
+
+function isWithinRange(value: Date, start: Date, end: Date) {
+  const timestamp = value.getTime();
+  return timestamp >= start.getTime() && timestamp < end.getTime();
+}
+
+function formatDateParam(value: Date) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const date = String(value.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${date}`;
+}
+
+function formatShortDate(value: string) {
+  const [, month, date] = value.split("-");
+  return `${month}/${date}`;
+}
+
 function buildActiveFilterLabels(filters: TaskFilters) {
   const labels: string[] = [];
 
@@ -396,12 +526,18 @@ function buildActiveFilterLabels(filters: TaskFilters) {
     labels.push(priorityFilterLabels[filters.priority]);
   }
 
-  if (filters.due) {
+  if (filters.due && !hasActiveDateRangeFilter(filters.date, filters.range)) {
     labels.push(dueFilterLabels[filters.due]);
   }
 
   if (filters.risk) {
     labels.push(riskFilterLabels[filters.risk]);
+  }
+
+  if (filters.date && filters.range !== DASHBOARD_RANGE_VALUES.all) {
+    labels.push(filters.range === DASHBOARD_RANGE_VALUES.week ? `本周：${formatShortDate(filters.date)}` : `日期：${filters.date}`);
+  } else if (filters.range === DASHBOARD_RANGE_VALUES.all) {
+    labels.push("全部日期");
   }
 
   if (filters.sort !== "due_asc") {
