@@ -1,6 +1,6 @@
 import { TaskListClient } from "@/components/task/task-list-client";
 import { PageContainer } from "@/components/layout/page-container";
-import { TASK_DUE_FILTERS, TASK_RISK_FILTERS } from "@/lib/constants/query-params";
+import { DASHBOARD_RANGE_VALUES, TASK_DUE_FILTERS, TASK_RISK_FILTERS } from "@/lib/constants/query-params";
 
 type TasksPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -37,6 +37,13 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
       resolvedSearchParams?.risk === TASK_RISK_FILTERS.low
         ? resolvedSearchParams.risk
         : "",
+    date: parseTaskDateParam(typeof resolvedSearchParams?.date === "string" ? resolvedSearchParams.date : undefined),
+    range:
+      resolvedSearchParams?.range === DASHBOARD_RANGE_VALUES.today ||
+      resolvedSearchParams?.range === DASHBOARD_RANGE_VALUES.week ||
+      resolvedSearchParams?.range === DASHBOARD_RANGE_VALUES.all
+        ? resolvedSearchParams.range
+        : "",
     sort:
       resolvedSearchParams?.sort === "created_desc" ||
       resolvedSearchParams?.sort === "updated_desc" ||
@@ -53,3 +60,26 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
   );
 }
 
+
+
+function parseTaskDateParam(value: string | undefined) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return "";
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(date.getTime()) || formatDateParam(date) !== value) {
+    return "";
+  }
+
+  return value;
+}
+
+function formatDateParam(value: Date) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const date = String(value.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${date}`;
+}

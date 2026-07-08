@@ -8,7 +8,7 @@ import {
 } from "@/components/common/custom-select";
 import type { TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
 import type { TaskSort } from "@/features/tasks/utils/task-deadline";
-import type { TaskDueFilter, TaskRiskFilter } from "@/lib/constants/query-params";
+import type { DashboardRangeValue, TaskDueFilter, TaskRiskFilter } from "@/lib/constants/query-params";
 
 export type TaskFilters = {
   query: string;
@@ -17,6 +17,8 @@ export type TaskFilters = {
   priority: TaskPriority | "all";
   due: TaskDueFilter | "";
   risk: TaskRiskFilter | "";
+  date: string;
+  range: DashboardRangeValue | "";
   sort: TaskSort;
 };
 
@@ -42,6 +44,8 @@ export function TaskFilterBar({
     filters.priority !== "all" ||
     filters.due !== "" ||
     filters.risk !== "" ||
+    filters.date !== "" ||
+    filters.range !== "" ||
     filters.sort !== "due_asc";
 
   const updateField =

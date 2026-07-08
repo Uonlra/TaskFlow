@@ -533,3 +533,167 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Step 9.5: Calendar responsive QA refinements. Keep these selectors scoped so global responsive rules do not collapse the page unexpectedly. */
+.calendar-shell,
+.calendar-shell * {
+  box-sizing: border-box;
+}
+
+.calendar-shell {
+  width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.calendar-toolbar__controls,
+.calendar-range-tabs,
+.calendar-date-nav,
+.calendar-week-strip,
+.calendar-timeline,
+.calendar-task-list,
+.calendar-quick-links {
+  max-width: 100%;
+}
+
+.calendar-panel {
+  overflow: hidden;
+}
+
+.calendar-day small,
+.calendar-toolbar__date-link,
+.calendar-range-tabs__button,
+.calendar-date-nav button {
+  white-space: nowrap;
+}
+
+.calendar-timeline__body,
+.calendar-task-row div {
+  overflow: hidden;
+}
+
+@media (max-width: 960px) {
+  .calendar-shell .calendar-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendar-shell .calendar-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .calendar-shell .calendar-toolbar__controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .calendar-shell .calendar-layout-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .calendar-shell {
+    gap: 14px;
+  }
+
+  .calendar-shell .calendar-toolbar,
+  .calendar-shell .calendar-overview,
+  .calendar-shell .calendar-panel {
+    padding: 16px;
+  }
+
+  .calendar-shell .calendar-toolbar__controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .calendar-shell .calendar-range-tabs,
+  .calendar-shell .calendar-date-nav {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .calendar-shell .calendar-range-tabs__button,
+  .calendar-shell .calendar-date-nav button {
+    min-width: 0;
+    padding-inline: 10px;
+  }
+
+  .calendar-shell .calendar-week-strip {
+    margin-inline: -2px;
+    padding: 0 2px 4px;
+  }
+
+  .calendar-shell .calendar-day {
+    flex-basis: 104px;
+    min-height: 88px;
+    padding: 11px;
+  }
+
+  .calendar-shell .calendar-day strong {
+    font-size: 22px;
+  }
+
+  .calendar-shell .calendar-empty-state {
+    min-height: 148px;
+  }
+
+  .calendar-shell .calendar-empty-state--compact {
+    min-height: 112px;
+  }
+}
+
+@media (max-width: 560px) {
+  .calendar-shell .calendar-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .calendar-shell .calendar-metric {
+    min-height: 84px;
+    padding: 14px;
+  }
+
+  .calendar-shell .calendar-metric strong {
+    font-size: 24px;
+  }
+
+  .calendar-shell .calendar-panel__head--inline {
+    gap: 10px;
+  }
+
+  .calendar-shell .calendar-timeline__item {
+    grid-template-columns: 42px 8px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .calendar-shell .calendar-timeline__meta span {
+    min-height: 22px;
+    padding-inline: 7px;
+  }
+
+  .calendar-shell .calendar-task-row {
+    grid-template-columns: 8px minmax(0, 1fr) 28px;
+    gap: 9px;
+  }
+
+  .calendar-shell .calendar-quick-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 390px) {
+  .calendar-shell .calendar-toolbar h2 {
+    font-size: 20px;
+  }
+
+  .calendar-shell .calendar-range-tabs__button,
+  .calendar-shell .calendar-date-nav button,
+  .calendar-shell .calendar-toolbar__date-link {
+    font-size: 13px;
+  }
+
+  .calendar-shell .calendar-quick-links {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

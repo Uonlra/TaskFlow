@@ -25,8 +25,8 @@ type DesktopTaskWorkbenchProps = {
 };
 
 const categoryTabs = [
-  { value: "today", label: "今天" },
-  { value: "upcoming", label: "即将" },
+  { value: "near", label: "临近" },
+  { value: "overdue", label: "逾期" },
   { value: "all", label: "全部" },
   { value: "done", label: "已完成" },
 ] as const;
@@ -73,12 +73,12 @@ export function DesktopTaskWorkbench({
       sort: value === "done" ? "updated_desc" : "due_asc",
     };
 
-    if (value === "today") {
-      nextFilters.due = "today";
+    if (value === "near") {
+      nextFilters.due = "near";
     }
 
-    if (value === "upcoming") {
-      nextFilters.due = "upcoming";
+    if (value === "overdue") {
+      nextFilters.due = "overdue";
     }
 
     if (value === "done") {
@@ -118,7 +118,11 @@ export function DesktopTaskWorkbench({
                 key={tab.value}
                 type="button"
                 aria-pressed={category === tab.value}
-                className={category === tab.value ? "desktop-task-tabs__button is-active" : "desktop-task-tabs__button"}
+                className={
+                  category === tab.value
+                    ? "desktop-task-tabs__button is-active"
+                    : "desktop-task-tabs__button"
+                }
                 onClick={() => handleCategoryChange(tab.value)}
               >
                 <span>{tab.label}</span>
@@ -180,12 +184,12 @@ function getActiveCategory(filters: TaskFilters): CategoryTab {
     return "done";
   }
 
-  if (filters.due === "upcoming") {
-    return "upcoming";
+  if (filters.due === "overdue") {
+    return "overdue";
   }
 
-  if (filters.due === "today") {
-    return "today";
+  if (filters.due === "near" || filters.due === "today" || filters.due === "upcoming") {
+    return "near";
   }
 
   return "all";
@@ -202,17 +206,17 @@ function buildCategoryCounts(tasks: Task[]) {
         counts.done += 1;
       }
 
-      if (task.status !== "done" && dueMeta.isDueToday) {
-        counts.today += 1;
+      if (task.status !== "done" && (dueMeta.isDueToday || dueMeta.isUpcoming)) {
+        counts.near += 1;
       }
 
-      if (task.status !== "done" && dueMeta.isUpcoming) {
-        counts.upcoming += 1;
+      if (task.status !== "done" && dueMeta.isOverdue) {
+        counts.overdue += 1;
       }
 
       return counts;
     },
-    { today: 0, upcoming: 0, all: 0, done: 0 },
+    { near: 0, overdue: 0, all: 0, done: 0 },
   );
 }
 

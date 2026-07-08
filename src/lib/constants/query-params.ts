@@ -8,9 +8,12 @@ export const TASK_QUERY_KEYS = {
   sort: "sort",
   due: "due",
   risk: "risk",
+  date: "date",
+  range: "range",
 } as const;
 
 export const TASK_DUE_FILTERS = {
+  near: "near",
   today: "today",
   upcoming: "upcoming",
   overdue: "overdue",
@@ -50,6 +53,8 @@ export type BuildTasksHrefInput = {
   sort?: "created_desc" | "updated_desc" | "due_asc" | "priority_desc";
   due?: TaskDueFilter;
   risk?: TaskRiskFilter;
+  date?: string;
+  range?: DashboardRangeValue;
 };
 
 export type BuildStatsHrefInput = {
@@ -62,7 +67,7 @@ export type BuildCalendarHrefInput = {
 };
 
 export function buildTasksHref(input: BuildTasksHrefInput = {}) {
-  return buildHref(ROUTES.tasks, input);
+  return buildHref(ROUTES.tasks, input, { keepAllKeys: [TASK_QUERY_KEYS.range] });
 }
 
 export function buildStatsHref(input: BuildStatsHrefInput = {}) {
@@ -73,11 +78,12 @@ export function buildCalendarHref(input: BuildCalendarHrefInput = {}) {
   return buildHref(ROUTES.calendar, input);
 }
 
-function buildHref(pathname: string, params: object) {
+function buildHref(pathname: string, params: object, options: { keepAllKeys?: string[] } = {}) {
   const searchParams = new URLSearchParams();
+  const keepAllKeys = new Set(options.keepAllKeys ?? []);
 
   Object.entries(params as Record<string, string | undefined>).forEach(([key, value]) => {
-    if (value && value !== "all") {
+    if (value && (value !== "all" || keepAllKeys.has(key))) {
       searchParams.set(key, value);
     }
   });
