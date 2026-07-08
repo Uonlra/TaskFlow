@@ -110,11 +110,18 @@ function DesktopTaskRow({
 
       <span role="cell" className="desktop-task-table__tags">
         {task.tags.length ? (
-          task.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="desktop-task-chip">
-              {tag}
-            </span>
-          ))
+          <>
+            {task.tags.slice(0, 2).map((tag) => (
+              <span key={tag} className="desktop-task-chip">
+                {tag}
+              </span>
+            ))}
+            {task.tags.length > 2 ? (
+              <span className="desktop-task-chip desktop-task-chip--muted">
+                +{task.tags.length - 2}
+              </span>
+            ) : null}
+          </>
         ) : (
           <span className="desktop-task-muted">无标签</span>
         )}

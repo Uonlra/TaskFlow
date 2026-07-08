@@ -3,6 +3,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { StatsClient } from "@/components/stats/stats-client";
 import { DASHBOARD_RANGE_VALUES } from "@/lib/constants/query-params";
 
+const showStatsPageHeader = false;
+
 type StatsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -15,11 +17,13 @@ export default async function StatsPage({ searchParams }: StatsPageProps) {
 
   return (
     <PageContainer>
-      <PageHeader
-        eyebrow="统计"
-        title="看清任务运行状态"
-        description="趋势、分布、标签和风险集中在这里，方便从全局判断任务节奏。"
-      />
+      {showStatsPageHeader ? (
+        <PageHeader
+          eyebrow="统计"
+          title="看清任务运行状态"
+          description="趋势、分布、标签和风险集中在这里，方便从全局判断任务节奏。"
+        />
+      ) : null}
       <StatsClient initialRange={initialRange} />
     </PageContainer>
   );

@@ -24,6 +24,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
         ? resolvedSearchParams.priority
         : "all",
     due:
+      resolvedSearchParams?.due === TASK_DUE_FILTERS.near ||
       resolvedSearchParams?.due === TASK_DUE_FILTERS.today ||
       resolvedSearchParams?.due === TASK_DUE_FILTERS.upcoming ||
       resolvedSearchParams?.due === TASK_DUE_FILTERS.overdue

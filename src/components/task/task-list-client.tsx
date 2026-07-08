@@ -280,6 +280,7 @@ function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null
   const status = input.status === "todo" || input.status === "in_progress" || input.status === "done" ? input.status : "all";
   const priority = input.priority === "low" || input.priority === "medium" || input.priority === "high" ? input.priority : "all";
   const due =
+    input.due === TASK_DUE_FILTERS.near ||
     input.due === TASK_DUE_FILTERS.today ||
     input.due === TASK_DUE_FILTERS.upcoming ||
     input.due === TASK_DUE_FILTERS.overdue
@@ -338,6 +339,10 @@ function matchesDueFilter(task: Task, due: TaskDueFilter) {
   }
 
   const dueMeta = getTaskDueMeta(task);
+
+  if (due === TASK_DUE_FILTERS.near) {
+    return dueMeta.isDueToday || dueMeta.isUpcoming;
+  }
 
   if (due === TASK_DUE_FILTERS.today) {
     return dueMeta.isDueToday;
@@ -441,6 +446,7 @@ const priorityFilterLabels = {
 } as const;
 
 const dueFilterLabels = {
+  near: "临近截止",
   today: "今天到期",
   upcoming: "即将到期",
   overdue: "已逾期",
