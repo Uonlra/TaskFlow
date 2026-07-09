@@ -1,5 +1,8 @@
 @import "./css/base.css";
 @import "./css/dashboard.css";
+@import "./css/dashboard-v2.css";
+@import "./css/calendar.css";
+@import "./css/stats.css";
 @import "./css/demo.css";
 @import "./css/auth.css";
 @import "./css/tasks.css";

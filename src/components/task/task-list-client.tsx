@@ -3,15 +3,29 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { AnimatedSection } from "@/components/common/animated-section";
-import { ScrambleText } from "@/components/common/scramble-text";
-import { TaskFilterBar, type TaskFilters } from "@/components/task/task-filter-bar";
-import { TaskFormDialog } from "@/components/task/task-form-dialog";
+import { DesktopTaskWorkbench } from "@/components/task/desktop-task-workbench";
+import type { TaskFilters } from "@/components/task/task-filter-bar";
 import { MobileTaskListView } from "@/components/task/mobile-task-list-view";
-import { TaskList } from "@/components/task/task-list";
 import { TaskSignalPanel } from "@/components/task/task-signal-panel";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
+import type { Task } from "@/features/tasks/types/task.types";
+import {
+  filterTasksByTaskDateRange,
+  formatTaskDateParam,
+  hasActiveTaskDateRangeFilter,
+  parseTaskDateParam,
+  startOfTaskDay,
+} from "@/features/tasks/utils/task-date-filters";
 import { getTaskDueMeta, sortTasks } from "@/features/tasks/utils/task-deadline";
+import {
+  DASHBOARD_RANGE_VALUES,
+  TASK_DUE_FILTERS,
+  TASK_QUERY_KEYS,
+  TASK_RISK_FILTERS,
+  type DashboardRangeValue,
+  type TaskDueFilter,
+  type TaskRiskFilter,
+} from "@/lib/constants/query-params";
 import { useAuth } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
 import { useTaskStore } from "@/store/task-store";
@@ -21,6 +35,10 @@ const initialFilters: TaskFilters = {
   tag: "",
   status: "all",
   priority: "all",
+  due: "",
+  risk: "",
+  date: "",
+  range: "",
   sort: "due_asc",
 };
 
@@ -58,6 +76,10 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       tag: searchParams.get("tag"),
       status: searchParams.get("status"),
       priority: searchParams.get("priority"),
+      due: searchParams.get("due"),
+      risk: searchParams.get("risk"),
+      date: searchParams.get("date"),
+      range: searchParams.get("range"),
       sort: searchParams.get("sort"),
     });
 
@@ -76,8 +98,12 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 
       const matchStatus = filters.status === "all" || task.status === filters.status;
       const matchPriority = filters.priority === "all" || task.priority === filters.priority;
+      const hasDateRangeFilter = hasActiveDateRangeFilter(filters.date, filters.range);
+      const matchDateRange = matchesDateRangeFilter(task, filters.date, filters.range);
+      const matchDue = hasDateRangeFilter || !filters.due || matchesDueFilter(task, filters.due);
+      const matchRisk = !filters.risk || matchesRiskFilter(task, filters.risk);
 
-      return matchQuery && matchTag && matchStatus && matchPriority;
+      return matchQuery && matchTag && matchStatus && matchPriority && matchDateRange && matchDue && matchRisk;
     });
 
     return sortTasks(nextTasks, filters.sort);
@@ -111,7 +137,12 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     filters.tag.trim() !== "" ||
     filters.status !== "all" ||
     filters.priority !== "all" ||
+    filters.due !== "" ||
+    filters.risk !== "" ||
+    filters.date !== "" ||
+    filters.range !== "" ||
     filters.sort !== "due_asc";
+  const activeFilterLabels = useMemo(() => buildActiveFilterLabels(filters), [filters]);
 
   const handleCreateTask = async (values: TaskFormValues) => {
     try {
@@ -194,11 +225,15 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 
     const params = new URLSearchParams(searchParams.toString());
 
-    syncParam(params, "query", nextFilters.query, "");
-    syncParam(params, "tag", nextFilters.tag, "");
-    syncParam(params, "status", nextFilters.status, "all");
-    syncParam(params, "priority", nextFilters.priority, "all");
-    syncParam(params, "sort", nextFilters.sort, "due_asc");
+    syncParam(params, TASK_QUERY_KEYS.query, nextFilters.query, "");
+    syncParam(params, TASK_QUERY_KEYS.tag, nextFilters.tag, "");
+    syncParam(params, TASK_QUERY_KEYS.status, nextFilters.status, "all");
+    syncParam(params, TASK_QUERY_KEYS.priority, nextFilters.priority, "all");
+    syncParam(params, TASK_QUERY_KEYS.due, nextFilters.due, "");
+    syncParam(params, TASK_QUERY_KEYS.risk, nextFilters.risk, "");
+    syncParam(params, TASK_QUERY_KEYS.date, nextFilters.date, "");
+    syncParam(params, TASK_QUERY_KEYS.range, nextFilters.range, "");
+    syncParam(params, TASK_QUERY_KEYS.sort, nextFilters.sort, "due_asc");
 
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
@@ -217,7 +252,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
   const signalDescription = hasActiveFilters
     ? "下面这批任务已经按你的条件收窄，先处理它们，别让注意力到处散步。"
     : "搜索、筛选和状态灯一起工作。你只管把任务放进来，剩下的节奏让界面帮你提醒。";
-  const motionKey = `${filters.query}|${filters.tag}|${filters.status}|${filters.priority}|${filters.sort}|${filteredTasks.map((task) => `${task.id}:${task.status}`).join(",")}`;
+  const motionKey = `${filters.query}|${filters.tag}|${filters.status}|${filters.priority}|${filters.due}|${filters.risk}|${filters.date}|${filters.range}|${filters.sort}|${filteredTasks.map((task) => `${task.id}:${task.status}`).join(",")}`;
 
   return (
     <>
@@ -233,99 +268,40 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
         />
       </div>
       <section className="tasks-toolbar tasks-desktop-only">
-      {!isConfigured ? (
-        <section className="notice-card card-surface">
-          <p>
-            还没连 Appwrite，所以任务先存在浏览器本地，够用，但别太飘。
-          </p>
-        </section>
-      ) : null}
-      {error ? (
-        <section className="notice-card notice-card--error card-surface">
-          <p>{error}</p>
-        </section>
-      ) : null}
-      <AnimatedSection className="tasks-highlight-grid">
-        <TaskSignalPanel
-          tasks={filteredTasks}
-          eyebrow="任务列表"
-          title={signalTitle}
-          description={signalDescription}
-          activeLabel={hasActiveFilters ? "筛选后先看" : "队列优先处理"}
-          variant="tasks"
-        />
-
-        <aside className="tasks-create-card card-surface">
-          <div>
-            <p className="section-eyebrow panel-eyebrow">
-              新建任务
-            </p>
-            <p className="panel-description panel-description--compact">
-              想到什么先记下来。标题写清楚一点，之后回看会少猜很多。
-            </p>
-          </div>
-          <TaskFormDialog onSubmitTask={handleCreateTask} />
-        </aside>
-      </AnimatedSection>
-
-      <AnimatedSection as="div" className="tasks-filter-area" delayMs={80}>
-        <TaskFilterBar
-          filters={filters}
-          resultCount={filteredTasks.length}
-          totalCount={tasks.length}
-          onChange={handleFiltersChange}
-          onReset={handleResetFilters}
-        />
-      </AnimatedSection>
-      <AnimatedSection className="tasks-view-summary card-surface" delayMs={120}>
-        <div className="tasks-view-summary__copy">
-          <p className="section-eyebrow panel-eyebrow">
-            当前任务视图
-          </p>
-          <p>
-            <ScrambleText text={summaryLabel} playKey={motionKey} durationMs={420} />
-          </p>
-        </div>
-        {hasActiveFilters ? (
-          <button
-            type="button"
-            onClick={handleResetFilters}
-            className="tesla-action tesla-action--secondary"
-          >
-            回到全部任务
-          </button>
+        {activeFilterLabels.length ? (
+          <section className="task-url-filters card-surface" aria-label="当前筛选">
+            <div className="task-url-filters__chips">
+              {activeFilterLabels.map((label) => (
+                <span key={label} className="task-url-filters__chip">{label}</span>
+              ))}
+            </div>
+            <button type="button" className="task-url-filters__clear" onClick={handleResetFilters}>
+              清除筛选
+            </button>
+          </section>
         ) : null}
-      </AnimatedSection>
-      {(deadlineSummary.overdue > 0 || deadlineSummary.today > 0 || deadlineSummary.upcoming > 0) && (
-        <AnimatedSection
-          className={deadlineSummary.overdue > 0 ? "tasks-deadline-card tasks-deadline-card--danger card-surface" : "tasks-deadline-card card-surface"}
-          delayMs={140}
-        >
-          <p className={deadlineSummary.overdue > 0 ? "section-eyebrow panel-eyebrow panel-eyebrow--danger" : "section-eyebrow panel-eyebrow"}>
-            截止提醒
-          </p>
-          <p>
-            {deadlineSummary.overdue > 0
-              ? `有 ${deadlineSummary.overdue} 条已经逾期，先处理它们比较安心。`
-              : deadlineSummary.today > 0
-                ? `有 ${deadlineSummary.today} 条今天到期，最好别拖到最后一分钟。`
-                : `接下来 3 天有 ${deadlineSummary.upcoming} 条快到了，提前看一眼就好。`}
-          </p>
-        </AnimatedSection>
-      )}
-      {isConfigured && isLoading ? (
-        <section className="notice-card card-surface">
-          <p>正在从 Appwrite 同步任务，稍等一下...</p>
-        </section>
-      ) : null}
-      <TaskList
-        tasks={filteredTasks}
-        motionKey={motionKey}
-        emptyAction={<TaskFormDialog onSubmitTask={handleCreateTask} triggerLabel="新增一条任务" />}
-        onUpdateTask={handleUpdateTask}
-        onUpdateStatus={handleUpdateStatus}
-        onDeleteTask={handleDeleteTask}
-      />
+        {!isConfigured ? (
+          <section className="notice-card card-surface">
+            <p>还没连 Appwrite，所以任务先存在浏览器本地，够用，但别太飘。</p>
+          </section>
+        ) : null}
+        {error ? (
+          <section className="notice-card notice-card--error card-surface">
+            <p>{error}</p>
+          </section>
+        ) : null}
+        <DesktopTaskWorkbench
+          tasks={filteredTasks}
+          totalTasks={tasks}
+          filters={filters}
+          isLoading={isConfigured && isLoading}
+          onFiltersChange={handleFiltersChange}
+          onResetFilters={handleResetFilters}
+          onCreateTask={handleCreateTask}
+          onUpdateTask={handleUpdateTask}
+          onUpdateStatus={handleUpdateStatus}
+          onDeleteTask={handleDeleteTask}
+        />
       </section>
     </>
   );
@@ -334,6 +310,20 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null | undefined>>): TaskFilters {
   const status = input.status === "todo" || input.status === "in_progress" || input.status === "done" ? input.status : "all";
   const priority = input.priority === "low" || input.priority === "medium" || input.priority === "high" ? input.priority : "all";
+  const due =
+    input.due === TASK_DUE_FILTERS.near ||
+    input.due === TASK_DUE_FILTERS.today ||
+    input.due === TASK_DUE_FILTERS.upcoming ||
+    input.due === TASK_DUE_FILTERS.overdue
+      ? input.due
+      : "";
+  const risk =
+    input.risk === TASK_RISK_FILTERS.overdue ||
+    input.risk === TASK_RISK_FILTERS.high ||
+    input.risk === TASK_RISK_FILTERS.medium ||
+    input.risk === TASK_RISK_FILTERS.low
+      ? input.risk
+      : "";
   const sort =
     input.sort === "created_desc" ||
     input.sort === "updated_desc" ||
@@ -341,12 +331,20 @@ function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null
     input.sort === "due_asc"
       ? input.sort
       : "due_asc";
+  const parsedDate = parseTaskDateParam(input.date);
+  const date = parsedDate ? formatTaskDateParam(parsedDate) : "";
+  const parsedRange = parseTaskRange(input.range);
+  const range = parsedRange;
 
   return {
     query: input.query ?? "",
     tag: input.tag ?? "",
     status,
     priority,
+    due,
+    risk,
+    date,
+    range,
     sort,
   };
 }
@@ -366,6 +364,179 @@ function areFiltersEqual(left: TaskFilters, right: TaskFilters) {
     left.tag === right.tag &&
     left.status === right.status &&
     left.priority === right.priority &&
+    left.due === right.due &&
+    left.risk === right.risk &&
+    left.date === right.date &&
+    left.range === right.range &&
     left.sort === right.sort
   );
 }
+
+function matchesDueFilter(task: Task, due: TaskDueFilter) {
+  if (task.status === "done") {
+    return false;
+  }
+
+  const dueMeta = getTaskDueMeta(task);
+
+  if (due === TASK_DUE_FILTERS.near) {
+    return dueMeta.isDueToday || dueMeta.isUpcoming;
+  }
+
+  if (due === TASK_DUE_FILTERS.today) {
+    return dueMeta.isDueToday;
+  }
+
+  if (due === TASK_DUE_FILTERS.upcoming) {
+    return dueMeta.isUpcoming;
+  }
+
+  return dueMeta.isOverdue;
+}
+
+function matchesRiskFilter(task: Task, risk: TaskRiskFilter) {
+  if (task.status === "done") {
+    return false;
+  }
+
+  if (risk === TASK_RISK_FILTERS.overdue) {
+    return getTaskDueMeta(task).isOverdue;
+  }
+
+  const offset = getDueDayOffset(task.dueDate);
+
+  if (risk === TASK_RISK_FILTERS.high) {
+    return task.priority === "high" || getTaskDueMeta(task).isOverdue;
+  }
+
+  if (risk === TASK_RISK_FILTERS.medium) {
+    return task.priority === "medium" || (offset !== null && offset >= 0 && offset <= 1);
+  }
+
+  return task.priority === "low" || (offset !== null && offset >= 0 && offset <= 3);
+}
+
+function hasActiveDateRangeFilter(date: string, range: DashboardRangeValue | "") {
+  return hasActiveTaskDateRangeFilter({ date: parseTaskDateParam(date), range });
+}
+
+function matchesDateRangeFilter(task: Task, date: string, range: DashboardRangeValue | "") {
+  const selectedDate = parseTaskDateParam(date);
+
+  if (!hasActiveTaskDateRangeFilter({ date: selectedDate, range })) {
+    return true;
+  }
+
+  return filterTasksByTaskDateRange([task], { date: selectedDate, range }).length > 0;
+}
+
+function parseTaskRange(value: string | null | undefined): DashboardRangeValue | "" {
+  if (
+    value === DASHBOARD_RANGE_VALUES.today ||
+    value === DASHBOARD_RANGE_VALUES.week ||
+    value === DASHBOARD_RANGE_VALUES.all
+  ) {
+    return value;
+  }
+
+  return "";
+}
+
+function formatShortDate(value: string) {
+  const [, month, date] = value.split("-");
+  return `${month}/${date}`;
+}
+
+function buildActiveFilterLabels(filters: TaskFilters) {
+  const labels: string[] = [];
+
+  if (filters.query.trim()) {
+    labels.push(`搜索：${filters.query.trim()}`);
+  }
+
+  if (filters.tag.trim()) {
+    labels.push(`标签：${filters.tag.trim()}`);
+  }
+
+  if (filters.status !== "all") {
+    labels.push(statusFilterLabels[filters.status]);
+  }
+
+  if (filters.priority !== "all") {
+    labels.push(priorityFilterLabels[filters.priority]);
+  }
+
+  if (filters.due && !hasActiveDateRangeFilter(filters.date, filters.range)) {
+    labels.push(dueFilterLabels[filters.due]);
+  }
+
+  if (filters.risk) {
+    labels.push(riskFilterLabels[filters.risk]);
+  }
+
+  if (filters.date && filters.range !== DASHBOARD_RANGE_VALUES.all) {
+    labels.push(filters.range === DASHBOARD_RANGE_VALUES.week ? `本周：${formatShortDate(filters.date)}` : `日期：${filters.date}`);
+  } else if (filters.range === DASHBOARD_RANGE_VALUES.today) {
+    labels.push("今天");
+  } else if (filters.range === DASHBOARD_RANGE_VALUES.week) {
+    labels.push("本周");
+  } else if (filters.range === DASHBOARD_RANGE_VALUES.all) {
+    labels.push("全部日期");
+  }
+
+  if (filters.sort !== "due_asc") {
+    labels.push(sortFilterLabels[filters.sort]);
+  }
+
+  return labels;
+}
+
+function getDueDayOffset(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const dueDate = startOfTaskDay(new Date(value));
+
+  if (Number.isNaN(dueDate.getTime())) {
+    return null;
+  }
+
+  const today = startOfTaskDay(new Date());
+
+  return Math.round((dueDate.getTime() - today.getTime()) / 86400000);
+}
+
+const statusFilterLabels = {
+  todo: "待开始",
+  in_progress: "进行中",
+  done: "已完成",
+} as const;
+
+const priorityFilterLabels = {
+  high: "高优先级",
+  medium: "中优先级",
+  low: "低优先级",
+} as const;
+
+const dueFilterLabels = {
+  near: "临近截止",
+  today: "今天到期",
+  upcoming: "即将到期",
+  overdue: "已逾期",
+} as const;
+
+const riskFilterLabels = {
+  overdue: "已逾期",
+  high: "高风险",
+  medium: "中风险",
+  low: "低风险",
+} as const;
+
+const sortFilterLabels = {
+  created_desc: "最新创建",
+  updated_desc: "最近更新",
+  priority_desc: "优先级排序",
+  due_asc: "截止时间",
+} as const;
+

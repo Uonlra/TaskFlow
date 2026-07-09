@@ -117,8 +117,17 @@
     grid-template-columns: 1fr;
   }
 
-  .demo-topbar,
-  .demo-hero-grid {
+  .calendar-layout-grid,
+  .stats-layout-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-overview,
+  .stats-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .demo-topbar {
     grid-template-columns: 1fr;
   }
 
@@ -431,31 +440,6 @@
     min-height: 58px;
   }
 
-  .auth-shell {
-    padding: 12px;
-  }
-
-  .auth-product-panel,
-  .auth-shell__form {
-    padding: 20px;
-  }
-
-  .auth-form-card {
-    padding: 24px;
-  }
-
-  .auth-product-copy h1 {
-    font-size: 2rem;
-  }
-
-  .auth-preview {
-    padding: 14px;
-    border-radius: 22px;
-  }
-
-  .auth-preview__stats {
-    grid-template-columns: 1fr;
-  }
 
   .dashboard-range-panel {
     width: 100%;
@@ -552,12 +536,10 @@
     font-size: 2.2rem;
   }
 
-  .demo-hero-card,
   .demo-task-panel {
     padding: 20px;
   }
 
-  .demo-hero-card h2,
   .demo-task-panel h2 {
     font-size: 2rem;
   }

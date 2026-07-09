@@ -50,19 +50,12 @@
   justify-content: flex-end;
 }
 
-.demo-hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
-  gap: 24px;
-}
 
-.demo-hero-card,
 .demo-task-panel {
   border-radius: 4px;
   padding: 24px;
 }
 
-.demo-hero-card h2,
 .demo-task-panel h2 {
   margin: 12px 0 0;
   font-family: var(--font-display);
@@ -71,7 +64,6 @@
   line-height: 1.16;
 }
 
-.demo-hero-card p:last-child,
 .demo-task-panel p:last-child {
   margin: 14px 0 0;
   color: var(--muted-strong);

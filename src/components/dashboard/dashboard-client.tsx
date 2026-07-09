@@ -13,10 +13,13 @@ import { StatusDistributionChart } from "@/components/dashboard/status-distribut
 import { TagSummary } from "@/components/dashboard/tag-summary";
 import { TagDistributionChart } from "@/components/dashboard/tag-distribution-chart";
 import { UpcomingDeadlines } from "@/components/dashboard/upcoming-deadlines";
+import { DashboardV2Shell } from "@/components/dashboard/v2/dashboard-v2-shell";
 import { TaskList } from "@/components/task/task-list";
 import { TaskSignalPanel } from "@/components/task/task-signal-panel";
 import type { Task } from "@/features/tasks/types/task.types";
+import { buildDashboardStats } from "@/features/tasks/utils/task-analytics";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
+import { buildDashboardPreviewTasks } from "@/features/tasks/utils/dashboard-preview-data";
 import { useAuth } from "@/providers/auth-provider";
 import { useTaskStore } from "@/store/task-store";
 
@@ -28,12 +31,15 @@ const rangeOptions: Array<{ value: DashboardRange; label: string }> = [
   { value: "all", label: "全部" },
 ];
 
+const showDashboardV2Draft = true;
+const useDashboardPreviewData = false;
+
 type DashboardClientProps = {
   initialRange?: DashboardRange;
 };
 
 export function DashboardClient({ initialRange = "today" }: DashboardClientProps) {
-  const { user, isConfigured } = useAuth();
+  const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -41,13 +47,14 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const tasks = useTaskStore((state) => state.tasks);
   const isLoading = useTaskStore((state) => state.isLoading);
   const error = useTaskStore((state) => state.error);
+  const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
   const syncTasks = useTaskStore((state) => state.syncTasks);
 
   useEffect(() => {
-    if (isConfigured && user?.id) {
+    if (isConfigured && user?.id && lastLoadedUserId !== user.id) {
       void syncTasks(user.id);
     }
-  }, [isConfigured, syncTasks, user?.id]);
+  }, [isConfigured, lastLoadedUserId, syncTasks, user?.id]);
 
   useEffect(() => {
     const nextRange = parseDashboardRange(searchParams.get("range"));
@@ -56,6 +63,15 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   }, [searchParams]);
 
   const scopedTasks = useMemo(() => filterTasksByRange(tasks, range), [range, tasks]);
+  const isDashboardV2Previewing = showDashboardV2Draft && useDashboardPreviewData && tasks.length === 0;
+  const dashboardV2Tasks = useMemo(
+    () => (isDashboardV2Previewing ? buildDashboardPreviewTasks() : tasks),
+    [isDashboardV2Previewing, tasks],
+  );
+  const dashboardV2Stats = useMemo(() => buildDashboardStats(dashboardV2Tasks, { range }), [dashboardV2Tasks, range]);
+  const isDashboardV2Syncing = isConfigured && (isAuthLoading || isLoading);
+  const isDashboardV2AccountEmpty = !isDashboardV2Syncing && dashboardV2Tasks.length === 0;
+  const isDashboardV2RangeEmpty = !isDashboardV2Syncing && dashboardV2Stats.totalCount === 0;
   const activeScopedTasks = useMemo(() => scopedTasks.filter((task) => task.status !== "done"), [scopedTasks]);
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "今天";
   const prioritiesTitle = range === "all" ? "所有重点任务" : `${rangeLabel}先看的任务`;
@@ -165,11 +181,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
 
     const params = new URLSearchParams(searchParams.toString());
 
-    if (nextRange === "today") {
-      params.delete("range");
-    } else {
-      params.set("range", nextRange);
-    }
+    params.set("range", nextRange);
 
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
@@ -189,6 +201,23 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           <p style={{ margin: 0, color: "var(--danger)", lineHeight: 1.7 }}>{error}</p>
         </section>
       ) : null}
+      {showDashboardV2Draft ? (
+        <div className="dashboard-desktop-only dashboard-v2-draft">
+          <DashboardV2Shell
+            stats={dashboardV2Stats}
+            range={range}
+            rangeLabel={rangeLabel}
+            isLoading={isLoading}
+            isEmpty={isDashboardV2RangeEmpty}
+            isAccountEmpty={isDashboardV2AccountEmpty}
+            isSyncing={isDashboardV2Syncing}
+            isPreview={isDashboardV2Previewing}
+            totalTaskCount={dashboardV2Tasks.length}
+            rangeOptions={rangeOptions}
+            onRangeChange={handleRangeChange}
+          />
+        </div>
+      ) : null}
       <div className="dashboard-mobile-only">
         <MobileDashboardOverview
           tasks={scopedTasks}
@@ -201,6 +230,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           onRangeChange={handleRangeChange}
         />
       </div>
+      {!showDashboardV2Draft ? (
       <div className="dashboard-desktop-only">
       <AnimatedSection className="dashboard-hero">
         <TaskSignalPanel
@@ -307,6 +337,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         </aside>
       </AnimatedSection>
       </div>
+      ) : null}
     </>
   );
 }
