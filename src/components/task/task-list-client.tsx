@@ -9,6 +9,13 @@ import { MobileTaskListView } from "@/components/task/mobile-task-list-view";
 import { TaskSignalPanel } from "@/components/task/task-signal-panel";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
+import {
+  filterTasksByTaskDateRange,
+  formatTaskDateParam,
+  hasActiveTaskDateRangeFilter,
+  parseTaskDateParam,
+  startOfTaskDay,
+} from "@/features/tasks/utils/task-date-filters";
 import { getTaskDueMeta, sortTasks } from "@/features/tasks/utils/task-deadline";
 import {
   DASHBOARD_RANGE_VALUES,
@@ -324,9 +331,10 @@ function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null
     input.sort === "due_asc"
       ? input.sort
       : "due_asc";
-  const date = parseTaskDateParam(input.date);
+  const parsedDate = parseTaskDateParam(input.date);
+  const date = parsedDate ? formatTaskDateParam(parsedDate) : "";
   const parsedRange = parseTaskRange(input.range);
-  const range = date || parsedRange === DASHBOARD_RANGE_VALUES.all ? parsedRange : "";
+  const range = parsedRange;
 
   return {
     query: input.query ?? "",
@@ -409,27 +417,17 @@ function matchesRiskFilter(task: Task, risk: TaskRiskFilter) {
 }
 
 function hasActiveDateRangeFilter(date: string, range: DashboardRangeValue | "") {
-  return Boolean(date) && range !== DASHBOARD_RANGE_VALUES.all;
+  return hasActiveTaskDateRangeFilter({ date: parseTaskDateParam(date), range });
 }
 
 function matchesDateRangeFilter(task: Task, date: string, range: DashboardRangeValue | "") {
-  if (!hasActiveDateRangeFilter(date, range)) {
+  const selectedDate = parseTaskDateParam(date);
+
+  if (!hasActiveTaskDateRangeFilter({ date: selectedDate, range })) {
     return true;
   }
 
-  const selectedDate = parseDateParam(date);
-  const dueDate = parseTaskDueDate(task);
-
-  if (!selectedDate || !dueDate) {
-    return false;
-  }
-
-  if (range === DASHBOARD_RANGE_VALUES.week) {
-    const start = getWeekStart(selectedDate);
-    return isWithinRange(dueDate, start, addDays(start, 7));
-  }
-
-  return isSameTaskDay(dueDate, selectedDate);
+  return filterTasksByTaskDateRange([task], { date: selectedDate, range }).length > 0;
 }
 
 function parseTaskRange(value: string | null | undefined): DashboardRangeValue | "" {
@@ -442,64 +440,6 @@ function parseTaskRange(value: string | null | undefined): DashboardRangeValue |
   }
 
   return "";
-}
-
-function parseTaskDateParam(value: string | null | undefined) {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return "";
-  }
-
-  const date = parseDateParam(value);
-
-  if (!date || formatDateParam(date) !== value) {
-    return "";
-  }
-
-  return value;
-}
-
-function parseDateParam(value: string) {
-  const date = startOfDay(new Date(`${value}T00:00:00`));
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function parseTaskDueDate(task: Task) {
-  if (!task.dueDate) {
-    return null;
-  }
-
-  const date = startOfDay(new Date(task.dueDate));
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function getWeekStart(value: Date) {
-  const date = startOfDay(value);
-  const day = date.getDay();
-  const offset = day === 0 ? -6 : 1 - day;
-  return addDays(date, offset);
-}
-
-function addDays(value: Date, days: number) {
-  const date = new Date(value);
-  date.setDate(date.getDate() + days);
-  return startOfDay(date);
-}
-
-function isSameTaskDay(left: Date, right: Date) {
-  return startOfDay(left).getTime() === startOfDay(right).getTime();
-}
-
-function isWithinRange(value: Date, start: Date, end: Date) {
-  const timestamp = value.getTime();
-  return timestamp >= start.getTime() && timestamp < end.getTime();
-}
-
-function formatDateParam(value: Date) {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const date = String(value.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${date}`;
 }
 
 function formatShortDate(value: string) {
@@ -536,6 +476,10 @@ function buildActiveFilterLabels(filters: TaskFilters) {
 
   if (filters.date && filters.range !== DASHBOARD_RANGE_VALUES.all) {
     labels.push(filters.range === DASHBOARD_RANGE_VALUES.week ? `本周：${formatShortDate(filters.date)}` : `日期：${filters.date}`);
+  } else if (filters.range === DASHBOARD_RANGE_VALUES.today) {
+    labels.push("今天");
+  } else if (filters.range === DASHBOARD_RANGE_VALUES.week) {
+    labels.push("本周");
   } else if (filters.range === DASHBOARD_RANGE_VALUES.all) {
     labels.push("全部日期");
   }
@@ -552,21 +496,15 @@ function getDueDayOffset(value: string | undefined) {
     return null;
   }
 
-  const dueDate = startOfDay(new Date(value));
+  const dueDate = startOfTaskDay(new Date(value));
 
   if (Number.isNaN(dueDate.getTime())) {
     return null;
   }
 
-  const today = startOfDay(new Date());
+  const today = startOfTaskDay(new Date());
 
   return Math.round((dueDate.getTime() - today.getTime()) / 86400000);
-}
-
-function startOfDay(value: Date) {
-  const next = new Date(value);
-  next.setHours(0, 0, 0, 0);
-  return next;
 }
 
 const statusFilterLabels = {
@@ -601,3 +539,4 @@ const sortFilterLabels = {
   priority_desc: "优先级排序",
   due_asc: "截止时间",
 } as const;
+

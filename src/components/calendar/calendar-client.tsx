@@ -5,6 +5,18 @@ import { useEffect, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import type { Task, TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
+import {
+  addTaskDays,
+  filterTasksByTaskDateRange,
+  formatTaskDateParam,
+  getTaskWeekStart,
+  hasTaskDueDate,
+  isTaskDueInWeek,
+  isTaskDueOnDate,
+  parseTaskDateParam,
+  parseTaskDueDate,
+  startOfTaskDay,
+} from "@/features/tasks/utils/task-date-filters";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import {
   buildCalendarHref,
@@ -82,12 +94,12 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
 
   const dateParam = parseCalendarDate(searchParams.get(CALENDAR_QUERY_KEYS.date) ?? initialDate);
   const range = parseCalendarRange(searchParams.get(CALENDAR_QUERY_KEYS.range) ?? initialRange);
-  const selectedDate = useMemo(() => parseDateParam(dateParam), [dateParam]);
+  const selectedDate = useMemo(() => parseTaskDateParam(dateParam) ?? startOfTaskDay(new Date()), [dateParam]);
   const isSyncing = isConfigured && (isAuthLoading || isLoading);
   const dueTasks = useMemo(() => tasks.filter(hasValidDueDate), [tasks]);
   const scopedTasks = useMemo(() => filterTasksByRange(dueTasks, range, selectedDate), [dueTasks, range, selectedDate]);
   const selectedDayTasks = useMemo(
-    () => sortCalendarTasks(dueTasks.filter((task) => isSameDay(parseTaskDueDate(task), selectedDate))),
+    () => sortCalendarTasks(dueTasks.filter((task) => isTaskDueOnDate(task, selectedDate))),
     [dueTasks, selectedDate],
   );
   const weekDays = useMemo(() => buildWeekDays(selectedDate, dueTasks), [dueTasks, selectedDate]);
@@ -113,7 +125,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
         rangeLabel={rangeLabel}
         isSyncing={isSyncing}
         isAccountEmpty={isAccountEmpty}
-        onDateChange={(nextDate) => updateCalendar({ date: formatDateParam(nextDate) })}
+        onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
         onRangeChange={(nextRange) => updateCalendar({ range: nextRange })}
       />
       <CalendarSummaryGrid metrics={metrics} isLoading={isSyncing} isRangeEmpty={isRangeEmpty} />
@@ -178,13 +190,13 @@ function CalendarToolbar({
           ))}
         </div>
         <div className="calendar-date-nav" aria-label="日期切换">
-          <button type="button" onClick={() => onDateChange(addDays(date, -1))} aria-label="上一天">
+          <button type="button" onClick={() => onDateChange(addTaskDays(date, -1))} aria-label="上一天">
             <span aria-hidden="true">‹</span>
           </button>
           <button type="button" onClick={() => onDateChange(new Date())}>
             今天
           </button>
-          <button type="button" onClick={() => onDateChange(addDays(date, 1))} aria-label="下一天">
+          <button type="button" onClick={() => onDateChange(addTaskDays(date, 1))} aria-label="下一天">
             <span aria-hidden="true">›</span>
           </button>
         </div>
@@ -270,7 +282,7 @@ function CalendarTimeline({
           <span className="calendar-eyebrow">任务时间线</span>
           <h2>{formatMonthDay(selectedDate)} 截止</h2>
         </div>
-        <Link href={buildTasksHref({ date: formatDateParam(selectedDate) })}>筛选任务</Link>
+        <Link href={buildTasksHref({ date: formatTaskDateParam(selectedDate) })}>筛选任务</Link>
       </div>
       <div className="calendar-timeline">
         {tasks.length ? (
@@ -325,7 +337,7 @@ function CalendarUpcomingPanel({
           <span className="calendar-eyebrow">截止提醒</span>
           <h2>{rangeLabel}即将到期</h2>
         </div>
-        <Link href={buildCalendarTasksHref(formatDateParam(selectedDate), range)}>查看全部</Link>
+        <Link href={buildCalendarTasksHref(formatTaskDateParam(selectedDate), range)}>查看全部</Link>
       </div>
       <div className="calendar-task-list">
         {tasks.length ? (
@@ -395,8 +407,8 @@ function buildCalendarTasksHref(
 function buildCalendarMetrics(dueTasks: Task[], scopedTasks: Task[], selectedDate: Date, dateParam: string, range: DashboardRangeValue): CalendarMetric[] {
   const activeDueTasks = dueTasks.filter((task) => task.status !== "done");
   const activeScopedTasks = scopedTasks.filter((task) => task.status !== "done");
-  const selectedDayCount = activeDueTasks.filter((task) => isSameDay(parseTaskDueDate(task), selectedDate)).length;
-  const weekCount = activeDueTasks.filter((task) => isWithinRange(parseTaskDueDate(task), getWeekStart(selectedDate), addDays(getWeekStart(selectedDate), 7))).length;
+  const selectedDayCount = activeDueTasks.filter((task) => isTaskDueOnDate(task, selectedDate)).length;
+  const weekCount = activeDueTasks.filter((task) => isTaskDueInWeek(task, selectedDate)).length;
   const overdueCount = activeDueTasks.filter((task) => getTaskDueMeta(task).isOverdue).length;
   const highCount = activeScopedTasks.filter((task) => task.priority === "high").length;
   const completedCount = scopedTasks.filter((task) => task.status === "done").length;
@@ -411,27 +423,27 @@ function buildCalendarMetrics(dueTasks: Task[], scopedTasks: Task[], selectedDat
 }
 
 function buildWeekDays(selectedDate: Date, dueTasks: Task[]): CalendarDay[] {
-  const start = getWeekStart(selectedDate);
-  const today = startOfDay(new Date());
+  const start = getTaskWeekStart(selectedDate);
+  const today = startOfTaskDay(new Date());
 
   return Array.from({ length: 7 }, (_, index) => {
-    const date = addDays(start, index);
+    const date = addTaskDays(start, index);
     return {
       date,
-      dateParam: formatDateParam(date),
+      dateParam: formatTaskDateParam(date),
       weekday: formatWeekday(date),
       dayLabel: String(date.getDate()),
-      isToday: isSameDay(date, today),
-      isSelected: isSameDay(date, selectedDate),
-      taskCount: dueTasks.filter((task) => task.status !== "done" && isSameDay(parseTaskDueDate(task), date)).length,
+      isToday: isSameCalendarDay(date, today),
+      isSelected: isSameCalendarDay(date, selectedDate),
+      taskCount: dueTasks.filter((task) => task.status !== "done" && isTaskDueOnDate(task, date)).length,
     };
   });
 }
 
 function buildUpcomingTasks(dueTasks: Task[], selectedDate: Date, range: DashboardRangeValue) {
   const activeTasks = dueTasks.filter((task) => task.status !== "done");
-  const start = startOfDay(selectedDate);
-  const end = range === DASHBOARD_RANGE_VALUES.all ? addDays(start, 30) : addDays(start, range === DASHBOARD_RANGE_VALUES.today ? 1 : 7);
+  const start = startOfTaskDay(selectedDate);
+  const end = range === DASHBOARD_RANGE_VALUES.all ? addTaskDays(start, 30) : addTaskDays(start, range === DASHBOARD_RANGE_VALUES.today ? 1 : 7);
 
   return sortCalendarTasks(
     activeTasks.filter((task) => {
@@ -442,19 +454,7 @@ function buildUpcomingTasks(dueTasks: Task[], selectedDate: Date, range: Dashboa
 }
 
 function filterTasksByRange(tasks: Task[], range: DashboardRangeValue, selectedDate: Date) {
-  if (range === DASHBOARD_RANGE_VALUES.all) {
-    return sortCalendarTasks(tasks);
-  }
-
-  const start = range === DASHBOARD_RANGE_VALUES.today ? startOfDay(selectedDate) : getWeekStart(selectedDate);
-  const end = addDays(start, range === DASHBOARD_RANGE_VALUES.today ? 1 : 7);
-
-  return sortCalendarTasks(
-    tasks.filter((task) => {
-      const dueDate = parseTaskDueDate(task);
-      return dueDate && dueDate >= start && dueDate < end;
-    }),
-  );
+  return sortCalendarTasks(filterTasksByTaskDateRange(tasks, { date: selectedDate, range }));
 }
 
 function sortCalendarTasks(tasks: Task[]) {
@@ -482,24 +482,14 @@ function getTaskCalendarHref(task: Task) {
   const dueDate = parseTaskDueDate(task);
 
   if (dueDate) {
-    return buildTasksHref({ date: formatDateParam(dueDate) });
+    return buildTasksHref({ date: formatTaskDateParam(dueDate) });
   }
 
   return buildTasksHref();
 }
 
 function hasValidDueDate(task: Task) {
-  return Boolean(parseTaskDueDate(task));
-}
-
-function parseTaskDueDate(task: Task) {
-  if (!task.dueDate) {
-    return null;
-  }
-
-  const date = startOfDay(new Date(task.dueDate));
-
-  return Number.isNaN(date.getTime()) ? null : date;
+  return hasTaskDueDate(task);
 }
 
 function parseCalendarRange(value: string | null | undefined): DashboardRangeValue {
@@ -512,20 +502,16 @@ function parseCalendarRange(value: string | null | undefined): DashboardRangeVal
 
 function parseCalendarDate(value: string | null | undefined) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return formatDateParam(new Date());
+    return formatTaskDateParam(new Date());
   }
 
-  const date = parseDateParam(value);
+  const date = parseTaskDateParam(value);
 
-  if (Number.isNaN(date.getTime()) || formatDateParam(date) !== value) {
-    return formatDateParam(new Date());
+  if (!date || formatTaskDateParam(date) !== value) {
+    return formatTaskDateParam(new Date());
   }
 
   return value;
-}
-
-function parseDateParam(value: string) {
-  return startOfDay(new Date(`${value}T00:00:00`));
 }
 
 function formatReadableDate(value: Date) {
@@ -544,46 +530,7 @@ function formatWeekday(value: Date) {
   return new Intl.DateTimeFormat("zh-CN", { weekday: "short" }).format(value).replace("周", "");
 }
 
-function formatDateParam(value: Date) {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const date = String(value.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${date}`;
+function isSameCalendarDay(left: Date, right: Date) {
+  return startOfTaskDay(left).getTime() === startOfTaskDay(right).getTime();
 }
 
-function getWeekStart(value: Date) {
-  const date = startOfDay(value);
-  const day = date.getDay();
-  const offset = day === 0 ? -6 : 1 - day;
-  return addDays(date, offset);
-}
-
-function addDays(value: Date, days: number) {
-  const date = new Date(value);
-  date.setDate(date.getDate() + days);
-  return startOfDay(date);
-}
-
-function startOfDay(value: Date) {
-  const next = new Date(value);
-  next.setHours(0, 0, 0, 0);
-  return next;
-}
-
-function isSameDay(left: Date | null, right: Date | null) {
-  if (!left || !right) {
-    return false;
-  }
-
-  return startOfDay(left).getTime() === startOfDay(right).getTime();
-}
-
-function isWithinRange(value: Date | null, start: Date, end: Date) {
-  if (!value) {
-    return false;
-  }
-
-  const timestamp = value.getTime();
-  return timestamp >= start.getTime() && timestamp < end.getTime();
-}
