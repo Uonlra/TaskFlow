@@ -39,6 +39,7 @@ export function DashboardV2Hero({
     totalTaskCount,
   });
   const statusLabel = isSyncing ? "同步中" : isPreview ? "预览数据" : isAccountEmpty ? "暂无任务" : "已同步";
+  const riskLabel = stats.overdueCount > 0 ? `${stats.overdueCount} 项风险` : "风险稳定";
 
   return (
     <section className={`dashboard-v2-hero${isEmpty ? " dashboard-v2-hero--empty" : ""}`}>
@@ -51,21 +52,35 @@ export function DashboardV2Hero({
         </div>
         <h1>{title}</h1>
         <p>{description}</p>
-        <div className="dashboard-v2-hero__chips" aria-label="今日概览">
-          <span>{stats.totalCount} 当前范围</span>
+        <div className="dashboard-v2-hero__summary" aria-label="总览摘要">
+          <span>
+            <strong>{stats.totalCount}</strong>
+            <small>{rangeLabel}任务</small>
+          </span>
+          <span>
+            <strong>{stats.completionRate}%</strong>
+            <small>完成率</small>
+          </span>
+          <span>
+            <strong>{riskLabel}</strong>
+            <small>逾期风险</small>
+          </span>
+        </div>
+        <div className="dashboard-v2-hero__chips" aria-label="当前范围概览">
           <span>{totalTaskCount} 全部任务</span>
-          <span>{stats.overdueCount} 逾期</span>
+          <span>{stats.activeCount} 待处理</span>
           <span>{stats.upcomingCount} 即将到期</span>
         </div>
-        {isAccountEmpty ? (
+        <div className="dashboard-v2-hero__actions">
           <Link className="dashboard-v2-hero__action" href={buildTasksHref()}>
-            添加第一个任务
+            {isAccountEmpty ? "添加第一个任务" : isEmpty ? "查看全部任务" : "查看任务"}
           </Link>
-        ) : isEmpty ? (
-          <Link className="dashboard-v2-hero__action" href={buildTasksHref()}>
-            查看全部任务
-          </Link>
-        ) : null}
+          {stats.overdueCount > 0 ? (
+            <Link className="dashboard-v2-hero__action dashboard-v2-hero__action--danger" href={buildTasksHref({ risk: "overdue" })}>
+              处理风险
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       <div className="dashboard-v2-scene" aria-label="数据网络背景层">
@@ -147,3 +162,4 @@ function getHeroDescription(input: {
 
   return `${input.activeCount} 项待处理，完成率 ${input.completionRate}%`;
 }
+

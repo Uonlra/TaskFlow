@@ -25,14 +25,14 @@ export function DashboardRiskPanel({ risks, overdueCount, isEmpty = false }: Das
       {hasRiskData ? (
         <div className="dashboard-v2-risk__list">
           {risks.map((risk) => (
-            <div key={risk.level} className="dashboard-v2-risk__item">
+            <Link key={risk.level} href={buildTasksHref({ risk: risk.level })} className="dashboard-v2-risk__item">
               <span style={{ background: risk.color }} aria-hidden="true" />
               <div>
                 <strong>{risk.label}</strong>
                 <small>{risk.helper}</small>
               </div>
               <b>{risk.count}</b>
-            </div>
+            </Link>
           ))}
         </div>
       ) : (
@@ -45,3 +45,4 @@ export function DashboardRiskPanel({ risks, overdueCount, isEmpty = false }: Das
     </section>
   );
 }
+

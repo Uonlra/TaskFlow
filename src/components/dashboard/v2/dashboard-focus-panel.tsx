@@ -54,6 +54,10 @@ function TaskPreviewList({ tasks, emptyLabel }: { tasks: DashboardTaskPreview[];
           <div>
             <strong>{task.title}</strong>
             <small>{task.dueLabel}</small>
+            <span className="dashboard-v2-task__meta">
+              <b>{priorityLabels[task.priority]}</b>
+              <b>{statusLabels[task.status]}</b>
+            </span>
           </div>
         </article>
       ))}
@@ -87,3 +91,15 @@ function getFocusCopy(range: DashboardAnalyticsRange) {
     deadlineEmpty: "暂无近期截止",
   };
 }
+const priorityLabels: Record<DashboardTaskPreview["priority"], string> = {
+  high: "高",
+  medium: "中",
+  low: "低",
+};
+
+const statusLabels: Record<DashboardTaskPreview["status"], string> = {
+  todo: "待开始",
+  in_progress: "进行中",
+  done: "已完成",
+};
+
