@@ -3,8 +3,14 @@
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 
+type DesktopTaskTableEmptyState = {
+  title: string;
+  description: string;
+};
+
 type DesktopTaskTableProps = {
   tasks: Task[];
+  emptyState: DesktopTaskTableEmptyState;
   selectedTaskId: string | null;
   onSelectTask: (taskId: string) => void;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
@@ -22,12 +28,12 @@ const statusLabel: Record<Task["status"], string> = {
   done: "已完成",
 };
 
-export function DesktopTaskTable({ tasks, selectedTaskId, onSelectTask, onUpdateStatus }: DesktopTaskTableProps) {
+export function DesktopTaskTable({ tasks, emptyState, selectedTaskId, onSelectTask, onUpdateStatus }: DesktopTaskTableProps) {
   if (!tasks.length) {
     return (
       <div className="desktop-task-empty">
-        <strong>没有任务</strong>
-        <span>换个筛选，或者新建一条任务。</span>
+        <strong>{emptyState.title}</strong>
+        <span>{emptyState.description}</span>
       </div>
     );
   }

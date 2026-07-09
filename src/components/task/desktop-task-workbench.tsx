@@ -32,6 +32,10 @@ const categoryTabs = [
 ] as const;
 
 type CategoryTab = (typeof categoryTabs)[number]["value"];
+type EmptyStateCopy = {
+  title: string;
+  description: string;
+};
 
 export function DesktopTaskWorkbench({
   tasks,
@@ -52,6 +56,13 @@ export function DesktopTaskWorkbench({
   );
   const category = getActiveCategory(filters);
   const counts = useMemo(() => buildCategoryCounts(totalTasks), [totalTasks]);
+  const hasActiveFilters = hasWorkbenchFilters(filters);
+  const emptyState = getEmptyStateCopy({
+    category,
+    filters,
+    hasActiveFilters,
+    totalCount: totalTasks.length,
+  });
 
   useEffect(() => {
     if (!tasks.length) {
@@ -158,6 +169,7 @@ export function DesktopTaskWorkbench({
 
         <DesktopTaskTable
           tasks={tasks}
+          emptyState={emptyState}
           selectedTaskId={selectedTask?.id ?? null}
           onSelectTask={setSelectedTaskId}
           onUpdateStatus={onUpdateStatus}
@@ -179,6 +191,79 @@ export function DesktopTaskWorkbench({
       />
     </section>
   );
+}
+
+function hasWorkbenchFilters(filters: TaskFilters) {
+  return (
+    filters.query.trim() !== "" ||
+    filters.tag.trim() !== "" ||
+    filters.status !== "all" ||
+    filters.priority !== "all" ||
+    filters.due !== "" ||
+    filters.risk !== "" ||
+    filters.date !== "" ||
+    filters.range !== "" ||
+    filters.sort !== "due_asc"
+  );
+}
+
+function getEmptyStateCopy({
+  category,
+  filters,
+  hasActiveFilters,
+  totalCount,
+}: {
+  category: CategoryTab;
+  filters: TaskFilters;
+  hasActiveFilters: boolean;
+  totalCount: number;
+}): EmptyStateCopy {
+  if (!totalCount) {
+    return {
+      title: "暂无任务",
+      description: "新建一条任务后，这里会显示任务列表。",
+    };
+  }
+
+  if (filters.query.trim()) {
+    return {
+      title: "没有匹配结果",
+      description: "换个关键词，或清空筛选再试。",
+    };
+  }
+
+  if (category === "near") {
+    return {
+      title: "临近任务为空",
+      description: "当前没有今天或三天内到期的未完成任务。",
+    };
+  }
+
+  if (category === "overdue") {
+    return {
+      title: "没有逾期任务",
+      description: "当前没有需要补救的过期任务。",
+    };
+  }
+
+  if (category === "done") {
+    return {
+      title: "没有已完成任务",
+      description: "完成任务后会汇总到这里。",
+    };
+  }
+
+  if (hasActiveFilters) {
+    return {
+      title: "没有匹配结果",
+      description: "调整状态、优先级或日期条件再试。",
+    };
+  }
+
+  return {
+    title: "没有任务",
+    description: "新建一条任务后，这里会显示任务列表。",
+  };
 }
 
 function getActiveCategory(filters: TaskFilters): CategoryTab {
