@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
-import { AuthExhibitionShell } from "@/components/auth/auth-exhibition-shell";
-import { hasAppwriteEnv } from "@/lib/appwrite/env";
-import { getCurrentAuthEnvelope } from "@/lib/appwrite/server";
+import { AuthExhibitionShell } from "@/features/auth/components/auth-exhibition-shell";
+import { hasAppwriteEnv } from "@/shared/lib/appwrite/env";
+import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
 
 type AuthLayoutProps = {
   children: ReactNode;

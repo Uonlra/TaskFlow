@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { loginSchema } from "@/features/auth/schemas/login-schema";
-import { hasAppwriteAuthEnv } from "@/lib/appwrite/env";
+import { hasAppwriteAuthEnv } from "@/shared/lib/appwrite/env";
 import {
   createEmailPasswordSession,
   AppwriteRequestError,
-} from "@/lib/appwrite/server";
-import { attachAppwriteSessionCookie } from "@/lib/appwrite/session";
+} from "@/shared/lib/appwrite/server";
+import { attachAppwriteSessionCookie } from "@/shared/lib/appwrite/session";
 
 export async function POST(request: NextRequest) {
   const payload = await request.json().catch(() => null);

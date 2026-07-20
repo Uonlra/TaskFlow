@@ -1,6 +1,6 @@
-import { SettingsClient } from "@/components/settings/settings-client";
-import { PageContainer } from "@/components/layout/page-container";
-import { PageHeader } from "@/components/layout/page-header";
+import { SettingsClient } from "@/features/settings/components/settings-client";
+import { PageContainer } from "@/shared/components/layout/page-container";
+import { PageHeader } from "@/shared/components/layout/page-header";
 
 export default function SettingsPage() {
   return (

@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { registerSchema } from "@/features/auth/schemas/register-schema";
-import { hasAppwriteAuthEnv } from "@/lib/appwrite/env";
+import { hasAppwriteAuthEnv } from "@/shared/lib/appwrite/env";
 import {
   AppwriteRequestError,
   registerEmailPasswordAccount,
-} from "@/lib/appwrite/server";
+} from "@/shared/lib/appwrite/server";
 
 export async function POST(request: NextRequest) {
   const payload = await request.json().catch(() => null);

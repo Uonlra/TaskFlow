@@ -3,10 +3,10 @@ import { z } from "zod";
 
 import { taskSchema } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
-import { handleApiError } from "@/lib/api/error";
-import { getCurrentAuthEnvelope } from "@/lib/appwrite/server";
-import { getAppwriteSessionSecret } from "@/lib/appwrite/session";
-import { deleteTask, updateTask, updateTaskStatus } from "@/lib/appwrite/tasks";
+import { handleApiError } from "@/shared/lib/api/error";
+import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
+import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
+import { deleteTask, updateTask, updateTaskStatus } from "@/shared/lib/appwrite/tasks";
 
 const taskStatusSchema = z.object({
   status: z.enum(["todo", "in_progress", "done"]),

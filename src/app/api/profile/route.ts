@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { handleApiError } from "@/lib/api/error";
-import { getCurrentAccount, toProfile, updateCurrentProfile } from "@/lib/appwrite/server";
-import { getAppwriteSessionSecret } from "@/lib/appwrite/session";
+import { handleApiError } from "@/shared/lib/api/error";
+import { getCurrentAccount, toProfile, updateCurrentProfile } from "@/shared/lib/appwrite/server";
+import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
 
 const profileSchema = z.object({
   fullName: z.string().trim().min(1, "姓名不能为空。").max(128, "姓名最多 128 个字符。"),

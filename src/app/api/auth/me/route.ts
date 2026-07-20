@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getCurrentAuthEnvelope } from "@/lib/appwrite/server";
+import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
 
 export async function GET() {
   const envelope = await getCurrentAuthEnvelope();

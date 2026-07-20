@@ -1,7 +1,7 @@
-import { PageContainer } from "@/components/layout/page-container";
-import { PageHeader } from "@/components/layout/page-header";
-import { StatsClient } from "@/components/stats/stats-client";
-import { DASHBOARD_RANGE_VALUES } from "@/lib/constants/query-params";
+import { PageContainer } from "@/shared/components/layout/page-container";
+import { PageHeader } from "@/shared/components/layout/page-header";
+import { StatsClient } from "@/features/stats/components/stats-client";
+import { DASHBOARD_RANGE_VALUES } from "@/shared/lib/constants/query-params";
 
 const showStatsPageHeader = false;
 
