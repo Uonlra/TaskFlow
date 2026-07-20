@@ -16,7 +16,7 @@ import {
   parseTaskDueDate,
   startOfTaskDay,
 } from "@/features/tasks/utils/task-date-filters";
-import { DASHBOARD_RANGE_VALUES } from "@/lib/constants/query-params";
+import { DASHBOARD_RANGE_VALUES } from "@/shared/lib/constants/query-params";
 
 const makeTask = (overrides: Partial<Task> = {}): Task => ({
   id: "task-1",

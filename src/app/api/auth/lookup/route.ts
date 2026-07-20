@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { getPublicAccountStatusByEmail } from "@/lib/appwrite/server";
+import { getPublicAccountStatusByEmail } from "@/shared/lib/appwrite/server";
 
 const lookupSchema = z.object({
   email: z.email(),

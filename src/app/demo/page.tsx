@@ -1,20 +1,20 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
-import { AnimatedSection } from "@/components/common/animated-section";
-import { ActivityFeed } from "@/components/dashboard/activity-feed";
-import { CompletionTrendChart } from "@/components/dashboard/completion-trend-chart";
-import { StatsGrid } from "@/components/dashboard/stats-grid";
-import { StatusDistributionChart } from "@/components/dashboard/status-distribution-chart";
-import { TagSummary } from "@/components/dashboard/tag-summary";
-import { UpcomingDeadlines } from "@/components/dashboard/upcoming-deadlines";
-import { TaskPriorityBadge } from "@/components/task/task-priority-badge";
-import { StatusDot, type TaskSignalTone } from "@/components/task/task-status-lights";
-import { TaskSignalPanel } from "@/components/task/task-signal-panel";
-import { TaskStatusBadge } from "@/components/task/task-status-badge";
+import { AnimatedSection } from "@/shared/components/common/animated-section";
+import { ActivityFeed } from "@/features/dashboard/components/demo/activity-feed";
+import { CompletionTrendChart } from "@/features/dashboard/components/demo/completion-trend-chart";
+import { StatsGrid } from "@/features/dashboard/components/demo/stats-grid";
+import { StatusDistributionChart } from "@/features/dashboard/components/demo/status-distribution-chart";
+import { TagSummary } from "@/features/dashboard/components/demo/tag-summary";
+import { UpcomingDeadlines } from "@/features/dashboard/components/demo/upcoming-deadlines";
+import { TaskPriorityBadge } from "@/features/tasks/components/task-priority-badge";
+import { StatusDot, type TaskSignalTone } from "@/features/tasks/components/task-status-lights";
+import { TaskSignalPanel } from "@/features/tasks/components/task-signal-panel";
+import { TaskStatusBadge } from "@/features/tasks/components/task-status-badge";
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
-import { tasks } from "@/mock/tasks";
+import { tasks } from "@/features/tasks/mock/tasks";
 
 type DemoActivityItem = {
   id: string;

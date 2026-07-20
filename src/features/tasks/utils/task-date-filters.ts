@@ -1,5 +1,5 @@
 import type { Task } from "@/features/tasks/types/task.types";
-import { DASHBOARD_RANGE_VALUES, type DashboardRangeValue } from "@/lib/constants/query-params";
+import { DASHBOARD_RANGE_VALUES, type DashboardRangeValue } from "@/shared/lib/constants/query-params";
 
 export type TaskDateRangeValue = Extract<DashboardRangeValue, "today" | "week" | "all">;
 

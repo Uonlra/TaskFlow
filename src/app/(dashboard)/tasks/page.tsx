@@ -1,6 +1,6 @@
-import { TaskListClient } from "@/components/task/task-list-client";
-import { PageContainer } from "@/components/layout/page-container";
-import { DASHBOARD_RANGE_VALUES, TASK_DUE_FILTERS, TASK_RISK_FILTERS } from "@/lib/constants/query-params";
+import { TaskListClient } from "@/features/tasks/components/task-list-client";
+import { PageContainer } from "@/shared/components/layout/page-container";
+import { DASHBOARD_RANGE_VALUES, TASK_DUE_FILTERS, TASK_RISK_FILTERS } from "@/shared/lib/constants/query-params";
 
 type TasksPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

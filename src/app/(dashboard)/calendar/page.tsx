@@ -1,7 +1,7 @@
-import { CalendarClient } from "@/components/calendar/calendar-client";
-import { PageContainer } from "@/components/layout/page-container";
-import { PageHeader } from "@/components/layout/page-header";
-import { DASHBOARD_RANGE_VALUES, type DashboardRangeValue } from "@/lib/constants/query-params";
+import { CalendarClient } from "@/features/calendar/components/calendar-client";
+import { PageContainer } from "@/shared/components/layout/page-container";
+import { PageHeader } from "@/shared/components/layout/page-header";
+import { DASHBOARD_RANGE_VALUES, type DashboardRangeValue } from "@/shared/lib/constants/query-params";
 
 const showCalendarPageHeader = false;
 

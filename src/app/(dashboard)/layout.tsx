@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 
-import { hasAppwriteEnv } from "@/lib/appwrite/env";
-import { getCurrentAuthEnvelope } from "@/lib/appwrite/server";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { hasAppwriteEnv } from "@/shared/lib/appwrite/env";
+import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
+import { DashboardShell } from "@/shared/components/layout/dashboard-shell";
 
 type DashboardLayoutProps = {
   children: ReactNode;

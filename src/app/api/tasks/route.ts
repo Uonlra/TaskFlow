@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { taskSchema } from "@/features/tasks/schemas/task-schema";
-import { handleApiError } from "@/lib/api/error";
-import { getCurrentAuthEnvelope } from "@/lib/appwrite/server";
-import { getAppwriteSessionSecret } from "@/lib/appwrite/session";
-import { createTask, listTasks } from "@/lib/appwrite/tasks";
+import { handleApiError } from "@/shared/lib/api/error";
+import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
+import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
+import { createTask, listTasks } from "@/shared/lib/appwrite/tasks";
 
 export async function GET(request: NextRequest) {
   const sessionSecret = await getAppwriteSessionSecret();

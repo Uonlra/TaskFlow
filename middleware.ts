@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { appwriteSessionCookieName, hasAppwriteAuthEnv } from "@/lib/appwrite/env";
+import { appwriteSessionCookieName, hasAppwriteAuthEnv } from "@/shared/lib/appwrite/env";
 
 const protectedPages = ["/dashboard", "/tasks", "/settings"];
 const protectedApiPrefixes = ["/api/tasks", "/api/profile"];

@@ -2,9 +2,9 @@ import "./globals.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
-import { AuthProvider } from "@/providers/auth-provider";
-import { LenisProvider } from "@/providers/lenis-provider";
-import { ToastProvider } from "@/providers/toast-provider";
+import { AuthProvider } from "@/features/auth/providers/auth-provider";
+import { LenisProvider } from "@/shared/providers/lenis-provider";
+import { ToastProvider } from "@/shared/providers/toast-provider";
 
 export const metadata: Metadata = {
   title: "U's Task - 我的任务小本",

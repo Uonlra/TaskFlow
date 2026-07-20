@@ -1,5 +1,5 @@
-import { DashboardClient } from "@/components/dashboard/dashboard-client";
-import { PageContainer } from "@/components/layout/page-container";
+import { DashboardClient } from "@/features/dashboard/components/dashboard-client";
+import { PageContainer } from "@/shared/components/layout/page-container";
 
 type DashboardPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

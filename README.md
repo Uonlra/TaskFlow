@@ -74,15 +74,15 @@ TaskFlow 是一个偏个人任务本风格的小应用，用来把任务记录�
 ```txt
 src/
   app/                  # App Router 页面与 API Route
-  components/           # 页面组件和通用 UI
-  features/             # 领域类型、schema 和工具函数
-  lib/appwrite/         # Appwrite 环境、会话和任务数据适配
-  providers/            # Auth / Toast 等全局能力
-  store/                # Zustand task store
+  features/             # 业务域：auth / tasks / dashboard / calendar / settings / stats
+  shared/               # 跨域组件、hooks、providers、lib
+  styles/               # 全局与页面样式
 
 docs/
-  screenshots/          # README 使用的页面截图
-  appwrite-setup.md     # Appwrite 配置说明
+  setup/                # Appwrite 等环境配置
+  product/              # URL 协议、UI QA 基线
+  career/               # 简历 / 面试 / 项目基线
+  screenshots/          # README 截图
 ```
 
 ## 本地运行
@@ -148,7 +148,7 @@ Appwrite 需要完成以下配置：
 7. 创建服务端 API Key
 8. 在本地 `.env.local` 或 Vercel 环境变量中填入对应配置
 
-`tasks` table 的字段、权限和 profile 存储方式可以看这份说明：[docs/appwrite-setup.md](docs/appwrite-setup.md)。
+`tasks` table 的字段、权限和 profile 存储方式可以看这份说明：[docs/setup/appwrite-setup.md](docs/setup/appwrite-setup.md)。
 
 ## 页面路由
 
