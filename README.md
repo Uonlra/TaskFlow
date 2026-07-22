@@ -148,7 +148,6 @@ Appwrite 需要完成以下配置：
 7. 创建服务端 API Key
 8. 在本地 `.env.local` 或 Vercel 环境变量中填入对应配置
 
-`tasks` table 的字段、权限和 profile 存储方式可以看这份说明：[docs/setup/appwrite-setup.md](docs/setup/appwrite-setup.md)。
 
 ## 页面路由
 
