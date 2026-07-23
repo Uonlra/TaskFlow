@@ -10,13 +10,17 @@ export type AuthAccountLookupStatus =
   | "available"
   | "unknown";
 
+export type AuthPreviewPhase = "anonymous" | "hydrating" | "ready" | "failed";
+
 type AuthPreviewState = {
   preloginName: string;
   preloginEmail: string;
   preloginAccountStatus: AuthAccountLookupStatus;
+  previewPhase: AuthPreviewPhase;
   setPreloginName: (name: string) => void;
   setPreloginEmail: (email: string) => void;
   setPreloginAccountStatus: (status: AuthAccountLookupStatus) => void;
+  setPreviewPhase: (phase: AuthPreviewPhase) => void;
 };
 
 const AuthPreviewStateContext = createContext<AuthPreviewState | null>(null);
@@ -26,16 +30,19 @@ export function AuthPreviewStateProvider({ children }: { children: ReactNode }) 
   const [preloginEmail, setPreloginEmail] = useState("");
   const [preloginAccountStatus, setPreloginAccountStatus] =
     useState<AuthAccountLookupStatus>("idle");
+  const [previewPhase, setPreviewPhase] = useState<AuthPreviewPhase>("anonymous");
   const value = useMemo(
     () => ({
       preloginName,
       preloginEmail,
       preloginAccountStatus,
+      previewPhase,
       setPreloginName,
       setPreloginEmail,
       setPreloginAccountStatus,
+      setPreviewPhase,
     }),
-    [preloginAccountStatus, preloginEmail, preloginName],
+    [preloginAccountStatus, preloginEmail, preloginName, previewPhase],
   );
 
   return (
