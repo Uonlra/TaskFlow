@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,21 +18,19 @@ import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { showToast } = useToast();
   const { applyAuthEnvelope } = useAuth();
   const syncTasks = useTaskStore((state) => state.syncTasks);
   const {
     preloginAccountStatus,
+    previewPhase,
     setPreloginAccountStatus,
     setPreloginEmail,
     setPreloginName,
+    setPreviewPhase,
   } = useAuthPreviewState();
-  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [isPreviewUnlocked, setIsPreviewUnlocked] = useState(false);
   const {
     register,
     handleSubmit,
@@ -40,10 +38,7 @@ export function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
   const watchedEmail = watch("email");
   useAuthAccountLookup(watchedEmail);
@@ -56,252 +51,131 @@ export function LoginForm() {
       setPreloginAccountStatus("idle");
       setPreloginName("");
       setPreloginEmail("");
+      setPreviewPhase("anonymous");
     };
-  }, [setPreloginAccountStatus, setPreloginEmail, setPreloginName, watchedEmail]);
+  }, [setPreloginAccountStatus, setPreloginEmail, setPreloginName, setPreviewPhase, watchedEmail]);
 
   useEffect(() => {
-    const reason = searchParams.get("reason");
-
-    if (reason === "registered") {
-      setSubmitError(null);
-      showToast({
-        title: "账号已创建",
-        description: "请使用刚才注册的邮箱和密码登录。",
-        tone: "success",
-      });
+    if (searchParams.get("reason") !== "registered") {
       return;
     }
 
+    showToast({
+      title: "账号已创建",
+      description: "请使用刚才注册的邮箱和密码登录。",
+      tone: "success",
+    });
   }, [searchParams, showToast]);
 
-  const navigateToDashboard = () => {
-    if (typeof window !== "undefined") {
-      window.location.assign("/dashboard");
-      return;
-    }
-
-    router.replace("/dashboard");
-    router.refresh();
+  const enterDashboard = () => {
+    window.location.assign("/dashboard");
   };
 
   const onSubmit = async (values: LoginFormValues) => {
     setSubmitError(null);
-    setIsPreviewLoading(false);
-    setIsPreviewUnlocked(false);
+    setPreviewPhase("hydrating");
 
     if (!hasAppwritePublicEnv) {
       await new Promise((resolve) => setTimeout(resolve, 300));
-      setSubmittedEmail(values.email);
-      setPreloginName("");
-      setPreloginEmail(values.email.trim());
-      setIsPreviewUnlocked(true);
-      showToast({
-        title: "登录已完成",
-        description: `已用本地模式登录 ${values.email}，左侧预览已更新。`,
-        tone: "success",
-      });
+      setPreviewPhase("ready");
+      showToast({ title: "工作台已连接", description: "请确认左侧任务预览后进入总览。", tone: "success" });
       return;
     }
 
     const response = await fetch("/api/auth/login", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),
     });
-
-    const payload = (await response.json().catch(() => null)) as
-      | { message?: string }
-      | AuthEnvelope
-      | null;
+    const payload = (await response.json().catch(() => null)) as { message?: string } | AuthEnvelope | null;
 
     if (!response.ok) {
       const message = getAuthErrorMessage(payload);
+      setPreviewPhase("failed");
       setSubmitError(message);
-      showToast({
-        title: "登录失败",
-        description: message,
-        tone: "error",
-      });
+      showToast({ title: "登录失败", description: message, tone: "error" });
       return;
     }
 
-    setIsPreviewLoading(true);
-
-    setSubmittedEmail(values.email);
-    setPreloginName("");
-    setPreloginEmail(values.email.trim());
     if (!isAuthEnvelope(payload)) {
       const message = "登录成功，但返回数据不完整，请刷新后再试。";
+      setPreviewPhase("failed");
       setSubmitError(message);
-      showToast({
-        title: "登录状态异常",
-        description: message,
-        tone: "error",
-      });
+      showToast({ title: "登录状态异常", description: message, tone: "error" });
       return;
     }
 
     try {
       applyAuthEnvelope(payload);
       await syncTasks(payload.user.id);
-      setIsPreviewUnlocked(true);
-      showToast({
-        title: "登录成功",
-        description: "左侧已经更新为你的真实任务概览。",
-        tone: "success",
-      });
+      const taskSyncError = useTaskStore.getState().error;
+
+      if (taskSyncError) {
+        throw new Error(taskSyncError);
+      }
+
+      setPreviewPhase("ready");
+      showToast({ title: "工作台已连接", description: "请确认左侧任务预览后进入总览。", tone: "success" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "任务预览同步失败，请稍后再试。";
+      const message = error instanceof Error ? error.message : "任务同步失败，请稍后再试。";
+      setPreviewPhase("failed");
       setSubmitError(message);
-      showToast({
-        title: "预览同步失败",
-        description: message,
-        tone: "error",
-      });
-    } finally {
-      setIsPreviewLoading(false);
+      showToast({ title: "登录失败", description: message, tone: "error" });
     }
   };
 
+  const isPreviewReady = previewPhase === "ready";
+  const isHydrating = previewPhase === "hydrating";
+
   return (
     <AuthFormShell
-      eyebrow="登录"
-      title="欢迎回来"
-      description={
-        hasAppwritePublicEnv
-          ? "登录后继续整理你的任务。"
-          : "当前以本地演示模式运行，登录后即可进入任务本。"
-      }
-      footer={
-        <>
-          还没有账号？{" "}
-          <Link href="/register" className="auth-form-footer-link">
-            立即注册
-          </Link>
-        </>
-      }
+      eyebrow={isPreviewReady ? "已连接" : "登录"}
+      title={isPreviewReady ? "工作台已准备好" : "欢迎回来"}
+      description={isPreviewReady ? "左侧已经同步当前任务，确认后进入总览。" : hasAppwritePublicEnv ? "登录后继续整理你的任务。" : "当前以本地演示模式运行，登录后即可预览任务本。"}
+      footer={isPreviewReady ? <span className="auth-preview-footer">登录身份已确认，下一步进入任务总览。</span> : <>还没有账号？ <Link href="/register" className="auth-form-footer-link">立即注册</Link></>}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
-        <AuthInput
-          label="邮箱"
-          type="email"
-          placeholder="请输入邮箱地址"
-          error={errors.email?.message}
-          registration={register("email")}
-          icon="@"
-        />
-        <AccountLookupMessage mode="login" status={preloginAccountStatus} />
-        <AuthInput
-          label="密码"
-          type="password"
-          placeholder="请输入密码"
-          error={errors.password?.message}
-          registration={register("password")}
-          icon="*"
-        />
-        <div className="auth-form-options">
-          <label className="auth-remember-option">
-            <input type="checkbox" name="remember" />
-            <span aria-hidden="true" />
-            <strong>记住我</strong>
-          </label>
-          <button type="button" className="auth-forgot-button" title="密码找回功能将在后续版本接入">
-            忘记密码？
+      {isPreviewReady ? (
+        <div className="auth-preview-confirmation">
+          <p className="auth-form-message auth-form-message--success">任务数据已同步到左侧工作台。</p>
+          <button type="button" className="auth-submit-button" onClick={enterDashboard}>
+            进入总览
           </button>
         </div>
-        <button type="submit" disabled={isSubmitting} className="auth-submit-button">
-          {isSubmitting ? "验证中..." : "验证身份"}
-        </button>
-        <div className="auth-form-divider">
-          <span>安全登录</span>
-        </div>
-        {submittedEmail ? (
-          <PostLoginActions
-            isPreviewLoading={isPreviewLoading}
-            isPreviewUnlocked={isPreviewUnlocked}
-            onEnterDashboard={navigateToDashboard}
-            submittedEmail={submittedEmail}
-          />
-        ) : null}
-        {submitError ? <p className="auth-form-message auth-form-message--error">{submitError}</p> : null}
-      </form>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
+          <AuthInput label="邮箱" type="email" placeholder="请输入邮箱地址" error={errors.email?.message} registration={register("email")} icon="@" />
+          <AccountLookupMessage status={preloginAccountStatus} />
+          <AuthInput label="密码" type="password" placeholder="请输入密码" error={errors.password?.message} registration={register("password")} icon="*" />
+          <button type="submit" disabled={isSubmitting || isHydrating} className="auth-submit-button">
+            {isHydrating ? "正在连接工作台..." : "登录"}
+          </button>
+          {submitError ? <p className="auth-form-message auth-form-message--error">{submitError}</p> : null}
+        </form>
+      )}
     </AuthFormShell>
   );
 }
 
 function isAuthEnvelope(payload: unknown): payload is AuthEnvelope {
-  return (
-    payload !== null &&
-    typeof payload === "object" &&
-    "user" in payload &&
-    "profile" in payload
-  );
+  return payload !== null && typeof payload === "object" && "user" in payload && "profile" in payload;
 }
 
 function getAuthErrorMessage(payload: unknown) {
   if (payload && typeof payload === "object" && "message" in payload) {
     const message = (payload as { message?: unknown }).message;
-
-    if (typeof message === "string" && message) {
-      return message;
-    }
+    if (typeof message === "string" && message) return message;
   }
-
   return "登录失败，请稍后再试。";
 }
 
-function AccountLookupMessage({
-  mode,
-  status,
-}: {
-  mode: "login";
-  status: ReturnType<typeof useAuthPreviewState>["preloginAccountStatus"];
-}) {
-  if (status === "idle") {
-    return null;
-  }
-
-  const message =
-    status === "checking"
-      ? "正在确认邮箱状态..."
-      : status === "registered"
-        ? "这个邮箱看起来已经有记录，输入密码后即可登录。"
-        : status === "available"
-          ? "这个邮箱还没有记录。可以继续尝试登录，也可以先去注册。"
-          : "暂时无法确认邮箱状态，可以继续登录。";
-
-  return (
-    <p className={`auth-form-message auth-form-message--hint auth-form-message--hint-${mode}`}>
-      {message}
-    </p>
-  );
-}
-
-function PostLoginActions({
-  isPreviewLoading,
-  isPreviewUnlocked,
-  onEnterDashboard,
-  submittedEmail,
-}: {
-  isPreviewLoading: boolean;
-  isPreviewUnlocked: boolean;
-  onEnterDashboard: () => void;
-  submittedEmail: string;
-}) {
-  return (
-    <div className="auth-post-login-actions">
-      <p className="auth-form-message auth-form-message--success">
-        {isPreviewLoading
-          ? `已验证 ${submittedEmail}，正在同步左侧预览。`
-          : isPreviewUnlocked
-            ? `已验证 ${submittedEmail}，左侧预览已经更新。`
-            : `已验证 ${submittedEmail}。`}
-      </p>
-      <button type="button" className="auth-submit-button" onClick={onEnterDashboard}>
-        进入总览
-      </button>
-    </div>
-  );
+function AccountLookupMessage({ status }: { status: ReturnType<typeof useAuthPreviewState>["preloginAccountStatus"] }) {
+  if (status === "idle") return null;
+  const message = status === "checking"
+    ? "正在确认邮箱状态..."
+    : status === "registered"
+      ? "这个邮箱看起来已经有记录，输入密码后即可登录。"
+      : status === "available"
+        ? "这个邮箱还没有记录。可以继续尝试登录，也可以先去注册。"
+        : "暂时无法确认邮箱状态，可以继续登录。";
+  return <p className="auth-form-message auth-form-message--hint auth-form-message--hint-login">{message}</p>;
 }
