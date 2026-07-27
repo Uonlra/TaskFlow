@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 
+import { AuthPageBackground } from "@/features/auth/components/auth-page-background";
+
 import { AuthPreviewStateProvider, useAuthPreviewState } from "@/features/auth/components/auth-preview-state";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
@@ -19,6 +21,7 @@ const previewNavigation = [
 export function AuthExhibitionShell({ children }: AuthExhibitionShellProps) {
   return (
     <main className="auth-page">
+      <AuthPageBackground />
       <AuthPreviewStateProvider>
         <AuthPreviewLayout>{children}</AuthPreviewLayout>
       </AuthPreviewStateProvider>
