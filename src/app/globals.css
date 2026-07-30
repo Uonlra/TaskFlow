@@ -3,9 +3,10 @@
 @import "../styles/dashboard-v2.css";
 @import "../styles/calendar.css";
 @import "../styles/stats.css";
-@import "../styles/demo.css";
 @import "../styles/auth.css";
 @import "../styles/tasks.css";
 @import "../styles/responsive.css";
 
 @import "../styles/auth-v2.css";
+
+@import "../styles/auth-action-gate.css";

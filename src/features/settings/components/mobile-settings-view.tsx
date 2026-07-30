@@ -74,7 +74,7 @@ export function MobileSettingsView({ displayName, email, avatarUrl, isConfigured
     <section className="mobile-settings" aria-label="移动端设置">
       <header className="mobile-settings__header">
         <div>
-          <p>{isConfigured ? "已同步" : "本地模式"}</p>
+          <p>{isConfigured ? "已登录" : "未登录"}</p>
           <h1>设置</h1>
         </div>
       </header>

@@ -57,9 +57,6 @@
     grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1fr);
   }
 
-  .task-signal-panel--demo .task-signal-panel__visual {
-    grid-template-columns: minmax(180px, 0.62fr) minmax(0, 1fr);
-  }
 
   .tasks-highlight-grid {
     grid-template-columns: 1fr;
@@ -125,18 +122,6 @@
   .calendar-overview,
   .stats-overview {
     grid-template-columns: 1fr;
-  }
-
-  .demo-topbar {
-    grid-template-columns: 1fr;
-  }
-
-  .demo-topbar {
-    display: grid;
-  }
-
-  .demo-actions {
-    justify-content: flex-start;
   }
 
   .task-filter-grid {
@@ -461,8 +446,7 @@
     line-height: 1.14;
   }
 
-  .task-signal-panel--tasks .task-signal-panel__title,
-  .task-signal-panel--demo .task-signal-panel__title {
+  .task-signal-panel--tasks .task-signal-panel__title {
     font-size: 26px;
   }
 
@@ -528,21 +512,6 @@
     padding-inline: 8px;
   }
 
-  .demo-shell {
-    padding: 22px 14px 36px;
-  }
-
-  .demo-topbar h1 {
-    font-size: 2.2rem;
-  }
-
-  .demo-task-panel {
-    padding: 20px;
-  }
-
-  .demo-task-panel h2 {
-    font-size: 2rem;
-  }
 
   .auth-page {
     width: 100%;

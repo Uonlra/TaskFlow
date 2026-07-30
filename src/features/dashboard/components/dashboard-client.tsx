@@ -97,13 +97,6 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
 
   return (
     <>
-      {!isConfigured ? (
-        <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
-          <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
-            当前为演示数据。
-          </p>
-        </section>
-      ) : null}
       {error ? (
         <section className="card-surface" style={{ borderRadius: 24, padding: 20 }}>
           <p style={{ margin: 0, color: "var(--danger)", lineHeight: 1.7 }}>{error}</p>
