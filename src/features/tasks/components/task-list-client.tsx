@@ -58,7 +58,6 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
   const error = useTaskStore((state) => state.error);
   const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
   const syncTasks = useTaskStore((state) => state.syncTasks);
-  const createTask = useTaskStore((state) => state.createTask);
   const createTaskAsync = useTaskStore((state) => state.createTaskAsync);
   const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
@@ -146,11 +145,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 
   const handleCreateTask = async (values: TaskFormValues) => {
     try {
-      if (isConfigured) {
-        await createTaskAsync(values, user?.id);
-      } else {
-        createTask(values);
-      }
+      await createTaskAsync(values, user?.id);
 
       showToast({
         title: "任务已创建",
@@ -261,7 +256,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
           tasks={filteredTasks}
           totalCount={tasks.length}
           filters={filters}
-          isLoading={isConfigured && isLoading}
+          isLoading={isLoading}
           onFiltersChange={handleFiltersChange}
           onCreateTask={handleCreateTask}
           onUpdateStatus={handleUpdateStatus}
@@ -280,11 +275,6 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
             </button>
           </section>
         ) : null}
-        {!isConfigured ? (
-          <section className="notice-card card-surface">
-            <p>还没连 Appwrite，所以任务先存在浏览器本地，够用，但别太飘。</p>
-          </section>
-        ) : null}
         {error ? (
           <section className="notice-card notice-card--error card-surface">
             <p>{error}</p>
@@ -294,7 +284,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
           tasks={filteredTasks}
           totalTasks={tasks}
           filters={filters}
-          isLoading={isConfigured && isLoading}
+          isLoading={isLoading}
           onFiltersChange={handleFiltersChange}
           onResetFilters={handleResetFilters}
           onCreateTask={handleCreateTask}

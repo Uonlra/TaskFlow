@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +16,8 @@ import { useToast } from "@/shared/providers/toast-provider";
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = getSafeNextPath(searchParams.get("next"));
   const { showToast } = useToast();
   const {
     preloginAccountStatus,
@@ -56,7 +58,7 @@ export function RegisterForm() {
   }, [setPreloginAccountStatus, setPreloginEmail, setPreloginName, watchedEmail, watchedName]);
 
   const navigateToLogin = () => {
-    const loginPath = "/login?reason=registered";
+    const loginPath = `/login?reason=registered&next=${encodeURIComponent(nextPath)}`;
 
     if (typeof window !== "undefined") {
       window.location.assign(loginPath);
@@ -72,16 +74,9 @@ export function RegisterForm() {
     setSubmitMessage(null);
 
     if (!hasAppwritePublicEnv) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setSubmittedName(values.name);
-      setPreloginName(values.name.trim());
-      setPreloginEmail(values.email.trim());
-      showToast({
-        title: "本地账号已创建",
-        description: `${values.name} 的本地任务本已经准备好了，请登录。`,
-        tone: "success",
-      });
-      navigateToLogin();
+      const message = "服务尚未配置，暂时无法创建账号。";
+      setSubmitError(message);
+      showToast({ title: "暂时无法注册", description: message, tone: "error" });
       return;
     }
 
@@ -127,15 +122,11 @@ export function RegisterForm() {
     <AuthFormShell
       eyebrow="注册"
       title="创建账号"
-      description={
-        hasAppwritePublicEnv
-          ? "填写信息后，账号会保存到 Appwrite，随后请登录进入任务本。"
-          : "当前以本地演示模式运行，创建后请登录进入任务本。"
-      }
+      description="填写信息后，账号会安全保存，随后登录继续使用任务本。"
       footer={
         <>
           已经有账号了？{" "}
-          <Link href="/login" className="auth-form-footer-link">
+          <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="auth-form-footer-link">
             去登录
           </Link>
         </>
@@ -184,7 +175,7 @@ export function RegisterForm() {
         </button>
         {submittedName ? (
           <p className="auth-form-message auth-form-message--success">
-            {hasAppwritePublicEnv ? `已为 ${submittedName} 创建账号。` : `已为 ${submittedName} 创建演示任务本。`}
+            {`已为 ${submittedName} 创建账号。`}
           </p>
         ) : null}
         {submitMessage ? <p className="auth-form-message auth-form-message--success">{submitMessage}</p> : null}
@@ -213,4 +204,9 @@ function AccountLookupMessage({
           : "暂时无法确认邮箱状态，可以继续填写注册信息。";
 
   return <p className="auth-form-message auth-form-message--hint">{message}</p>;
+}
+
+function getSafeNextPath(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/dashboard";
+  return value;
 }

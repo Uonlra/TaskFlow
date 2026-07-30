@@ -14,7 +14,7 @@ type TaskSignalPanelProps = {
   title: string;
   description: string;
   activeLabel: string;
-  variant?: "dashboard" | "tasks" | "demo";
+  variant?: "dashboard" | "tasks";
   action?: ReactNode;
 };
 

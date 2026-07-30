@@ -53,7 +53,7 @@ export function SettingsClient() {
     router.push("/login");
   };
 
-  const displayName = namePreview || profile?.fullName || user?.email || "演示用户";
+  const displayName = namePreview || profile?.fullName || user?.email || "访客";
   const displayEmail = profile?.email || user?.email || "暂无邮箱信息";
 
   return (
@@ -63,18 +63,11 @@ export function SettingsClient() {
           displayName={displayName}
           email={displayEmail}
           avatarUrl={avatarPreview}
-          isConfigured={isConfigured}
+          isConfigured={Boolean(user)}
           onSignOut={handleSignOut}
         />
       </div>
       <section className="settings-desktop-only" style={{ display: "grid", gap: 24 }}>
-      {!isConfigured ? (
-        <section className="card-surface" style={{ borderRadius: 28, padding: 24 }}>
-          <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.76 }}>
-            当前还没有连接 Appwrite，所以这里的资料修改只会影响本地演示会话。
-          </p>
-        </section>
-      ) : null}
 
       <section className="settings-grid">
         <aside
