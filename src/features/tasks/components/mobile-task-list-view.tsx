@@ -78,8 +78,8 @@ export function MobileTaskListView({
 
   return (
     <section className="mobile-task-list" aria-label="移动端任务列表">
-      <header className="mobile-task-list__header">
-        <div>
+      <header className="mobile-page-header mobile-task-list__header">
+        <div className="mobile-page-header__copy">
           <p>{isLoading ? "同步中" : `${totalCount} 项`}</p>
           <h1>任务</h1>
         </div>
@@ -120,17 +120,11 @@ export function MobileTaskListView({
         {tasks.length ? (
           tasks.map((task) => <MobileTaskItem key={task.id} task={task} onUpdateStatus={onUpdateStatus} />)
         ) : (
-          <div className="mobile-task-list__empty">
+          <div className="mobile-task-list__empty mobile-empty-state">
             <strong>没有任务</strong>
             <span>换个筛选</span>
           </div>
         )}
-      </div>
-
-      <div className="mobile-task-list__bottom-bar" aria-label="移动端导航">
-        <Link href={ROUTES.dashboard}>总览</Link>
-        <Link href={ROUTES.tasks} aria-current="page">任务</Link>
-        <TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="+" />
       </div>
     </section>
   );

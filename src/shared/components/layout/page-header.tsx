@@ -1,30 +1,21 @@
+import type { ReactNode } from "react";
+
 type PageHeaderProps = {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
-  description: string;
+  description?: string;
+  actions?: ReactNode;
 };
 
-export function PageHeader({ eyebrow, title, description }: PageHeaderProps) {
+export function PageHeader({ eyebrow, title, description, actions }: PageHeaderProps) {
   return (
-    <section
-      className="card-surface page-header"
-      style={{
-        minWidth: 0,
-      }}
-    >
-      <p
-        className="section-eyebrow"
-        style={{
-          margin: 0,
-          color: "var(--primary)",
-          fontWeight: 700,
-          fontSize: "0.88rem",
-        }}
-      >
-        {eyebrow}
-      </p>
-      <h1 style={{ margin: "14px 0 0", fontSize: "clamp(2rem, 4.4vw, 3rem)", lineHeight: 1.2 }}>{title}</h1>
-      <p style={{ margin: "16px 0 0", maxWidth: 720, color: "var(--muted-strong)", lineHeight: 1.85 }}>{description}</p>
-    </section>
+    <header className="card-surface page-header">
+      <div className="page-header__copy">
+        {eyebrow ? <span className="page-header__eyebrow">{eyebrow}</span> : null}
+        <h1>{title}</h1>
+        {description ? <p>{description}</p> : null}
+      </div>
+      {actions ? <div className="page-header__actions">{actions}</div> : null}
+    </header>
   );
 }

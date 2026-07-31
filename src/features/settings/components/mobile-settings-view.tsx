@@ -72,8 +72,8 @@ export function MobileSettingsView({ displayName, email, avatarUrl, isConfigured
 
   return (
     <section className="mobile-settings" aria-label="移动端设置">
-      <header className="mobile-settings__header">
-        <div>
+      <header className="mobile-page-header mobile-settings__header">
+        <div className="mobile-page-header__copy">
           <p>{isConfigured ? "已登录" : "未登录"}</p>
           <h1>设置</h1>
         </div>

@@ -9,7 +9,7 @@ type EmptyStateProps = {
 export function EmptyState({ title, description, action }: EmptyStateProps) {
   return (
     <section
-      className="card-surface"
+      className="card-surface empty-state"
       style={{
         borderRadius: 28,
         padding: 28,

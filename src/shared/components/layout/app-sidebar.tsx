@@ -4,15 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { AppTopbar } from "@/shared/components/layout/app-topbar";
-import { ROUTES } from "@/shared/lib/constants/routes";
-
-const navItems = [
-  { label: "总览", description: "今天先看这里", href: ROUTES.dashboard, icon: "overview" },
-  { label: "任务", description: "记录与整理", href: ROUTES.tasks, icon: "tasks" },
-  { label: "日历", description: "日期与截止", href: ROUTES.calendar, icon: "calendar" },
-  { label: "统计", description: "趋势与风险", href: ROUTES.stats, icon: "stats" },
-  { label: "设置", description: "个人信息", href: ROUTES.settings, icon: "settings" },
-];
+import { appNavigation, isAppNavigationActive } from "@/shared/lib/constants/navigation";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -40,8 +32,8 @@ export function AppSidebar() {
       </div>
 
       <nav className="dashboard-sidebar-nav">
-        {navItems.map((item) => {
-          const isActive = isActiveNavItem(pathname, item.href);
+        {appNavigation.map((item) => {
+          const isActive = isAppNavigationActive(pathname, item.href);
 
           return (
             <Link
@@ -73,12 +65,4 @@ export function AppSidebar() {
       </div>
     </aside>
   );
-}
-
-function isActiveNavItem(pathname: string, href: string) {
-  if (href === ROUTES.dashboard) {
-    return pathname === href;
-  }
-
-  return pathname === href || pathname.startsWith(`${href}/`);
 }
