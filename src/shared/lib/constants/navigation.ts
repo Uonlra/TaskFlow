@@ -7,3 +7,11 @@ export const appNavigation = [
   { label: "统计", description: "趋势与风险", href: ROUTES.stats, icon: "stats" },
   { label: "设置", description: "个人信息", href: ROUTES.settings, icon: "settings" },
 ] as const;
+
+export function isAppNavigationActive(pathname: string, href: string) {
+  if (href === ROUTES.dashboard) {
+    return pathname === href;
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}

@@ -4,9 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { AppTopbar } from "@/shared/components/layout/app-topbar";
-import { ROUTES } from "@/shared/lib/constants/routes";
-import { appNavigation } from "@/shared/lib/constants/navigation";
-
+import { appNavigation, isAppNavigationActive } from "@/shared/lib/constants/navigation";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -35,7 +33,7 @@ export function AppSidebar() {
 
       <nav className="dashboard-sidebar-nav">
         {appNavigation.map((item) => {
-          const isActive = isActiveNavItem(pathname, item.href);
+          const isActive = isAppNavigationActive(pathname, item.href);
 
           return (
             <Link
@@ -67,12 +65,4 @@ export function AppSidebar() {
       </div>
     </aside>
   );
-}
-
-function isActiveNavItem(pathname: string, href: string) {
-  if (href === ROUTES.dashboard) {
-    return pathname === href;
-  }
-
-  return pathname === href || pathname.startsWith(`${href}/`);
 }

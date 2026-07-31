@@ -79,8 +79,8 @@ export function MobileDashboardOverview({
 
   return (
     <section className="mobile-dashboard" aria-label="移动端任务总览">
-      <header className="mobile-dashboard__header">
-        <div>
+      <header className="mobile-page-header mobile-dashboard__header">
+        <div className="mobile-page-header__copy">
           <p className="mobile-dashboard__date">{dateLabel}</p>
           <h1>今日</h1>
         </div>
@@ -134,7 +134,7 @@ export function MobileDashboardOverview({
           {focusTasks.length ? (
             focusTasks.map((task) => <MobileTaskRow key={task.id} task={task} />)
           ) : (
-            <p className="mobile-dashboard__empty">暂无待处理任务</p>
+            <p className="mobile-dashboard__empty mobile-empty-state">暂无待处理任务</p>
           )}
         </div>
       </section>
@@ -148,7 +148,7 @@ export function MobileDashboardOverview({
           {timelineTasks.length ? (
             timelineTasks.map((task) => <TimelineItem key={task.id} task={task} />)
           ) : (
-            <p className="mobile-dashboard__empty">没有临近日程</p>
+            <p className="mobile-dashboard__empty mobile-empty-state">没有临近日程</p>
           )}
         </div>
       </section>
@@ -168,7 +168,7 @@ export function MobileDashboardOverview({
               </Link>
             ))
           ) : (
-            <p className="mobile-dashboard__empty">暂无项目标签</p>
+            <p className="mobile-dashboard__empty mobile-empty-state">暂无项目标签</p>
           )}
         </div>
       </section>
