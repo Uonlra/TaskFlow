@@ -3,7 +3,7 @@ import { PageHeader } from "@/shared/components/layout/page-header";
 import { StatsClient } from "@/features/stats/components/stats-client";
 import { DASHBOARD_RANGE_VALUES } from "@/shared/lib/constants/query-params";
 
-const showStatsPageHeader = false;
+const showStatsPageHeader = true;
 
 type StatsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

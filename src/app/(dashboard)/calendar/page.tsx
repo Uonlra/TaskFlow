@@ -3,7 +3,7 @@ import { PageContainer } from "@/shared/components/layout/page-container";
 import { PageHeader } from "@/shared/components/layout/page-header";
 import { DASHBOARD_RANGE_VALUES, type DashboardRangeValue } from "@/shared/lib/constants/query-params";
 
-const showCalendarPageHeader = false;
+const showCalendarPageHeader = true;
 
 type CalendarPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

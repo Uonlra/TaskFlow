@@ -5,14 +5,8 @@ import { usePathname } from "next/navigation";
 
 import { AppTopbar } from "@/shared/components/layout/app-topbar";
 import { ROUTES } from "@/shared/lib/constants/routes";
+import { appNavigation } from "@/shared/lib/constants/navigation";
 
-const navItems = [
-  { label: "总览", description: "今天先看这里", href: ROUTES.dashboard, icon: "overview" },
-  { label: "任务", description: "记录与整理", href: ROUTES.tasks, icon: "tasks" },
-  { label: "日历", description: "日期与截止", href: ROUTES.calendar, icon: "calendar" },
-  { label: "统计", description: "趋势与风险", href: ROUTES.stats, icon: "stats" },
-  { label: "设置", description: "个人信息", href: ROUTES.settings, icon: "settings" },
-];
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -40,7 +34,7 @@ export function AppSidebar() {
       </div>
 
       <nav className="dashboard-sidebar-nav">
-        {navItems.map((item) => {
+        {appNavigation.map((item) => {
           const isActive = isActiveNavItem(pathname, item.href);
 
           return (
