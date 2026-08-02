@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { DataEmptyState } from "@/shared/components/common/data-empty-state";
+
 import type { Task, TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
 import {
   addTaskDays,
@@ -134,6 +136,39 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     );
   }
 
+  if (isAccountEmpty) {
+    return (
+      <section className="calendar-shell calendar-shell--empty">
+        <DataEmptyState
+          title="日历等待第一条任务"
+          description="为任务设置截止日期后，会在这里形成时间线。"
+          action={<Link href="/tasks">创建任务</Link>}
+        />
+      </section>
+    );
+  }
+
+  if (isRangeEmpty) {
+    return (
+      <section className="calendar-shell calendar-shell--empty">
+        <CalendarToolbar
+          date={selectedDate}
+          dateParam={dateParam}
+          range={range}
+          rangeLabel={rangeLabel}
+          isSyncing={isSyncing}
+          isAccountEmpty={false}
+          onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
+          onRangeChange={(nextRange) => updateCalendar({ range: nextRange })}
+        />
+        <DataEmptyState
+          variant="table"
+          title={`${rangeLabel}暂无截止任务`}
+          description="切换日期或范围，查看其他时间的任务安排。"
+        />
+      </section>
+    );
+  }
   return (
     <section className="calendar-shell">
       <CalendarToolbar
@@ -306,7 +341,10 @@ function CalendarTimeline({
         {tasks.length ? (
           tasks.map((task) => <CalendarTimelineItem key={task.id} task={task} />)
         ) : (
-          <CalendarEmptyState label={isSyncing ? "同步中" : isAccountEmpty ? "添加任务后显示日历" : "今天暂无截止"} />
+          <CalendarEmptyState
+            label={isSyncing ? "同步中" : "今天暂无截止"}
+            description={isSyncing ? "数据准备完成后自动显示。" : "该日期没有设置截止时间的任务。"}
+          />
         )}
       </div>
     </section>
@@ -373,7 +411,10 @@ function CalendarUpcomingPanel({
             );
           })
         ) : (
-          <CalendarEmptyState label={isSyncing ? "同步中" : "暂无近期截止"} compact />
+          <CalendarEmptyState
+            label={isSyncing ? "同步中" : "暂无近期截止"}
+            description={isSyncing ? "数据准备完成后自动显示。" : "当前范围没有临近截止的任务。"}
+          />
         )}
       </div>
     </section>
@@ -397,14 +438,8 @@ function CalendarQuickLinks() {
   );
 }
 
-function CalendarEmptyState({ label, compact = false }: { label: string; compact?: boolean }) {
-  return (
-    <div className={compact ? "calendar-empty-state calendar-empty-state--compact" : "calendar-empty-state"}>
-      <span aria-hidden="true" />
-      <strong>{label}</strong>
-      <p>添加截止日期后显示</p>
-    </div>
-  );
+function CalendarEmptyState({ label, description }: { label: string; description: string }) {
+  return <DataEmptyState variant="panel" title={label} description={description} />;
 }
 
 function buildCalendarTasksHref(

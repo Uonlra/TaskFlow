@@ -1861,3 +1861,26 @@
   place-items: center;
   text-align: center;
 }
+.desktop-task-workbench--empty,
+.desktop-task-workbench--filtered-empty {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.desktop-task-workbench--empty {
+  height: 360px;
+  min-height: 0;
+}
+
+.desktop-task-workbench--empty .desktop-task-workbench__main {
+  grid-template-rows: auto minmax(0, 1fr);
+  border-right: 0;
+}
+
+.desktop-task-workbench--filtered-empty .desktop-task-workbench__main {
+  border-right: 0;
+}
+
+.desktop-task-workbench--empty .data-empty-state,
+.desktop-task-workbench--filtered-empty .data-empty-state {
+  margin: 20px;
+}

@@ -1,9 +1,12 @@
+import Link from "next/link";
+
 import { DashboardDistributionPanel } from "@/features/dashboard/components/dashboard-distribution-panel";
 import { DashboardFocusPanel } from "@/features/dashboard/components/dashboard-focus-panel";
 import { DashboardMetricGrid } from "@/features/dashboard/components/dashboard-metric-grid";
 import { DashboardRiskPanel } from "@/features/dashboard/components/dashboard-risk-panel";
 import { DashboardTrendPanel } from "@/features/dashboard/components/dashboard-trend-panel";
 import { DashboardV2Hero } from "@/features/dashboard/components/dashboard-v2-hero";
+import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import type { DashboardAnalyticsRange, DashboardStats } from "@/features/tasks/utils/task-analytics";
 
 type DashboardV2ShellProps = {
@@ -33,6 +36,47 @@ export function DashboardV2Shell({
   rangeOptions,
   onRangeChange,
 }: DashboardV2ShellProps) {
+  if (isAccountEmpty) {
+    return (
+      <section className="dashboard-v2-shell dashboard-v2-shell--empty" aria-label="总览空状态">
+        <DataEmptyState
+          title="从第一条任务开始"
+          description="创建任务后，这里会汇总进度、截止和风险。"
+          action={<Link href="/tasks">创建任务</Link>}
+        />
+      </section>
+    );
+  }
+
+  if (isEmpty) {
+    return (
+      <section className="dashboard-v2-shell dashboard-v2-shell--empty" aria-label="总览范围无数据">
+        <div className="dashboard-v2-range-row" aria-label="总览范围切换">
+          <div className="dashboard-v2-range-tabs" role="tablist" aria-label="总览范围">
+            {rangeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="tab"
+                aria-selected={range === option.value}
+                className={range === option.value ? "is-active" : ""}
+                onClick={() => onRangeChange(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <span>{getRangeHint(range, stats.totalCount, totalTaskCount)}</span>
+        </div>
+        <DataEmptyState
+          variant="table"
+          title={`${rangeLabel}暂无任务`}
+          description="切换范围，或创建一条任务后再查看数据。"
+        />
+      </section>
+    );
+  }
+
   return (
     <section className="dashboard-v2-shell" aria-label="新版数据看板骨架">
       <DashboardV2Hero

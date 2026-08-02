@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { CustomSelect } from "@/shared/components/common/custom-select";
+import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import { DesktopTaskTable } from "@/features/tasks/components/desktop-task-table";
 import { TaskDetailPanel } from "@/features/tasks/components/task-detail-panel";
 import type { TaskFilters } from "@/features/tasks/components/task-filter-bar";
@@ -75,6 +76,45 @@ export function DesktopTaskWorkbench({
     }
   }, [selectedTaskId, tasks]);
 
+  if (isLoading && !totalTasks.length) {
+    return (
+      <section className="desktop-task-workbench desktop-task-workbench--empty" aria-label="任务同步状态">
+        <div className="desktop-task-workbench__main">
+          <header className="desktop-task-workbench__topbar">
+            <div>
+              <h1>任务</h1>
+              <p>正在同步账号数据</p>
+            </div>
+          </header>
+          <DataEmptyState
+            title="正在同步任务"
+            description="数据准备完成后会自动显示任务列表。"
+          />
+        </div>
+      </section>
+    );
+  }
+
+  if (!totalTasks.length) {
+    return (
+      <section className="desktop-task-workbench desktop-task-workbench--empty" aria-label="任务空状态">
+        <div className="desktop-task-workbench__main">
+          <header className="desktop-task-workbench__topbar">
+            <div>
+              <h1>任务</h1>
+              <p>开始整理当前事项</p>
+            </div>
+            <TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="新建任务" />
+          </header>
+          <DataEmptyState
+            title="还没有任务"
+            description="新建第一条任务，开始整理当前事项。"
+          />
+        </div>
+      </section>
+    );
+  }
+
   const handleCategoryChange = (value: CategoryTab) => {
     const nextFilters: TaskFilters = {
       ...filters,
@@ -106,7 +146,7 @@ export function DesktopTaskWorkbench({
   };
 
   return (
-    <section className="desktop-task-workbench" aria-label="桌面端任务工作台">
+    <section className={tasks.length ? "desktop-task-workbench" : "desktop-task-workbench desktop-task-workbench--filtered-empty"} aria-label="桌面端任务工作台">
       <div className="desktop-task-workbench__main">
         <header className="desktop-task-workbench__topbar">
           <div>
@@ -167,28 +207,41 @@ export function DesktopTaskWorkbench({
           </div>
         </div>
 
-        <DesktopTaskTable
-          tasks={tasks}
-          emptyState={emptyState}
-          selectedTaskId={selectedTask?.id ?? null}
-          onSelectTask={setSelectedTaskId}
-          onUpdateStatus={onUpdateStatus}
-        />
+        {tasks.length ? (
+          <DesktopTaskTable
+            tasks={tasks}
+            emptyState={emptyState}
+            selectedTaskId={selectedTask?.id ?? null}
+            onSelectTask={setSelectedTaskId}
+            onUpdateStatus={onUpdateStatus}
+          />
+        ) : (
+          <DataEmptyState
+            variant="table"
+            title={emptyState.title}
+            description={emptyState.description}
+            action={<button type="button" onClick={onResetFilters}>清除筛选</button>}
+          />
+        )}
 
-        <footer className="desktop-task-workbench__footer">
-          <span>共 {tasks.length} 项任务</span>
-          <button type="button" onClick={onResetFilters}>
-            重置筛选
-          </button>
-        </footer>
+        {tasks.length ? (
+          <footer className="desktop-task-workbench__footer">
+            <span>共 {tasks.length} 项任务</span>
+            <button type="button" onClick={onResetFilters}>
+              重置筛选
+            </button>
+          </footer>
+        ) : null}
       </div>
 
-      <TaskDetailPanel
-        task={selectedTask}
-        onUpdateTask={onUpdateTask}
-        onUpdateStatus={onUpdateStatus}
-        onDeleteTask={onDeleteTask}
-      />
+      {tasks.length ? (
+        <TaskDetailPanel
+          task={selectedTask}
+          onUpdateTask={onUpdateTask}
+          onUpdateStatus={onUpdateStatus}
+          onDeleteTask={onDeleteTask}
+        />
+      ) : null}
     </section>
   );
 }
