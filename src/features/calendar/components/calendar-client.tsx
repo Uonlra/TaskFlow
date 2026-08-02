@@ -26,7 +26,9 @@ import {
   type BuildTasksHrefInput,
   type DashboardRangeValue,
 } from "@/shared/lib/constants/query-params";
+import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 
 type CalendarClientProps = {
@@ -95,7 +97,13 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   const dateParam = parseCalendarDate(searchParams.get(CALENDAR_QUERY_KEYS.date) ?? initialDate);
   const range = parseCalendarRange(searchParams.get(CALENDAR_QUERY_KEYS.range) ?? initialRange);
   const selectedDate = useMemo(() => parseTaskDateParam(dateParam) ?? startOfTaskDay(new Date()), [dateParam]);
-  const isSyncing = isConfigured && (isAuthLoading || isLoading);
+  const workspaceState = getWorkspaceState({
+    isAuthLoading,
+    isTaskLoading: isLoading,
+    taskCount: tasks.length,
+    userId: user?.id,
+  });
+  const isSyncing = workspaceState === "syncing";
   const dueTasks = useMemo(() => tasks.filter(hasValidDueDate), [tasks]);
   const scopedTasks = useMemo(() => filterTasksByRange(dueTasks, range, selectedDate), [dueTasks, range, selectedDate]);
   const selectedDayTasks = useMemo(
@@ -106,8 +114,8 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   const upcomingTasks = useMemo(() => buildUpcomingTasks(dueTasks, selectedDate, range), [dueTasks, range, selectedDate]);
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "本周";
   const metrics = useMemo(() => buildCalendarMetrics(dueTasks, scopedTasks, selectedDate, dateParam, range), [dateParam, dueTasks, range, scopedTasks, selectedDate]);
-  const isAccountEmpty = !isSyncing && tasks.length === 0;
-  const isRangeEmpty = !isSyncing && scopedTasks.length === 0;
+  const isAccountEmpty = workspaceState === "account-empty";
+  const isRangeEmpty = isAccountEmpty || (workspaceState === "ready" && scopedTasks.length === 0);
 
   const updateCalendar = (input: { date?: string; range?: DashboardRangeValue }) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -115,6 +123,16 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     params.set(CALENDAR_QUERY_KEYS.range, input.range ?? range);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
+
+  if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
+  if (workspaceState === "guest") {
+    return (
+      <WorkspaceStateNotice
+        title="登录后按日期安排任务"
+        description="登录后可查看截止日期、近期提醒和任务时间线。"
+      />
+    );
+  }
 
   return (
     <section className="calendar-shell">

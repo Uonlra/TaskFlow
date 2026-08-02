@@ -26,7 +26,12 @@ import {
   type TaskDueFilter,
   type TaskRiskFilter,
 } from "@/shared/lib/constants/query-params";
+import {
+  WorkspaceAuthCheckingNotice,
+  WorkspaceStateNotice,
+} from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 
@@ -47,7 +52,7 @@ type TaskListClientProps = {
 };
 
 export function TaskListClient({ initialFilters: initialFiltersProp = initialFilters }: TaskListClientProps) {
-  const { user, isConfigured } = useAuth();
+  const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -248,6 +253,22 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     ? "下面这批任务已经按你的条件收窄，先处理它们，别让注意力到处散步。"
     : "搜索、筛选和状态灯一起工作。你只管把任务放进来，剩下的节奏让界面帮你提醒。";
   const motionKey = `${filters.query}|${filters.tag}|${filters.status}|${filters.priority}|${filters.due}|${filters.risk}|${filters.date}|${filters.range}|${filters.sort}|${filteredTasks.map((task) => `${task.id}:${task.status}`).join(",")}`;
+  const workspaceState = getWorkspaceState({
+    isAuthLoading,
+    isTaskLoading: isLoading,
+    taskCount: tasks.length,
+    userId: user?.id,
+  });
+
+  if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
+  if (workspaceState === "guest") {
+    return (
+      <WorkspaceStateNotice
+        title="登录后管理你的任务"
+        description="登录后即可创建、筛选和更新任务，并在右侧查看完整详情。"
+      />
+    );
+  }
 
   return (
     <>

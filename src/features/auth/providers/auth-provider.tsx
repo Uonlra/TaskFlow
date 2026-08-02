@@ -48,10 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let mounted = true;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 4000);
 
     void (async () => {
       try {
-        const response = await fetch("/api/auth/me", { cache: "no-store" });
+        const response = await fetch("/api/auth/me", { cache: "no-store", signal: controller.signal });
 
         if (!mounted) return;
 
@@ -67,13 +69,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(payload.session ?? null);
         setUser(payload.user);
         setProfile(payload.profile);
+      } catch {
+        if (!mounted) return;
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        clearTasks();
       } finally {
+        window.clearTimeout(timeoutId);
         if (mounted) setIsLoading(false);
       }
     })();
 
     return () => {
       mounted = false;
+      window.clearTimeout(timeoutId);
+      controller.abort();
     };
   }, [clearTasks]);
 
