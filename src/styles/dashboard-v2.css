@@ -1302,3 +1302,7 @@
     grid-template-columns: 10px minmax(0, 1fr) auto;
   }
 }
+
+.dashboard-v2-distribution-card.is-empty {
+  min-height: 0;
+}

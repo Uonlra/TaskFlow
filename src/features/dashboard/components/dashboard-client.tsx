@@ -8,7 +8,9 @@ import { DashboardV2Shell } from "@/features/dashboard/components/dashboard-v2-s
 import type { Task } from "@/features/tasks/types/task.types";
 import { buildDashboardStats } from "@/features/tasks/utils/task-analytics";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
+import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 
 type DashboardRange = "today" | "week" | "all";
@@ -48,9 +50,15 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
 
   const scopedTasks = useMemo(() => filterTasksByRange(tasks, range), [range, tasks]);
   const stats = useMemo(() => buildDashboardStats(tasks, { range }), [tasks, range]);
-  const isSyncing = isConfigured && (isAuthLoading || isLoading);
-  const isAccountEmpty = !isSyncing && tasks.length === 0;
-  const isRangeEmpty = !isSyncing && stats.totalCount === 0;
+  const workspaceState = getWorkspaceState({
+    isAuthLoading,
+    isTaskLoading: isLoading,
+    taskCount: tasks.length,
+    userId: user?.id,
+  });
+  const isSyncing = workspaceState === "syncing";
+  const isAccountEmpty = workspaceState === "account-empty";
+  const isRangeEmpty = isAccountEmpty || (workspaceState === "ready" && stats.totalCount === 0);
   const activeScopedTasks = useMemo(
     () => scopedTasks.filter((task) => task.status !== "done"),
     [scopedTasks],
@@ -94,6 +102,16 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
+
+  if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
+  if (workspaceState === "guest") {
+    return (
+      <WorkspaceStateNotice
+        title="登录后开始管理任务"
+        description="登录后即可创建任务、查看今日重点，并在这里同步你的真实进度。"
+      />
+    );
+  }
 
   return (
     <>

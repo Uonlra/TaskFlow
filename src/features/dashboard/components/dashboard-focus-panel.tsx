@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { DashboardAnalyticsRange, DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
+import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import { buildTasksHref } from "@/shared/lib/constants/query-params";
 
 type DashboardFocusPanelProps = {
@@ -38,11 +39,11 @@ export function DashboardFocusPanel({ tasks, deadlines, range }: DashboardFocusP
 function TaskPreviewList({ tasks, emptyLabel }: { tasks: DashboardTaskPreview[]; emptyLabel: string }) {
   if (!tasks.length) {
     return (
-      <div className="dashboard-v2-empty-list">
-        <span />
-        <strong>{emptyLabel}</strong>
-        <p>添加任务后显示</p>
-      </div>
+      <DataEmptyState
+        variant="panel"
+        title={emptyLabel}
+        description="当前范围内没有符合条件的任务。"
+      />
     );
   }
 

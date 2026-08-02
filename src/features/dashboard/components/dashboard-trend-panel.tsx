@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { EChartsClient } from "@/shared/components/charts/echarts-client";
+import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import { buildTaskTrendOption } from "@/shared/components/charts/task-chart-options";
 import type { DashboardAnalyticsRange, DashboardTrendPoint } from "@/features/tasks/utils/task-analytics";
 import { buildStatsHref } from "@/shared/lib/constants/query-params";
@@ -32,17 +33,11 @@ export function DashboardTrendPanel({ trend, range, rangeLabel, isEmpty = false 
           option={option}
         />
       ) : (
-        <div className="dashboard-v2-empty-chart" aria-label="暂无趋势">
-          <div className="dashboard-v2-empty-chart__grid">
-            {trend.map((point, index) => (
-              <span key={point.date} style={{ opacity: 0.35 + index * 0.07 }} />
-            ))}
-          </div>
-          <div>
-            <strong>暂无趋势</strong>
-            <p>{rangeLabel}完成任务后显示</p>
-          </div>
-        </div>
+        <DataEmptyState
+          variant="panel"
+          title="暂无趋势"
+          description={`${rangeLabel}完成或新增任务后显示趋势。`}
+        />
       )}
     </section>
   );

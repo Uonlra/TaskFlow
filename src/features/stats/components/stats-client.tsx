@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 
 import { EChartsClient } from "@/shared/components/charts/echarts-client";
 import {
@@ -19,7 +22,9 @@ import {
   STATS_QUERY_KEYS,
   type DashboardRangeValue,
 } from "@/shared/lib/constants/query-params";
+import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 
 type StatsClientProps = {
@@ -50,9 +55,15 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   }, [isConfigured, lastLoadedUserId, syncTasks, user?.id]);
 
   const stats = useMemo(() => buildDashboardStats(tasks, { range }), [range, tasks]);
-  const isSyncing = isConfigured && (isAuthLoading || isLoading);
-  const isAccountEmpty = !isSyncing && tasks.length === 0;
-  const isRangeEmpty = !isSyncing && stats.totalCount === 0;
+  const workspaceState = getWorkspaceState({
+    isAuthLoading,
+    isTaskLoading: isLoading,
+    taskCount: tasks.length,
+    userId: user?.id,
+  });
+  const isSyncing = workspaceState === "syncing";
+  const isAccountEmpty = workspaceState === "account-empty";
+  const isRangeEmpty = isAccountEmpty || (workspaceState === "ready" && stats.totalCount === 0);
   const hasTrendData = !isRangeEmpty && stats.trend.some((point) => point.completed > 0 || point.created > 0);
   const hasStatusData = !isRangeEmpty && stats.statusDistribution.some((item) => item.count > 0);
   const hasPriorityData = !isRangeEmpty && stats.priorityDistribution.some((item) => item.count > 0);
@@ -65,6 +76,40 @@ export function StatsClient({ initialRange }: StatsClientProps) {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
+  if (workspaceState === "guest") {
+    return (
+      <WorkspaceStateNotice
+        title="登录后查看任务运行状态"
+        description="登录后即可查看完成趋势、状态分布和逾期风险。"
+      />
+    );
+  }
+
+  if (isAccountEmpty) {
+    return (
+      <section className="stats-shell stats-shell--empty">
+        <DataEmptyState
+          title="还没有可统计的数据"
+          description="创建任务并更新状态后，这里会生成趋势和分布。"
+          action={<Link href="/tasks">创建任务</Link>}
+        />
+      </section>
+    );
+  }
+
+  if (isRangeEmpty) {
+    return (
+      <section className="stats-shell stats-shell--empty">
+        <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+        <DataEmptyState
+          variant="table"
+          title={`${rangeOptions.find((item) => item.value === range)?.label ?? "当前范围"}暂无统计数据`}
+          description="切换统计范围，查看其他时间段的任务数据。"
+        />
+      </section>
+    );
+  }
   return (
     <section className="stats-shell">
       <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
@@ -236,7 +281,7 @@ function StatsTrendSection({
       {hasData ? (
         <EChartsClient className="stats-echart stats-echart--large" ariaLabel="统计趋势图" option={option} />
       ) : (
-        <StatsEmptyState label={isSyncing ? "同步中" : "暂无趋势"} />
+        <StatsEmptyState isSyncing={isSyncing} label="暂无趋势" description="完成或新增任务后显示趋势。" />
       )}
     </section>
   );
@@ -268,7 +313,7 @@ function StatsStatusSection({
           }}
         />
       ) : (
-        <StatsEmptyState label={isSyncing ? "同步中" : "暂无状态"} />
+        <StatsEmptyState isSyncing={isSyncing} label="暂无状态分布" description="更新任务状态后显示分布。" />
       )}
     </section>
   );
@@ -300,7 +345,7 @@ function StatsPrioritySection({
           }}
         />
       ) : (
-        <StatsEmptyState label={isSyncing ? "同步中" : "暂无优先级"} />
+        <StatsEmptyState isSyncing={isSyncing} label="暂无优先级分布" description="设置任务优先级后显示分布。" />
       )}
     </section>
   );
@@ -332,7 +377,7 @@ function StatsTagSection({
           }}
         />
       ) : (
-        <StatsEmptyState label={isSyncing ? "同步中" : "暂无标签"} />
+        <StatsEmptyState isSyncing={isSyncing} label="暂无标签数据" description="为任务添加标签后显示排行。" />
       )}
     </section>
   );
@@ -365,19 +410,27 @@ function StatsRiskSection({
           ))}
       </div>
       ) : (
-        <StatsEmptyState label={isSyncing ? "同步中" : "暂无风险"} />
+        <StatsEmptyState isSyncing={isSyncing} label="暂无逾期风险" description="当前范围没有逾期任务。" />
       )}
     </section>
   );
 }
 
-function StatsEmptyState({ label }: { label: string }) {
+function StatsEmptyState({
+  isSyncing,
+  label,
+  description,
+}: {
+  isSyncing: boolean;
+  label: string;
+  description: string;
+}) {
   return (
-    <div className="stats-empty-state">
-      <span />
-      <strong>{label}</strong>
-      <p>添加任务后显示</p>
-    </div>
+    <DataEmptyState
+      variant="panel"
+      title={isSyncing ? "同步中" : label}
+      description={isSyncing ? "数据准备完成后自动显示。" : description}
+    />
   );
 }
 

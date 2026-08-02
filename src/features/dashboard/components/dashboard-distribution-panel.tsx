@@ -1,4 +1,5 @@
 import { EChartsClient } from "@/shared/components/charts/echarts-client";
+import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import {
   buildTaskPriorityOption,
   buildTaskStatusOption,
@@ -51,7 +52,7 @@ function StatusDistributionCard({
   const option = buildTaskStatusOption(items);
 
   return (
-    <article className="dashboard-v2-panel dashboard-v2-distribution-card">
+    <article className={hasData ? "dashboard-v2-panel dashboard-v2-distribution-card" : "dashboard-v2-panel dashboard-v2-distribution-card is-empty"}>
       <div className="dashboard-v2-panel__head">
         <h2>{rangeLabel}状态分布</h2>
       </div>
@@ -69,7 +70,7 @@ function StatusDistributionCard({
           <DistributionLegend items={items} />
         </div>
       ) : (
-        <DashboardV2EmptyBlock label="暂无状态" />
+        <DataEmptyState variant="panel" title="暂无状态分布" description="更新任务状态后显示分布。" />
       )}
     </article>
   );
@@ -88,7 +89,7 @@ function PriorityDistributionCard({
   const option = buildTaskPriorityOption(items);
 
   return (
-    <article className="dashboard-v2-panel dashboard-v2-distribution-card">
+    <article className={hasData ? "dashboard-v2-panel dashboard-v2-distribution-card" : "dashboard-v2-panel dashboard-v2-distribution-card is-empty"}>
       <div className="dashboard-v2-panel__head">
         <h2>{rangeLabel}优先级</h2>
       </div>
@@ -103,7 +104,7 @@ function PriorityDistributionCard({
           }}
         />
       ) : (
-        <DashboardV2EmptyBlock label="暂无优先级" />
+        <DataEmptyState variant="panel" title="暂无优先级分布" description="设置任务优先级后显示分布。" />
       )}
     </article>
   );
@@ -124,7 +125,7 @@ function TagTopCard({
   const option = buildTaskTagTopOption(items);
 
   return (
-    <article className="dashboard-v2-panel dashboard-v2-distribution-card">
+    <article className={hasData ? "dashboard-v2-panel dashboard-v2-distribution-card" : "dashboard-v2-panel dashboard-v2-distribution-card is-empty"}>
       <div className="dashboard-v2-panel__head">
         <h2>{range === "all" ? "标签 Top 5" : `${rangeLabel}标签 Top 5`}</h2>
       </div>
@@ -139,7 +140,7 @@ function TagTopCard({
           }}
         />
       ) : (
-        <DashboardV2EmptyBlock label="暂无标签" />
+        <DataEmptyState variant="panel" title="暂无标签数据" description="为任务添加标签后显示排行。" />
       )}
     </article>
   );
