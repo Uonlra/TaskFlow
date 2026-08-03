@@ -1,10 +1,11 @@
-import Link from "next/link";
-
 import { DashboardDistributionPanel } from "@/features/dashboard/components/dashboard-distribution-panel";
 import { DashboardFocusPanel } from "@/features/dashboard/components/dashboard-focus-panel";
+import type { DashboardRangeOption } from "@/features/dashboard/components/dashboard-range-menu";
 import { DashboardRiskPanel } from "@/features/dashboard/components/dashboard-risk-panel";
 import { DashboardTrendPanel } from "@/features/dashboard/components/dashboard-trend-panel";
 import { DashboardWorkspace } from "@/features/dashboard/components/dashboard-workspace";
+import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
+import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import type { DashboardAnalyticsRange, DashboardStats } from "@/features/tasks/utils/task-analytics";
 
@@ -15,10 +16,10 @@ type DashboardV2ShellProps = {
   isLoading?: boolean;
   isEmpty?: boolean;
   isAccountEmpty?: boolean;
-  isSyncing?: boolean;
   totalTaskCount?: number;
-  rangeOptions: Array<{ value: DashboardAnalyticsRange; label: string }>;
+  rangeOptions: DashboardRangeOption[];
   onRangeChange: (range: DashboardAnalyticsRange) => void;
+  onCreateTask: (values: TaskFormValues) => Promise<void>;
 };
 
 export function DashboardV2Shell({
@@ -28,10 +29,10 @@ export function DashboardV2Shell({
   isLoading = false,
   isEmpty = false,
   isAccountEmpty = false,
-  isSyncing = false,
   totalTaskCount = 0,
   rangeOptions,
   onRangeChange,
+  onCreateTask,
 }: DashboardV2ShellProps) {
   if (isAccountEmpty) {
     return (
@@ -39,7 +40,7 @@ export function DashboardV2Shell({
         <DataEmptyState
           title="从第一条任务开始"
           description="创建任务后，这里会汇总进度、截止和风险。"
-          action={<Link href="/tasks">创建任务</Link>}
+          action={<TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="创建任务" />}
         />
       </section>
     );
@@ -48,26 +49,18 @@ export function DashboardV2Shell({
   if (isEmpty) {
     return (
       <section className="dashboard-v2-shell dashboard-v2-shell--empty" aria-label="总览范围无数据">
-        <div className="dashboard-v2-range-row" aria-label="总览范围切换">
-          <div className="dashboard-v2-range-tabs" role="tablist" aria-label="总览范围">
-            {rangeOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="tab"
-                aria-selected={range === option.value}
-                className={range === option.value ? "is-active" : ""}
-                onClick={() => onRangeChange(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-          <span>{getRangeHint(range, stats.totalCount, totalTaskCount)}</span>
-        </div>
+        <DashboardWorkspace
+          stats={stats}
+          rangeLabel={rangeLabel}
+          isLoading={isLoading}
+          range={range}
+          rangeOptions={rangeOptions}
+          onRangeChange={onRangeChange}
+          onCreateTask={onCreateTask}
+        />
         <DataEmptyState
           variant="table"
-          title={`${rangeLabel}暂无任务`}
+          title={rangeLabel + "暂无任务"}
           description="切换范围，或创建一条任务后再查看数据。"
         />
       </section>
@@ -76,24 +69,15 @@ export function DashboardV2Shell({
 
   return (
     <section className="dashboard-v2-shell" aria-label="新版数据看板骨架">
-      <div className="dashboard-v2-range-row" aria-label="总览范围切换">
-        <div className="dashboard-v2-range-tabs" role="tablist" aria-label="总览范围">
-          {rangeOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="tab"
-              aria-selected={range === option.value}
-              className={range === option.value ? "is-active" : ""}
-              onClick={() => onRangeChange(option.value)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        <span>{getRangeHint(range, stats.totalCount, totalTaskCount)}</span>
-      </div>
-      <DashboardWorkspace stats={stats} rangeLabel={rangeLabel} isLoading={isLoading} />
+      <DashboardWorkspace
+        stats={stats}
+        rangeLabel={rangeLabel}
+        isLoading={isLoading}
+        range={range}
+        rangeOptions={rangeOptions}
+        onRangeChange={onRangeChange}
+        onCreateTask={onCreateTask}
+      />
       <div className="dashboard-v2-grid">
         <div className="dashboard-v2-grid__main">
           <DashboardTrendPanel trend={stats.trend} range={range} rangeLabel={rangeLabel} isEmpty={isEmpty} />
@@ -113,20 +97,4 @@ export function DashboardV2Shell({
       </div>
     </section>
   );
-}
-
-function getRangeHint(range: DashboardAnalyticsRange, rangeCount: number, totalCount: number) {
-  if (totalCount === 0) {
-    return "暂无任务";
-  }
-
-  if (range === "today") {
-    return `今日 ${rangeCount} 项 / 全部 ${totalCount} 项`;
-  }
-
-  if (range === "week") {
-    return `本周 ${rangeCount} 项 / 全部 ${totalCount} 项`;
-  }
-
-  return `全部 ${totalCount} 项`;
 }

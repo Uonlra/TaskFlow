@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { MobileDashboardOverview } from "@/features/dashboard/components/mobile-dashboard-overview";
 import { DashboardV2Shell } from "@/features/dashboard/components/dashboard-v2-shell";
+import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import { buildDashboardStats } from "@/features/tasks/utils/task-analytics";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
@@ -36,6 +37,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const error = useTaskStore((state) => state.error);
   const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
   const syncTasks = useTaskStore((state) => state.syncTasks);
+  const createTaskAsync = useTaskStore((state) => state.createTaskAsync);
 
   useEffect(() => {
     if (isConfigured && user?.id && lastLoadedUserId !== user.id) {
@@ -103,6 +105,10 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
+  const handleCreateTask = async (values: TaskFormValues) => {
+    await createTaskAsync(values, user?.id);
+  };
+
   if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
   if (workspaceState === "guest") {
     return (
@@ -128,10 +134,9 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           isLoading={isLoading}
           isEmpty={isRangeEmpty}
           isAccountEmpty={isAccountEmpty}
-          isSyncing={isSyncing}
-          totalTaskCount={tasks.length}
           rangeOptions={rangeOptions}
           onRangeChange={handleRangeChange}
+          onCreateTask={handleCreateTask}
         />
       </div>
       <div className="dashboard-mobile-only">

@@ -19,6 +19,7 @@ type TaskFormDialogProps = {
   dialogEyebrow?: string;
   dialogTitle?: string;
   submitLabel?: string;
+  triggerClassName?: string;
 };
 
 export function TaskFormDialog({
@@ -28,6 +29,7 @@ export function TaskFormDialog({
   dialogEyebrow = "创建任务",
   dialogTitle = "记下一条新的任务",
   submitLabel = "创建任务",
+  triggerClassName,
 }: TaskFormDialogProps) {
   const headingId = useId();
   const [open, setOpen] = useState(false);
@@ -124,11 +126,11 @@ export function TaskFormDialog({
       <button
         type="button"
         onClick={openDialog}
-        className={
+        className={triggerClassName ?? (
           triggerLabel === "新建任务"
             ? "tesla-action tesla-action--primary"
             : "tesla-action tesla-action--secondary"
-        }
+        )}
       >
         {triggerLabel}
       </button>

@@ -1354,3 +1354,32 @@
 @media (max-width: 1180px) { .dashboard-workspace { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .dashboard-workspace__priority, .dashboard-workspace__progress { padding: 18px; } .dashboard-workspace__task { grid-template-columns: 20px minmax(0, 1fr) auto; gap: 10px; padding: 10px 0; } .dashboard-workspace__priority-label, .dashboard-workspace__task time { display: none; } .dashboard-workspace__progress-body { grid-template-columns: 118px minmax(0, 1fr); min-height: 146px; } .dashboard-workspace__ring { width: 116px; } }
 @media (prefers-reduced-motion: reduce) { .dashboard-workspace__task { transition: none; } }
+
+/* Step 15: Compact range tools and outcome-led progress */
+.dashboard-range-menu { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.dashboard-range-menu__select-wrap { position: relative; min-width: 92px; }
+.dashboard-range-menu__select { width: 100%; min-height: 32px; padding: 0 24px 0 8px; border: 0; appearance: none; background: transparent; color: var(--muted-strong); cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; }
+.dashboard-range-menu__chevron { position: absolute; top: 50%; right: 8px; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; color: var(--muted); pointer-events: none; transform: translateY(-70%) rotate(45deg); }
+.dashboard-range-menu__tool, .dashboard-range-menu__more > summary { display: grid; width: 32px; height: 32px; padding: 0; border: 0; place-items: center; border-radius: 5px; background: transparent; color: var(--muted); cursor: pointer; list-style: none; }
+.dashboard-range-menu__tool:hover, .dashboard-range-menu__more > summary:hover { background: var(--surface); color: var(--foreground); }
+.dashboard-range-menu__tool:focus-visible, .dashboard-range-menu__select:focus-visible, .dashboard-range-menu__more > summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.dashboard-range-menu__tool--filter span { position: relative; width: 13px; height: 8px; border: 1.5px solid currentColor; border-bottom: 0; clip-path: polygon(0 0, 100% 0, 63% 60%, 63% 100%, 37% 100%, 37% 60%); }
+.dashboard-range-menu__tool--filter span::after { position: absolute; bottom: -6px; left: 5px; width: 2px; height: 5px; background: currentColor; content: ""; }
+.dashboard-range-menu__more { position: relative; }
+.dashboard-range-menu__more > summary::-webkit-details-marker { display: none; }
+.dashboard-range-menu__more > summary span { width: 3px; height: 3px; border-radius: 50%; background: currentColor; box-shadow: 5px 0 currentColor, 10px 0 currentColor; }
+.dashboard-range-menu__more-menu { position: absolute; z-index: 3; top: calc(100% + 6px); right: 0; width: max-content; padding: 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-strong); box-shadow: var(--shadow); }
+.dashboard-range-menu__more-menu a { display: block; padding: 7px 8px; color: var(--foreground); font-size: 12px; text-decoration: none; white-space: nowrap; }
+.dashboard-range-menu__more-menu a:hover { background: var(--surface); }
+.dashboard-workspace__head--toolbar { align-items: center; }
+.dashboard-workspace__add-task { padding: 0; border: 0; background: transparent; cursor: pointer; font: inherit; }
+.dashboard-workspace__progress-body { grid-template-columns: 164px minmax(0, 1fr); }
+.dashboard-workspace__progress-visual { display: grid; justify-items: center; gap: 10px; }
+.dashboard-workspace__progress-visual p { margin: 0; color: var(--muted-strong); font-size: 12px; font-weight: 500; text-align: center; white-space: nowrap; }
+.dashboard-workspace__progress-copy { display: grid; align-self: stretch; align-content: center; gap: 0; border-left: 1px solid var(--border); }
+.dashboard-workspace__progress-copy > div { display: grid; gap: 4px; padding: 12px 0 12px 18px; }
+.dashboard-workspace__progress-copy > div + div { border-top: 1px solid var(--border); }
+.dashboard-workspace__progress-copy span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.dashboard-workspace__progress-copy strong { color: var(--foreground); font-size: 24px; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.dashboard-workspace__progress-overdue strong { color: var(--danger); }
+@media (max-width: 760px) { .dashboard-workspace__head--toolbar { align-items: stretch; flex-direction: column; gap: 10px; } .dashboard-range-menu { align-self: flex-start; } .dashboard-workspace__progress-body { grid-template-columns: 118px minmax(0, 1fr); gap: 12px; } .dashboard-workspace__progress-visual p { font-size: 11px; } .dashboard-workspace__progress-copy > div { padding-left: 12px; } }
