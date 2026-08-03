@@ -8,22 +8,25 @@ type DashboardFocusPanelProps = {
   tasks: DashboardTaskPreview[];
   deadlines: DashboardTaskPreview[];
   range: DashboardAnalyticsRange;
+  showFocus?: boolean;
 };
 
-export function DashboardFocusPanel({ tasks, deadlines, range }: DashboardFocusPanelProps) {
+export function DashboardFocusPanel({ tasks, deadlines, range, showFocus = true }: DashboardFocusPanelProps) {
   const copy = getFocusCopy(range);
   const taskIds = new Set(tasks.map((task) => task.id));
   const visibleDeadlines = deadlines.filter((task) => !taskIds.has(task.id));
 
   return (
     <>
-      <section className="dashboard-v2-panel">
-        <div className="dashboard-v2-panel__head">
-          <h2>{copy.focusTitle}</h2>
-          <Link href={buildTasksHref({ priority: "high" })}>查看全部</Link>
-        </div>
-        <TaskPreviewList tasks={tasks} emptyLabel={copy.focusEmpty} />
-      </section>
+      {showFocus ? (
+        <section className="dashboard-v2-panel">
+          <div className="dashboard-v2-panel__head">
+            <h2>{copy.focusTitle}</h2>
+            <Link href={buildTasksHref({ priority: "high" })}>查看全部</Link>
+          </div>
+          <TaskPreviewList tasks={tasks} emptyLabel={copy.focusEmpty} />
+        </section>
+      ) : null}
 
       <section className="dashboard-v2-panel">
         <div className="dashboard-v2-panel__head">
