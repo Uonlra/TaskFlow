@@ -80,7 +80,7 @@ export function DashboardV2Shell({
       />
       <div className="dashboard-v2-grid">
         <div className="dashboard-v2-grid__main">
-          <DashboardTrendPanel trend={stats.trend} range={range} rangeLabel={rangeLabel} isEmpty={isEmpty} />
+          <DashboardTrendPanel stats={stats} trend={stats.trend} range={range} rangeLabel={rangeLabel} isEmpty={isEmpty} />
           <DashboardDistributionPanel
             statusDistribution={stats.statusDistribution}
             priorityDistribution={stats.priorityDistribution}

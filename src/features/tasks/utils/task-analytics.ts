@@ -1,5 +1,6 @@
 import type { Task, TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta, sortTasks } from "@/features/tasks/utils/task-deadline";
+import { parseTaskDueDate } from "@/features/tasks/utils/task-date-filters";
 
 export type DashboardAnalyticsRange = "today" | "week" | "all";
 
@@ -53,6 +54,12 @@ export type DashboardTaskPreview = {
   tags: string[];
 };
 
+export type DashboardTodayPace = {
+  completedCount: number;
+  inProgressCount: number;
+  dueTodayCount: number;
+  overdueCount: number;
+};
 export type DashboardStats = {
   range: DashboardAnalyticsRange;
   totalCount: number;
@@ -63,6 +70,7 @@ export type DashboardStats = {
   overdueCount: number;
   dueTodayCount: number;
   upcomingCount: number;
+  todayPace: DashboardTodayPace;
   metrics: DashboardMetric[];
   trend: DashboardTrendPoint[];
   statusDistribution: Array<DashboardDistributionItem<TaskStatus>>;
@@ -114,6 +122,7 @@ export function buildDashboardStats(tasks: Task[], options: DashboardAnalyticsOp
   const completedCount = scopedTasks.filter((task) => task.status === "done").length;
   const inProgressCount = scopedTasks.filter((task) => task.status === "in_progress").length;
   const dueCounts = buildDueCounts(activeTasks, range, referenceDate);
+  const todayPace = buildTodayPace(tasks, referenceDate);
   const totalCount = scopedTasks.length;
   const completionRate = totalCount ? Math.round((completedCount / totalCount) * 100) : 0;
   const focusTasks = buildFocusTasks(scopedTasks);
@@ -128,6 +137,7 @@ export function buildDashboardStats(tasks: Task[], options: DashboardAnalyticsOp
     overdueCount: dueCounts.overdue,
     dueTodayCount: dueCounts.today,
     upcomingCount: dueCounts.upcoming,
+    todayPace,
     metrics: buildMetricCards({
       totalCount,
       completionRate,
@@ -340,6 +350,50 @@ function toDashboardTaskPreview(task: Task): DashboardTaskPreview {
   };
 }
 
+function buildTodayPace(tasks: Task[], referenceDate: Date): DashboardTodayPace {
+  const start = startOfDay(referenceDate);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 1);
+
+  return tasks.reduce(
+    (summary, task) => {
+      if (task.status === "done") {
+        if (isTimestampInRange(task.completedAt, start, end)) {
+          summary.completedCount += 1;
+        }
+
+        return summary;
+      }
+
+      const dueDate = parseTaskDueDate(task);
+
+      if (dueDate && dueDate.getTime() < start.getTime()) {
+        summary.overdueCount += 1;
+      }
+
+      if (dueDate && dueDate.getTime() === start.getTime()) {
+        summary.dueTodayCount += 1;
+      }
+
+      if (task.status === "in_progress") {
+        summary.inProgressCount += 1;
+      }
+
+      return summary;
+    },
+    { completedCount: 0, inProgressCount: 0, dueTodayCount: 0, overdueCount: 0 },
+  );
+}
+
+function isTimestampInRange(value: string | undefined, start: Date, end: Date) {
+  if (!value) {
+    return false;
+  }
+
+  const timestamp = new Date(value).getTime();
+
+  return !Number.isNaN(timestamp) && timestamp >= start.getTime() && timestamp < end.getTime();
+}
 function buildDueCounts(tasks: Task[], range: DashboardAnalyticsRange, referenceDate: Date) {
   const start = startOfDay(referenceDate);
   const end = new Date(start);

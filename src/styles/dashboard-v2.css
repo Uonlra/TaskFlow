@@ -538,7 +538,7 @@
 
 .dashboard-v2-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 352px);
+  grid-template-columns: minmax(0, 2.33fr) minmax(300px, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -1383,3 +1383,23 @@
 .dashboard-workspace__progress-copy strong { color: var(--foreground); font-size: 24px; font-variant-numeric: tabular-nums; line-height: 1.15; }
 .dashboard-workspace__progress-overdue strong { color: var(--danger); }
 @media (max-width: 760px) { .dashboard-workspace__head--toolbar { align-items: stretch; flex-direction: column; gap: 10px; } .dashboard-range-menu { align-self: flex-start; } .dashboard-workspace__progress-body { grid-template-columns: 118px minmax(0, 1fr); gap: 12px; } .dashboard-workspace__progress-visual p { font-size: 11px; } .dashboard-workspace__progress-copy > div { padding-left: 12px; } }
+
+/* Step 16: Range-aware today pace view */
+.dashboard-v2-today-pace .dashboard-v2-panel__head { align-items: flex-start; }
+.dashboard-v2-today-pace .dashboard-v2-panel__head h2 { margin: 0; }
+.dashboard-v2-today-pace .dashboard-v2-panel__head p { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+.dashboard-v2-today-pace__body { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(250px, 0.95fr); min-height: 238px; border-top: 1px solid var(--border); }
+.dashboard-v2-today-pace__summary { display: grid; align-content: center; gap: 8px; padding: 28px 30px; background: var(--surface); }
+.dashboard-v2-today-pace__summary strong { max-width: 24ch; color: var(--foreground); font-size: 18px; font-weight: 600; line-height: 1.5; }
+.dashboard-v2-today-pace__summary span { color: var(--muted); font-size: 13px; line-height: 1.45; }
+.dashboard-v2-today-pace__summary.is-empty { background: var(--surface-strong); }
+.dashboard-v2-today-pace__signals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dashboard-v2-today-pace__signal { display: grid; align-content: center; gap: 5px; min-width: 0; padding: 20px 22px; border-left: 1px solid var(--border); }
+.dashboard-v2-today-pace__signal:nth-child(n + 3) { border-top: 1px solid var(--border); }
+.dashboard-v2-today-pace__signal span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.dashboard-v2-today-pace__signal strong { color: var(--foreground); font-size: 26px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.dashboard-v2-today-pace__signal--done strong { color: var(--success); }
+.dashboard-v2-today-pace__signal--progress strong { color: var(--primary); }
+.dashboard-v2-today-pace__signal--due strong { color: var(--warning); }
+.dashboard-v2-today-pace__signal--risk strong { color: var(--danger); }
+@media (max-width: 760px) { .dashboard-v2-today-pace__body { grid-template-columns: 1fr; } .dashboard-v2-today-pace__summary { padding: 22px; } .dashboard-v2-today-pace__signal { border-left: 0; } .dashboard-v2-today-pace__signal:nth-child(odd) { border-right: 1px solid var(--border); } }
