@@ -25,6 +25,7 @@ export function DashboardWorkspace({
   onCreateTask,
 }: DashboardWorkspaceProps) {
   const progress = stats.totalCount ? Math.round((stats.completedCount / stats.totalCount) * 360) : 0;
+  const remainingCount = Math.max(stats.totalCount - stats.completedCount, 0);
 
   return (
     <>
@@ -55,9 +56,6 @@ export function DashboardWorkspace({
         <section className="dashboard-workspace__progress" aria-label="今日进度">
           <div className="dashboard-workspace__head">
             <h2>今日进度</h2>
-            <span className={stats.overdueCount > 0 ? "is-risk" : ""}>
-              {stats.overdueCount > 0 ? "需要关注" : "节奏稳定"}
-            </span>
           </div>
           <div className="dashboard-workspace__progress-body">
             <div className="dashboard-workspace__progress-visual">
@@ -70,16 +68,15 @@ export function DashboardWorkspace({
               </div>
               <p>目标完成 {isLoading ? "--" : stats.totalCount} 个任务</p>
             </div>
-            <div className="dashboard-workspace__progress-copy">
-              <div>
-                <span>完成数</span>
-                <strong>{isLoading ? "--" : String(stats.completedCount) + " / " + String(stats.totalCount)}</strong>
-              </div>
-              <div className="dashboard-workspace__progress-overdue">
-                <span>逾期任务</span>
-                <strong>{isLoading ? "--" : stats.overdueCount}</strong>
-              </div>
+            <div className="dashboard-workspace__progress-main">
+              <span>完成数</span>
+              <strong>{isLoading ? "--" : String(stats.completedCount) + " / " + String(stats.totalCount)}</strong>
+              <p>{isLoading ? "正在汇总今日任务" : remainingCount > 0 ? "还剩 " + String(remainingCount) + " 项待完成" : "今日任务已全部完成"}</p>
             </div>
+          </div>
+          <div className="dashboard-workspace__progress-overdue" aria-label="逾期任务">
+            <span>逾期任务</span>
+            <strong>{isLoading ? "--" : stats.overdueCount}</strong>
           </div>
         </section>
       </section>
@@ -114,6 +111,7 @@ function Metric({ label, value, helper, tone }: { label: string; value: number; 
 
   return <div className={className}><span>{label}</span><strong>{value}</strong><small>{helper}</small></div>;
 }
+
 
 const priorityLabels: Record<DashboardTaskPreview["priority"], string> = { high: "高", medium: "中", low: "低" };
 const statusLabels: Record<DashboardTaskPreview["status"], string> = { todo: "待处理", in_progress: "进行中", done: "已完成" };

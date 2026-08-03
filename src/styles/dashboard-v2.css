@@ -1403,3 +1403,26 @@
 .dashboard-v2-today-pace__signal--due strong { color: var(--warning); }
 .dashboard-v2-today-pace__signal--risk strong { color: var(--danger); }
 @media (max-width: 760px) { .dashboard-v2-today-pace__body { grid-template-columns: 1fr; } .dashboard-v2-today-pace__summary { padding: 22px; } .dashboard-v2-today-pace__signal { border-left: 0; } .dashboard-v2-today-pace__signal:nth-child(odd) { border-right: 1px solid var(--border); } }
+
+/* Step 17: Self-sized daily progress with a single target cue */
+@property --dashboard-progress { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes dashboard-progress-reveal { from { --dashboard-progress: 0deg; } to { opacity: 1; } }
+@keyframes dashboard-progress-label-reveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.dashboard-workspace { align-items: start; }
+.dashboard-workspace__progress { align-self: start; min-height: 296px; padding: 28px 24px 30px; }
+.dashboard-workspace__progress .dashboard-workspace__head { align-items: center; }
+.dashboard-workspace__progress-body { grid-template-columns: 122px minmax(172px, max-content); justify-content: center; gap: 72px; min-height: 184px; margin-top: 28px; padding-left: 28px; }
+.dashboard-workspace__progress-visual { align-self: start; gap: 12px; }
+.dashboard-workspace__progress-visual p { color: var(--muted); font-weight: 500; }
+.dashboard-workspace__ring { width: 122px; background: conic-gradient(var(--primary) 0 var(--dashboard-progress), var(--surface) var(--dashboard-progress) 360deg); transition: --dashboard-progress 720ms cubic-bezier(0.22, 1, 0.36, 1); animation: dashboard-progress-reveal 720ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.dashboard-workspace__ring::after { inset: 9px; }
+.dashboard-workspace__ring strong { font-size: 22px; animation: dashboard-progress-label-reveal 360ms 140ms both; }
+.dashboard-workspace__progress-main { display: grid; align-content: center; justify-items: start; gap: 8px; min-width: 0; }
+.dashboard-workspace__progress-main > span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.dashboard-workspace__progress-main > strong { color: var(--foreground); font-size: 30px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.dashboard-workspace__progress-main > p { margin: 0; color: var(--muted-strong); font-size: 13px; line-height: 1.45; }
+.dashboard-workspace__progress-overdue { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+.dashboard-workspace__progress-overdue span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.dashboard-workspace__progress-overdue strong { color: var(--danger); font-size: 20px; font-variant-numeric: tabular-nums; line-height: 1; }
+@media (max-width: 760px) { .dashboard-workspace__progress { min-height: 256px; padding: 22px 18px 24px; } .dashboard-workspace__progress-body { grid-template-columns: 104px minmax(0, 1fr); justify-content: start; gap: 24px; min-height: 160px; margin-top: 24px; padding-left: 0; } .dashboard-workspace__ring { width: 104px; } .dashboard-workspace__progress-main > strong { font-size: 26px; } }
+@media (prefers-reduced-motion: reduce) { .dashboard-workspace__ring, .dashboard-workspace__ring strong { transition: none; animation: none; } }
