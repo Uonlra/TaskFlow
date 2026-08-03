@@ -2,10 +2,9 @@ import Link from "next/link";
 
 import { DashboardDistributionPanel } from "@/features/dashboard/components/dashboard-distribution-panel";
 import { DashboardFocusPanel } from "@/features/dashboard/components/dashboard-focus-panel";
-import { DashboardMetricGrid } from "@/features/dashboard/components/dashboard-metric-grid";
 import { DashboardRiskPanel } from "@/features/dashboard/components/dashboard-risk-panel";
 import { DashboardTrendPanel } from "@/features/dashboard/components/dashboard-trend-panel";
-import { DashboardV2Hero } from "@/features/dashboard/components/dashboard-v2-hero";
+import { DashboardWorkspace } from "@/features/dashboard/components/dashboard-workspace";
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import type { DashboardAnalyticsRange, DashboardStats } from "@/features/tasks/utils/task-analytics";
 
@@ -17,7 +16,6 @@ type DashboardV2ShellProps = {
   isEmpty?: boolean;
   isAccountEmpty?: boolean;
   isSyncing?: boolean;
-  isPreview?: boolean;
   totalTaskCount?: number;
   rangeOptions: Array<{ value: DashboardAnalyticsRange; label: string }>;
   onRangeChange: (range: DashboardAnalyticsRange) => void;
@@ -31,7 +29,6 @@ export function DashboardV2Shell({
   isEmpty = false,
   isAccountEmpty = false,
   isSyncing = false,
-  isPreview = false,
   totalTaskCount = 0,
   rangeOptions,
   onRangeChange,
@@ -79,15 +76,6 @@ export function DashboardV2Shell({
 
   return (
     <section className="dashboard-v2-shell" aria-label="新版数据看板骨架">
-      <DashboardV2Hero
-        stats={stats}
-        rangeLabel={rangeLabel}
-        isEmpty={isEmpty}
-        isAccountEmpty={isAccountEmpty}
-        isSyncing={isSyncing}
-        isPreview={isPreview}
-        totalTaskCount={totalTaskCount}
-      />
       <div className="dashboard-v2-range-row" aria-label="总览范围切换">
         <div className="dashboard-v2-range-tabs" role="tablist" aria-label="总览范围">
           {rangeOptions.map((option) => (
@@ -105,7 +93,7 @@ export function DashboardV2Shell({
         </div>
         <span>{getRangeHint(range, stats.totalCount, totalTaskCount)}</span>
       </div>
-      <DashboardMetricGrid metrics={stats.metrics} isLoading={isLoading} isEmpty={isEmpty} />
+      <DashboardWorkspace stats={stats} rangeLabel={rangeLabel} isLoading={isLoading} />
       <div className="dashboard-v2-grid">
         <div className="dashboard-v2-grid__main">
           <DashboardTrendPanel trend={stats.trend} range={range} rangeLabel={rangeLabel} isEmpty={isEmpty} />
@@ -119,7 +107,7 @@ export function DashboardV2Shell({
           />
         </div>
         <aside className="dashboard-v2-grid__aside">
-          <DashboardFocusPanel tasks={stats.focusTasks} deadlines={stats.upcomingDeadlines} range={range} />
+          <DashboardFocusPanel tasks={stats.focusTasks} deadlines={stats.upcomingDeadlines} range={range} showFocus={false} />
           <DashboardRiskPanel risks={stats.overdueRisk} overdueCount={stats.overdueCount} isEmpty={isEmpty} />
         </aside>
       </div>
