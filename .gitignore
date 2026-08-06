@@ -45,6 +45,7 @@ test-results/
 coverage/
 .nyc_output/
 
+
 # Visual verification artifacts
 /auth-*.png
 
@@ -65,3 +66,8 @@ docs/career/
 docs/product/
 docs/setup/
 docs/README.md
+
+# Playwright artifacts
+blob-report/
+.playwright
+.playwright-cli
