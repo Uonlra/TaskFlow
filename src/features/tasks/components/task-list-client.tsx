@@ -35,6 +35,8 @@ import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 
+const SETTINGS_STORAGE_KEY = "u-task-settings";
+
 const initialFilters: TaskFilters = {
   query: "",
   tag: "",
@@ -86,6 +88,10 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       range: searchParams.get("range"),
       sort: searchParams.get("sort"),
     });
+
+    if (!searchParams.get("sort")) {
+      nextFilters.sort = getPreferredTaskSort();
+    }
 
     setFilters((current) => (areFiltersEqual(current, nextFilters) ? current : nextFilters));
   }, [searchParams]);
@@ -316,6 +322,18 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       </section>
     </>
   );
+}
+
+function getPreferredTaskSort(): TaskFilters["sort"] {
+  try {
+    const saved = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+    const taskSort = saved ? (JSON.parse(saved) as { taskSort?: string }).taskSort : undefined;
+    if (taskSort === "优先级优先") return "priority_desc";
+  } catch {
+    // The default ordering is retained when local preferences cannot be read.
+  }
+
+  return "due_asc";
 }
 
 function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null | undefined>>): TaskFilters {
@@ -550,4 +568,3 @@ const sortFilterLabels = {
   priority_desc: "优先级排序",
   due_asc: "截止时间",
 } as const;
-
