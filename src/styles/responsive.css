@@ -1721,6 +1721,125 @@
     font-size: 15px;
     font-weight: 700;
   }
+
+  .mobile-settings__row[role="button"] {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid #f0f2f5;
+    background: #ffffff;
+    text-align: left;
+  }
+
+  .mobile-settings__row[role="button"]:focus-visible,
+  .mobile-settings__profile-action:focus-visible,
+  .mobile-settings__toggle:focus-visible {
+    outline: 2px solid #3e6ae1;
+    outline-offset: -2px;
+  }
+
+  .mobile-settings__dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    align-items: end;
+    background: rgba(17, 24, 39, 0.42);
+  }
+
+  .mobile-settings__dialog {
+    width: 100%;
+    max-height: min(80dvh, 520px);
+    overflow: auto;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0;
+    background: var(--surface-strong);
+    color: var(--foreground);
+  }
+
+  .mobile-settings__dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .mobile-settings__dialog-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .mobile-settings__dialog-header button {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .mobile-settings__dialog-form,
+  .mobile-settings__dialog-options {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobile-settings__dialog-form label {
+    display: grid;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .mobile-settings__dialog-form input {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: var(--background);
+    color: var(--foreground);
+  }
+
+  .mobile-settings__dialog-form > button,
+  .mobile-settings__dialog-options button {
+    min-height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--foreground);
+    font-weight: 650;
+    text-align: left;
+  }
+
+  .mobile-settings__dialog-form > button {
+    margin-top: 8px;
+    padding-inline: 14px;
+    background: var(--primary);
+    color: #ffffff;
+    text-align: center;
+  }
+
+  .mobile-settings__dialog-options button {
+    padding-inline: 14px;
+  }
+
+  .mobile-settings__dialog-options button.is-selected {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary);
+  }
+
+  .mobile-settings__dialog > p {
+    margin: 0;
+    color: var(--muted-strong);
+    font-size: 14px;
+    line-height: 1.7;
+  }
 }
 
 .mobile-bottom-navigation {

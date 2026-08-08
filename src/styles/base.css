@@ -29,6 +29,19 @@
   --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
 }
 
+html[data-theme="dark"] {
+  --background: #111318;
+  --page-background: #171a20;
+  --surface: #20242b;
+  --surface-strong: #1b1f26;
+  --foreground: #f5f7fa;
+  --muted: #a5adb8;
+  --muted-strong: #d3d8df;
+  --border: #303640;
+  --border-strong: #4c5664;
+  --primary-soft: #273858;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -298,4 +311,3 @@ textarea:focus {
   letter-spacing: 0;
   text-transform: none;
 }
-

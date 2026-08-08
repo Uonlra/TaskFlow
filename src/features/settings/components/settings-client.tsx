@@ -63,6 +63,8 @@ export function SettingsClient() {
           email={displayEmail}
           avatarUrl={avatarPreview}
           isConfigured={Boolean(user)}
+          isProfileLoading={isProfileLoading}
+          onSaveProfile={saveProfile}
           onSignOut={handleSignOut}
         />
       </div>
