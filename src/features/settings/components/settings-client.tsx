@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
@@ -67,176 +66,107 @@ export function SettingsClient() {
           onSignOut={handleSignOut}
         />
       </div>
-      <section className="settings-desktop-only" style={{ display: "grid", gap: 24 }}>
+      <section className="settings-desktop-only settings-desktop">
+        <section className="settings-grid">
+          <aside className="settings-profile-panel">
+            <div className="settings-panel-heading">
 
-      <section className="settings-grid">
-        <aside
-          className="card-surface dashboard-highlight-card"
-          style={{
-            borderRadius: 28,
-            padding: 24,
-            background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(237,245,255,0.86))",
-            display: "grid",
-            gap: 18,
-            alignContent: "start",
-          }}
-        >
-          <div>
-            <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
-              个人信息
-            </p>
-            <h2 style={{ margin: "12px 0 0", fontSize: "1.5rem" }}>我的小名片</h2>
-            <p style={{ margin: "12px 0 0", color: "var(--muted-strong)", lineHeight: 1.82 }}>
-              这里会影响顶部头像、用户昵称和这个应用里的身份展示方式。
-            </p>
-          </div>
+              <span className="settings-status-dot" aria-label={isConfigured ? "已连接" : "未连接"} />
+            </div>
 
-          <div
-            style={{
-              display: "grid",
-              gap: 14,
-              padding: 18,
-              borderRadius: 24,
-              border: "1px solid var(--border)",
-              background: "rgba(255,255,255,0.86)",
-            }}
-          >
-            <div
-              style={{
-                width: 84,
-                height: 84,
-                borderRadius: "50%",
-                overflow: "hidden",
-                border: "1px solid var(--border-strong)",
-                background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(237,245,255,0.9))",
-                display: "grid",
-                placeItems: "center",
-                fontWeight: 800,
-                fontSize: "1.6rem",
-              }}
-            >
+            <div className="settings-profile-card">
+              <div className="settings-profile-card__avatar">
               {avatarPreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={avatarPreview}
                   alt={namePreview || user?.email || "头像预览"}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               ) : (
                 <span>{(namePreview || user?.email || "演").slice(0, 1).toUpperCase()}</span>
               )}
-            </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: "1.12rem" }}>{namePreview || "未设置姓名"}</p>
-              <p className="ui-sans" style={{ margin: "6px 0 0", color: "var(--muted)" }}>
-                {profile?.email || user?.email || "暂无邮箱信息"}
-              </p>
-            </div>
-          </div>
-        </aside>
-
-        <section
-          className="card-surface"
-          style={{
-            borderRadius: 28,
-            padding: 24,
-            background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(249,251,255,0.84))",
-          }}
-        >
-          <div style={{ display: "grid", gap: 8 }}>
-            <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
-              账号设置
-            </p>
-            <h2 style={{ margin: 0, fontSize: "1.28rem" }}>个人资料</h2>
-            <p style={{ margin: 0, color: "var(--muted-strong)", lineHeight: 1.74 }}>
-              调整会在顶栏、设置页和其他地方显示的姓名与头像地址。
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit(onSubmit)} style={{ display: "grid", gap: 16, marginTop: 24 }}>
-            <label style={{ display: "grid", gap: 8 }}>
-              <span className="ui-sans" style={{ fontWeight: 600 }}>姓名</span>
-              <input
-                {...register("fullName")}
-                placeholder="请输入你的姓名或常用称呼"
-                style={inputStyle}
-                disabled={isProfileLoading}
-              />
-            </label>
-
-            <label style={{ display: "grid", gap: 8 }}>
-              <span className="ui-sans" style={{ fontWeight: 600 }}>头像地址</span>
-              <input
-                {...register("avatarUrl")}
-                placeholder="https://example.com/avatar.jpg"
-                style={inputStyle}
-                disabled={isProfileLoading}
-              />
-            </label>
-
-            <div style={{ display: "grid", gap: 6 }}>
-              <span className="ui-sans" style={{ fontWeight: 600 }}>账号邮箱</span>
-              <div
-                className="ui-sans"
-                style={{
-                  ...inputStyle,
-                  color: "var(--muted)",
-                  display: "flex",
-                  alignItems: "center",
-                  minHeight: 50,
-                }}
-              >
-                {profile?.email || user?.email || "暂无邮箱信息"}
+              </div>
+              <div className="settings-profile-card__copy">
+                <strong>{namePreview || "未设置姓名"}</strong>
+                <span>{profile?.email || user?.email || "暂无邮箱信息"}</span>
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button
-                type="submit"
-                disabled={isSubmitting || isProfileLoading}
-                className="ui-sans"
-                style={{
-                  border: "1px solid transparent",
-                  padding: "14px 18px",
-                  borderRadius: 999,
-                  background: "linear-gradient(135deg, var(--primary), var(--data-cyan))",
-                  color: "var(--primary-foreground)",
-                  fontWeight: 700,
-                  opacity: isSubmitting || isProfileLoading ? 0.8 : 1,
-                  boxShadow: "0 12px 24px rgba(37,99,235,0.18)",
-                }}
-              >
-                {isSubmitting ? "保存中..." : "保存资料"}
-              </button>
+            <div className="settings-profile-note">
+              <span className="settings-profile-note__icon" aria-hidden="true">✓</span>
+              <div>
+                <strong>{isConfigured ? "账号已连接" : "当前为访客模式"}</strong>
+                <p>{isConfigured ? "资料会同步到你的工作区。" : "登录后即可同步个人资料。"}</p>
+              </div>
             </div>
-          </form>
+          </aside>
 
-          <section className="settings-danger-zone">
-            <div>
-              <p className="settings-danger-zone__title">退出当前账号</p>
-              <p className="settings-danger-zone__description">
-                结束当前会话并返回登录页。下次进入真实数据前，需要重新登录。
-              </p>
+          <section className="settings-form-panel">
+            <div className="settings-panel-heading settings-panel-heading--form">
+              <div>
+                <span className="settings-panel-kicker">账号设置</span>
+                <h2>个人资料</h2>
+                <p>更新会在顶栏和工作区中显示的身份信息。</p>
+              </div>
+              <span className="settings-form-index">01</span>
             </div>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="settings-signout-button"
-            >
-              退出登录
-            </button>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="settings-form">
+              <div className="settings-form__fields">
+                <label className="settings-field">
+                  <span>姓名</span>
+                  <input
+                    {...register("fullName")}
+                    placeholder="请输入你的昵称"
+                    disabled={isProfileLoading}
+                  />
+                  <small>用于顶栏、头像菜单和任务归属提示。</small>
+                </label>
+
+                <label className="settings-field">
+                  <span>头像地址</span>
+                  <input
+                    {...register("avatarUrl")}
+                    placeholder="https://example.com/avatar.jpg"
+                    disabled={isProfileLoading}
+                  />
+                  <small>建议使用稳定、可公开访问的图片地址。</small>
+                </label>
+
+                <div className="settings-field">
+                  <span>账号邮箱</span>
+                  <div className="settings-readonly-field">
+                    <span>{profile?.email || user?.email || "暂无邮箱信息"}</span>
+                    <b>已验证</b>
+                  </div>
+                  <small>邮箱用于登录和账号通知，暂不支持在此修改。</small>
+                </div>
+              </div>
+
+              <div className="settings-form__footer">
+                <span>最后一次修改会立即同步到当前工作区。</span>
+                <button type="submit" disabled={isSubmitting || isProfileLoading}>
+                  <span aria-hidden="true">↗</span>
+                  {isSubmitting ? "保存中..." : "保存资料"}
+                </button>
+              </div>
+            </form>
+
+            <section className="settings-danger-zone">
+              <div>
+                <span className="settings-panel-kicker settings-panel-kicker--danger">会话管理</span>
+                <p className="settings-danger-zone__title">退出当前账号</p>
+                <p className="settings-danger-zone__description">
+                  结束当前会话并返回登录页。
+                </p>
+              </div>
+              <button type="button" onClick={handleSignOut} className="settings-signout-button">
+                退出登录
+              </button>
+            </section>
           </section>
         </section>
-      </section>
       </section>
     </>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  borderRadius: 16,
-  border: "1px solid var(--border)",
-  padding: "14px 16px",
-  background: "rgba(255,255,255,0.92)",
-} satisfies CSSProperties;
