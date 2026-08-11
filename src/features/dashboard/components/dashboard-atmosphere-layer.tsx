@@ -37,7 +37,7 @@ export function DashboardAtmosphereLayer({
           <span>{node.label}</span>
         </span>
       ))}
-      <span className="dashboard-v2-atmosphere__dot dashboard-v2-atmosphere__dot--one" />
+      <span className="dashboard-v3-atmosphere__dot dashboard-v2-atmosphere__dot--one" />
       <span className="dashboard-v2-atmosphere__dot dashboard-v2-atmosphere__dot--two" />
       <span className="dashboard-v2-atmosphere__dot dashboard-v2-atmosphere__dot--three" />
     </div>

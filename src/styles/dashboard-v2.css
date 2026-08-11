@@ -1426,3 +1426,44 @@
 .dashboard-workspace__progress-overdue strong { color: var(--danger); font-size: 20px; font-variant-numeric: tabular-nums; line-height: 1; }
 @media (max-width: 760px) { .dashboard-workspace__progress { min-height: 256px; padding: 22px 18px 24px; } .dashboard-workspace__progress-body { grid-template-columns: 104px minmax(0, 1fr); justify-content: start; gap: 24px; min-height: 160px; margin-top: 24px; padding-left: 0; } .dashboard-workspace__ring { width: 104px; } .dashboard-workspace__progress-main > strong { font-size: 26px; } }
 @media (prefers-reduced-motion: reduce) { .dashboard-workspace__ring, .dashboard-workspace__ring strong { transition: none; animation: none; } }
+
+/* Step 18: In-place priority filtering and compact status signals */
+.dashboard-range-menu__filter { position: relative; }
+.dashboard-range-menu__filter > summary::-webkit-details-marker { display: none; }
+.dashboard-range-menu__filter-menu { position: absolute; z-index: 4; top: calc(100% + 6px); right: 0; display: grid; width: 224px; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-strong); box-shadow: var(--shadow); }
+.dashboard-range-menu__filter-head { display: flex; align-items: center; justify-content: space-between; color: var(--foreground); font-size: 13px; font-weight: 600; }
+.dashboard-range-menu__filter-head button { padding: 0; border: 0; background: transparent; color: var(--primary); cursor: pointer; font: inherit; font-size: 12px; }
+.dashboard-range-menu__filter-head button:hover { color: var(--primary-strong); }
+.dashboard-range-menu__filter-head button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.dashboard-range-menu__filter-menu label { display: grid; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 600; }
+.dashboard-range-menu__filter-menu .custom-select { width: 100%; }
+.dashboard-range-menu__filter-menu .task-field { min-height: 34px; padding: 0 10px; border-color: var(--border); background: var(--surface); font-size: 12px; }
+.dashboard-workspace__metric-label { display: inline-flex; align-items: center; gap: 7px; }
+.dashboard-workspace__metric-icon { position: relative; display: inline-block; width: 13px; height: 13px; flex: 0 0 auto; color: var(--primary); }
+.dashboard-workspace__metric-icon--todo { border: 1.5px solid currentColor; border-radius: 3px; }
+.dashboard-workspace__metric-icon--todo::after { position: absolute; top: 3px; left: 3px; width: 5px; height: 2px; border-bottom: 1.5px solid currentColor; border-left: 1.5px solid currentColor; content: ""; transform: rotate(-45deg); }
+.dashboard-workspace__metric-icon--progress { border: 1.5px solid currentColor; border-radius: 50%; }
+.dashboard-workspace__metric-icon--progress::after { position: absolute; top: 2px; left: 5px; width: 1.5px; height: 4px; border-radius: 2px; background: currentColor; box-shadow: 2px 4px 0 -0.25px currentColor; content: ""; transform-origin: bottom; }
+.dashboard-workspace__metric-icon--deadline { border: 1.5px solid currentColor; border-radius: 3px; color: var(--warning); }
+.dashboard-workspace__metric-icon--deadline::before, .dashboard-workspace__metric-icon--deadline::after { position: absolute; top: -2px; width: 1.5px; height: 4px; border-radius: 2px; background: currentColor; content: ""; }
+.dashboard-workspace__metric-icon--deadline::before { left: 3px; }
+.dashboard-workspace__metric-icon--deadline::after { right: 3px; }
+@media (max-width: 760px) { .dashboard-range-menu__filter-menu { right: auto; left: 0; width: min(224px, calc(100vw - 52px)); } }
+
+/* Step 19: Soft metric glyphs */
+.dashboard-workspace__metric { display: flex; align-items: center; gap: 12px; }
+.dashboard-workspace__metric-copy { display: grid; gap: 3px; min-width: 0; }
+.dashboard-workspace__metric-copy span, .dashboard-workspace__metric-copy small { overflow: hidden; color: var(--muted); font-size: 11px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.dashboard-workspace__metric-copy strong { color: var(--foreground); font-size: 22px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.dashboard-workspace__metric-icon { display: grid; width: 40px; height: 40px; flex: 0 0 40px; place-items: center; border: 0; border-radius: 50%; background: var(--surface); color: var(--muted-strong); }
+.dashboard-workspace__metric-icon--todo { color: var(--muted-strong); }
+.dashboard-workspace__metric-icon--todo::before { width: 11px; height: 14px; border: 1.5px solid currentColor; border-radius: 2px; background: linear-gradient(135deg, transparent 0 63%, currentColor 64% 69%, transparent 70%); content: ""; }
+.dashboard-workspace__metric-icon--todo::after { top: 22px; left: 16px; width: 6px; height: 2px; border: 0; border-bottom: 1.5px solid currentColor; border-left: 1.5px solid currentColor; transform: rotate(-45deg); }
+.dashboard-workspace__metric-icon--progress { color: var(--primary); background: var(--primary-soft); }
+.dashboard-workspace__metric-icon--progress::before { width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 10px solid currentColor; content: ""; }
+.dashboard-workspace__metric-icon--progress::after { display: none; }
+.dashboard-workspace__metric-icon--deadline { color: var(--primary); background: var(--primary-soft); }
+.dashboard-workspace__metric-icon--deadline::before { position: static; width: 11px; height: 11px; border: 1.5px solid currentColor; border-radius: 50%; background: linear-gradient(currentColor, currentColor) 50% 3px / 1.5px 4px no-repeat, linear-gradient(currentColor, currentColor) calc(50% + 2px) 50% / 4px 1.5px no-repeat; content: ""; }
+.dashboard-workspace__metric-icon--deadline::after { display: none; }
+.dashboard-workspace__metric--warning .dashboard-workspace__metric-copy strong { color: var(--warning); }
+@media (max-width: 760px) { .dashboard-workspace__metric { gap: 10px; padding: 14px; } .dashboard-workspace__metric-icon { width: 36px; height: 36px; flex-basis: 36px; } }
