@@ -17,6 +17,7 @@ import {
   startOfTaskDay,
 } from "@/features/tasks/utils/task-date-filters";
 import { DASHBOARD_RANGE_VALUES } from "@/shared/lib/constants/query-params";
+import { matchesTaskDueFilter } from "@/features/tasks/utils/task-deadline";
 
 const makeTask = (overrides: Partial<Task> = {}): Task => ({
   id: "task-1",
@@ -192,6 +193,19 @@ describe("task date filters", () => {
       expect(hasActiveTaskDateRangeFilter({ range: DASHBOARD_RANGE_VALUES.all })).toBe(true);
       expect(hasActiveTaskDateRangeFilter({})).toBe(false);
       expect(hasActiveTaskDateRangeFilter({ range: "invalid" })).toBe(false);
+    });
+  });
+
+  describe("matchesTaskDueFilter", () => {
+    it("matches the same active-task deadline buckets used by the task page", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 6, 9, 10, 0, 0));
+
+      expect(matchesTaskDueFilter(makeTask({ dueDate: "2026-07-09" }), "today")).toBe(true);
+      expect(matchesTaskDueFilter(makeTask({ dueDate: "2026-07-10" }), "near")).toBe(true);
+      expect(matchesTaskDueFilter(makeTask({ dueDate: "2026-07-13" }), "upcoming")).toBe(false);
+      expect(matchesTaskDueFilter(makeTask({ dueDate: "2026-07-08" }), "overdue")).toBe(true);
+      expect(matchesTaskDueFilter(makeTask({ status: "done", dueDate: "2026-07-08" }), "overdue")).toBe(false);
     });
   });
 });

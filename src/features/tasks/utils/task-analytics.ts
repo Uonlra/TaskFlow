@@ -324,9 +324,9 @@ function buildMetricCards(input: {
   ];
 }
 
-function buildFocusTasks(tasks: Task[]) {
+export function buildFocusTasks(tasks: Task[], options: { includeCompleted?: boolean } = {}) {
   return sortTasks(tasks, "priority_desc")
-    .filter((task) => task.status !== "done")
+    .filter((task) => options.includeCompleted || task.status !== "done")
     .slice(0, 5)
     .map(toDashboardTaskPreview);
 }

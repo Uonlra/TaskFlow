@@ -5,10 +5,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { MobileDashboardOverview } from "@/features/dashboard/components/mobile-dashboard-overview";
 import { DashboardV2Shell } from "@/features/dashboard/components/dashboard-v2-shell";
+import type { DashboardPriorityFilters } from "@/features/dashboard/components/dashboard-range-menu";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
-import { buildDashboardStats } from "@/features/tasks/utils/task-analytics";
-import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
+import { buildDashboardStats, buildFocusTasks } from "@/features/tasks/utils/task-analytics";
+import { getTaskDueMeta, matchesTaskDueFilter } from "@/features/tasks/utils/task-deadline";
 import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
@@ -22,6 +23,8 @@ const rangeOptions: Array<{ value: DashboardRange; label: string }> = [
   { value: "all", label: "全部" },
 ];
 
+const initialPriorityFilters: DashboardPriorityFilters = { status: "all", priority: "all", due: "" };
+
 type DashboardClientProps = {
   initialRange?: DashboardRange;
 };
@@ -32,6 +35,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [range, setRange] = useState<DashboardRange>(initialRange);
+  const [priorityFilters, setPriorityFilters] = useState<DashboardPriorityFilters>(initialPriorityFilters);
   const tasks = useTaskStore((state) => state.tasks);
   const isLoading = useTaskStore((state) => state.isLoading);
   const error = useTaskStore((state) => state.error);
@@ -52,6 +56,15 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
 
   const scopedTasks = useMemo(() => filterTasksByRange(tasks, range), [range, tasks]);
   const stats = useMemo(() => buildDashboardStats(tasks, { range }), [tasks, range]);
+  const priorityTasks = useMemo(() => {
+    const filteredTasks = scopedTasks.filter((task) => (
+      (priorityFilters.status === "all" || task.status === priorityFilters.status) &&
+      (priorityFilters.priority === "all" || task.priority === priorityFilters.priority) &&
+      (!priorityFilters.due || matchesTaskDueFilter(task, priorityFilters.due))
+    ));
+
+    return buildFocusTasks(filteredTasks, { includeCompleted: priorityFilters.status === "done" });
+  }, [priorityFilters, scopedTasks]);
   const workspaceState = getWorkspaceState({
     isAuthLoading,
     isTaskLoading: isLoading,
@@ -129,6 +142,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       <div className="dashboard-desktop-only">
         <DashboardV2Shell
           stats={stats}
+          priorityTasks={priorityTasks}
           range={range}
           rangeLabel={rangeLabel}
           isLoading={isLoading}
@@ -136,6 +150,8 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           isAccountEmpty={isAccountEmpty}
           rangeOptions={rangeOptions}
           onRangeChange={handleRangeChange}
+          priorityFilters={priorityFilters}
+          onPriorityFiltersChange={setPriorityFilters}
           onCreateTask={handleCreateTask}
         />
       </div>

@@ -6,7 +6,7 @@ import { CustomSelect } from "@/shared/components/common/custom-select";
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import { DesktopTaskTable } from "@/features/tasks/components/desktop-task-table";
 import { TaskDetailPanel } from "@/features/tasks/components/task-detail-panel";
-import type { TaskFilters } from "@/features/tasks/components/task-filter-bar";
+import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";

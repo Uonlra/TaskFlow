@@ -1,6 +1,6 @@
 import { DashboardDistributionPanel } from "@/features/dashboard/components/dashboard-distribution-panel";
 import { DashboardFocusPanel } from "@/features/dashboard/components/dashboard-focus-panel";
-import type { DashboardRangeOption } from "@/features/dashboard/components/dashboard-range-menu";
+import type { DashboardPriorityFilters, DashboardRangeOption } from "@/features/dashboard/components/dashboard-range-menu";
 import { DashboardRiskPanel } from "@/features/dashboard/components/dashboard-risk-panel";
 import { DashboardTrendPanel } from "@/features/dashboard/components/dashboard-trend-panel";
 import { DashboardWorkspace } from "@/features/dashboard/components/dashboard-workspace";
@@ -11,6 +11,7 @@ import type { DashboardAnalyticsRange, DashboardStats } from "@/features/tasks/u
 
 type DashboardV2ShellProps = {
   stats: DashboardStats;
+  priorityTasks: DashboardStats["focusTasks"];
   range: DashboardAnalyticsRange;
   rangeLabel: string;
   isLoading?: boolean;
@@ -19,11 +20,14 @@ type DashboardV2ShellProps = {
   totalTaskCount?: number;
   rangeOptions: DashboardRangeOption[];
   onRangeChange: (range: DashboardAnalyticsRange) => void;
+  priorityFilters: DashboardPriorityFilters;
+  onPriorityFiltersChange: (filters: DashboardPriorityFilters) => void;
   onCreateTask: (values: TaskFormValues) => Promise<void>;
 };
 
 export function DashboardV2Shell({
   stats,
+  priorityTasks,
   range,
   rangeLabel,
   isLoading = false,
@@ -32,6 +36,8 @@ export function DashboardV2Shell({
   totalTaskCount = 0,
   rangeOptions,
   onRangeChange,
+  priorityFilters,
+  onPriorityFiltersChange,
   onCreateTask,
 }: DashboardV2ShellProps) {
   if (isAccountEmpty) {
@@ -51,11 +57,14 @@ export function DashboardV2Shell({
       <section className="dashboard-v2-shell dashboard-v2-shell--empty" aria-label="总览范围无数据">
         <DashboardWorkspace
           stats={stats}
+          priorityTasks={priorityTasks}
           rangeLabel={rangeLabel}
           isLoading={isLoading}
           range={range}
           rangeOptions={rangeOptions}
           onRangeChange={onRangeChange}
+          priorityFilters={priorityFilters}
+          onPriorityFiltersChange={onPriorityFiltersChange}
           onCreateTask={onCreateTask}
         />
         <DataEmptyState
@@ -71,11 +80,14 @@ export function DashboardV2Shell({
     <section className="dashboard-v2-shell" aria-label="新版数据看板骨架">
       <DashboardWorkspace
         stats={stats}
+        priorityTasks={priorityTasks}
         rangeLabel={rangeLabel}
         isLoading={isLoading}
         range={range}
         rangeOptions={rangeOptions}
         onRangeChange={onRangeChange}
+        priorityFilters={priorityFilters}
+        onPriorityFiltersChange={onPriorityFiltersChange}
         onCreateTask={onCreateTask}
       />
       <div className="dashboard-v2-grid">

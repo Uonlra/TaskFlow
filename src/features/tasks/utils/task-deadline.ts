@@ -1,4 +1,5 @@
 import type { Task, TaskPriority } from "@/features/tasks/types/task.types";
+import { TASK_DUE_FILTERS, type TaskDueFilter } from "@/shared/lib/constants/query-params";
 
 export type TaskSort =
   | "created_desc"
@@ -103,6 +104,28 @@ export function getTaskDueMeta(task: Task): TaskDueMeta {
     isDueToday: false,
     isUpcoming: false,
   };
+}
+
+export function matchesTaskDueFilter(task: Task, due: TaskDueFilter): boolean {
+  if (task.status === "done") {
+    return false;
+  }
+
+  const dueMeta = getTaskDueMeta(task);
+
+  if (due === TASK_DUE_FILTERS.near) {
+    return dueMeta.isDueToday || dueMeta.isUpcoming;
+  }
+
+  if (due === TASK_DUE_FILTERS.today) {
+    return dueMeta.isDueToday;
+  }
+
+  if (due === TASK_DUE_FILTERS.upcoming) {
+    return dueMeta.isUpcoming;
+  }
+
+  return dueMeta.isOverdue;
 }
 
 export function sortTasks(tasks: Task[], sort: TaskSort) {

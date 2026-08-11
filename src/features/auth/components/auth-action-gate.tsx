@@ -1,16 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/features/auth/providers/auth-provider";
-
-type AuthActionGateContextValue = {
-  requireAuth: (intent?: string) => boolean;
-};
-
-const AuthActionGateContext = createContext<AuthActionGateContextValue | null>(null);
 
 export function AuthActionGateProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -71,35 +65,25 @@ export function AuthActionGateProvider({ children }: { children: ReactNode }) {
     };
   }, [handleClickCapture, handleFocusCapture]);
 
-  const value = useMemo(() => ({ requireAuth }), [requireAuth]);
-
   return (
-    <AuthActionGateContext.Provider value={value}>
-      <div ref={gateRef} className="auth-action-gate">
-        {children}
-        {isOpen ? (
-          <div className="auth-action-gate__backdrop" role="presentation">
-            <section className="auth-action-gate__dialog" role="dialog" aria-modal="true" aria-labelledby="auth-action-gate-title" data-auth-gate-bypass>
-              <button type="button" className="auth-action-gate__close" aria-label="关闭登录提醒" onClick={() => setIsOpen(false)}>×</button>
-              <p>访客浏览</p>
-              <h2 id="auth-action-gate-title">登录后即可{intent}</h2>
-              <span>登录后会回到当前页面，继续刚才的操作。</span>
-              <div>
-                <Link href={`/login?next=${encodedReturnTo}`}>登录并继续</Link>
-                <Link href={`/register?next=${encodedReturnTo}`} className="auth-action-gate__secondary">创建账号</Link>
-              </div>
-            </section>
-          </div>
-        ) : null}
-      </div>
-    </AuthActionGateContext.Provider>
+    <div ref={gateRef} className="auth-action-gate">
+      {children}
+      {isOpen ? (
+        <div className="auth-action-gate__backdrop" role="presentation">
+          <section className="auth-action-gate__dialog" role="dialog" aria-modal="true" aria-labelledby="auth-action-gate-title" data-auth-gate-bypass>
+            <button type="button" className="auth-action-gate__close" aria-label="关闭登录提醒" onClick={() => setIsOpen(false)}>×</button>
+            <p>访客浏览</p>
+            <h2 id="auth-action-gate-title">登录后即可{intent}</h2>
+            <span>登录后会回到当前页面，继续刚才的操作。</span>
+            <div>
+              <Link href={`/login?next=${encodedReturnTo}`}>登录并继续</Link>
+              <Link href={`/register?next=${encodedReturnTo}`} className="auth-action-gate__secondary">创建账号</Link>
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </div>
   );
-}
-
-export function useAuthActionGate() {
-  const context = useContext(AuthActionGateContext);
-  if (!context) throw new Error("useAuthActionGate 必须在 AuthActionGateProvider 内部使用。");
-  return context;
 }
 
 function isBrowseNavigation(href: string | null) {

@@ -1,27 +1,33 @@
 import type { CSSProperties } from "react";
 
-import { DashboardRangeMenu, type DashboardRangeOption } from "@/features/dashboard/components/dashboard-range-menu";
+import { DashboardRangeMenu, type DashboardPriorityFilters, type DashboardRangeOption } from "@/features/dashboard/components/dashboard-range-menu";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { DashboardAnalyticsRange, DashboardStats, DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
 
 type DashboardWorkspaceProps = {
   stats: DashboardStats;
+  priorityTasks: DashboardTaskPreview[];
   rangeLabel: string;
   isLoading?: boolean;
   range: DashboardAnalyticsRange;
   rangeOptions: DashboardRangeOption[];
   onRangeChange: (range: DashboardAnalyticsRange) => void;
+  priorityFilters: DashboardPriorityFilters;
+  onPriorityFiltersChange: (filters: DashboardPriorityFilters) => void;
   onCreateTask: (values: TaskFormValues) => Promise<void>;
 };
 
 export function DashboardWorkspace({
   stats,
+  priorityTasks,
   rangeLabel,
   isLoading = false,
   range,
   rangeOptions,
   onRangeChange,
+  priorityFilters,
+  onPriorityFiltersChange,
   onCreateTask,
 }: DashboardWorkspaceProps) {
   const progress = stats.totalCount ? Math.round((stats.completedCount / stats.totalCount) * 360) : 0;
@@ -36,12 +42,12 @@ export function DashboardWorkspace({
               <h1>优先处理</h1>
               <p>{rangeLabel}先完成最重要的几件事。</p>
             </div>
-            <DashboardRangeMenu range={range} options={rangeOptions} onChange={onRangeChange} />
+            <DashboardRangeMenu range={range} options={rangeOptions} onChange={onRangeChange} filters={priorityFilters} onFiltersChange={onPriorityFiltersChange} />
           </div>
 
-          {stats.focusTasks.length ? (
+          {priorityTasks.length ? (
             <div className="dashboard-workspace__task-list">
-              {stats.focusTasks.map((task) => <PriorityTaskRow key={task.id} task={task} />)}
+              {priorityTasks.map((task) => <PriorityTaskRow key={task.id} task={task} />)}
             </div>
           ) : (
             <div className="dashboard-workspace__empty">
@@ -50,7 +56,7 @@ export function DashboardWorkspace({
             </div>
           )}
 
-          <TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="添加任务" triggerClassName="dashboard-workspace__add-task" />
+          <TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="+ 添加今日任务" triggerClassName="dashboard-workspace__add-task" />
         </section>
 
         <section className="dashboard-workspace__progress" aria-label="今日进度">
@@ -82,9 +88,9 @@ export function DashboardWorkspace({
       </section>
 
       <section className="dashboard-workspace__status-grid" aria-label="任务状态概览">
-        <Metric label="待处理" value={stats.activeCount} helper="未完成" />
-        <Metric label="进行中" value={stats.inProgressCount} helper="正在推进" />
-        <Metric label="临近截止" value={stats.upcomingCount} helper="3 天内" tone={stats.upcomingCount > 0 ? "warning" : undefined} />
+        <Metric label="待处理" value={stats.activeCount} helper="未完成" icon="todo" />
+        <Metric label="进行中" value={stats.inProgressCount} helper="正在推进" icon="progress" />
+        <Metric label="临近截止" value={stats.upcomingCount} helper="3 天内" icon="deadline" tone={stats.upcomingCount > 0 ? "warning" : undefined} />
       </section>
     </>
   );
@@ -106,10 +112,10 @@ function PriorityTaskRow({ task }: { task: DashboardTaskPreview }) {
   );
 }
 
-function Metric({ label, value, helper, tone }: { label: string; value: number; helper: string; tone?: "warning" }) {
+function Metric({ label, value, helper, icon, tone }: { label: string; value: number; helper: string; icon: "todo" | "progress" | "deadline"; tone?: "warning" }) {
   const className = tone ? "dashboard-workspace__metric dashboard-workspace__metric--" + tone : "dashboard-workspace__metric";
 
-  return <div className={className}><span>{label}</span><strong>{value}</strong><small>{helper}</small></div>;
+  return <div className={className}><i className={"dashboard-workspace__metric-icon dashboard-workspace__metric-icon--" + icon} aria-hidden="true" /><div className="dashboard-workspace__metric-copy"><span>{label}</span><strong>{value}</strong><small>{helper}</small></div></div>;
 }
 
 
