@@ -4,9 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DesktopTaskWorkbench } from "@/features/tasks/components/desktop-task-workbench";
-import type { TaskFilters } from "@/features/tasks/components/task-filter-bar";
+import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { MobileTaskListView } from "@/features/tasks/components/mobile-task-list-view";
-import { TaskSignalPanel } from "@/features/tasks/components/task-signal-panel";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import {
@@ -249,16 +248,6 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     handleFiltersChange(initialFilters);
   };
 
-  const summaryLabel = !tasks.length
-    ? "先加一条任务吧，别都放脑子里打转。"
-    : hasActiveFilters
-      ? `筛出了 ${filteredTasks.length} 条，先看这些就够了。`
-      : `一共有 ${tasks.length} 条任务，可以先看快到期或正在做的。`;
-  const signalTitle = hasActiveFilters ? "当前筛选视图已锁定" : "任务队列正在待命";
-  const signalDescription = hasActiveFilters
-    ? "下面这批任务已经按你的条件收窄，先处理它们，别让注意力到处散步。"
-    : "搜索、筛选和状态灯一起工作。你只管把任务放进来，剩下的节奏让界面帮你提醒。";
-  const motionKey = `${filters.query}|${filters.tag}|${filters.status}|${filters.priority}|${filters.due}|${filters.risk}|${filters.date}|${filters.range}|${filters.sort}|${filteredTasks.map((task) => `${task.id}:${task.status}`).join(",")}`;
   const workspaceState = getWorkspaceState({
     isAuthLoading,
     isTaskLoading: isLoading,

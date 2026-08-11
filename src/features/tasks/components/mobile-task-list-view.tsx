@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
-import type { TaskFilters } from "@/features/tasks/components/task-filter-bar";
+import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";

@@ -1,4 +1,5 @@
 import { TaskListClient } from "@/features/tasks/components/task-list-client";
+import { formatTaskDateParam, parseTaskDateParam } from "@/features/tasks/utils/task-date-filters";
 import { PageContainer } from "@/shared/components/layout/page-container";
 import { DASHBOARD_RANGE_VALUES, TASK_DUE_FILTERS, TASK_RISK_FILTERS } from "@/shared/lib/constants/query-params";
 
@@ -8,6 +9,7 @@ type TasksPageProps = {
 
 export default async function TasksPage({ searchParams }: TasksPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const parsedDate = parseTaskDateParam(typeof resolvedSearchParams?.date === "string" ? resolvedSearchParams.date : undefined);
   const initialFilters = {
     query: typeof resolvedSearchParams?.query === "string" ? resolvedSearchParams.query : "",
     tag: typeof resolvedSearchParams?.tag === "string" ? resolvedSearchParams.tag : "",
@@ -37,7 +39,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
       resolvedSearchParams?.risk === TASK_RISK_FILTERS.low
         ? resolvedSearchParams.risk
         : "",
-    date: parseTaskDateParam(typeof resolvedSearchParams?.date === "string" ? resolvedSearchParams.date : undefined),
+    date: parsedDate ? formatTaskDateParam(parsedDate) : "",
     range:
       resolvedSearchParams?.range === DASHBOARD_RANGE_VALUES.today ||
       resolvedSearchParams?.range === DASHBOARD_RANGE_VALUES.week ||
@@ -58,28 +60,4 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
       <TaskListClient initialFilters={initialFilters} />
     </PageContainer>
   );
-}
-
-
-
-function parseTaskDateParam(value: string | undefined) {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return "";
-  }
-
-  const date = new Date(`${value}T00:00:00`);
-
-  if (Number.isNaN(date.getTime()) || formatDateParam(date) !== value) {
-    return "";
-  }
-
-  return value;
-}
-
-function formatDateParam(value: Date) {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const date = String(value.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${date}`;
 }
