@@ -16,7 +16,7 @@ import {
   parseTaskDateParam,
   startOfTaskDay,
 } from "@/features/tasks/utils/task-date-filters";
-import { getTaskDueMeta, sortTasks } from "@/features/tasks/utils/task-deadline";
+import { getTaskDueMeta, matchesTaskDueFilter, sortTasks } from "@/features/tasks/utils/task-deadline";
 import {
   DASHBOARD_RANGE_VALUES,
   TASK_DUE_FILTERS,
@@ -110,7 +110,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       const matchPriority = filters.priority === "all" || task.priority === filters.priority;
       const hasDateRangeFilter = hasActiveDateRangeFilter(filters.date, filters.range);
       const matchDateRange = matchesDateRangeFilter(task, filters.date, filters.range);
-      const matchDue = hasDateRangeFilter || !filters.due || matchesDueFilter(task, filters.due);
+      const matchDue = hasDateRangeFilter || !filters.due || matchesTaskDueFilter(task, filters.due);
       const matchRisk = !filters.risk || matchesRiskFilter(task, filters.risk);
 
       return matchQuery && matchTag && matchStatus && matchPriority && matchDateRange && matchDue && matchRisk;
@@ -399,28 +399,6 @@ function areFiltersEqual(left: TaskFilters, right: TaskFilters) {
     left.range === right.range &&
     left.sort === right.sort
   );
-}
-
-function matchesDueFilter(task: Task, due: TaskDueFilter) {
-  if (task.status === "done") {
-    return false;
-  }
-
-  const dueMeta = getTaskDueMeta(task);
-
-  if (due === TASK_DUE_FILTERS.near) {
-    return dueMeta.isDueToday || dueMeta.isUpcoming;
-  }
-
-  if (due === TASK_DUE_FILTERS.today) {
-    return dueMeta.isDueToday;
-  }
-
-  if (due === TASK_DUE_FILTERS.upcoming) {
-    return dueMeta.isUpcoming;
-  }
-
-  return dueMeta.isOverdue;
 }
 
 function matchesRiskFilter(task: Task, risk: TaskRiskFilter) {
