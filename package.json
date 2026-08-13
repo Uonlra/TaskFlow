@@ -9,7 +9,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "start": "next start",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:mock": "playwright test test/e2e/login.spec.ts test/e2e/auth-guard.spec.ts test/e2e/task-create.spec.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",
