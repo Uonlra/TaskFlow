@@ -17,7 +17,6 @@ type DashboardV2ShellProps = {
   isLoading?: boolean;
   isEmpty?: boolean;
   isAccountEmpty?: boolean;
-  totalTaskCount?: number;
   rangeOptions: DashboardRangeOption[];
   onRangeChange: (range: DashboardAnalyticsRange) => void;
   priorityFilters: DashboardPriorityFilters;
@@ -33,7 +32,6 @@ export function DashboardV2Shell({
   isLoading = false,
   isEmpty = false,
   isAccountEmpty = false,
-  totalTaskCount = 0,
   rangeOptions,
   onRangeChange,
   priorityFilters,
@@ -92,7 +90,13 @@ export function DashboardV2Shell({
       />
       <div className="dashboard-v2-grid">
         <div className="dashboard-v2-grid__main">
-          <DashboardTrendPanel stats={stats} trend={stats.trend} range={range} rangeLabel={rangeLabel} isEmpty={isEmpty} />
+          <DashboardTrendPanel
+            stats={stats}
+            trend={stats.trend}
+            range={range}
+            rangeLabel={rangeLabel}
+            isEmpty={isEmpty}
+          />
           <DashboardDistributionPanel
             statusDistribution={stats.statusDistribution}
             priorityDistribution={stats.priorityDistribution}
@@ -103,8 +107,17 @@ export function DashboardV2Shell({
           />
         </div>
         <aside className="dashboard-v2-grid__aside">
-          <DashboardFocusPanel tasks={stats.focusTasks} deadlines={stats.upcomingDeadlines} range={range} showFocus={false} />
-          <DashboardRiskPanel risks={stats.overdueRisk} overdueCount={stats.overdueCount} isEmpty={isEmpty} />
+          <DashboardFocusPanel
+            tasks={stats.focusTasks}
+            deadlines={stats.upcomingDeadlines}
+            range={range}
+            showFocus={false}
+          />
+          <DashboardRiskPanel
+            risks={stats.overdueRisk}
+            overdueCount={stats.overdueCount}
+            isEmpty={isEmpty}
+          />
         </aside>
       </div>
     </section>

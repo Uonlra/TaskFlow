@@ -7,10 +7,19 @@ import { MobileDashboardOverview } from "@/features/dashboard/components/mobile-
 import { DashboardV2Shell } from "@/features/dashboard/components/dashboard-v2-shell";
 import type { DashboardPriorityFilters } from "@/features/dashboard/components/dashboard-range-menu";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
-import type { Task } from "@/features/tasks/types/task.types";
-import { buildDashboardStats, buildFocusTasks } from "@/features/tasks/utils/task-analytics";
-import { getTaskDueMeta, matchesTaskDueFilter } from "@/features/tasks/utils/task-deadline";
-import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
+import {
+  buildDashboardStats,
+  buildFocusTasks,
+  filterTasksByRange,
+} from "@/features/tasks/utils/task-analytics";
+import {
+  getTaskDueMeta,
+  matchesTaskDueFilter,
+} from "@/features/tasks/utils/task-deadline";
+import {
+  WorkspaceAuthCheckingNotice,
+  WorkspaceStateNotice,
+} from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useTaskStore } from "@/features/tasks/store/task-store";
@@ -23,7 +32,11 @@ const rangeOptions: Array<{ value: DashboardRange; label: string }> = [
   { value: "all", label: "全部" },
 ];
 
-const initialPriorityFilters: DashboardPriorityFilters = { status: "all", priority: "all", due: "" };
+const initialPriorityFilters: DashboardPriorityFilters = {
+  status: "all",
+  priority: "all",
+  due: "",
+};
 
 type DashboardClientProps = {
   initialRange?: DashboardRange;
@@ -35,7 +48,8 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [range, setRange] = useState<DashboardRange>(initialRange);
-  const [priorityFilters, setPriorityFilters] = useState<DashboardPriorityFilters>(initialPriorityFilters);
+  const [priorityFilters, setPriorityFilters] =
+    useState<DashboardPriorityFilters>(initialPriorityFilters);
   const tasks = useTaskStore((state) => state.tasks);
   const isLoading = useTaskStore((state) => state.isLoading);
   const error = useTaskStore((state) => state.error);
@@ -54,16 +68,25 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     setRange((current) => (current === nextRange ? current : nextRange));
   }, [searchParams]);
 
-  const scopedTasks = useMemo(() => filterTasksByRange(tasks, range), [range, tasks]);
-  const stats = useMemo(() => buildDashboardStats(tasks, { range }), [tasks, range]);
+  const scopedTasks = useMemo(
+    () => filterTasksByRange(tasks, range),
+    [range, tasks],
+  );
+  const stats = useMemo(
+    () => buildDashboardStats(tasks, { range }),
+    [tasks, range],
+  );
   const priorityTasks = useMemo(() => {
-    const filteredTasks = scopedTasks.filter((task) => (
-      (priorityFilters.status === "all" || task.status === priorityFilters.status) &&
-      (priorityFilters.priority === "all" || task.priority === priorityFilters.priority) &&
-      (!priorityFilters.due || matchesTaskDueFilter(task, priorityFilters.due))
-    ));
+    const filteredTasks = scopedTasks.filter(
+      (task) =>
+        (priorityFilters.status === "all" || task.status === priorityFilters.status) &&
+        (priorityFilters.priority === "all" || task.priority === priorityFilters.priority) &&
+        (!priorityFilters.due || matchesTaskDueFilter(task, priorityFilters.due)),
+    );
 
-    return buildFocusTasks(filteredTasks, { includeCompleted: priorityFilters.status === "done" });
+    return buildFocusTasks(filteredTasks, {
+      includeCompleted: priorityFilters.status === "done",
+    });
   }, [priorityFilters, scopedTasks]);
   const workspaceState = getWorkspaceState({
     isAuthLoading,
@@ -71,7 +94,6 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     taskCount: tasks.length,
     userId: user?.id,
   });
-  const isSyncing = workspaceState === "syncing";
   const isAccountEmpty = workspaceState === "account-empty";
   const isRangeEmpty = isAccountEmpty || (workspaceState === "ready" && stats.totalCount === 0);
   const activeScopedTasks = useMemo(
@@ -122,7 +144,10 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     await createTaskAsync(values, user?.id);
   };
 
-  if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
+  if (workspaceState === "auth-checking") {
+    return <WorkspaceAuthCheckingNotice />;
+  }
+
   if (workspaceState === "guest") {
     return (
       <WorkspaceStateNotice
@@ -171,36 +196,9 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   );
 }
 
-function filterTasksByRange(tasks: Task[], range: DashboardRange) {
-  if (range === "all") {
-    return tasks;
-  }
-
-  const now = new Date();
-  const start = new Date(now);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(start);
-
-  if (range === "today") {
-    end.setDate(start.getDate() + 1);
-  } else {
-    end.setDate(start.getDate() + 7);
-  }
-
-  return tasks.filter((task) => {
-    const checkpoints = [task.createdAt, task.updatedAt, task.completedAt, task.dueDate].filter(
-      Boolean,
-    ) as string[];
-
-    return checkpoints.some((value) => {
-      const timestamp = new Date(value).getTime();
-      return !Number.isNaN(timestamp) && timestamp >= start.getTime() && timestamp < end.getTime();
-    });
-  });
-}
-
-function parseDashboardRange(value: string | null | undefined): DashboardRange {
+function parseDashboardRange(
+  value: string | null | undefined,
+): DashboardRange {
   if (value === "week" || value === "all") {
     return value;
   }
