@@ -75,7 +75,7 @@ describe("LoginForm", () => {
 
         renderLoginForm();
 
-        await user.click(screen.getByRole("button", { name: "登录", exact: true }));
+        await user.click(screen.getByRole("button", { name: /^登录$/ }));
 
         expect(
             await screen.findByText("请输入有效的邮箱地址。"),
@@ -112,7 +112,7 @@ describe("LoginForm", () => {
         await user.type(passwordInput, "password123");
 
         await user.click(
-            screen.getByRole("button", { name: "登录", exact: true }),
+            screen.getByRole("button", { name: /^登录$/ }),
         );
 
         expect(
