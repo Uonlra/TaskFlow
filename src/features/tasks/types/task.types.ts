@@ -14,3 +14,8 @@ export type Task = {
   updatedAt?: string;
   completedAt?: string;
 };
+
+export type TaskPageInitialData = {
+  userId: string;
+  tasks: Task[];
+};

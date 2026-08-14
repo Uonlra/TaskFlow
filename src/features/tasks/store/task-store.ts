@@ -12,6 +12,7 @@ type TaskStore = {
   error: string | null;
   lastLoadedUserId: string | null;
   clearTasks: () => void;
+  initializeTasks: (tasks: Task[], userId: string) => void;
   syncTasks: (userId?: string) => Promise<void>;
   createTaskAsync: (input: TaskFormValues, userId?: string) => Promise<string>;
   updateTask: (id: string, input: TaskFormValues, userId?: string) => Promise<void>;
@@ -25,6 +26,18 @@ export const useTaskStore = create<TaskStore>()((set) => ({
   error: null,
   lastLoadedUserId: null,
   clearTasks: () => set({ tasks: [], error: null, lastLoadedUserId: null }),
+  initializeTasks: (tasks, userId) => set((state) => {
+    if (state.lastLoadedUserId === userId) {
+      return state;
+    }
+
+    return {
+      tasks: tasks.map(normalizeTask),
+      isLoading: false,
+      error: null,
+      lastLoadedUserId: userId,
+    };
+  }),
   syncTasks: async (userId?: string): Promise<void> => {
     if (!hasAppwritePublicEnv || !userId) {
       set({ tasks: [], error: null, lastLoadedUserId: null, isLoading: false });
