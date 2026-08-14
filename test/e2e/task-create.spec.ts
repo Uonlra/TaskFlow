@@ -103,11 +103,17 @@ test.describe("创建任务", () => {
             .getByRole("button", { name: "新建任务", exact: true })
             .click();
 
-        await page.getByRole("textbox", { name: "标题" }).fill("完成 E2E 学习");
+        await expect(page.locator("html")).toHaveCSS("overflow", "hidden");
+        await expect(page.locator("body")).toHaveCSS("position", "fixed");
+        await expect(page.locator(".task-dialog")).toHaveCSS("overflow-y", "auto");
+
+        await page.getByRole("textbox", { name: "任务名称" }).fill("完成 E2E 学习");
 
         await page
-            .getByRole("textbox", { name: "说明" })
+            .getByRole("textbox", { name: "备注" })
             .fill("使用 Playwright 验证任务创建流程");
+
+        await page.getByRole("button", { name: "安排与分类" }).click();
 
         await page.getByRole("textbox", { name: "标签" }).fill("测试，学习");
 

@@ -41,9 +41,9 @@ test.describe("TaskFlow 真实冒烟测试", () => {
 
         await page.getByRole("button", { name: "新建任务", exact: true }).click();
 
-        await page.getByRole("textbox", { name: "标题" }).fill(title);
+        await page.getByRole("textbox", { name: "任务名称" }).fill(title);
         await page
-            .getByRole("textbox", { name: "说明" })
+            .getByRole("textbox", { name: "备注" })
             .fill("真实 Appwrite 冒烟测试任务");
         await page.getByRole("button", { name: "创建任务", exact: true }).click();
 

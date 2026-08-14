@@ -1,3 +1,4 @@
+/* Hallmark · component: task form dialog · genre: modern-minimal · theme: project cool-blue tokens */
 .dashboard-analytics-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -905,27 +906,28 @@
   display: grid;
   place-items: center;
   overflow-y: auto;
-  padding: 20px;
-  background: rgba(128, 128, 128, 0.65);
+  padding: 24px;
+  background: rgba(23, 26, 32, 0.42);
 }
 
 .dialog-close-button {
   width: 40px;
   height: 40px;
   border: 1px solid var(--border);
-  border-radius: 4px;
-  background: #ffffff;
+  border-radius: 6px;
+  background: var(--surface-strong);
   color: var(--foreground);
   font-family: var(--font-text);
   font-size: 18px;
 }
 
 .task-dialog {
-  width: min(620px, 100%);
-  max-height: min(860px, calc(100vh - 40px));
+  width: min(660px, 100%);
+  max-height: min(860px, calc(100dvh - 48px));
   overflow-y: auto;
-  border-radius: 4px;
-  padding: 24px;
+  overscroll-behavior: contain;
+  border-radius: 8px;
+  padding: 28px;
 }
 
 .task-dialog__header {
@@ -933,14 +935,16 @@
   justify-content: space-between;
   gap: 16px;
   align-items: flex-start;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
 }
 
 .task-dialog__eyebrow,
 .confirm-dialog__eyebrow {
   margin: 0;
   color: var(--primary);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 650;
 }
 
 .confirm-dialog__eyebrow--danger {
@@ -949,17 +953,18 @@
 
 .task-dialog__title,
 .confirm-dialog__title {
-  margin: 10px 0 0;
+  margin: 7px 0 0;
   color: var(--foreground);
   font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 500;
+  font-size: 26px;
+  font-weight: 600;
   line-height: 1.2;
 }
 
 .task-dialog__description,
 .confirm-dialog__description {
-  margin: 8px 0 0;
+  max-width: 480px;
+  margin: 7px 0 0;
   color: var(--muted-strong);
   font-size: 14px;
   line-height: 1.43;
@@ -967,13 +972,82 @@
 
 .task-dialog__form {
   display: grid;
-  gap: 16px;
-  margin-top: 20px;
+  gap: 18px;
+  margin-top: 22px;
 }
 
 .task-dialog__field {
   display: grid;
+  gap: 7px;
+}
+
+.task-dialog__label {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.task-dialog__label small,
+.task-dialog__schedule-head small,
+.task-dialog__planning-toggle small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.task-dialog__core,
+.task-dialog__planning {
+  display: grid;
+  gap: 16px;
+}
+
+.task-dialog__draft-note {
+  margin: 0;
+  padding: 9px 11px;
+  border-left: 2px solid var(--primary);
+  background: var(--primary-soft);
+  color: var(--muted-strong);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.task-dialog__planning-toggle {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
   gap: 8px;
+  padding: 10px 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.task-dialog__planning-toggle small {
+  margin-right: auto;
+}
+
+.task-dialog__planning-caret {
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 180ms ease-out;
+}
+
+.task-dialog__planning-toggle.is-open .task-dialog__planning-caret {
+  transform: rotate(225deg) translate(-2px, -1px);
 }
 
 .task-dialog__grid {
@@ -982,24 +1056,119 @@
   gap: 14px;
 }
 
-.task-dialog__hint {
-  padding: 12px;
+.task-priority-segment,
+.task-date-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.task-priority-segment button,
+.task-date-presets button {
+  min-height: 40px;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 5px;
+  background: var(--surface-strong);
   color: var(--muted-strong);
-  background: #ffffff;
-  font-family: var(--font-text);
-  font-size: 14px;
-  line-height: 1.43;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.task-priority-segment button:hover,
+.task-date-presets button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface);
+}
+
+.task-priority-segment button.is-active,
+.task-date-presets button.is-active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.task-priority-segment button.is-active--high {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--danger);
+}
+
+.task-priority-segment button.is-active--low {
+  border-color: var(--success);
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--success);
+}
+
+.task-dialog__tag-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: -8px;
+}
+
+.task-dialog__tag-preview span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--muted-strong);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.task-dialog__schedule {
+  display: grid;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.task-date-picker {
+  width: 100%;
+  cursor: pointer;
+}
+
+.task-date-picker .task-date {
+  cursor: pointer;
+}
+
+.task-dialog__schedule-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.task-dialog__schedule-head > div {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.task-dialog__schedule-head > button {
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .task-dialog__actions,
 .confirm-dialog__actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 8px;
+  margin-top: 6px;
   flex-wrap: wrap;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.task-dialog__actions .tesla-action {
+  min-height: 42px;
 }
 
 .task-dialog__error,
