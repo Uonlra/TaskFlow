@@ -94,6 +94,7 @@ test.describe("创建任务", () => {
         });
 
         await page.goto("/tasks");
+        await page.setViewportSize({ width: 1440, height: 620 });
 
         await expect(
             page.getByRole("heading", { name: "任务", exact: true }),
@@ -103,11 +104,30 @@ test.describe("创建任务", () => {
             .getByRole("button", { name: "新建任务", exact: true })
             .click();
 
-        await page.getByRole("textbox", { name: "标题" }).fill("完成 E2E 学习");
+        await expect(page.locator("html")).toHaveCSS("overflow", "hidden");
+        await expect(page.locator("body")).toHaveCSS("position", "fixed");
+        await expect(page.locator(".task-dialog")).toHaveCSS("overflow-y", "auto");
+
+        await page.getByRole("textbox", { name: "任务名称" }).fill("完成 E2E 学习");
 
         await page
-            .getByRole("textbox", { name: "说明" })
+            .getByRole("textbox", { name: "备注" })
             .fill("使用 Playwright 验证任务创建流程");
+
+        await page.getByRole("button", { name: "具体描述" }).click();
+
+        const taskDialog = page.getByRole("dialog");
+        const initialDialogScrollTop = await taskDialog.evaluate((element) => element.scrollTop);
+        await taskDialog.hover();
+        await page.mouse.wheel(0, 420);
+        await expect.poll(() => taskDialog.evaluate((element) => element.scrollTop)).toBeGreaterThan(initialDialogScrollTop);
+
+        await taskDialog.getByRole("button", { name: /明天/ }).click();
+        await expect(taskDialog.locator('input[name="dueDate"]')).not.toHaveValue("");
+
+        await taskDialog.getByRole("button", { name: "选择具体日期" }).click();
+        await expect(page.getByRole("dialog", { name: "选择截止日期" })).toBeVisible();
+        await taskDialog.getByRole("button", { name: "选择具体日期" }).click();
 
         await page.getByRole("textbox", { name: "标签" }).fill("测试，学习");
 
