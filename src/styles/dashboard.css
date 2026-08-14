@@ -764,3 +764,21 @@
     display: none;
   }
 }
+
+/* Keep the shared dashboard shell responsive when route styles load after globals.css. */
+@media (max-width: 960px) {
+  .dashboard-sidebar {
+    height: auto;
+    padding: 12px 16px 11px;
+  }
+
+  .dashboard-main {
+    min-height: calc(100dvh - 71px);
+    padding: 0 16px calc(96px + env(safe-area-inset-bottom));
+    background: var(--page-background);
+  }
+
+  .dashboard-content {
+    margin-top: 0;
+  }
+}

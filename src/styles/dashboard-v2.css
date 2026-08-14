@@ -1,4 +1,5 @@
 /* Hallmark · genre: modern-minimal · macrostructure: Workbench · tone: utilitarian · anchor hue: cool-blue */
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4 */
 .dashboard-v2-shell {
   display: grid;
   gap: 14px;
@@ -654,15 +655,23 @@
 @media (prefers-reduced-motion: reduce) { .dashboard-workspace__task { transition: none; } }
 
 /* Step 15: Compact range tools and outcome-led progress */
-.dashboard-range-menu { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
-.dashboard-range-menu__select-wrap { position: relative; min-width: 92px; }
-.dashboard-range-menu__select { width: 100%; min-height: 32px; padding: 0 24px 0 8px; border: 0; appearance: none; background: transparent; color: var(--muted-strong); cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; }
-.dashboard-range-menu__chevron { position: absolute; top: 50%; right: 8px; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; color: var(--muted); pointer-events: none; transform: translateY(-70%) rotate(45deg); }
+.dashboard-range-menu { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.dashboard-range-menu__scope { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.dashboard-range-menu__scope-label { color: var(--muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.dashboard-range-menu__scope .custom-select { width: 92px; }
+.dashboard-range-menu__scope .task-field { min-height: 32px; padding: 0 8px; border-color: transparent; border-radius: 5px; background: var(--surface); color: var(--muted-strong); font-size: 12px; font-weight: 600; }
+.dashboard-range-menu__scope .task-field:hover { border-color: var(--border); background: var(--surface-strong); }
+.dashboard-range-menu__scope .task-field:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.dashboard-range-menu__scope .custom-select__caret { width: 7px; height: 7px; border-width: 1.5px; }
+.dashboard-range-menu__divider { width: 1px; height: 20px; background: var(--border); }
 .dashboard-range-menu__tool, .dashboard-range-menu__more > summary { display: grid; width: 32px; height: 32px; padding: 0; border: 0; place-items: center; border-radius: 5px; background: transparent; color: var(--muted); cursor: pointer; list-style: none; }
 .dashboard-range-menu__tool:hover, .dashboard-range-menu__more > summary:hover { background: var(--surface); color: var(--foreground); }
-.dashboard-range-menu__tool:focus-visible, .dashboard-range-menu__select:focus-visible, .dashboard-range-menu__more > summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.dashboard-range-menu__tool:focus-visible, .dashboard-range-menu__more > summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.dashboard-range-menu__tool.is-active { background: var(--primary-soft); color: var(--primary); }
+.dashboard-range-menu__tool b { position: absolute; top: 1px; right: 1px; display: grid; width: 14px; height: 14px; place-items: center; border: 2px solid var(--surface-strong); border-radius: 50%; background: var(--primary); color: #fff; font-size: 9px; font-variant-numeric: tabular-nums; line-height: 1; }
 .dashboard-range-menu__tool--filter span { position: relative; width: 13px; height: 8px; border: 1.5px solid currentColor; border-bottom: 0; clip-path: polygon(0 0, 100% 0, 63% 60%, 63% 100%, 37% 100%, 37% 60%); }
 .dashboard-range-menu__tool--filter span::after { position: absolute; bottom: -6px; left: 5px; width: 2px; height: 5px; background: currentColor; content: ""; }
+.dashboard-range-menu__filter > summary { position: relative; }
 .dashboard-range-menu__more { position: relative; }
 .dashboard-range-menu__more > summary::-webkit-details-marker { display: none; }
 .dashboard-range-menu__more > summary span { width: 3px; height: 3px; border-radius: 50%; background: currentColor; box-shadow: 5px 0 currentColor, 10px 0 currentColor; }
@@ -680,7 +689,7 @@
 .dashboard-workspace__progress-copy span { color: var(--muted); font-size: 12px; line-height: 1.35; }
 .dashboard-workspace__progress-copy strong { color: var(--foreground); font-size: 24px; font-variant-numeric: tabular-nums; line-height: 1.15; }
 .dashboard-workspace__progress-overdue strong { color: var(--danger); }
-@media (max-width: 760px) { .dashboard-workspace__head--toolbar { align-items: stretch; flex-direction: column; gap: 10px; } .dashboard-range-menu { align-self: flex-start; } .dashboard-workspace__progress-body { grid-template-columns: 118px minmax(0, 1fr); gap: 12px; } .dashboard-workspace__progress-visual p { font-size: 11px; } .dashboard-workspace__progress-copy > div { padding-left: 12px; } }
+@media (max-width: 760px) { .dashboard-workspace__head--toolbar { align-items: stretch; flex-direction: column; gap: 10px; } .dashboard-range-menu { align-self: flex-start; } .dashboard-range-menu__scope-label { font-size: 11px; } .dashboard-range-menu__scope .custom-select { width: 84px; } .dashboard-workspace__progress-body { grid-template-columns: 118px minmax(0, 1fr); gap: 12px; } .dashboard-workspace__progress-visual p { font-size: 11px; } .dashboard-workspace__progress-copy > div { padding-left: 12px; } }
 
 /* Step 16: Range-aware today pace view */
 .dashboard-v2-today-pace .dashboard-v2-panel__head { align-items: flex-start; }
@@ -727,11 +736,12 @@
 
 /* Step 18: In-place priority filtering and compact status signals */
 .dashboard-range-menu__filter { position: relative; }
-.dashboard-range-menu__filter > summary::-webkit-details-marker { display: none; }
-.dashboard-range-menu__filter-menu { position: absolute; z-index: 4; top: calc(100% + 6px); right: 0; display: grid; width: 224px; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-strong); box-shadow: var(--shadow); }
+.dashboard-range-menu__filter-menu { display: grid; gap: 12px; overflow-y: auto; padding: 14px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-strong); box-shadow: var(--shadow); }
 .dashboard-range-menu__filter-head { display: flex; align-items: center; justify-content: space-between; color: var(--foreground); font-size: 13px; font-weight: 600; }
+.dashboard-range-menu__filter-head > div { display: inline-flex; align-items: center; gap: 10px; }
 .dashboard-range-menu__filter-head button { padding: 0; border: 0; background: transparent; color: var(--primary); cursor: pointer; font: inherit; font-size: 12px; }
 .dashboard-range-menu__filter-head button:hover { color: var(--primary-strong); }
+.dashboard-range-menu__filter-head button:active { transform: translateY(1px); }
 .dashboard-range-menu__filter-head button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .dashboard-range-menu__filter-menu label { display: grid; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 600; }
 .dashboard-range-menu__filter-menu .custom-select { width: 100%; }
@@ -746,7 +756,7 @@
 .dashboard-workspace__metric-icon--deadline::before, .dashboard-workspace__metric-icon--deadline::after { position: absolute; top: -2px; width: 1.5px; height: 4px; border-radius: 2px; background: currentColor; content: ""; }
 .dashboard-workspace__metric-icon--deadline::before { left: 3px; }
 .dashboard-workspace__metric-icon--deadline::after { right: 3px; }
-@media (max-width: 760px) { .dashboard-range-menu__filter-menu { right: auto; left: 0; width: min(224px, calc(100vw - 52px)); } }
+@media (max-width: 760px) { .dashboard-range-menu__filter-menu { padding: 12px; } }
 
 /* Step 19: Soft metric glyphs */
 .dashboard-workspace__metric { display: flex; align-items: center; gap: 12px; }
