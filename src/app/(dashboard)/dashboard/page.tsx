@@ -1,3 +1,6 @@
+import "@/styles/dashboard-v2.css";
+import "@/styles/responsive-dashboard.css";
+
 import { DashboardClient } from "@/features/dashboard/components/dashboard-client";
 import { PageContainer } from "@/shared/components/layout/page-container";
 

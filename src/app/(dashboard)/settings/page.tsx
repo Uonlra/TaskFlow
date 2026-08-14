@@ -1,3 +1,6 @@
+import "@/styles/settings.css";
+import "@/styles/responsive-settings.css";
+
 import { SettingsClient } from "@/features/settings/components/settings-client";
 import { PageContainer } from "@/shared/components/layout/page-container";
 import { PageHeader } from "@/shared/components/layout/page-header";
@@ -12,4 +15,3 @@ export default function SettingsPage() {
     </PageContainer>
   );
 }
-

@@ -1,3 +1,7 @@
+import "@/styles/auth.css";
+import "@/styles/auth-v2.css";
+import "@/styles/responsive-auth.css";
+
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 

@@ -1,0 +1,366 @@
+.dashboard-mobile-only {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .dashboard-desktop-only {
+    display: none;
+  }
+
+  .dashboard-mobile-only {
+    display: block;
+  }
+
+  .mobile-dashboard {
+    display: grid;
+    gap: 18px;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2px 0 28px;
+    color: #171a20;
+  }
+
+  .mobile-dashboard__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 4px 2px 0;
+  }
+
+  .mobile-dashboard__date,
+  .mobile-dashboard__progress-copy p,
+  .mobile-dashboard__progress-copy span,
+  .mobile-dashboard__metric span,
+  .mobile-dashboard__section-head span,
+  .mobile-dashboard__section-head a,
+  .mobile-dashboard__task-copy small,
+  .mobile-dashboard__timeline-item small,
+  .mobile-dashboard__project-card small,
+  .mobile-dashboard__empty {
+    margin: 0;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+
+  .mobile-dashboard__header h1 {
+    margin: 4px 0 0;
+    font-size: 34px;
+    font-weight: 650;
+    line-height: 1.05;
+  }
+
+  .mobile-dashboard__icon-button {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+  }
+
+  .mobile-dashboard__icon-button span,
+  .mobile-dashboard__icon-button span::before,
+  .mobile-dashboard__icon-button span::after {
+    display: block;
+    width: 15px;
+    height: 2px;
+    border-radius: 999px;
+    background: #111827;
+    content: "";
+  }
+
+  .mobile-dashboard__icon-button span {
+    position: relative;
+  }
+
+  .mobile-dashboard__icon-button span::before,
+  .mobile-dashboard__icon-button span::after {
+    position: absolute;
+    left: 0;
+  }
+
+  .mobile-dashboard__icon-button span::before {
+    top: -6px;
+  }
+
+  .mobile-dashboard__icon-button span::after {
+    top: 6px;
+  }
+
+  .mobile-dashboard__range {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 4px;
+    border: 1px solid #eceff3;
+    border-radius: 8px;
+    background: #f7f8fa;
+  }
+
+  .mobile-dashboard__range-button {
+    min-height: 36px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.2;
+  }
+
+  .mobile-dashboard__range-button.is-active {
+    background: #ffffff;
+    color: #111827;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  }
+
+  .mobile-dashboard__progress-card,
+  .mobile-dashboard__task-row,
+  .mobile-dashboard__timeline-item,
+  .mobile-dashboard__project-card {
+    border: 1px solid #eceff3;
+    background: #ffffff;
+  }
+
+  .mobile-dashboard__progress-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px;
+    align-items: center;
+    min-height: 144px;
+    padding: 20px;
+    border-radius: 8px;
+  }
+
+  .mobile-dashboard__progress-ring {
+    width: 96px;
+    height: 96px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: conic-gradient(#3e6ae1 var(--mobile-progress), #eef2f7 0deg);
+  }
+
+  .mobile-dashboard__progress-ring::before {
+    position: absolute;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #ffffff;
+    content: "";
+  }
+
+  .mobile-dashboard__progress-ring span {
+    position: relative;
+    z-index: 1;
+    color: #111827;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .mobile-dashboard__progress-copy h2 {
+    margin: 4px 0 2px;
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .mobile-dashboard__metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .mobile-dashboard__metric {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+    min-height: 76px;
+    padding: 12px 10px;
+    border: 1px solid #eceff3;
+    border-radius: 8px;
+    background: #ffffff;
+  }
+
+  .mobile-dashboard__metric strong {
+    color: #111827;
+    font-size: 25px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .mobile-dashboard__metric--blue {
+    border-color: #dce6ff;
+  }
+
+  .mobile-dashboard__metric--red {
+    border-color: #ffe0e0;
+  }
+
+  .mobile-dashboard__metric--amber {
+    border-color: #fdecc8;
+  }
+
+  .mobile-dashboard__section {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobile-dashboard__section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 2px;
+  }
+
+  .mobile-dashboard__section-head h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 650;
+    line-height: 1.25;
+  }
+
+  .mobile-dashboard__task-stack,
+  .mobile-dashboard__timeline {
+    display: grid;
+    gap: 8px;
+  }
+
+  .mobile-dashboard__task-row {
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    min-height: 68px;
+    padding: 13px 14px;
+    border-radius: 8px;
+  }
+
+  .mobile-dashboard__task-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #9ca3af;
+  }
+
+  .mobile-dashboard__task-row--high .mobile-dashboard__task-status {
+    background: #ef4444;
+  }
+
+  .mobile-dashboard__task-row--medium .mobile-dashboard__task-status {
+    background: #f59e0b;
+  }
+
+  .mobile-dashboard__task-copy {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+  }
+
+  .mobile-dashboard__task-copy strong,
+  .mobile-dashboard__timeline-item strong,
+  .mobile-dashboard__project-card strong {
+    overflow: hidden;
+    color: #111827;
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-dashboard__task-priority {
+    min-width: 30px;
+    min-height: 28px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 6px;
+    background: #f3f4f6;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .mobile-dashboard__timeline-item {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    min-height: 58px;
+    padding: 11px 14px;
+    border-radius: 8px;
+  }
+
+  .mobile-dashboard__timeline-item time {
+    color: #3e6ae1;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .mobile-dashboard__timeline-item span {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+  }
+
+  .mobile-dashboard__project-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .mobile-dashboard__project-card {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 3px 10px;
+    align-items: center;
+    min-height: 76px;
+    padding: 13px;
+    border-radius: 8px;
+  }
+
+  .mobile-dashboard__project-card span {
+    grid-row: span 2;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    background: #f3f6ff;
+    color: #3e6ae1;
+    font-size: 14px;
+    font-weight: 750;
+    line-height: 1;
+  }
+
+  .mobile-dashboard__empty {
+    padding: 16px;
+    border: 1px dashed #d7dce3;
+    border-radius: 8px;
+    background: #ffffff;
+  }
+}
+
+@media (max-width: 520px) {
+  .mobile-dashboard__metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mobile-dashboard__progress-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mobile-dashboard__project-grid {
+    grid-template-columns: 1fr;
+  }
+}

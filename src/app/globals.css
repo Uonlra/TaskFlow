@@ -1,15 +1,2 @@
 @import "../styles/base.css";
-@import "../styles/dashboard.css";
-@import "../styles/dashboard-v2.css";
-@import "../styles/calendar.css";
-@import "../styles/stats.css";
-@import "../styles/auth.css";
-@import "../styles/tasks.css";
 @import "../styles/responsive.css";
-
-@import "../styles/auth-v2.css";
-
-@import "../styles/auth-action-gate.css";
-@import "../styles/workspace-state.css";
-@import "../styles/data-empty-state.css";
-@import "../styles/settings.css";

@@ -1,0 +1,326 @@
+.tasks-mobile-only {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .tasks-desktop-only {
+    display: none;
+  }
+
+  .tasks-mobile-only {
+    display: block;
+  }
+
+  .mobile-task-list {
+    position: relative;
+    display: grid;
+    gap: 14px;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2px 0 88px;
+    color: #171a20;
+  }
+
+  .mobile-task-list__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 4px 2px 0;
+  }
+
+  .mobile-task-list__header p,
+  .mobile-task-list__stat small,
+  .mobile-task-item__main small,
+  .mobile-task-item__tag,
+  .mobile-task-list__empty span {
+    margin: 0;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+
+  .mobile-task-list__header h1 {
+    margin: 3px 0 0;
+    color: #111827;
+    font-size: 34px;
+    font-weight: 650;
+    line-height: 1.05;
+  }
+
+  .mobile-task-list__header .tesla-action {
+    min-height: 40px;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+
+  .mobile-task-list__search {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    min-height: 46px;
+    padding: 0 14px;
+    border: 1px solid #eceff3;
+    border-radius: 8px;
+    background: #f7f8fa;
+  }
+
+  .mobile-task-list__search span {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #9ca3af;
+    border-radius: 50%;
+  }
+
+  .mobile-task-list__search span::after {
+    display: block;
+    width: 7px;
+    height: 2px;
+    margin: 10px 0 0 9px;
+    border-radius: 999px;
+    background: #9ca3af;
+    content: "";
+    transform: rotate(45deg);
+  }
+
+  .mobile-task-list__search input {
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: #111827;
+    font-size: 15px;
+    line-height: 1.3;
+  }
+
+  .mobile-task-list__chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .mobile-task-list__chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-task-list__chip {
+    flex: 0 0 auto;
+    min-height: 36px;
+    border: 1px solid #eceff3;
+    border-radius: 8px;
+    padding: 7px 14px;
+    background: #ffffff;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1.2;
+  }
+
+  .mobile-task-list__chip.is-active {
+    border-color: #111827;
+    background: #111827;
+    color: #ffffff;
+  }
+
+  .mobile-task-list__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .mobile-task-list__stat {
+    display: grid;
+    gap: 4px;
+    min-height: 66px;
+    padding: 12px;
+    border: 1px solid #eceff3;
+    border-radius: 8px;
+    background: #ffffff;
+  }
+
+  .mobile-task-list__stat strong {
+    color: #111827;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .mobile-task-list__items {
+    display: grid;
+    gap: 8px;
+  }
+
+  .mobile-task-item {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    min-height: 74px;
+    padding: 14px;
+    border: 1px solid #eceff3;
+    border-left: 3px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+  }
+
+  .mobile-task-item--high {
+    border-left-color: #ef4444;
+  }
+
+  .mobile-task-item--medium {
+    border-left-color: #f59e0b;
+  }
+
+  .mobile-task-item--low {
+    border-left-color: #10b981;
+  }
+
+  .mobile-task-item--done {
+    background: #fafafa;
+  }
+
+  .mobile-task-item__check {
+    width: 24px;
+    height: 24px;
+    margin-top: 1px;
+    border: 1.5px solid #c7ccd3;
+    border-radius: 50%;
+    background: #ffffff;
+  }
+
+  .mobile-task-item__check[aria-pressed="true"] {
+    border-color: #10b981;
+    background: #10b981;
+  }
+
+  .mobile-task-item__body {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  .mobile-task-item__main {
+    min-width: 0;
+    display: grid;
+    gap: 3px;
+  }
+
+  .mobile-task-item__main strong {
+    overflow: hidden;
+    color: #111827;
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-task-item--done .mobile-task-item__main strong {
+    color: #9ca3af;
+    text-decoration: line-through;
+  }
+
+  .mobile-task-item__meta {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .mobile-task-item__meta::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-task-item__priority,
+  .mobile-task-item__tag {
+    flex: 0 0 auto;
+    min-height: 24px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 6px;
+    padding: 3px 8px;
+    background: #f3f4f6;
+    line-height: 1;
+  }
+
+  .mobile-task-item__priority {
+    color: #374151;
+    font-size: 12px;
+    font-weight: 750;
+  }
+
+  .mobile-task-list__empty {
+    display: grid;
+    gap: 4px;
+    padding: 18px;
+    border: 1px dashed #d7dce3;
+    border-radius: 8px;
+    background: #ffffff;
+  }
+
+  .mobile-task-list__empty strong {
+    color: #111827;
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.3;
+  }
+
+  .mobile-task-list__bottom-bar {
+    position: sticky;
+    bottom: 12px;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: 1fr 1fr 52px;
+    gap: 8px;
+    align-items: center;
+    width: min(100%, 420px);
+    margin: 14px auto 0;
+    padding: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  }
+
+  .mobile-task-list__bottom-bar > a,
+  .mobile-task-list__bottom-bar .tesla-action {
+    min-height: 42px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 8px;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .mobile-task-list__bottom-bar > a[aria-current="page"] {
+    background: #f3f4f6;
+    color: #111827;
+  }
+
+  .mobile-task-list__bottom-bar .tesla-action {
+    width: 42px;
+    min-width: 42px;
+    padding: 0;
+    background: #3e6ae1;
+    color: #ffffff;
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 420px) {
+  .mobile-task-list__stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mobile-task-list__stat {
+    padding: 10px;
+  }
+}

@@ -1,3 +1,5 @@
+import "@/styles/calendar.css";
+
 import { CalendarClient } from "@/features/calendar/components/calendar-client";
 import { PageContainer } from "@/shared/components/layout/page-container";
 import { PageHeader } from "@/shared/components/layout/page-header";
