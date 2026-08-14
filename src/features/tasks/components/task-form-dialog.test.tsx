@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -66,33 +66,67 @@ describe("TaskFormDialog", () => {
     });
   });
 
-  it("可以通过日期快捷选择设置截止日期", async () => {
+  it("备注会根据内容高度自动扩展", async () => {
+    const user = userEvent.setup();
+    render(<TaskFormDialog onSubmitTask={() => {}} />);
+
+    await user.click(screen.getByRole("button", { name: "新建任务" }));
+
+    const description = screen.getByRole("textbox", { name: "备注" });
+    Object.defineProperty(description, "scrollHeight", {
+      configurable: true,
+      value: 164,
+    });
+
+    fireEvent.input(description, { target: { value: "补充一段较长的任务说明。" } });
+
+    expect(description).toHaveStyle({ height: "164px" });
+  });
+
+  it("可以通过七天日期轨道设置截止日期，并更新日期摘要", async () => {
     const user = userEvent.setup();
     render(<TaskFormDialog onSubmitTask={() => {}} />);
 
     await user.click(screen.getByRole("button", { name: "新建任务" }));
     await user.click(screen.getByRole("button", { name: "具体描述" }));
-    await user.click(screen.getByRole("button", { name: "明天" }));
+    await user.click(screen.getByRole("button", { name: /明天/ }));
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const expectedValue = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`;
 
-    expect(screen.getByLabelText("自定义截止日期")).toHaveValue(expectedValue);
+    expect(screen.getByDisplayValue(expectedValue)).toHaveAttribute("name", "dueDate");
+    expect(document.querySelector(".task-date-summary")).toHaveTextContent("明天");
   });
 
-  it("点击日期输入行会打开原生日期选择器", async () => {
+  it("桌面端可以展开紧凑月历弹层", async () => {
+    const user = userEvent.setup();
+    render(<TaskFormDialog onSubmitTask={() => {}} />);
+
+    await user.click(screen.getByRole("button", { name: "新建任务" }));
+    await user.click(screen.getByRole("button", { name: "具体描述" }));
+    await user.click(screen.getByRole("button", { name: "选择具体日期" }));
+
+    expect(screen.getByRole("dialog", { name: "选择截止日期" })).toBeInTheDocument();
+    expect(screen.getByRole("grid")).toBeInTheDocument();
+  });
+
+  it("触控设备会打开原生日期选择器", async () => {
     const showPicker = vi.fn();
     Object.defineProperty(HTMLInputElement.prototype, "showPicker", {
       configurable: true,
       value: showPicker,
+    });
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      value: vi.fn().mockReturnValue({ matches: true }),
     });
     const user = userEvent.setup();
     render(<TaskFormDialog onSubmitTask={() => {}} />);
 
     await user.click(screen.getByRole("button", { name: "新建任务" }));
     await user.click(screen.getByRole("button", { name: "具体描述" }));
-    await user.click(screen.getByLabelText("自定义截止日期"));
+    await user.click(screen.getByRole("button", { name: "选择具体日期" }));
 
     expect(showPicker).toHaveBeenCalledTimes(1);
   });

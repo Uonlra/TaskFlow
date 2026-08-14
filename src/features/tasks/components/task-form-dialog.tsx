@@ -50,10 +50,17 @@ export function TaskFormDialog({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPlanning, setShowPlanning] = useState(Boolean(initialValues));
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
+  const [isDateCalendarOpen, setIsDateCalendarOpen] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
+  const [calendarPosition, setCalendarPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const descriptionTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const dueDateInputRef = useRef<HTMLInputElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const dateComposerRef = useRef<HTMLDivElement | null>(null);
+  const dateCalendarTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const dateCalendarRef = useRef<HTMLDivElement | null>(null);
   const {
     control,
     register,
@@ -68,7 +75,13 @@ export function TaskFormDialog({
   });
   const values = watch();
   const dueDate = watch("dueDate");
+  const description = watch("description");
   const tagPreview = parseTagsInput(watch("tags"));
+  const dueDateField = register("dueDate");
+  const today = startOfDay(new Date());
+  const selectedDueDate = parseDateParam(dueDate ?? "");
+  const visibleWeek = Array.from({ length: 7 }, (_, index) => addDays(today, index));
+  const calendarDays = getCalendarDays(calendarMonth);
 
   useEffect(() => {
     setMounted(true);
@@ -110,6 +123,17 @@ export function TaskFormDialog({
   }, [mounted, open]);
 
   useEffect(() => {
+    const textarea = descriptionTextareaRef.current;
+
+    if (!open || !textarea) {
+      return;
+    }
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [description, open]);
+
+  useEffect(() => {
     if (!open) {
       return;
     }
@@ -126,6 +150,45 @@ export function TaskFormDialog({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isSubmitting, open]);
+
+  useEffect(() => {
+    if (!isDateCalendarOpen) {
+      return;
+    }
+
+    const closeCalendarOnOutsidePress = (event: PointerEvent) => {
+      if (!dateComposerRef.current?.contains(event.target as Node)) {
+        setIsDateCalendarOpen(false);
+        setCalendarPosition(null);
+      }
+    };
+
+    document.addEventListener("pointerdown", closeCalendarOnOutsidePress);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeCalendarOnOutsidePress);
+    };
+  }, [isDateCalendarOpen]);
+
+  useEffect(() => {
+    if (!open || !isDateCalendarOpen) {
+      return;
+    }
+
+    const animationFrame = window.requestAnimationFrame(updateDateCalendarPosition);
+    const dialog = dialogRef.current;
+
+    window.addEventListener("resize", updateDateCalendarPosition);
+    window.addEventListener("scroll", updateDateCalendarPosition, true);
+    dialog?.addEventListener("scroll", updateDateCalendarPosition);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", updateDateCalendarPosition);
+      window.removeEventListener("scroll", updateDateCalendarPosition, true);
+      dialog?.removeEventListener("scroll", updateDateCalendarPosition);
+    };
+  }, [isDateCalendarOpen, open]);
 
   useEffect(() => {
     if (!open || initialValues || !isDirty) {
@@ -190,18 +253,26 @@ export function TaskFormDialog({
 
     reset(nextValues);
     setShowPlanning(Boolean(initialValues || nextValues.dueDate || nextValues.tags));
+    setCalendarMonth(startOfMonth(parseDateParam(nextValues.dueDate ?? "") ?? new Date()));
+    setIsDateCalendarOpen(false);
+    setCalendarPosition(null);
     setOpen(true);
   };
 
   const selectDueDate = (date: Date) => {
     setValue("dueDate", formatDateParam(date), { shouldDirty: true });
+    setCalendarMonth(startOfMonth(date));
+    setIsDateCalendarOpen(false);
+    setCalendarPosition(null);
   };
 
   const clearDueDate = () => {
     setValue("dueDate", "", { shouldDirty: true });
+    setIsDateCalendarOpen(false);
+    setCalendarPosition(null);
   };
 
-  const openDatePicker = () => {
+  const openNativeDatePicker = () => {
     const input = dueDateInputRef.current;
 
     if (!input) {
@@ -216,6 +287,45 @@ export function TaskFormDialog({
         // The focused native input remains usable when a browser blocks showPicker().
       }
     }
+  };
+
+  const openDatePicker = () => {
+    const shouldUseNativePicker = window.matchMedia?.("(max-width: 767px), (pointer: coarse)").matches;
+
+    if (shouldUseNativePicker) {
+      openNativeDatePicker();
+      return;
+    }
+
+    if (isDateCalendarOpen) {
+      setIsDateCalendarOpen(false);
+      setCalendarPosition(null);
+      return;
+    }
+
+    setCalendarMonth(startOfMonth(selectedDueDate ?? new Date()));
+    updateDateCalendarPosition();
+    setIsDateCalendarOpen(true);
+  };
+
+  const updateDateCalendarPosition = () => {
+    const trigger = dateCalendarTriggerRef.current;
+
+    if (!trigger) {
+      return;
+    }
+
+    const viewportPadding = 12;
+    const calendarWidth = Math.min(342, window.innerWidth - viewportPadding * 2);
+    const calendarHeight = dateCalendarRef.current?.offsetHeight ?? 346;
+    const triggerBounds = trigger.getBoundingClientRect();
+    const top = Math.max(viewportPadding, triggerBounds.top - calendarHeight - 8);
+    const left = Math.min(
+      Math.max(viewportPadding, triggerBounds.right - calendarWidth),
+      window.innerWidth - calendarWidth - viewportPadding,
+    );
+
+    setCalendarPosition({ top, left, width: calendarWidth });
   };
 
   const normalizeTags = () => {
@@ -327,10 +437,19 @@ export function TaskFormDialog({
                   <textarea
                     {...register("description")}
                     className="task-field task-textarea"
+                    ref={(node) => {
+                      register("description").ref(node);
+                      descriptionTextareaRef.current = node;
+                    }}
                     placeholder="任务的目标、实现过程或者方法，都可以写下补充说明。"
-                    rows={3}
+                    rows={1}
                     aria-label="备注"
                     aria-invalid={Boolean(errors.description)}
+                    onInput={(event) => {
+                      const textarea = event.currentTarget;
+                      textarea.style.height = "auto";
+                      textarea.style.height = `${textarea.scrollHeight}px`;
+                    }}
                   />
                 </Field>
               </section>
@@ -412,23 +531,127 @@ export function TaskFormDialog({
                       </div>
                       {dueDate ? <button type="button" onClick={clearDueDate}>清除</button> : null}
                     </div>
-                    <div className="task-date-presets" role="group" aria-label="截止日期快捷选择">
-                      <button type="button" className={dueDate === formatDateParam(new Date()) ? "is-active" : ""} onClick={() => selectDueDate(new Date())}>今天</button>
-                      <button type="button" className={dueDate === formatDateParam(addDays(new Date(), 1)) ? "is-active" : ""} onClick={() => selectDueDate(addDays(new Date(), 1))}>明天</button>
-                      <button type="button" className={dueDate === formatDateParam(getNextMonday()) ? "is-active" : ""} onClick={() => selectDueDate(getNextMonday())}>下周一</button>
-                    </div>
-                    <div className="task-date-picker" onClick={openDatePicker}>
-                      <input
-                        type="date"
-                        {...register("dueDate")}
-                        ref={(node) => {
-                          register("dueDate").ref(node);
-                          dueDateInputRef.current = node;
-                        }}
-                        className="task-field task-date"
-                        aria-label="自定义截止日期"
-                        aria-invalid={Boolean(errors.dueDate)}
-                      />
+                    <div ref={dateComposerRef} className="task-date-composer">
+                      <div className={selectedDueDate ? "task-date-summary is-selected" : "task-date-summary"} role="status">
+                        <span className="task-date-summary__day">{selectedDueDate ? selectedDueDate.getDate() : "--"}</span>
+                        <span className="task-date-summary__month">{selectedDueDate ? `${selectedDueDate.getMonth() + 1}月` : "日期"}</span>
+                        <span className="task-date-summary__content">
+                          <strong>{selectedDueDate ? getRelativeDateLabel(selectedDueDate, today) : "暂不设置日期"}</strong>
+                          <small>{selectedDueDate ? formatDateDescription(selectedDueDate) : "需要时再为任务安排时间"}</small>
+                        </span>
+                      </div>
+
+                      <div className="task-date-rail" role="group" aria-label="未来七天">
+                        {visibleWeek.map((date) => {
+                          const isSelected = isSameDate(date, selectedDueDate);
+                          const relativeLabel = getRelativeDateLabel(date, today);
+
+                          return (
+                            <button
+                              key={formatDateParam(date)}
+                              type="button"
+                              aria-label={`${formatDateDescription(date)}，${relativeLabel}`}
+                              aria-pressed={isSelected}
+                              className={isSelected ? "is-active" : ""}
+                              onClick={() => selectDueDate(date)}
+                            >
+                              <span>{getWeekdayLabel(date)}</span>
+                              <strong>{date.getDate()}</strong>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="task-date-picker">
+                        <button
+                          ref={dateCalendarTriggerRef}
+                          type="button"
+                          className="task-date-picker__trigger"
+                          aria-expanded={isDateCalendarOpen}
+                          aria-haspopup="dialog"
+                          onClick={openDatePicker}
+                        >
+                          选择具体日期
+                        </button>
+                        <input
+                          type="date"
+                          {...dueDateField}
+                          ref={(node) => {
+                            dueDateField.ref(node);
+                            dueDateInputRef.current = node;
+                          }}
+                          className="task-date task-date-picker__native-input"
+                          tabIndex={-1}
+                          aria-hidden="true"
+                          aria-invalid={Boolean(errors.dueDate)}
+                          onChange={(event) => {
+                            dueDateField.onChange(event);
+                            setIsDateCalendarOpen(false);
+                            setCalendarPosition(null);
+                          }}
+                        />
+                      </div>
+
+                      {isDateCalendarOpen ? (
+                        <div
+                          className="task-date-calendar"
+                          role="dialog"
+                          aria-label="选择截止日期"
+                          ref={dateCalendarRef}
+                          style={calendarPosition ?? undefined}
+                          onKeyDown={(event) => {
+                            if (event.key === "Escape") {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setIsDateCalendarOpen(false);
+                              setCalendarPosition(null);
+                              dateCalendarTriggerRef.current?.focus();
+                            }
+                          }}
+                        >
+                          <div className="task-date-calendar__head">
+                            <button
+                              type="button"
+                              aria-label="上个月"
+                              onClick={() => setCalendarMonth((current) => shiftMonth(current, -1))}
+                            >
+                              &lt;
+                            </button>
+                            <strong>{calendarMonth.getFullYear()}年{calendarMonth.getMonth() + 1}月</strong>
+                            <button
+                              type="button"
+                              aria-label="下个月"
+                              onClick={() => setCalendarMonth((current) => shiftMonth(current, 1))}
+                            >
+                              &gt;
+                            </button>
+                          </div>
+                          <div className="task-date-calendar__weekdays" aria-hidden="true">
+                            {weekdayLabels.map((weekday) => <span key={weekday}>{weekday}</span>)}
+                          </div>
+                          <div className="task-date-calendar__days" role="grid" aria-label={`${calendarMonth.getFullYear()}年${calendarMonth.getMonth() + 1}月`}>
+                            {calendarDays.map((date) => {
+                              const isCurrentMonth = date.getMonth() === calendarMonth.getMonth();
+                              const isSelected = isSameDate(date, selectedDueDate);
+                              const isToday = isSameDate(date, today);
+
+                              return (
+                                <button
+                                  key={formatDateParam(date)}
+                                  type="button"
+                                  role="gridcell"
+                                  aria-label={`选择 ${formatDateDescription(date)}`}
+                                  aria-selected={isSelected}
+                                  className={`${isCurrentMonth ? "" : "is-outside"}${isSelected ? " is-selected" : ""}${isToday ? " is-today" : ""}`}
+                                  onClick={() => selectDueDate(date)}
+                                >
+                                  {date.getDate()}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   </section>
                 </section>
@@ -506,10 +729,76 @@ function addDays(date: Date, amount: number) {
   return next;
 }
 
-function getNextMonday() {
-  const today = new Date();
-  const daysUntilMonday = ((8 - today.getDay()) % 7) || 7;
-  return addDays(today, daysUntilMonday);
+const weekdayLabels = ["一", "二", "三", "四", "五", "六", "日"];
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function shiftMonth(date: Date, amount: number) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function parseDateParam(value: string) {
+  if (!value) {
+    return null;
+  }
+
+  const [year, month, date] = value.split("-").map(Number);
+
+  if (!year || !month || !date) {
+    return null;
+  }
+
+  return new Date(year, month - 1, date);
+}
+
+function isSameDate(first: Date, second: Date | null) {
+  if (!second) {
+    return false;
+  }
+
+  return first.getFullYear() === second.getFullYear()
+    && first.getMonth() === second.getMonth()
+    && first.getDate() === second.getDate();
+}
+
+function getWeekdayLabel(date: Date) {
+  return weekdayLabels[(date.getDay() + 6) % 7];
+}
+
+function getRelativeDateLabel(date: Date, today: Date) {
+  const difference = Math.round((startOfDay(date).getTime() - today.getTime()) / 86_400_000);
+
+  if (difference === 0) {
+    return "今天";
+  }
+
+  if (difference === 1) {
+    return "明天";
+  }
+
+  if (difference === -1) {
+    return "昨天";
+  }
+
+  return `周${getWeekdayLabel(date)}`;
+}
+
+function formatDateDescription(date: Date) {
+  return `${date.getMonth() + 1}月${date.getDate()}日，星期${getWeekdayLabel(date)}`;
+}
+
+function getCalendarDays(month: Date) {
+  const firstDay = startOfMonth(month);
+  const offset = (firstDay.getDay() + 6) % 7;
+  const gridStart = addDays(firstDay, -offset);
+
+  return Array.from({ length: 42 }, (_, index) => addDays(gridStart, index));
 }
 
 function formatDateParam(value: Date) {

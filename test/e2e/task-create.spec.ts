@@ -122,6 +122,13 @@ test.describe("创建任务", () => {
         await page.mouse.wheel(0, 420);
         await expect.poll(() => taskDialog.evaluate((element) => element.scrollTop)).toBeGreaterThan(initialDialogScrollTop);
 
+        await taskDialog.getByRole("button", { name: /明天/ }).click();
+        await expect(taskDialog.locator('input[name="dueDate"]')).not.toHaveValue("");
+
+        await taskDialog.getByRole("button", { name: "选择具体日期" }).click();
+        await expect(page.getByRole("dialog", { name: "选择截止日期" })).toBeVisible();
+        await taskDialog.getByRole("button", { name: "选择具体日期" }).click();
+
         await page.getByRole("textbox", { name: "标签" }).fill("测试，学习");
 
         await page

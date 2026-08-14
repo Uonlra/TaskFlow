@@ -1161,15 +1161,6 @@
   padding-top: 2px;
 }
 
-.task-date-picker {
-  width: 100%;
-  cursor: pointer;
-}
-
-.task-date-picker .task-date {
-  cursor: pointer;
-}
-
 .task-dialog__schedule-head {
   display: flex;
   align-items: center;
@@ -1190,6 +1181,301 @@
   color: var(--primary);
   font-size: 12px;
   font-weight: 600;
+}
+
+.task-date-composer {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.task-date-summary {
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: 44px 42px minmax(0, 1fr);
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-strong);
+  color: var(--muted-strong);
+}
+
+.task-date-summary.is-selected {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.task-date-summary__day {
+  justify-self: end;
+  padding-right: 7px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.task-date-summary__month {
+  align-self: end;
+  padding-bottom: 16px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.task-date-summary__content {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 10px 14px 10px 0;
+}
+
+.task-date-summary__content strong {
+  color: inherit;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.task-date-summary__content small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-date-rail {
+  display: flex;
+  gap: 5px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+
+.task-date-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.task-date-rail button {
+  min-width: 44px;
+  min-height: 50px;
+  flex: 1 0 44px;
+  display: grid;
+  place-content: center;
+  gap: 2px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted-strong);
+  scroll-snap-align: start;
+}
+
+.task-date-rail button span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.task-date-rail button strong {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.task-date-rail button.is-active {
+  border-color: var(--primary);
+  background: var(--surface-strong);
+  color: var(--primary);
+}
+
+.task-date-rail button.is-active span {
+  color: var(--primary);
+}
+
+.task-date-picker {
+  position: relative;
+}
+
+.task-date-picker__trigger {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 5px;
+  background: var(--surface-strong);
+  color: var(--muted-strong);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.task-date-picker__trigger[aria-expanded="true"] {
+  border-style: solid;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.task-date-picker__native-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.task-date-calendar {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface-strong);
+  box-shadow: 0 14px 32px rgba(23, 26, 32, 0.14);
+  animation: task-date-calendar-in 160ms ease-out;
+}
+
+.task-date-calendar__head {
+  min-height: 32px;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-date-calendar__head strong {
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.task-date-calendar__head button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted-strong);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.task-date-calendar__weekdays,
+.task-date-calendar__days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.task-date-calendar__weekdays span {
+  min-height: 22px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.task-date-calendar__days button {
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted-strong);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.task-date-calendar__days button.is-outside {
+  color: var(--muted);
+  opacity: 0.48;
+}
+
+.task-date-calendar__days button.is-today:not(.is-selected) {
+  border-color: var(--border-strong);
+}
+
+.task-date-calendar__days button.is-selected {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.task-date-rail button:focus-visible,
+.task-date-picker__trigger:focus-visible,
+.task-date-calendar button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .task-date-rail button:hover,
+  .task-date-calendar__days button:hover,
+  .task-date-calendar__head button:hover,
+  .task-date-picker__trigger:hover {
+    border-color: var(--border-strong);
+    background: var(--surface);
+  }
+
+  .task-date-rail button.is-active:hover,
+  .task-date-picker__trigger[aria-expanded="true"]:hover {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+
+  .task-date-calendar__days button.is-selected:hover {
+    border-color: var(--primary-strong);
+    background: var(--primary-strong);
+    color: var(--primary-foreground);
+  }
+}
+
+.task-date-rail button:active,
+.task-date-calendar button:active,
+.task-date-picker__trigger:active {
+  transform: translateY(1px);
+}
+
+.task-date-rail button:disabled,
+.task-date-picker__trigger:disabled,
+.task-date-calendar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@keyframes task-date-calendar-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-date-calendar {
+    animation-duration: 1ms;
+  }
 }
 
 .task-dialog__actions,
