@@ -53,7 +53,7 @@ TaskFlow 是一个偏个人任务本风格的小应用，用来把任务记录�
 - TypeScript 6
 - Appwrite
 - React Hook Form、Zod、Zustand
-- Vitest
+- Vitest、Testing Library、Playwright
 - Vercel
 
 ## 实现思路
@@ -82,8 +82,35 @@ docs/
   setup/                # Appwrite 等环境配置
   product/              # URL 协议、UI QA 基线
   career/               # 简历 / 面试 / 项目基线
+  testing/              # 测试分层、覆盖率和 CI 说明
   screenshots/          # README 截图
 ```
+
+## 测试与质量
+
+TaskFlow 当前使用分层测试：Vitest 覆盖日期、排序、统计、Hook、Provider、Zustand Store 和 API Route；Testing Library 覆盖登录、注册和任务表单；Playwright 覆盖登录、鉴权、创建任务等 Mock E2E，并保留一条真实 Appwrite 冒烟流程。
+
+最近一次本地验证结果：
+
+- Vitest：14 个测试文件，71 条测试通过
+- Mock E2E：5 条测试通过
+- TypeScript 类型检查：通过
+- Next.js 生产构建：通过
+- V8 覆盖率：Statements 40.85%、Branches 29.43%、Functions 42.81%、Lines 41.36%
+
+核心 Store 模块当前 Statements 覆盖率为 93.18%，任务 Store 的 Lines 覆盖率为 96.96%。整体覆盖率包含认证、任务和 API 目录中的暂未测试模块，因此不以总百分比作为唯一质量指标。
+
+本地运行质量检查：
+
+```bash
+pnpm test
+pnpm test:coverage
+pnpm typecheck
+pnpm build
+pnpm test:e2e:mock
+```
+
+GitHub Actions 会在 push 和 pull request 时自动运行测试、类型检查、生产构建和 Mock E2E。完整测试分层、覆盖率范围和当前缺口见：[docs/testing/taskflow-testing-notes.md](docs/testing/taskflow-testing-notes.md)。
 
 ## 本地运行
 
