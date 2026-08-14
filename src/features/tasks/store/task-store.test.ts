@@ -50,6 +50,36 @@ afterEach(() => {
 });
 
 describe("task store", () => {
+    it("initializeTasks 写入服务端预取数据并规范化 tags", () => {
+        useTaskStore.getState().initializeTasks([
+            makeTask({
+                id: "prefetched-task",
+                tags: null as unknown as string[],
+            }),
+        ], "user-1");
+
+        expect(useTaskStore.getState()).toEqual(expect.objectContaining({
+            tasks: [expect.objectContaining({ id: "prefetched-task", tags: [] })],
+            isLoading: false,
+            error: null,
+            lastLoadedUserId: "user-1",
+        }));
+    });
+
+    it("initializeTasks 不覆盖同一用户已经更新的客户端数据", () => {
+        const clientTask = makeTask({ id: "client-task", title: "客户端已更新" });
+        useTaskStore.setState({
+            tasks: [clientTask],
+            lastLoadedUserId: "user-1",
+        });
+
+        useTaskStore.getState().initializeTasks([
+            makeTask({ id: "stale-prefetched-task" }),
+        ], "user-1");
+
+        expect(useTaskStore.getState().tasks).toEqual([clientTask]);
+    });
+
     it("syncTasks 获取任务后写入 store，并规范化 tags", async () => {
         vi.spyOn(global, "fetch").mockResolvedValue(
             jsonResponse({

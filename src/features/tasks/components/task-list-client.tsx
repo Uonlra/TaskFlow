@@ -7,7 +7,7 @@ import { DesktopTaskWorkbench } from "@/features/tasks/components/desktop-task-w
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { MobileTaskListView } from "@/features/tasks/components/mobile-task-list-view";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
-import type { Task } from "@/features/tasks/types/task.types";
+import type { Task, TaskPageInitialData } from "@/features/tasks/types/task.types";
 import {
   filterTasksByTaskDateRange,
   formatTaskDateParam,
@@ -50,9 +50,13 @@ const initialFilters: TaskFilters = {
 
 type TaskListClientProps = {
   initialFilters?: TaskFilters;
+  initialData?: TaskPageInitialData | null;
 };
 
-export function TaskListClient({ initialFilters: initialFiltersProp = initialFilters }: TaskListClientProps) {
+export function TaskListClient({
+  initialFilters: initialFiltersProp = initialFilters,
+  initialData = null,
+}: TaskListClientProps) {
   const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -63,17 +67,43 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
   const isLoading = useTaskStore((state) => state.isLoading);
   const error = useTaskStore((state) => state.error);
   const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
+  const initializeTasks = useTaskStore((state) => state.initializeTasks);
   const syncTasks = useTaskStore((state) => state.syncTasks);
   const createTaskAsync = useTaskStore((state) => state.createTaskAsync);
   const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
 
+  const canUseInitialData = Boolean(
+    initialData && (isAuthLoading || user?.id === initialData.userId),
+  );
+  const hasMatchingStoreData = Boolean(
+    initialData && lastLoadedUserId === initialData.userId,
+  );
+  const hasConfirmedUserMismatch = Boolean(
+    initialData && !isAuthLoading && user && user.id !== initialData.userId,
+  );
+  const visibleTasks = hasConfirmedUserMismatch
+    ? []
+    : canUseInitialData && !hasMatchingStoreData
+      ? initialData?.tasks ?? []
+      : tasks;
+  const visibleIsLoading = hasConfirmedUserMismatch || (canUseInitialData ? false : isLoading);
+  const activeUserId = user?.id ?? (isAuthLoading ? initialData?.userId : undefined);
+
   useEffect(() => {
-    if (isConfigured && user?.id && lastLoadedUserId !== user.id) {
+    if (initialData) {
+      initializeTasks(initialData.tasks, initialData.userId);
+    }
+  }, [initialData, initializeTasks]);
+
+  useEffect(() => {
+    const isCoveredByInitialData = initialData?.userId === user?.id;
+
+    if (isConfigured && user?.id && lastLoadedUserId !== user.id && !isCoveredByInitialData) {
       void syncTasks(user.id);
     }
-  }, [isConfigured, lastLoadedUserId, syncTasks, user?.id]);
+  }, [initialData?.userId, isConfigured, lastLoadedUserId, syncTasks, user?.id]);
 
   useEffect(() => {
     const nextFilters = parseTaskFilters({
@@ -96,7 +126,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
   }, [searchParams]);
 
   const filteredTasks = useMemo(() => {
-    const nextTasks = tasks.filter((task) => {
+    const nextTasks = visibleTasks.filter((task) => {
       const matchQuery =
         !filters.query ||
         task.title.toLowerCase().includes(filters.query.toLowerCase()) ||
@@ -116,10 +146,10 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
     });
 
     return sortTasks(nextTasks, filters.sort);
-  }, [filters, tasks]);
+  }, [filters, visibleTasks]);
 
   const deadlineSummary = useMemo(() => {
-    return tasks.reduce(
+    return visibleTasks.reduce(
       (summary, task) => {
         const dueMeta = getTaskDueMeta(task);
 
@@ -139,7 +169,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       },
       { overdue: 0, today: 0, upcoming: 0 },
     );
-  }, [tasks]);
+  }, [visibleTasks]);
 
   const hasActiveFilters =
     filters.query.trim() !== "" ||
@@ -155,7 +185,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 
   const handleCreateTask = async (values: TaskFormValues) => {
     try {
-      await createTaskAsync(values, user?.id);
+      await createTaskAsync(values, activeUserId);
 
       showToast({
         title: "任务已创建",
@@ -174,7 +204,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 
   const handleUpdateTask = async (id: string, values: TaskFormValues) => {
     try {
-      await updateTask(id, values, user?.id);
+      await updateTask(id, values, activeUserId);
       showToast({
         title: "任务已更新",
         description: `“${values.title}” 已更新，改动存好了。`,
@@ -192,7 +222,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 
   const handleUpdateStatus = async (id: string, status: "todo" | "in_progress" | "done") => {
     try {
-      await updateTaskStatus(id, status, user?.id);
+      await updateTaskStatus(id, status, activeUserId);
       showToast({
         title: "状态已更新",
         description: `任务已切换为${status === "todo" ? "待开始" : status === "in_progress" ? "进行中" : "已完成"}。`,
@@ -209,7 +239,7 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
 
   const handleDeleteTask = async (id: string) => {
     try {
-      await deleteTask(id, user?.id);
+      await deleteTask(id, activeUserId);
       showToast({
         title: "任务已删除",
         description: "这条任务已经从任务本里移除。",
@@ -249,10 +279,10 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
   };
 
   const workspaceState = getWorkspaceState({
-    isAuthLoading,
-    isTaskLoading: isLoading,
-    taskCount: tasks.length,
-    userId: user?.id,
+    isAuthLoading: isAuthLoading && !canUseInitialData,
+    isTaskLoading: visibleIsLoading,
+    taskCount: visibleTasks.length,
+    userId: activeUserId,
   });
 
   if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
@@ -270,9 +300,9 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
       <div className="tasks-mobile-only">
         <MobileTaskListView
           tasks={filteredTasks}
-          totalCount={tasks.length}
+          totalCount={visibleTasks.length}
           filters={filters}
-          isLoading={isLoading}
+          isLoading={visibleIsLoading}
           onFiltersChange={handleFiltersChange}
           onCreateTask={handleCreateTask}
           onUpdateStatus={handleUpdateStatus}
@@ -298,9 +328,9 @@ export function TaskListClient({ initialFilters: initialFiltersProp = initialFil
         ) : null}
         <DesktopTaskWorkbench
           tasks={filteredTasks}
-          totalTasks={tasks}
+          totalTasks={visibleTasks}
           filters={filters}
-          isLoading={isLoading}
+          isLoading={visibleIsLoading}
           onFiltersChange={handleFiltersChange}
           onResetFilters={handleResetFilters}
           onCreateTask={handleCreateTask}

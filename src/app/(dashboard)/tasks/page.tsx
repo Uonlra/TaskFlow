@@ -1,4 +1,5 @@
 import { TaskListClient } from "@/features/tasks/components/task-list-client";
+import { getTaskPageInitialData } from "@/features/tasks/server/get-task-page-initial-data";
 import { formatTaskDateParam, parseTaskDateParam } from "@/features/tasks/utils/task-date-filters";
 import { PageContainer } from "@/shared/components/layout/page-container";
 import { DASHBOARD_RANGE_VALUES, TASK_DUE_FILTERS, TASK_RISK_FILTERS } from "@/shared/lib/constants/query-params";
@@ -8,7 +9,10 @@ type TasksPageProps = {
 };
 
 export default async function TasksPage({ searchParams }: TasksPageProps) {
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const [resolvedSearchParams, initialData] = await Promise.all([
+    searchParams ?? Promise.resolve(undefined),
+    getTaskPageInitialData(),
+  ]);
   const parsedDate = parseTaskDateParam(typeof resolvedSearchParams?.date === "string" ? resolvedSearchParams.date : undefined);
   const initialFilters = {
     query: typeof resolvedSearchParams?.query === "string" ? resolvedSearchParams.query : "",
@@ -57,7 +61,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
 
   return (
     <PageContainer>
-      <TaskListClient initialFilters={initialFilters} />
+      <TaskListClient initialFilters={initialFilters} initialData={initialData} />
     </PageContainer>
   );
 }
