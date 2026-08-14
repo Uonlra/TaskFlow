@@ -22,6 +22,7 @@ describe("TaskFormDialog", () => {
     await user.click(screen.getByRole("button", { name: "新建任务" }));
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toHaveAttribute("data-lenis-prevent-wheel", "true");
     expect(
       screen.getByRole("heading", { name: "记下一条新的任务" }),
     ).toBeInTheDocument();
@@ -70,7 +71,7 @@ describe("TaskFormDialog", () => {
     render(<TaskFormDialog onSubmitTask={() => {}} />);
 
     await user.click(screen.getByRole("button", { name: "新建任务" }));
-    await user.click(screen.getByRole("button", { name: "安排与分类" }));
+    await user.click(screen.getByRole("button", { name: "具体描述" }));
     await user.click(screen.getByRole("button", { name: "明天" }));
 
     const tomorrow = new Date();
@@ -90,7 +91,7 @@ describe("TaskFormDialog", () => {
     render(<TaskFormDialog onSubmitTask={() => {}} />);
 
     await user.click(screen.getByRole("button", { name: "新建任务" }));
-    await user.click(screen.getByRole("button", { name: "安排与分类" }));
+    await user.click(screen.getByRole("button", { name: "具体描述" }));
     await user.click(screen.getByLabelText("自定义截止日期"));
 
     expect(showPicker).toHaveBeenCalledTimes(1);

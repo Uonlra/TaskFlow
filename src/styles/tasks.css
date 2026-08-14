@@ -926,8 +926,35 @@
   max-height: min(860px, calc(100dvh - 48px));
   overflow-y: auto;
   overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
   border-radius: 8px;
   padding: 28px;
+}
+
+.task-dialog::-webkit-scrollbar {
+  width: 10px;
+}
+
+.task-dialog::-webkit-scrollbar-track {
+  margin: 14px 3px 14px 0;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.task-dialog::-webkit-scrollbar-thumb {
+  min-height: 44px;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--border-strong);
+  background-clip: padding-box;
+}
+
+.task-dialog::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+  background-clip: padding-box;
 }
 
 .task-dialog__header {
@@ -1048,6 +1075,15 @@
 
 .task-dialog__planning-toggle.is-open .task-dialog__planning-caret {
   transform: rotate(225deg) translate(-2px, -1px);
+}
+
+.task-dialog__planning-toggle:focus-visible,
+.task-priority-segment button:focus-visible,
+.task-date-presets button:focus-visible,
+.task-dialog__schedule-head > button:focus-visible,
+.dialog-close-button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .task-dialog__grid {

@@ -280,6 +280,7 @@ export function TaskFormDialog({
             aria-labelledby={headingId}
             aria-describedby={descriptionId}
             className="task-dialog card-surface"
+            data-lenis-prevent-wheel="true"
             onKeyDown={handleDialogKeyDown}
           >
             <div className="task-dialog__header">

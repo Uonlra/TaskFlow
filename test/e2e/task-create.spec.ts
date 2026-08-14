@@ -94,6 +94,7 @@ test.describe("创建任务", () => {
         });
 
         await page.goto("/tasks");
+        await page.setViewportSize({ width: 1440, height: 620 });
 
         await expect(
             page.getByRole("heading", { name: "任务", exact: true }),
@@ -113,7 +114,13 @@ test.describe("创建任务", () => {
             .getByRole("textbox", { name: "备注" })
             .fill("使用 Playwright 验证任务创建流程");
 
-        await page.getByRole("button", { name: "安排与分类" }).click();
+        await page.getByRole("button", { name: "具体描述" }).click();
+
+        const taskDialog = page.getByRole("dialog");
+        const initialDialogScrollTop = await taskDialog.evaluate((element) => element.scrollTop);
+        await taskDialog.hover();
+        await page.mouse.wheel(0, 420);
+        await expect.poll(() => taskDialog.evaluate((element) => element.scrollTop)).toBeGreaterThan(initialDialogScrollTop);
 
         await page.getByRole("textbox", { name: "标签" }).fill("测试，学习");
 
