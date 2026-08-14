@@ -16,6 +16,7 @@ export default defineConfig({
       reporter: ["text", "html"],
       reportsDirectory: "coverage",
       include: [
+        "src/app/api/**/*.{ts,tsx}",
         "src/features/auth/**/*.{ts,tsx}",
         "src/features/tasks/**/*.{ts,tsx}",
       ],

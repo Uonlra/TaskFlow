@@ -193,4 +193,58 @@ describe("task store", () => {
 
         expect(useTaskStore.getState().tasks).toEqual([]);
     });
+
+    it("updateTask 编辑任务后替换 store 中的旧任务", async () => {
+        const updatedTask = makeTask({
+            id: "task-to-update",
+            title: "更新后的任务",
+            description: "更新后的说明",
+            priority: "high",
+        });
+
+        useTaskStore.setState({
+            tasks: [makeTask({ id: "task-to-update" })],
+        });
+
+        const fetchMock = vi
+            .spyOn(global, "fetch")
+            .mockResolvedValue(jsonResponse({ task: updatedTask }));
+
+        await useTaskStore
+            .getState()
+            .updateTask("task-to-update", formValues, "user-1");
+
+        expect(fetchMock).toHaveBeenCalledWith(
+            "/api/tasks/task-to-update",
+            expect.objectContaining({
+                method: "PATCH",
+                body: JSON.stringify(formValues),
+            }),
+        );
+        expect(useTaskStore.getState().tasks).toEqual([updatedTask]);
+    });
+
+    it("没有用户时同步会清空 store 且不请求 API", async () => {
+        useTaskStore.setState({
+            tasks: [makeTask()],
+            lastLoadedUserId: "old-user",
+        });
+        const fetchMock = vi.spyOn(global, "fetch");
+
+        await useTaskStore.getState().syncTasks();
+
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(useTaskStore.getState().tasks).toEqual([]);
+        expect(useTaskStore.getState().lastLoadedUserId).toBeNull();
+    });
+
+    it("未登录创建任务时直接拒绝且不请求 API", async () => {
+        const fetchMock = vi.spyOn(global, "fetch");
+
+        await expect(
+            useTaskStore.getState().createTaskAsync(formValues),
+        ).rejects.toThrow("请先登录后再创建任务。");
+
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
 });
