@@ -1,3 +1,5 @@
+import "@/styles/stats.css";
+
 import { PageContainer } from "@/shared/components/layout/page-container";
 import { PageHeader } from "@/shared/components/layout/page-header";
 import { StatsClient } from "@/features/stats/components/stats-client";
