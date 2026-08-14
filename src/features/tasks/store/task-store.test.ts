@@ -131,4 +131,66 @@ describe("task store", () => {
             }),
         ]);
     });
+
+    it("updateTaskStatus 更新任务状态并发送 PATCH 请求", async () => {
+        const updatedTask = makeTask({
+            id: "task-to-update",
+            status: "done",
+            completedAt: "2026-08-14T10:00:00.000Z",
+        });
+
+        useTaskStore.setState({
+            tasks: [makeTask({ id: "task-to-update" })],
+        });
+
+        const fetchMock = vi
+            .spyOn(global, "fetch")
+            .mockResolvedValue(jsonResponse({ task: updatedTask }));
+
+        await useTaskStore
+            .getState()
+            .updateTaskStatus("task-to-update", "done", "user-1");
+
+        expect(fetchMock).toHaveBeenCalledWith(
+            "/api/tasks/task-to-update",
+            expect.objectContaining({
+                method: "PATCH",
+                body: JSON.stringify({ status: "done" }),
+            }),
+        );
+
+        expect(useTaskStore.getState().tasks[0]).toEqual(updatedTask);
+    });
+
+    it("syncTasks 请求失败时保存错误并结束加载状态", async () => {
+        vi.spyOn(global, "fetch").mockRejectedValue(
+            new Error("网络暂时不可用"),
+        );
+
+        await useTaskStore.getState().syncTasks("user-1");
+
+        const state = useTaskStore.getState();
+
+        expect(state.error).toBe("网络暂时不可用");
+        expect(state.isLoading).toBe(false);
+    });
+
+    it("API 返回错误响应时抛出服务端错误信息", async () => {
+        vi.spyOn(global, "fetch").mockResolvedValue(
+            jsonResponse(
+                {
+                    message: "任务保存失败。",
+                },
+                500,
+            ),
+        );
+
+        await expect(
+            useTaskStore
+                .getState()
+                .createTaskAsync(formValues, "user-1"),
+        ).rejects.toThrow("任务保存失败。");
+
+        expect(useTaskStore.getState().tasks).toEqual([]);
+    });
 });
