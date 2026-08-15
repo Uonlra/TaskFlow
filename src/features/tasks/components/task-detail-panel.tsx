@@ -47,7 +47,7 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
     return (
       <aside className="task-detail-panel task-detail-panel--empty" aria-label="任务详情">
         <div>
-          <p className="task-detail-panel__tab">详情</p>
+          <p className="task-detail-panel__empty-label">详情</p>
           <h2>没有选中任务</h2>
           <p>选择一条任务后，会在这里看到详情。</p>
         </div>
@@ -241,7 +241,7 @@ function buildTaskActivity(task: Task): TaskActivityItem[] {
     {
       id: "created",
       label: "创建任务",
-      description: "任务已加入当前任务列表。",
+      description: "任务在此时间创建。",
       occurredAt: task.createdAt,
     },
   ];
@@ -259,7 +259,7 @@ function buildTaskActivity(task: Task): TaskActivityItem[] {
     items.push({
       id: "completed",
       label: "完成任务",
-      description: "任务在此时间被标记为已完成。",
+      description: "任务在此时间完成。",
       occurredAt: task.completedAt,
     });
   }
