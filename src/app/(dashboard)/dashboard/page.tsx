@@ -1,3 +1,5 @@
+import "@/styles/tasks.css";
+import "@/styles/responsive-tasks.css";
 import "@/styles/dashboard-v2.css";
 import "@/styles/responsive-dashboard.css";
 
