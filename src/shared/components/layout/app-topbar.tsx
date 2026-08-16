@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -65,7 +64,7 @@ export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
         {isAuthenticated ? (
           <button type="button" onClick={handleSignOut} className="dashboard-signout-button">退出登录</button>
         ) : (
-          <Link href={loginHref} className="dashboard-signout-button" data-auth-gate-bypass>登录</Link>
+          <a href={loginHref} className="dashboard-signout-button" data-auth-gate-bypass>登录</a>
         )}
       </div>
     </header>
