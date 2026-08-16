@@ -89,14 +89,16 @@ export function MobileDashboardOverview({
         </Link>
       </header>
 
-      <div className="mobile-dashboard__range" aria-label="切换统计范围">
+      <div className="mobile-dashboard__range date-switcher" aria-label="切换统计范围">
         {rangeOptions.map((option) => (
           <button
             key={option.value}
             type="button"
             aria-pressed={range === option.value}
             className={
-              range === option.value ? "mobile-dashboard__range-button is-active" : "mobile-dashboard__range-button"
+              range === option.value
+                ? "mobile-dashboard__range-button date-switcher__button is-active"
+                : "mobile-dashboard__range-button date-switcher__button"
             }
             onClick={() => onRangeChange(option.value)}
           >

@@ -100,6 +100,78 @@
   line-height: 1;
 }
 
+@media (max-width: 960px) {
+  .stats-toolbar {
+    justify-content: stretch;
+  }
+
+  .stats-overview.card-surface {
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .stats-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats-overview article {
+    min-height: 96px;
+    gap: 5px;
+    padding: 12px;
+    background: var(--surface-strong);
+  }
+
+  .stats-overview strong {
+    overflow-wrap: anywhere;
+    font-size: 24px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stats-overview small {
+    display: none;
+  }
+
+  .stats-overview__item--risk {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+  }
+
+  .stats-overview__item--risk span,
+  .stats-overview__item--risk small {
+    grid-column: 1;
+  }
+
+  .stats-overview__item--risk strong {
+    grid-column: 2;
+    grid-row: 1 / -1;
+  }
+
+  .stats-overview__item--risk small {
+    display: block;
+    font-size: 12px;
+  }
+
+  .stats-overview__item--risk.is-attention {
+    border-left: 3px solid var(--danger);
+  }
+
+  .stats-panel__head {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-panel__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
 .stats-insight {
   display: grid;
   gap: 8px;
