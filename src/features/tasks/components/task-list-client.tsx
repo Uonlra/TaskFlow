@@ -22,7 +22,6 @@ import {
   TASK_QUERY_KEYS,
   TASK_RISK_FILTERS,
   type DashboardRangeValue,
-  type TaskDueFilter,
   type TaskRiskFilter,
 } from "@/shared/lib/constants/query-params";
 import {
@@ -83,11 +82,25 @@ export function TaskListClient({
   const hasConfirmedUserMismatch = Boolean(
     initialData && !isAuthLoading && user && user.id !== initialData.userId,
   );
-  const visibleTasks = hasConfirmedUserMismatch
-    ? []
-    : canUseInitialData && !hasMatchingStoreData
-      ? initialData?.tasks ?? []
-      : tasks;
+
+  const visibleTasks = useMemo(() => {
+    if (hasConfirmedUserMismatch) {
+      return [];
+    }
+
+    if (canUseInitialData && !hasMatchingStoreData) {
+      return initialData?.tasks ?? [];
+    }
+
+    return tasks;
+  }, [
+    canUseInitialData,
+    hasConfirmedUserMismatch,
+    hasMatchingStoreData,
+    initialData?.tasks,
+    tasks,
+  ]);
+
   const visibleIsLoading = hasConfirmedUserMismatch || (canUseInitialData ? false : isLoading);
   const activeUserId = user?.id ?? (isAuthLoading ? initialData?.userId : undefined);
 
@@ -148,39 +161,6 @@ export function TaskListClient({
     return sortTasks(nextTasks, filters.sort);
   }, [filters, visibleTasks]);
 
-  const deadlineSummary = useMemo(() => {
-    return visibleTasks.reduce(
-      (summary, task) => {
-        const dueMeta = getTaskDueMeta(task);
-
-        if (dueMeta.isOverdue) {
-          summary.overdue += 1;
-        }
-
-        if (dueMeta.isDueToday) {
-          summary.today += 1;
-        }
-
-        if (dueMeta.isUpcoming) {
-          summary.upcoming += 1;
-        }
-
-        return summary;
-      },
-      { overdue: 0, today: 0, upcoming: 0 },
-    );
-  }, [visibleTasks]);
-
-  const hasActiveFilters =
-    filters.query.trim() !== "" ||
-    filters.tag.trim() !== "" ||
-    filters.status !== "all" ||
-    filters.priority !== "all" ||
-    filters.due !== "" ||
-    filters.risk !== "" ||
-    filters.date !== "" ||
-    filters.range !== "" ||
-    filters.sort !== "due_asc";
   const activeFilterLabels = useMemo(() => buildActiveFilterLabels(filters), [filters]);
 
   const handleCreateTask = async (values: TaskFormValues) => {

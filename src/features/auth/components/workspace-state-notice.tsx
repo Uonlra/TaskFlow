@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 type WorkspaceStateNoticeProps = {
@@ -17,7 +16,7 @@ export function WorkspaceStateNotice({ description, title }: WorkspaceStateNotic
       <p>访客浏览</p>
       <h1>{title}</h1>
       <span>{description}</span>
-      <Link href={loginHref} data-auth-gate-bypass>登录后继续</Link>
+      <a href={loginHref} data-auth-gate-bypass>登录后继续</a>
     </section>
   );
 }

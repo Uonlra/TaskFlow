@@ -18,7 +18,7 @@ export function AppSidebar() {
         <div className="dashboard-sidebar-title-row">
           <div className="dashboard-sidebar-title-copy">
             <p className="dashboard-brand">
-              U's Task
+              U&apos;s Task
             </p>
             <h1 className="dashboard-sidebar-title">
               我的任务本
