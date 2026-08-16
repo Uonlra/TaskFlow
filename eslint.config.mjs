@@ -1,3 +1,4 @@
+import prettier from "eslint-config-prettier/flat";
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTypeScript from "eslint-config-next/typescript";
@@ -11,6 +12,7 @@ export default defineConfig([
             "react-hooks/immutability": "warn",
         },
     },
+    prettier,
     globalIgnores([
         ".next/**",
         "out/**",
