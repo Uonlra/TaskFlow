@@ -361,6 +361,7 @@ function buildCategoryCounts(tasks: Task[]) {
 
 const statusOptions = [
   { value: "all" as const, label: "状态", description: "全部状态" },
+  { value: "active" as const, label: "未完成", description: "待办与进行中" },
   { value: "todo" as const, label: "待开始", description: "还没动手" },
   { value: "in_progress" as const, label: "进行中", description: "正在推进" },
   { value: "done" as const, label: "已完成", description: "已经完成" },

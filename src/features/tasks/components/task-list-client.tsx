@@ -134,7 +134,9 @@ export function TaskListClient({
       const matchTag =
         !filters.tag || (task.tags ?? []).some((tag) => tag.toLowerCase().includes(filters.tag.toLowerCase()));
 
-      const matchStatus = filters.status === "all" || task.status === filters.status;
+      const matchStatus =
+        filters.status === "all" ||
+        (filters.status === "active" ? task.status !== "done" : task.status === filters.status);
       const matchPriority = filters.priority === "all" || task.priority === filters.priority;
       const hasDateRangeFilter = hasActiveDateRangeFilter(filters.date, filters.range);
       const matchDateRange = matchesDateRangeFilter(task, filters.date, filters.range);
@@ -325,7 +327,9 @@ function getPreferredTaskSort(): TaskFilters["sort"] {
 
 function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null | undefined>>): TaskFilters {
   const status =
-    input.status === "todo" || input.status === "in_progress" || input.status === "done" ? input.status : "all";
+    input.status === "todo" || input.status === "in_progress" || input.status === "done" || input.status === "active"
+      ? input.status
+      : "all";
   const priority =
     input.priority === "low" || input.priority === "medium" || input.priority === "high" ? input.priority : "all";
   const due =
@@ -508,6 +512,7 @@ function getDueDayOffset(value: string | undefined) {
 }
 
 const statusFilterLabels = {
+  active: "未完成",
   todo: "待开始",
   in_progress: "进行中",
   done: "已完成",

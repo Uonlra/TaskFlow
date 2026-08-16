@@ -22,7 +22,8 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
     status:
       resolvedSearchParams?.status === "todo" ||
       resolvedSearchParams?.status === "in_progress" ||
-      resolvedSearchParams?.status === "done"
+      resolvedSearchParams?.status === "done" ||
+      resolvedSearchParams?.status === "active"
         ? resolvedSearchParams.status
         : "all",
     priority:

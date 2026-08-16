@@ -241,13 +241,15 @@ function CalendarToolbar({
         </p>
       </div>
       <div className="calendar-toolbar__controls">
-        <div className="calendar-range-tabs" aria-label="日历范围">
+        <div className="calendar-range-tabs date-switcher" aria-label="日历范围">
           {rangeOptions.map((option) => (
             <button
               key={option.value}
               type="button"
               className={
-                range === option.value ? "calendar-range-tabs__button is-active" : "calendar-range-tabs__button"
+                range === option.value
+                  ? "calendar-range-tabs__button date-switcher__button is-active"
+                  : "calendar-range-tabs__button date-switcher__button"
               }
               onClick={() => onRangeChange(option.value)}
             >
@@ -255,18 +257,31 @@ function CalendarToolbar({
             </button>
           ))}
         </div>
-        <div className="calendar-date-nav" aria-label="日期切换">
-          <button type="button" onClick={() => onDateChange(addTaskDays(date, -1))} aria-label="上一天">
+        <div className="calendar-date-nav date-switcher" aria-label="日期切换">
+          <button
+            type="button"
+            className="date-switcher__button"
+            onClick={() => onDateChange(addTaskDays(date, -1))}
+            aria-label="上一天"
+          >
             <span aria-hidden="true">‹</span>
           </button>
-          <button type="button" onClick={() => onDateChange(new Date())}>
+          <button type="button" className="date-switcher__button" onClick={() => onDateChange(new Date())}>
             今天
           </button>
-          <button type="button" onClick={() => onDateChange(addTaskDays(date, 1))} aria-label="下一天">
+          <button
+            type="button"
+            className="date-switcher__button"
+            onClick={() => onDateChange(addTaskDays(date, 1))}
+            aria-label="下一天"
+          >
             <span aria-hidden="true">›</span>
           </button>
         </div>
-        <Link className="calendar-toolbar__date-link" href={buildCalendarHref({ date: dateParam, range })}>
+        <Link
+          className="calendar-toolbar__date-link mobile-date-switcher__date"
+          href={buildCalendarHref({ date: dateParam, range })}
+        >
           {dateParam}
         </Link>
       </div>

@@ -154,12 +154,16 @@ function StatsToolbar({
         <span className="stats-eyebrow">{isSyncing ? "同步中" : "统计范围"}</span>
         <h2>任务数据详情</h2>
       </div>
-      <div className="stats-range-tabs" aria-label="统计范围">
+      <div className="stats-range-tabs date-switcher" aria-label="统计范围">
         {rangeOptions.map((option) => (
           <button
             key={option.value}
             type="button"
-            className={range === option.value ? "stats-range-tabs__button is-active" : "stats-range-tabs__button"}
+            className={
+              range === option.value
+                ? "stats-range-tabs__button date-switcher__button is-active"
+                : "stats-range-tabs__button date-switcher__button"
+            }
             onClick={() => onRangeChange(option.value)}
           >
             {option.label}
@@ -189,17 +193,19 @@ function StatsOverview({
   isLoading: boolean;
   isRangeEmpty: boolean;
 }) {
+  const riskHelper = isLoading ? "正在同步" : overdueCount > 0 ? "需要关注" : "暂无逾期";
+
   return (
     <section className="stats-overview card-surface">
       <article>
         <span>完成率</span>
         <strong>{isLoading ? "--" : `${completionRate}%`}</strong>
-        <small>{isRangeEmpty ? "当前范围" : "当前范围"}</small>
+        <small>{isRangeEmpty ? "当前范围" : "所选范围内"}</small>
       </article>
       <article>
-        <span>当前范围</span>
+        <span>已完成</span>
         <strong>{isLoading ? "--" : `${completedCount}/${totalCount}`}</strong>
-        <small>已完成 / 总数</small>
+        <small>完成 / 总数</small>
       </article>
       <article>
         <span>待处理</span>
@@ -211,10 +217,14 @@ function StatsOverview({
         <strong>{isLoading ? "--" : accountTotalCount}</strong>
         <small>账号总量</small>
       </article>
-      <article>
+      <article
+        className={
+          !isLoading && overdueCount > 0 ? "stats-overview__item--risk is-attention" : "stats-overview__item--risk"
+        }
+      >
         <span>逾期风险</span>
         <strong>{isLoading ? "--" : overdueCount}</strong>
-        <small>需要关注</small>
+        <small>{riskHelper}</small>
       </article>
     </section>
   );

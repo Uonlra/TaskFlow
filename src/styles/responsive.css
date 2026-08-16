@@ -730,6 +730,11 @@
     box-shadow: none;
   }
 
+  .date-switcher.mobile-dashboard__range .date-switcher__button.is-active {
+    border-color: var(--primary);
+    background: var(--primary);
+  }
+
   .calendar-toolbar__date-link.mobile-date-switcher__date {
     width: 100%;
     min-height: 40px;

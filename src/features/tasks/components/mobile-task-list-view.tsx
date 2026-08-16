@@ -7,6 +7,7 @@ import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
+import { TASK_DUE_FILTERS } from "@/shared/lib/constants/query-params";
 import { ROUTES } from "@/shared/lib/constants/routes";
 
 type MobileTaskListViewProps = {
@@ -26,10 +27,10 @@ type QuickFilter = {
 };
 
 const quickFilters: QuickFilter[] = [
-  { key: "today", label: "今天", filters: { status: "all", sort: "due_asc" } },
-  { key: "upcoming", label: "即将", filters: { status: "all", sort: "due_asc" } },
-  { key: "project", label: "项目", filters: { status: "all", sort: "priority_desc" } },
-  { key: "done", label: "已完成", filters: { status: "done", sort: "updated_desc" } },
+  { key: "today", label: "今天", filters: { status: "all", due: TASK_DUE_FILTERS.today, sort: "due_asc" } },
+  { key: "near", label: "临近", filters: { status: "all", due: TASK_DUE_FILTERS.near, sort: "due_asc" } },
+  { key: "active", label: "未完成", filters: { status: "active", due: "", sort: "due_asc" } },
+  { key: "done", label: "已完成", filters: { status: "done", due: "", sort: "updated_desc" } },
 ];
 
 const priorityLabel: Record<Task["priority"], string> = {
@@ -65,8 +66,8 @@ export function MobileTaskListView({
   const handleQuickFilter = (item: QuickFilter) => {
     onFiltersChange({
       ...filters,
-      query: item.key === "project" ? filters.query : "",
-      tag: item.key === "project" ? filters.tag : "",
+      query: "",
+      tag: "",
       priority: "all",
       due: "",
       risk: "",
@@ -183,11 +184,19 @@ function getSelectedQuickFilter(filters: TaskFilters) {
     return "done";
   }
 
-  if (filters.sort === "priority_desc") {
-    return "project";
+  if (filters.status === "active") {
+    return "active";
   }
 
-  return "today";
+  if (filters.due === TASK_DUE_FILTERS.near) {
+    return "near";
+  }
+
+  if (filters.due === TASK_DUE_FILTERS.today) {
+    return "today";
+  }
+
+  return "";
 }
 
 function formatTaskMeta(task: Task, dueLabel: string) {

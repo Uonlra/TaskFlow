@@ -22,13 +22,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
   return (
     <PageContainer>
-      {showCalendarPageHeader ? (
-        <PageHeader
-          eyebrow="日历"
-          title="按日期查看任务"
-          description="截止、重点和近期风险集中在这里，保持日程清楚可扫。"
-        />
-      ) : null}
+      {showCalendarPageHeader ? <PageHeader eyebrow="日历" title="按日期查看任务" /> : null}
       <CalendarClient initialDate={initialDate} initialRange={initialRange} />
     </PageContainer>
   );

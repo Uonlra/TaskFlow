@@ -19,13 +19,7 @@ export default async function StatsPage({ searchParams }: StatsPageProps) {
 
   return (
     <PageContainer>
-      {showStatsPageHeader ? (
-        <PageHeader
-          eyebrow="统计"
-          title="看清任务运行状态"
-          description="趋势、分布、标签和风险集中在这里，方便从全局判断任务节奏。"
-        />
-      ) : null}
+      {showStatsPageHeader ? <PageHeader eyebrow="统计" title="看清任务运行状态" /> : null}
       <StatsClient initialRange={initialRange} />
     </PageContainer>
   );

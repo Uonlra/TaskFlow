@@ -619,7 +619,6 @@
   .calendar-shell .calendar-range-tabs__button,
   .calendar-shell .calendar-date-nav button {
     min-width: 0;
-    padding-inline: 10px;
   }
 
   .calendar-shell .calendar-week-strip {
