@@ -57,7 +57,10 @@
   font-weight: 650;
   text-decoration: none;
   white-space: nowrap;
-  transition: background-color 160ms ease-out, border-color 160ms ease-out, transform 160ms ease-out;
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out,
+    transform 160ms ease-out;
 }
 
 .data-empty-state__action > a:hover,
@@ -76,7 +79,6 @@
   outline: 3px solid var(--primary);
   outline-offset: 3px;
 }
-
 
 .data-empty-state__action > a[aria-disabled="true"],
 .data-empty-state__action > button:disabled {

@@ -616,7 +616,7 @@
   border-radius: 0;
   box-shadow: none;
   background:
-    linear-gradient(180deg, rgba(17,17,17,0.08), rgba(17,17,17,0.72)),
+    linear-gradient(180deg, rgba(17, 17, 17, 0.08), rgba(17, 17, 17, 0.72)),
     radial-gradient(circle at 78% 14%, rgba(216, 201, 174, 0.28), transparent 26%);
   pointer-events: none;
   z-index: 1;
@@ -749,8 +749,7 @@
   align-items: center;
   min-width: 0;
   padding: clamp(34px, 5vw, 76px);
-  background:
-    linear-gradient(180deg, rgba(245, 240, 230, 0.94), rgba(250, 247, 239, 0.98));
+  background: linear-gradient(180deg, rgba(245, 240, 230, 0.94), rgba(250, 247, 239, 0.98));
 }
 
 .auth-form-shell {
@@ -928,8 +927,7 @@
 }
 
 .auth-form-panel {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(239, 246, 255, 0.88));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(239, 246, 255, 0.88));
 }
 
 .auth-form-eyebrow {

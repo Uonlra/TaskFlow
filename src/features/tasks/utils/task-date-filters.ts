@@ -86,7 +86,10 @@ export function isTaskDueOnDate(task: Task, date: Date): boolean {
 export function isTaskDueInWeek(task: Task, weekAnchorDate: Date): boolean {
   const dueDate = parseTaskDueDate(task);
 
-  return Boolean(dueDate && isWithinTaskDateRange(dueDate, getTaskWeekStart(weekAnchorDate), addTaskDays(getTaskWeekStart(weekAnchorDate), 7)));
+  return Boolean(
+    dueDate &&
+    isWithinTaskDateRange(dueDate, getTaskWeekStart(weekAnchorDate), addTaskDays(getTaskWeekStart(weekAnchorDate), 7)),
+  );
 }
 
 export function isTaskDueInRange(task: Task, input: TaskDateRangeInput): boolean {
@@ -116,11 +119,15 @@ export function filterTasksByTaskDateRange(tasks: Task[], input: TaskDateRangeIn
 }
 
 export function hasActiveTaskDateRangeFilter(input: { date?: Date | null; range?: string | null }): boolean {
-  return Boolean(input.date || input.range === DASHBOARD_RANGE_VALUES.today || input.range === DASHBOARD_RANGE_VALUES.week || input.range === DASHBOARD_RANGE_VALUES.all);
+  return Boolean(
+    input.date ||
+    input.range === DASHBOARD_RANGE_VALUES.today ||
+    input.range === DASHBOARD_RANGE_VALUES.week ||
+    input.range === DASHBOARD_RANGE_VALUES.all,
+  );
 }
 
 function isWithinTaskDateRange(value: Date, start: Date, exclusiveEnd: Date): boolean {
   const timestamp = value.getTime();
   return timestamp >= start.getTime() && timestamp < exclusiveEnd.getTime();
 }
-

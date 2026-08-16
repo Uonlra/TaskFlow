@@ -28,7 +28,13 @@ const statusLabel: Record<Task["status"], string> = {
   done: "已完成",
 };
 
-export function DesktopTaskTable({ tasks, emptyState, selectedTaskId, onSelectTask, onUpdateStatus }: DesktopTaskTableProps) {
+export function DesktopTaskTable({
+  tasks,
+  emptyState,
+  selectedTaskId,
+  onSelectTask,
+  onUpdateStatus,
+}: DesktopTaskTableProps) {
   if (!tasks.length) {
     return (
       <div className="desktop-task-empty">
@@ -81,11 +87,9 @@ function DesktopTaskRow({
 
   return (
     <div
-      className={[
-        "desktop-task-table__row",
-        selected ? "is-selected" : "",
-        task.status === "done" ? "is-done" : "",
-      ].filter(Boolean).join(" ")}
+      className={["desktop-task-table__row", selected ? "is-selected" : "", task.status === "done" ? "is-done" : ""]
+        .filter(Boolean)
+        .join(" ")}
       role="row"
       tabIndex={0}
       onClick={() => onSelectTask(task.id)}
@@ -123,9 +127,7 @@ function DesktopTaskRow({
               </span>
             ))}
             {task.tags.length > 2 ? (
-              <span className="desktop-task-chip desktop-task-chip--muted">
-                +{task.tags.length - 2}
-              </span>
+              <span className="desktop-task-chip desktop-task-chip--muted">+{task.tags.length - 2}</span>
             ) : null}
           </>
         ) : (
@@ -143,9 +145,7 @@ function DesktopTaskRow({
       </span>
 
       <span role="cell">
-        <span className={`desktop-task-status desktop-task-status--${task.status}`}>
-          {statusLabel[task.status]}
-        </span>
+        <span className={`desktop-task-status desktop-task-status--${task.status}`}>{statusLabel[task.status]}</span>
       </span>
 
       <span role="cell" className="desktop-task-table__actions">

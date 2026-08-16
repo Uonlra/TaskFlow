@@ -50,7 +50,11 @@ export function TaskDetailClient({ id }: { id: string }) {
   if (!task) {
     return (
       <PageContainer>
-        <Link href="/tasks" className="ui-sans" style={{ display: "inline-block", marginBottom: 20, color: "var(--muted)" }}>
+        <Link
+          href="/tasks"
+          className="ui-sans"
+          style={{ display: "inline-block", marginBottom: 20, color: "var(--muted)" }}
+        >
           返回任务列表
         </Link>
         <EmptyState
@@ -76,8 +80,8 @@ export function TaskDetailClient({ id }: { id: string }) {
   const handleDelete = async () => {
     try {
       await deleteTask(task.id, user?.id);
-        showToast({
-          title: "任务已删除",
+      showToast({
+        title: "任务已删除",
         description: "这条任务已经从当前任务本中移除。",
         tone: "success",
       });
@@ -94,7 +98,9 @@ export function TaskDetailClient({ id }: { id: string }) {
 
   return (
     <PageContainer>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+      <div
+        style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", flexWrap: "wrap" }}
+      >
         <Link
           href="/tasks"
           className="ui-sans"
@@ -125,12 +131,19 @@ export function TaskDetailClient({ id }: { id: string }) {
         }}
       >
         <div style={{ display: "grid", gap: 18 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "start" }}>
+          <div
+            style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "start" }}
+          >
             <div>
-              <p className="section-eyebrow" style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}>
+              <p
+                className="section-eyebrow"
+                style={{ margin: 0, color: "var(--primary)", fontWeight: 700, fontSize: "0.82rem" }}
+              >
                 任务详情
               </p>
-              <h1 style={{ margin: "12px 0 0", fontSize: "clamp(2rem, 4vw, 2.8rem)", lineHeight: 1.18 }}>{task.title}</h1>
+              <h1 style={{ margin: "12px 0 0", fontSize: "clamp(2rem, 4vw, 2.8rem)", lineHeight: 1.18 }}>
+                {task.title}
+              </h1>
               <p style={{ margin: "12px 0 0", maxWidth: 700, color: "var(--muted-strong)", lineHeight: 1.82 }}>
                 这里放着这条任务的状态、截止信息、标签与说明，方便你回到细节时快速接上思路。
               </p>
@@ -247,7 +260,10 @@ export function TaskDetailClient({ id }: { id: string }) {
           background: "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(249,251,255,0.84))",
         }}
       >
-        <p className="section-eyebrow" style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}>
+        <p
+          className="section-eyebrow"
+          style={{ margin: 0, color: "var(--data-ink)", fontWeight: 700, fontSize: "0.82rem" }}
+        >
           说明
         </p>
         <h2 style={{ margin: "10px 0 0", fontSize: "1.18rem" }}>任务说明</h2>

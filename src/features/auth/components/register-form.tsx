@@ -19,12 +19,7 @@ export function RegisterForm() {
   const searchParams = useSearchParams();
   const nextPath = getSafeNextPath(searchParams.get("next"));
   const { showToast } = useToast();
-  const {
-    preloginAccountStatus,
-    setPreloginAccountStatus,
-    setPreloginEmail,
-    setPreloginName,
-  } = useAuthPreviewState();
+  const { preloginAccountStatus, setPreloginAccountStatus, setPreloginEmail, setPreloginName } = useAuthPreviewState();
   const [submittedName, setSubmittedName] = useState<string | null>(null);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -88,11 +83,9 @@ export function RegisterForm() {
       body: JSON.stringify(values),
     });
 
-    const payload = (await response.json().catch(() => null)) as
-      | {
-          message?: string;
-        }
-      | null;
+    const payload = (await response.json().catch(() => null)) as {
+      message?: string;
+    } | null;
 
     if (!response.ok) {
       const message = payload?.message || "注册失败，请稍后再试。";
@@ -166,17 +159,11 @@ export function RegisterForm() {
           registration={register("confirmPassword")}
           icon="*"
         />
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="auth-submit-button"
-        >
+        <button type="submit" disabled={isSubmitting} className="auth-submit-button">
           {isSubmitting ? "创建中..." : "创建任务本"}
         </button>
         {submittedName ? (
-          <p className="auth-form-message auth-form-message--success">
-            {`已为 ${submittedName} 创建账号。`}
-          </p>
+          <p className="auth-form-message auth-form-message--success">{`已为 ${submittedName} 创建账号。`}</p>
         ) : null}
         {submitMessage ? <p className="auth-form-message auth-form-message--success">{submitMessage}</p> : null}
         {submitError ? <p className="auth-form-message auth-form-message--error">{submitError}</p> : null}
@@ -185,11 +172,7 @@ export function RegisterForm() {
   );
 }
 
-function AccountLookupMessage({
-  status,
-}: {
-  status: ReturnType<typeof useAuthPreviewState>["preloginAccountStatus"];
-}) {
+function AccountLookupMessage({ status }: { status: ReturnType<typeof useAuthPreviewState>["preloginAccountStatus"] }) {
   if (status === "idle") {
     return null;
   }

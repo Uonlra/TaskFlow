@@ -36,10 +36,7 @@ export async function PATCH(request: NextRequest) {
   const parsed = profileSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { message: parsed.error.issues[0]?.message ?? "资料信息格式不正确。" },
-      { status: 400 },
-    );
+    return NextResponse.json({ message: parsed.error.issues[0]?.message ?? "资料信息格式不正确。" }, { status: 400 });
   }
 
   try {

@@ -139,12 +139,20 @@ function StatItem({ label, value }: { label: string; value: number }) {
   );
 }
 
-function MobileTaskItem({ task, onUpdateStatus }: { task: Task; onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void> }) {
+function MobileTaskItem({
+  task,
+  onUpdateStatus,
+}: {
+  task: Task;
+  onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
+}) {
   const dueMeta = getTaskDueMeta(task);
   const nextStatus = task.status === "done" ? "todo" : "done";
 
   return (
-    <article className={`mobile-task-item mobile-task-item--${task.priority}${task.status === "done" ? " mobile-task-item--done" : ""}`}>
+    <article
+      className={`mobile-task-item mobile-task-item--${task.priority}${task.status === "done" ? " mobile-task-item--done" : ""}`}
+    >
       <button
         type="button"
         className="mobile-task-item__check"
@@ -160,7 +168,9 @@ function MobileTaskItem({ task, onUpdateStatus }: { task: Task; onUpdateStatus: 
         <span className="mobile-task-item__meta">
           <span className="mobile-task-item__priority">{priorityLabel[task.priority]}</span>
           {task.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="mobile-task-item__tag">#{tag}</span>
+            <span key={tag} className="mobile-task-item__tag">
+              #{tag}
+            </span>
           ))}
         </span>
       </Link>

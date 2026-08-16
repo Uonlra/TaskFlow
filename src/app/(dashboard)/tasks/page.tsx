@@ -13,7 +13,9 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
     searchParams ?? Promise.resolve(undefined),
     getTaskPageInitialData(),
   ]);
-  const parsedDate = parseTaskDateParam(typeof resolvedSearchParams?.date === "string" ? resolvedSearchParams.date : undefined);
+  const parsedDate = parseTaskDateParam(
+    typeof resolvedSearchParams?.date === "string" ? resolvedSearchParams.date : undefined,
+  );
   const initialFilters = {
     query: typeof resolvedSearchParams?.query === "string" ? resolvedSearchParams.query : "",
     tag: typeof resolvedSearchParams?.tag === "string" ? resolvedSearchParams.tag : "",

@@ -66,22 +66,20 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
   };
   const activityItems = buildTaskActivity(task);
 
-  const handleTabKeyDown = (
-    event: ReactKeyboardEvent<HTMLButtonElement>,
-    currentTab: TaskDetailTab,
-  ) => {
+  const handleTabKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, currentTab: TaskDetailTab) => {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
       return;
     }
 
     event.preventDefault();
-    const nextTab = event.key === "Home"
-      ? "details"
-      : event.key === "End"
-        ? "activity"
-        : currentTab === "details"
+    const nextTab =
+      event.key === "Home"
+        ? "details"
+        : event.key === "End"
           ? "activity"
-          : "details";
+          : currentTab === "details"
+            ? "activity"
+            : "details";
 
     setActiveTab(nextTab);
     (nextTab === "details" ? detailsTabRef : activityTabRef).current?.focus();
@@ -99,7 +97,11 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
             aria-selected={activeTab === "details"}
             aria-controls="task-detail-panel-details"
             tabIndex={activeTab === "details" ? 0 : -1}
-            className={activeTab === "details" ? "task-detail-panel__tab task-detail-panel__tab--active" : "task-detail-panel__tab"}
+            className={
+              activeTab === "details"
+                ? "task-detail-panel__tab task-detail-panel__tab--active"
+                : "task-detail-panel__tab"
+            }
             onClick={() => setActiveTab("details")}
             onKeyDown={(event) => handleTabKeyDown(event, "details")}
           >
@@ -113,7 +115,11 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
             aria-selected={activeTab === "activity"}
             aria-controls="task-detail-panel-activity"
             tabIndex={activeTab === "activity" ? 0 : -1}
-            className={activeTab === "activity" ? "task-detail-panel__tab task-detail-panel__tab--active" : "task-detail-panel__tab"}
+            className={
+              activeTab === "activity"
+                ? "task-detail-panel__tab task-detail-panel__tab--active"
+                : "task-detail-panel__tab"
+            }
             onClick={() => setActiveTab("activity")}
             onKeyDown={(event) => handleTabKeyDown(event, "activity")}
           >
@@ -155,7 +161,9 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
             </DetailRow>
 
             <DetailRow label="截止时间">
-              <span className={`task-detail-due task-detail-due--${dueMeta.tone}`}>{formatDate(task.dueDate) || dueMeta.label}</span>
+              <span className={`task-detail-due task-detail-due--${dueMeta.tone}`}>
+                {formatDate(task.dueDate) || dueMeta.label}
+              </span>
             </DetailRow>
 
             <DetailRow label="创建时间">
@@ -178,7 +186,9 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
             </div>
             {task.tags.length ? (
               <div className="task-detail-panel__tag-list" aria-label="任务标签">
-                {task.tags.map((tag) => <span key={tag}>#{tag}</span>)}
+                {task.tags.map((tag) => (
+                  <span key={tag}>#{tag}</span>
+                ))}
               </div>
             ) : (
               <p className="task-detail-panel__tag-empty">暂无标签，可通过编辑任务添加。</p>
@@ -198,7 +208,10 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
           </div>
           <ol className="task-detail-panel__timeline">
             {activityItems.map((item) => (
-              <li key={item.id} className={`task-detail-panel__timeline-item task-detail-panel__timeline-item--${item.id}`}>
+              <li
+                key={item.id}
+                className={`task-detail-panel__timeline-item task-detail-panel__timeline-item--${item.id}`}
+              >
                 <span className="task-detail-panel__timeline-marker" aria-hidden="true" />
                 <div>
                   <div className="task-detail-panel__timeline-meta">
@@ -309,4 +322,3 @@ function formatDateTime(value: string) {
 
   return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
-

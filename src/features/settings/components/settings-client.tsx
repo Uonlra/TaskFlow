@@ -72,21 +72,17 @@ export function SettingsClient() {
         <section className="settings-grid">
           <aside className="settings-profile-panel">
             <div className="settings-panel-heading">
-
               <span className="settings-status-dot" aria-label={isConfigured ? "已连接" : "未连接"} />
             </div>
 
             <div className="settings-profile-card">
               <div className="settings-profile-card__avatar">
-              {avatarPreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={avatarPreview}
-                  alt={namePreview || user?.email || "头像预览"}
-                />
-              ) : (
-                <span>{(namePreview || user?.email || "演").slice(0, 1).toUpperCase()}</span>
-              )}
+                {avatarPreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarPreview} alt={namePreview || user?.email || "头像预览"} />
+                ) : (
+                  <span>{(namePreview || user?.email || "演").slice(0, 1).toUpperCase()}</span>
+                )}
               </div>
               <div className="settings-profile-card__copy">
                 <strong>{namePreview || "未设置姓名"}</strong>
@@ -95,7 +91,9 @@ export function SettingsClient() {
             </div>
 
             <div className="settings-profile-note">
-              <span className="settings-profile-note__icon" aria-hidden="true">✓</span>
+              <span className="settings-profile-note__icon" aria-hidden="true">
+                ✓
+              </span>
               <div>
                 <strong>{isConfigured ? "账号已连接" : "当前为访客模式"}</strong>
                 <p>{isConfigured ? "资料会同步到你的工作区。" : "登录后即可同步个人资料。"}</p>
@@ -117,11 +115,7 @@ export function SettingsClient() {
               <div className="settings-form__fields">
                 <label className="settings-field">
                   <span>姓名</span>
-                  <input
-                    {...register("fullName")}
-                    placeholder="请输入你的昵称"
-                    disabled={isProfileLoading}
-                  />
+                  <input {...register("fullName")} placeholder="请输入你的昵称" disabled={isProfileLoading} />
                   <small>用于顶栏、头像菜单和任务归属提示。</small>
                 </label>
 
@@ -158,9 +152,7 @@ export function SettingsClient() {
               <div>
                 <span className="settings-panel-kicker settings-panel-kicker--danger">会话管理</span>
                 <p className="settings-danger-zone__title">退出当前账号</p>
-                <p className="settings-danger-zone__description">
-                  结束当前会话并返回登录页。
-                </p>
+                <p className="settings-danger-zone__description">结束当前会话并返回登录页。</p>
               </div>
               <button type="button" onClick={handleSignOut} className="settings-signout-button">
                 退出登录

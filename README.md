@@ -25,12 +25,12 @@ TaskFlow 是一个偏个人任务本风格的小应用，用来把任务记录�
 
 ## 项目截图
 
-| 首页 | 总览 |
-| --- | --- |
+| 首页                                                               | 总览                                                  |
+| ------------------------------------------------------------------ | ----------------------------------------------------- |
 | ![TaskFlow landing page](docs/screenshots/auth-login-adjusted.png) | ![TaskFlow dashboard](docs/screenshots/dashboard.png) |
 
-| 任务列表 | 设置页 |
-| --- | --- |
+| 任务列表                                           | 设置页                                                   |
+| -------------------------------------------------- | -------------------------------------------------------- |
 | ![TaskFlow tasks page](docs/screenshots/tasks.png) | ![TaskFlow settings page](docs/screenshots/settings.png) |
 
 ## 主要功能
@@ -205,4 +205,3 @@ Appwrite 需要完成以下配置：
 - 增加任务导出能力
 - 给总览补更多时间维度
 - 整理旧兼容字段，让 Appwrite table schema 更干净
-

@@ -12,10 +12,7 @@ export async function GET(request: NextRequest) {
   const parsed = lookupSchema.safeParse({ email });
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { status: "invalid", message: "请输入有效的邮箱地址。" },
-      { status: 400 },
-    );
+    return NextResponse.json({ status: "invalid", message: "请输入有效的邮箱地址。" }, { status: 400 });
   }
 
   const status = await getPublicAccountStatusByEmail(parsed.data.email, request);

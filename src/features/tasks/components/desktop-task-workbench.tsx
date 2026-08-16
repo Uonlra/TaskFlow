@@ -86,10 +86,7 @@ export function DesktopTaskWorkbench({
               <p>正在同步账号数据</p>
             </div>
           </header>
-          <DataEmptyState
-            title="正在同步任务"
-            description="数据准备完成后会自动显示任务列表。"
-          />
+          <DataEmptyState title="正在同步任务" description="数据准备完成后会自动显示任务列表。" />
         </div>
       </section>
     );
@@ -106,10 +103,7 @@ export function DesktopTaskWorkbench({
             </div>
             <TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="新建任务" />
           </header>
-          <DataEmptyState
-            title="还没有任务"
-            description="新建第一条任务，开始整理当前事项。"
-          />
+          <DataEmptyState title="还没有任务" description="新建第一条任务，开始整理当前事项。" />
         </div>
       </section>
     );
@@ -146,7 +140,12 @@ export function DesktopTaskWorkbench({
   };
 
   return (
-    <section className={tasks.length ? "desktop-task-workbench" : "desktop-task-workbench desktop-task-workbench--filtered-empty"} aria-label="桌面端任务工作台">
+    <section
+      className={
+        tasks.length ? "desktop-task-workbench" : "desktop-task-workbench desktop-task-workbench--filtered-empty"
+      }
+      aria-label="桌面端任务工作台"
+    >
       <div className="desktop-task-workbench__main">
         <header className="desktop-task-workbench__topbar">
           <div>
@@ -171,11 +170,7 @@ export function DesktopTaskWorkbench({
                 key={tab.value}
                 type="button"
                 aria-pressed={category === tab.value}
-                className={
-                  category === tab.value
-                    ? "desktop-task-tabs__button is-active"
-                    : "desktop-task-tabs__button"
-                }
+                className={category === tab.value ? "desktop-task-tabs__button is-active" : "desktop-task-tabs__button"}
                 onClick={() => handleCategoryChange(tab.value)}
               >
                 <span>{tab.label}</span>
@@ -220,7 +215,11 @@ export function DesktopTaskWorkbench({
             variant="table"
             title={emptyState.title}
             description={emptyState.description}
-            action={<button type="button" onClick={onResetFilters}>清除筛选</button>}
+            action={
+              <button type="button" onClick={onResetFilters}>
+                清除筛选
+              </button>
+            }
           />
         )}
 

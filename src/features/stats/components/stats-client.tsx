@@ -79,10 +79,7 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
   if (workspaceState === "guest") {
     return (
-      <WorkspaceStateNotice
-        title="登录后查看任务运行状态"
-        description="登录后即可查看完成趋势、状态分布和逾期风险。"
-      />
+      <WorkspaceStateNotice title="登录后查看任务运行状态" description="登录后即可查看完成趋势、状态分布和逾期风险。" />
     );
   }
 
@@ -133,16 +130,8 @@ export function StatsClient({ initialRange }: StatsClientProps) {
       />
       <div className="stats-layout-grid">
         <StatsTrendSection hasData={hasTrendData} isSyncing={isSyncing} option={buildTaskTrendOption(stats.trend)} />
-        <StatsStatusSection
-          hasData={hasStatusData}
-          isSyncing={isSyncing}
-          items={stats.statusDistribution}
-        />
-        <StatsPrioritySection
-          hasData={hasPriorityData}
-          isSyncing={isSyncing}
-          items={stats.priorityDistribution}
-        />
+        <StatsStatusSection hasData={hasStatusData} isSyncing={isSyncing} items={stats.statusDistribution} />
+        <StatsPrioritySection hasData={hasPriorityData} isSyncing={isSyncing} items={stats.priorityDistribution} />
         <StatsTagSection hasData={hasTagData} isSyncing={isSyncing} items={stats.tagTop} />
         <StatsRiskSection hasData={hasRiskData} isSyncing={isSyncing} rows={stats.overdueRisk} />
       </div>
@@ -399,7 +388,7 @@ function StatsRiskSection({
         <span>点击筛选</span>
       </div>
       {hasData ? (
-      <div className="stats-risk-list">
+        <div className="stats-risk-list">
           {rows.map((row) => (
             <a key={row.level} href={buildTasksHref({ risk: row.level })}>
               <span style={{ background: row.color }} />
@@ -408,7 +397,7 @@ function StatsRiskSection({
               <b>{row.count}</b>
             </a>
           ))}
-      </div>
+        </div>
       ) : (
         <StatsEmptyState isSyncing={isSyncing} label="暂无逾期风险" description="当前范围没有逾期任务。" />
       )}

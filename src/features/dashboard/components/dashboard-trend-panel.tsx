@@ -3,7 +3,11 @@ import Link from "next/link";
 import { EChartsClient } from "@/shared/components/charts/echarts-client";
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import { buildTaskTrendOption } from "@/shared/components/charts/task-chart-options";
-import type { DashboardAnalyticsRange, DashboardStats, DashboardTrendPoint } from "@/features/tasks/utils/task-analytics";
+import type {
+  DashboardAnalyticsRange,
+  DashboardStats,
+  DashboardTrendPoint,
+} from "@/features/tasks/utils/task-analytics";
 import { buildStatsHref } from "@/shared/lib/constants/query-params";
 
 type DashboardTrendPanelProps = {
@@ -36,11 +40,7 @@ export function DashboardTrendPanel({ stats, trend, range, rangeLabel, isEmpty =
           option={option}
         />
       ) : (
-        <DataEmptyState
-          variant="panel"
-          title="暂无趋势"
-          description={rangeLabel + "完成或新增任务后显示趋势。"}
-        />
+        <DataEmptyState variant="panel" title="暂无趋势" description={rangeLabel + "完成或新增任务后显示趋势。"} />
       )}
     </section>
   );
@@ -48,14 +48,16 @@ export function DashboardTrendPanel({ stats, trend, range, rangeLabel, isEmpty =
 
 function TodayPacePanel({ stats }: { stats: DashboardStats }) {
   const pace = stats.todayPace;
-  const hasAction = pace.completedCount > 0 || pace.inProgressCount > 0 || pace.dueTodayCount > 0 || pace.overdueCount > 0;
-  const status = pace.overdueCount > 0
-    ? "先处理逾期任务，再继续推进今天的安排。"
-    : pace.completedCount > 0
-      ? "已经完成一部分，继续收住正在推进的任务。"
-      : pace.inProgressCount > 0
-        ? "已有任务在推进，优先完成手上的一件事。"
-        : "从优先处理列表中选择一项开始。";
+  const hasAction =
+    pace.completedCount > 0 || pace.inProgressCount > 0 || pace.dueTodayCount > 0 || pace.overdueCount > 0;
+  const status =
+    pace.overdueCount > 0
+      ? "先处理逾期任务，再继续推进今天的安排。"
+      : pace.completedCount > 0
+        ? "已经完成一部分，继续收住正在推进的任务。"
+        : pace.inProgressCount > 0
+          ? "已有任务在推进，优先完成手上的一件事。"
+          : "从优先处理列表中选择一项开始。";
 
   return (
     <section className="dashboard-v2-panel dashboard-v2-today-pace">
@@ -81,7 +83,15 @@ function TodayPacePanel({ stats }: { stats: DashboardStats }) {
     </section>
   );
 }
-function Signal({ label, value, tone }: { label: string; value: number; tone: "done" | "progress" | "due" | "risk" | "neutral" }) {
+function Signal({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "done" | "progress" | "due" | "risk" | "neutral";
+}) {
   return (
     <div className={"dashboard-v2-today-pace__signal dashboard-v2-today-pace__signal--" + tone}>
       <span>{label}</span>

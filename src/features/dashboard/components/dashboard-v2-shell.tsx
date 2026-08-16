@@ -1,6 +1,9 @@
 import { DashboardDistributionPanel } from "@/features/dashboard/components/dashboard-distribution-panel";
 import { DashboardFocusPanel } from "@/features/dashboard/components/dashboard-focus-panel";
-import type { DashboardPriorityFilters, DashboardRangeOption } from "@/features/dashboard/components/dashboard-range-menu";
+import type {
+  DashboardPriorityFilters,
+  DashboardRangeOption,
+} from "@/features/dashboard/components/dashboard-range-menu";
 import { DashboardRiskPanel } from "@/features/dashboard/components/dashboard-risk-panel";
 import { DashboardTrendPanel } from "@/features/dashboard/components/dashboard-trend-panel";
 import { DashboardWorkspace } from "@/features/dashboard/components/dashboard-workspace";
@@ -113,11 +116,7 @@ export function DashboardV2Shell({
             range={range}
             showFocus={false}
           />
-          <DashboardRiskPanel
-            risks={stats.overdueRisk}
-            overdueCount={stats.overdueCount}
-            isEmpty={isEmpty}
-          />
+          <DashboardRiskPanel risks={stats.overdueRisk} overdueCount={stats.overdueCount} isEmpty={isEmpty} />
         </aside>
       </div>
     </section>

@@ -26,13 +26,7 @@ export type DashboardPriorityFilters = {
   due: TaskDueFilter | "";
 };
 
-export function DashboardRangeMenu({
-  range,
-  options,
-  onChange,
-  filters,
-  onFiltersChange,
-}: DashboardRangeMenuProps) {
+export function DashboardRangeMenu({ range, options, onChange, filters, onFiltersChange }: DashboardRangeMenuProps) {
   const filterButtonRef = useRef<HTMLButtonElement | null>(null);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const filterMenuId = useId();
@@ -40,7 +34,8 @@ export function DashboardRangeMenu({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterMenuStyle, setFilterMenuStyle] = useState<CSSProperties | null>(null);
   const hasActiveFilters = filters.status !== "all" || filters.priority !== "all" || filters.due !== "";
-  const activeFilterCount = Number(filters.status !== "all") + Number(filters.priority !== "all") + Number(Boolean(filters.due));
+  const activeFilterCount =
+    Number(filters.status !== "all") + Number(filters.priority !== "all") + Number(Boolean(filters.due));
 
   useEffect(() => {
     setIsMounted(true);
@@ -110,9 +105,7 @@ export function DashboardRangeMenu({
         width: menuWidth,
         zIndex: 3000,
         maxHeight: Math.max(160, availableHeight),
-        ...(openUpward
-          ? { bottom: viewportHeight - rect.top + 8 }
-          : { top: rect.bottom + 8 }),
+        ...(openUpward ? { bottom: viewportHeight - rect.top + 8 } : { top: rect.bottom + 8 }),
       });
     };
 
@@ -130,12 +123,7 @@ export function DashboardRangeMenu({
     <div className="dashboard-range-menu" aria-label="总览任务范围工具栏">
       <div className="dashboard-range-menu__scope">
         <span className="dashboard-range-menu__scope-label">任务范围</span>
-        <CustomSelect
-          ariaLabel="任务范围"
-          value={range}
-          options={options}
-          onChange={onChange}
-        />
+        <CustomSelect ariaLabel="任务范围" value={range} options={options} onChange={onChange} />
       </div>
       <span className="dashboard-range-menu__divider" aria-hidden="true" />
       <div className="dashboard-range-menu__filter">
@@ -154,41 +142,66 @@ export function DashboardRangeMenu({
         </button>
         {isFilterOpen && isMounted && filterMenuStyle
           ? createPortal(
-            <div
-              ref={filterMenuRef}
-              id={filterMenuId}
-              role="dialog"
-              aria-label="筛选优先处理任务"
-              className="dashboard-range-menu__filter-menu"
-              style={filterMenuStyle}
-            >
-              <div className="dashboard-range-menu__filter-head">
-                <span>筛选任务</span>
-                <div>
-                  {hasActiveFilters ? <button type="button" onClick={() => onFiltersChange(initialFilters)}>清除</button> : null}
-                  <button type="button" onClick={() => setIsFilterOpen(false)}>完成</button>
+              <div
+                ref={filterMenuRef}
+                id={filterMenuId}
+                role="dialog"
+                aria-label="筛选优先处理任务"
+                className="dashboard-range-menu__filter-menu"
+                style={filterMenuStyle}
+              >
+                <div className="dashboard-range-menu__filter-head">
+                  <span>筛选任务</span>
+                  <div>
+                    {hasActiveFilters ? (
+                      <button type="button" onClick={() => onFiltersChange(initialFilters)}>
+                        清除
+                      </button>
+                    ) : null}
+                    <button type="button" onClick={() => setIsFilterOpen(false)}>
+                      完成
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <label>
-                <span>状态</span>
-                <CustomSelect ariaLabel="优先处理任务状态" value={filters.status} options={statusOptions} onChange={(status) => onFiltersChange({ ...filters, status })} />
-              </label>
-              <label>
-                <span>优先级</span>
-                <CustomSelect ariaLabel="优先处理任务优先级" value={filters.priority} options={priorityOptions} onChange={(priority) => onFiltersChange({ ...filters, priority })} />
-              </label>
-              <label>
-                <span>截止日期</span>
-                <CustomSelect ariaLabel="优先处理任务截止日期" value={filters.due} options={dueOptions} onChange={(due) => onFiltersChange({ ...filters, due })} />
-              </label>
-            </div>,
-            document.body,
-          )
+                <label>
+                  <span>状态</span>
+                  <CustomSelect
+                    ariaLabel="优先处理任务状态"
+                    value={filters.status}
+                    options={statusOptions}
+                    onChange={(status) => onFiltersChange({ ...filters, status })}
+                  />
+                </label>
+                <label>
+                  <span>优先级</span>
+                  <CustomSelect
+                    ariaLabel="优先处理任务优先级"
+                    value={filters.priority}
+                    options={priorityOptions}
+                    onChange={(priority) => onFiltersChange({ ...filters, priority })}
+                  />
+                </label>
+                <label>
+                  <span>截止日期</span>
+                  <CustomSelect
+                    ariaLabel="优先处理任务截止日期"
+                    value={filters.due}
+                    options={dueOptions}
+                    onChange={(due) => onFiltersChange({ ...filters, due })}
+                  />
+                </label>
+              </div>,
+              document.body,
+            )
           : null}
       </div>
       <details className="dashboard-range-menu__more">
-        <summary aria-label="更多总览操作" title="更多操作"><span aria-hidden="true" /></summary>
-        <div className="dashboard-range-menu__more-menu"><Link href="/tasks">查看任务列表</Link></div>
+        <summary aria-label="更多总览操作" title="更多操作">
+          <span aria-hidden="true" />
+        </summary>
+        <div className="dashboard-range-menu__more-menu">
+          <Link href="/tasks">查看任务列表</Link>
+        </div>
       </details>
     </div>
   );

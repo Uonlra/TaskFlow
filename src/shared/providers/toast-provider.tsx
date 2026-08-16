@@ -29,7 +29,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback(
     (input: ToastInput) => {
       const id =
-        typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random()}`;
 
       setToasts((current) => [...current, { id, ...input }]);
 
@@ -90,7 +92,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   {toast.title}
                 </p>
                 {toast.description ? (
-                  <p style={{ margin: "8px 0 0", color: "var(--muted-strong)", lineHeight: 1.6 }}>{toast.description}</p>
+                  <p style={{ margin: "8px 0 0", color: "var(--muted-strong)", lineHeight: 1.6 }}>
+                    {toast.description}
+                  </p>
                 ) : null}
               </div>
               <button

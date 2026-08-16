@@ -38,7 +38,11 @@ export function CustomSelect<T extends string = string>({
   const [menuStyle, setMenuStyle] = useState<CSSProperties | null>(null);
 
   const selectedIndex = useMemo(
-    () => Math.max(0, options.findIndex((option) => option.value === value)),
+    () =>
+      Math.max(
+        0,
+        options.findIndex((option) => option.value === value),
+      ),
     [options, value],
   );
 
@@ -68,10 +72,7 @@ export function CustomSelect<T extends string = string>({
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target as Node;
 
-      if (
-        !rootRef.current?.contains(target) &&
-        !menuRef.current?.contains(target)
-      ) {
+      if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) {
         setOpen(false);
       }
     };
@@ -118,12 +119,8 @@ export function CustomSelect<T extends string = string>({
       const preferredMaxHeight = 320;
       const spaceBelow = viewportHeight - rect.bottom - 12;
       const spaceAbove = rect.top - 12;
-      const shouldOpenUpward =
-        spaceBelow < 220 && spaceAbove > spaceBelow;
-      const maxHeight = Math.max(
-        180,
-        Math.min(preferredMaxHeight, shouldOpenUpward ? spaceAbove : spaceBelow),
-      );
+      const shouldOpenUpward = spaceBelow < 220 && spaceAbove > spaceBelow;
+      const maxHeight = Math.max(180, Math.min(preferredMaxHeight, shouldOpenUpward ? spaceAbove : spaceBelow));
 
       setMenuStyle({
         position: "fixed",
@@ -131,9 +128,7 @@ export function CustomSelect<T extends string = string>({
         width: rect.width,
         zIndex: 3000,
         maxHeight,
-        ...(shouldOpenUpward
-          ? { bottom: viewportHeight - rect.top + 8 }
-          : { top: rect.bottom + 8 }),
+        ...(shouldOpenUpward ? { bottom: viewportHeight - rect.top + 8 } : { top: rect.bottom + 8 }),
       });
     };
 
@@ -233,43 +228,43 @@ export function CustomSelect<T extends string = string>({
 
       {open && mounted && menuStyle
         ? createPortal(
-        <div
-          ref={menuRef}
-          id={listboxId}
-          role="listbox"
-          aria-label={ariaLabel}
-          className="custom-select__menu"
-          style={menuStyle}
-        >
-          {options.map((option, index) => {
-            const isSelected = option.value === value;
-            const isHighlighted = index === highlightedIndex;
+            <div
+              ref={menuRef}
+              id={listboxId}
+              role="listbox"
+              aria-label={ariaLabel}
+              className="custom-select__menu"
+              style={menuStyle}
+            >
+              {options.map((option, index) => {
+                const isSelected = option.value === value;
+                const isHighlighted = index === highlightedIndex;
 
-            return (
-              <button
-                key={option.value}
-                ref={(node) => {
-                  optionRefs.current[index] = node;
-                }}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                className={`custom-select__option${
-                  isSelected ? " custom-select__option--selected" : ""
-                }${isHighlighted ? " custom-select__option--highlighted" : ""}`}
-                onMouseEnter={() => setHighlightedIndex(index)}
-                onClick={() => commitSelection(index)}
-              >
-                <span className="custom-select__option-label">{option.label}</span>
-                {option.description ? (
-                  <span className="custom-select__option-description">{option.description}</span>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>,
-        document.body,
-      )
+                return (
+                  <button
+                    key={option.value}
+                    ref={(node) => {
+                      optionRefs.current[index] = node;
+                    }}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    className={`custom-select__option${
+                      isSelected ? " custom-select__option--selected" : ""
+                    }${isHighlighted ? " custom-select__option--highlighted" : ""}`}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                    onClick={() => commitSelection(index)}
+                  >
+                    <span className="custom-select__option-label">{option.label}</span>
+                    {option.description ? (
+                      <span className="custom-select__option-description">{option.description}</span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>,
+            document.body,
+          )
         : null}
     </div>
   );

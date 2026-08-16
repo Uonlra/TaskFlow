@@ -52,7 +52,13 @@ function StatusDistributionCard({
   const option = buildTaskStatusOption(items);
 
   return (
-    <article className={hasData ? "dashboard-v2-panel dashboard-v2-distribution-card" : "dashboard-v2-panel dashboard-v2-distribution-card is-empty"}>
+    <article
+      className={
+        hasData
+          ? "dashboard-v2-panel dashboard-v2-distribution-card"
+          : "dashboard-v2-panel dashboard-v2-distribution-card is-empty"
+      }
+    >
       <div className="dashboard-v2-panel__head">
         <h2>{rangeLabel}状态分布</h2>
       </div>
@@ -89,7 +95,13 @@ function PriorityDistributionCard({
   const option = buildTaskPriorityOption(items);
 
   return (
-    <article className={hasData ? "dashboard-v2-panel dashboard-v2-distribution-card" : "dashboard-v2-panel dashboard-v2-distribution-card is-empty"}>
+    <article
+      className={
+        hasData
+          ? "dashboard-v2-panel dashboard-v2-distribution-card"
+          : "dashboard-v2-panel dashboard-v2-distribution-card is-empty"
+      }
+    >
       <div className="dashboard-v2-panel__head">
         <h2>{rangeLabel}优先级</h2>
       </div>
@@ -125,7 +137,13 @@ function TagTopCard({
   const option = buildTaskTagTopOption(items);
 
   return (
-    <article className={hasData ? "dashboard-v2-panel dashboard-v2-distribution-card" : "dashboard-v2-panel dashboard-v2-distribution-card is-empty"}>
+    <article
+      className={
+        hasData
+          ? "dashboard-v2-panel dashboard-v2-distribution-card"
+          : "dashboard-v2-panel dashboard-v2-distribution-card is-empty"
+      }
+    >
       <div className="dashboard-v2-panel__head">
         <h2>{range === "all" ? "标签 Top 5" : `${rangeLabel}标签 Top 5`}</h2>
       </div>

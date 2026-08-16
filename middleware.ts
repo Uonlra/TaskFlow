@@ -12,12 +12,8 @@ export function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  const isProtectedPage = protectedPages.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`),
-  );
-  const isProtectedApi = protectedApiPrefixes.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`),
-  );
+  const isProtectedPage = protectedPages.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  const isProtectedApi = protectedApiPrefixes.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 
   if (!isProtectedPage && !isProtectedApi) {
     return NextResponse.next();
@@ -27,10 +23,7 @@ export function middleware(request: NextRequest) {
 
   if (!sessionCookie) {
     if (isProtectedApi) {
-      return NextResponse.json(
-        { message: "请先登录后再执行此操作。" },
-        { status: 401 },
-      );
+      return NextResponse.json({ message: "请先登录后再执行此操作。" }, { status: 401 });
     }
 
     return NextResponse.redirect(new URL("/login", request.url));
@@ -40,7 +33,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };

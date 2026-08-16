@@ -13,10 +13,7 @@ export async function getTaskPageInitialData(): Promise<TaskPageInitialData | nu
   }
 
   try {
-    const [account, tasks] = await Promise.all([
-      getCurrentAccount(sessionSecret),
-      listTasks(sessionSecret),
-    ]);
+    const [account, tasks] = await Promise.all([getCurrentAccount(sessionSecret), listTasks(sessionSecret)]);
 
     return {
       userId: account.$id,

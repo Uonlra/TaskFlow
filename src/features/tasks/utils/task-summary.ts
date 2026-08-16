@@ -83,7 +83,10 @@ export function getTaskPreviewSummary(tasks: Task[]): TaskPreviewSummary {
   );
 
   const sortedByDeadline = sortTasks(tasks, "due_asc");
-  const focusTasks = sortedByDeadline.filter((task) => task.status !== "done").slice(0, 3).map(toPreviewTask);
+  const focusTasks = sortedByDeadline
+    .filter((task) => task.status !== "done")
+    .slice(0, 3)
+    .map(toPreviewTask);
   const recentTasks = sortTasks(tasks, "updated_desc").slice(0, 3).map(toPreviewTask);
   const totalCount = tasks.length;
   const doneCount = statusCounts.done;

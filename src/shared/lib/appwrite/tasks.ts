@@ -4,11 +4,7 @@ import type { NextRequest } from "next/server";
 
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
-import {
-  appwriteDatabaseId,
-  appwriteTasksTableId,
-  hasAppwriteDatabaseEnv,
-} from "@/shared/lib/appwrite/env";
+import { appwriteDatabaseId, appwriteTasksTableId, hasAppwriteDatabaseEnv } from "@/shared/lib/appwrite/env";
 import { appwriteFetch } from "@/shared/lib/appwrite/request";
 
 type AppwriteTaskRow = {
@@ -31,10 +27,7 @@ type AppwriteRowsList = {
   rows: AppwriteTaskRow[];
 };
 
-export async function listTasks(
-  sessionSecret: string,
-  request?: NextRequest,
-) {
+export async function listTasks(sessionSecret: string, request?: NextRequest) {
   const payload = await appwriteTaskRequest<AppwriteRowsList>("", {
     sessionSecret,
     request,
@@ -43,12 +36,7 @@ export async function listTasks(
   return (payload.rows ?? []).map(mapTaskRow);
 }
 
-export async function createTask(
-  sessionSecret: string,
-  userId: string,
-  input: TaskFormValues,
-  request?: NextRequest,
-) {
+export async function createTask(sessionSecret: string, userId: string, input: TaskFormValues, request?: NextRequest) {
   const rowId = crypto.randomUUID();
   const taskKey = Date.now();
   const row = await appwriteTaskRequest<AppwriteTaskRow>("", {
@@ -65,12 +53,7 @@ export async function createTask(
   return mapTaskRow(row);
 }
 
-export async function updateTask(
-  sessionSecret: string,
-  taskId: string,
-  input: TaskFormValues,
-  request?: NextRequest,
-) {
+export async function updateTask(sessionSecret: string, taskId: string, input: TaskFormValues, request?: NextRequest) {
   const row = await appwriteTaskRequest<AppwriteTaskRow>(`/${taskId}`, {
     method: "PATCH",
     sessionSecret,
@@ -104,11 +87,7 @@ export async function updateTaskStatus(
   return mapTaskRow(row);
 }
 
-export async function deleteTask(
-  sessionSecret: string,
-  taskId: string,
-  request?: NextRequest,
-) {
+export async function deleteTask(sessionSecret: string, taskId: string, request?: NextRequest) {
   await appwriteTaskRequest(`/${taskId}`, {
     method: "DELETE",
     sessionSecret,
@@ -116,11 +95,7 @@ export async function deleteTask(
   });
 }
 
-export async function getTask(
-  sessionSecret: string,
-  taskId: string,
-  request?: NextRequest,
-) {
+export async function getTask(sessionSecret: string, taskId: string, request?: NextRequest) {
   const row = await appwriteTaskRequest<AppwriteTaskRow>(`/${taskId}`, {
     sessionSecret,
     request,
@@ -145,17 +120,10 @@ export function mapTaskRow(row: AppwriteTaskRow): Task {
 }
 
 function buildTaskPermissions(userId: string) {
-  return [
-    `read("user:${userId}")`,
-    `update("user:${userId}")`,
-    `delete("user:${userId}")`,
-  ];
+  return [`read("user:${userId}")`, `update("user:${userId}")`, `delete("user:${userId}")`];
 }
 
-function buildTaskData(
-  input: TaskFormValues,
-  taskKey?: number,
-) {
+function buildTaskData(input: TaskFormValues, taskKey?: number) {
   const tags = Array.from(
     new Set(
       (input.tags ?? "")
@@ -214,9 +182,7 @@ async function appwriteTaskRequest<T = unknown>(
     body: options.body,
     sessionSecret: options.sessionSecret,
     request: options.request,
-    searchParams: options.searchParams as
-      | Record<string, string | number | boolean | Array<string>>
-      | undefined,
+    searchParams: options.searchParams as Record<string, string | number | boolean | Array<string>> | undefined,
     errorMessage: "Task request failed.",
   });
 }

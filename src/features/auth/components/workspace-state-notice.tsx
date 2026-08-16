@@ -16,7 +16,9 @@ export function WorkspaceStateNotice({ description, title }: WorkspaceStateNotic
       <p>访客浏览</p>
       <h1>{title}</h1>
       <span>{description}</span>
-      <a href={loginHref} data-auth-gate-bypass>登录后继续</a>
+      <a href={loginHref} data-auth-gate-bypass>
+        登录后继续
+      </a>
     </section>
   );
 }

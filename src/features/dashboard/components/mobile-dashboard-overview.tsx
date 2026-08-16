@@ -95,7 +95,9 @@ export function MobileDashboardOverview({
             key={option.value}
             type="button"
             aria-pressed={range === option.value}
-            className={range === option.value ? "mobile-dashboard__range-button is-active" : "mobile-dashboard__range-button"}
+            className={
+              range === option.value ? "mobile-dashboard__range-button is-active" : "mobile-dashboard__range-button"
+            }
             onClick={() => onRangeChange(option.value)}
           >
             {option.label}
@@ -113,7 +115,9 @@ export function MobileDashboardOverview({
         </div>
         <div className="mobile-dashboard__progress-copy">
           <p>{rangeLabel}进度</p>
-          <h2>{completedCount}/{tasks.length || 0}</h2>
+          <h2>
+            {completedCount}/{tasks.length || 0}
+          </h2>
           <span>{isLoading ? "同步中" : "已完成"}</span>
         </div>
       </section>
@@ -161,7 +165,11 @@ export function MobileDashboardOverview({
         <div className="mobile-dashboard__project-grid">
           {projectEntries.length ? (
             projectEntries.map((item) => (
-              <Link key={item.tag} href={`${ROUTES.tasks}?tag=${encodeURIComponent(item.tag)}`} className="mobile-dashboard__project-card">
+              <Link
+                key={item.tag}
+                href={`${ROUTES.tasks}?tag=${encodeURIComponent(item.tag)}`}
+                className="mobile-dashboard__project-card"
+              >
                 <span>{item.tag.slice(0, 1).toUpperCase()}</span>
                 <strong>{item.tag}</strong>
                 <small>{item.count} 项</small>
@@ -176,7 +184,15 @@ export function MobileDashboardOverview({
   );
 }
 
-function MetricCard({ label, value, tone }: { label: string; value: number; tone: "neutral" | "blue" | "red" | "amber" }) {
+function MetricCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "neutral" | "blue" | "red" | "amber";
+}) {
   return (
     <article className={`mobile-dashboard__metric mobile-dashboard__metric--${tone}`}>
       <span>{label}</span>
@@ -189,7 +205,10 @@ function MobileTaskRow({ task }: { task: Task }) {
   const dueMeta = getTaskDueMeta(task);
 
   return (
-    <Link href={`${ROUTES.tasks}/${task.id}`} className={`mobile-dashboard__task-row mobile-dashboard__task-row--${task.priority}`}>
+    <Link
+      href={`${ROUTES.tasks}/${task.id}`}
+      className={`mobile-dashboard__task-row mobile-dashboard__task-row--${task.priority}`}
+    >
       <span className="mobile-dashboard__task-status" aria-hidden="true" />
       <span className="mobile-dashboard__task-copy">
         <strong>{task.title}</strong>

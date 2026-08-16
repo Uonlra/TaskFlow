@@ -11,10 +11,7 @@ const statusMessages: Record<number, string> = {
   429: "操作过于频繁，请稍后再试。",
 };
 
-export function handleApiError(
-  error: unknown,
-  fallbackMessage = "服务暂时不可用，请稍后再试。",
-): NextResponse {
+export function handleApiError(error: unknown, fallbackMessage = "服务暂时不可用，请稍后再试。"): NextResponse {
   if (error instanceof AppwriteRequestError) {
     const status = error.status || 500;
     const message = statusMessages[status] ?? fallbackMessage;

@@ -23,9 +23,7 @@ describe("TaskFormDialog", () => {
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("dialog")).toHaveAttribute("data-lenis-prevent-wheel", "true");
-    expect(
-      screen.getByRole("heading", { name: "记下一条新的任务" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "记下一条新的任务" })).toBeInTheDocument();
   });
 
   it("空提交时仅显示标题校验错误", async () => {
@@ -35,9 +33,7 @@ describe("TaskFormDialog", () => {
     await user.click(screen.getByRole("button", { name: "新建任务" }));
     await user.click(screen.getByRole("button", { name: "创建任务" }));
 
-    expect(
-      await screen.findByText("标题至少需要 1 个字符。"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("标题至少需要 1 个字符。")).toBeInTheDocument();
     expect(screen.queryByText("说明至少需要 3 个字符。")).not.toBeInTheDocument();
   });
 
