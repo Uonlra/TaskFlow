@@ -2,11 +2,7 @@ import "server-only";
 
 import type { NextRequest } from "next/server";
 
-import {
-  appwriteApiKey,
-  appwriteEndpoint,
-  appwriteProjectId,
-} from "@/shared/lib/appwrite/env";
+import { appwriteApiKey, appwriteEndpoint, appwriteProjectId } from "@/shared/lib/appwrite/env";
 
 export class AppwriteRequestError extends Error {
   status: number;
@@ -29,9 +25,7 @@ type AppwriteFetchOptions = {
   errorMessage?: string;
 };
 
-export async function appwriteFetch<T = unknown>(
-  options: AppwriteFetchOptions,
-): Promise<T> {
+export async function appwriteFetch<T = unknown>(options: AppwriteFetchOptions): Promise<T> {
   if (!appwriteEndpoint || !appwriteProjectId) {
     throw new Error("Appwrite endpoint or project ID is missing.");
   }
@@ -82,10 +76,7 @@ export async function appwriteFetch<T = unknown>(
   if (!response.ok) {
     const errorPayload = (await safeJson<{ message?: string }>(response)) ?? {};
     const fallback = options.errorMessage ?? `Appwrite request failed with status ${response.status}.`;
-    throw new AppwriteRequestError(
-      response.status,
-      errorPayload.message || fallback,
-    );
+    throw new AppwriteRequestError(response.status, errorPayload.message || fallback);
   }
 
   if (response.status === 204) {

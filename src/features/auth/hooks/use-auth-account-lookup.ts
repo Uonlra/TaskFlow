@@ -38,12 +38,9 @@ export function useAuthAccountLookup(email: string) {
       setPreloginAccountStatus("checking");
 
       try {
-        const response = await fetch(
-          `/api/auth/lookup?email=${encodeURIComponent(normalizedEmail)}`,
-          {
-            signal: controller.signal,
-          },
-        );
+        const response = await fetch(`/api/auth/lookup?email=${encodeURIComponent(normalizedEmail)}`, {
+          signal: controller.signal,
+        });
         const payload = (await response.json().catch(() => null)) as LookupResponse | null;
 
         if (!response.ok || !payload?.status || payload.status === "invalid") {

@@ -26,18 +26,19 @@ export const useTaskStore = create<TaskStore>()((set) => ({
   error: null,
   lastLoadedUserId: null,
   clearTasks: () => set({ tasks: [], error: null, lastLoadedUserId: null }),
-  initializeTasks: (tasks, userId) => set((state) => {
-    if (state.lastLoadedUserId === userId) {
-      return state;
-    }
+  initializeTasks: (tasks, userId) =>
+    set((state) => {
+      if (state.lastLoadedUserId === userId) {
+        return state;
+      }
 
-    return {
-      tasks: tasks.map(normalizeTask),
-      isLoading: false,
-      error: null,
-      lastLoadedUserId: userId,
-    };
-  }),
+      return {
+        tasks: tasks.map(normalizeTask),
+        isLoading: false,
+        error: null,
+        lastLoadedUserId: userId,
+      };
+    }),
   syncTasks: async (userId?: string): Promise<void> => {
     if (!hasAppwritePublicEnv || !userId) {
       set({ tasks: [], error: null, lastLoadedUserId: null, isLoading: false });
@@ -62,12 +63,18 @@ export const useTaskStore = create<TaskStore>()((set) => ({
   updateTask: async (id, input, userId) => {
     assertSignedIn(userId, "编辑");
     const payload = await apiRequest<{ task: Task }>(`/api/tasks/${id}`, { method: "PATCH", body: input });
-    set((state) => ({ tasks: state.tasks.map((task) => task.id === id ? normalizeTask(payload.task) : task), error: null }));
+    set((state) => ({
+      tasks: state.tasks.map((task) => (task.id === id ? normalizeTask(payload.task) : task)),
+      error: null,
+    }));
   },
   updateTaskStatus: async (id, status, userId) => {
     assertSignedIn(userId, "更新");
     const payload = await apiRequest<{ task: Task }>(`/api/tasks/${id}`, { method: "PATCH", body: { status } });
-    set((state) => ({ tasks: state.tasks.map((task) => task.id === id ? normalizeTask(payload.task) : task), error: null }));
+    set((state) => ({
+      tasks: state.tasks.map((task) => (task.id === id ? normalizeTask(payload.task) : task)),
+      error: null,
+    }));
   },
   deleteTask: async (id, userId) => {
     assertSignedIn(userId, "删除");
@@ -84,7 +91,10 @@ function normalizeTask(task: Task): Task {
   return { ...task, tags: task.tags ?? [] };
 }
 
-async function apiRequest<T = unknown>(input: RequestInfo | URL, init?: { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown }) {
+async function apiRequest<T = unknown>(
+  input: RequestInfo | URL,
+  init?: { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown },
+) {
   const response = await fetch(input, {
     method: init?.method ?? "GET",
     headers: init?.body === undefined ? undefined : { "Content-Type": "application/json" },

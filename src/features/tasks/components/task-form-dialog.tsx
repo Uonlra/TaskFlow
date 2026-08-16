@@ -6,10 +6,7 @@ import { createPortal } from "react-dom";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import {
-  CustomSelect,
-  type CustomSelectOption,
-} from "@/shared/components/common/custom-select";
+import { CustomSelect, type CustomSelectOption } from "@/shared/components/common/custom-select";
 import { taskSchema, type TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { formatTagsInput, parseTagsInput } from "@/features/tasks/utils/task-tags";
 
@@ -364,322 +361,343 @@ export function TaskFormDialog({
         ref={triggerRef}
         type="button"
         onClick={openDialog}
-        className={triggerClassName ?? (
-          triggerLabel === "新建任务"
-            ? "tesla-action tesla-action--primary"
-            : "tesla-action tesla-action--secondary"
-        )}
+        className={
+          triggerClassName ??
+          (triggerLabel === "新建任务" ? "tesla-action tesla-action--primary" : "tesla-action tesla-action--secondary")
+        }
       >
         {triggerLabel}
       </button>
 
       {open && mounted
         ? createPortal(
-        <div
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !isSubmitting) {
-              closeDialog();
-            }
-          }}
-          className="dialog-overlay"
-        >
-          <div
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={headingId}
-            aria-describedby={descriptionId}
-            className="task-dialog card-surface"
-            data-lenis-prevent-wheel="true"
-            onKeyDown={handleDialogKeyDown}
-          >
-            <div className="task-dialog__header">
-              <div>
-                <p className="section-eyebrow task-dialog__eyebrow">
-                  {dialogEyebrow}
-                </p>
-                <h2 id={headingId} className="task-dialog__title">{dialogTitle}</h2>
-                <p id={descriptionId} className="task-dialog__description">
-                  {initialValues ? "调整任务内容与安排信息。" : "先写要完成的目标，详细信息可以稍后补充。"}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeDialog}
-                aria-label="关闭任务表单"
-                className="dialog-close-button"
+            <div
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget && !isSubmitting) {
+                  closeDialog();
+                }
+              }}
+              className="dialog-overlay"
+            >
+              <div
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={headingId}
+                aria-describedby={descriptionId}
+                className="task-dialog card-surface"
+                data-lenis-prevent-wheel="true"
+                onKeyDown={handleDialogKeyDown}
               >
-                ×
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="task-dialog__form">
-              {hasSavedDraft && !initialValues ? (
-                <p className="task-dialog__draft-note" role="status">已恢复上次未完成的草稿。</p>
-              ) : null}
-
-              <section className="task-dialog__core" aria-label="任务内容">
-                <Field label="任务名称" required error={errors.title?.message}>
-                  <input
-                    {...register("title")}
-                    className="task-field"
-                    ref={(node) => {
-                      register("title").ref(node);
-                      titleInputRef.current = node;
-                    }}
-                    placeholder="例如：完成项目说明文档初稿"
-                    aria-label="任务名称"
-                    aria-invalid={Boolean(errors.title)}
-                  />
-                </Field>
-
-                <Field label="备注" optional error={errors.description?.message}>
-                  <textarea
-                    {...register("description")}
-                    className="task-field task-textarea"
-                    ref={(node) => {
-                      register("description").ref(node);
-                      descriptionTextareaRef.current = node;
-                    }}
-                    placeholder="任务的目标、实现过程或者方法，都可以写下补充说明。"
-                    rows={1}
-                    aria-label="备注"
-                    aria-invalid={Boolean(errors.description)}
-                    onInput={(event) => {
-                      const textarea = event.currentTarget;
-                      textarea.style.height = "auto";
-                      textarea.style.height = `${textarea.scrollHeight}px`;
-                    }}
-                  />
-                </Field>
-              </section>
-
-              <button
-                type="button"
-                className={showPlanning ? "task-dialog__planning-toggle is-open" : "task-dialog__planning-toggle"}
-                aria-label="具体描述"
-                aria-expanded={showPlanning}
-                onClick={() => setShowPlanning((current) => !current)}
-              >
-                <span>具体描述</span>
-                <small>可选</small>
-                <span className="task-dialog__planning-caret" aria-hidden="true" />
-              </button>
-
-              {showPlanning ? (
-                <section className="task-dialog__planning" aria-label="具体描述设置">
-                  <div className="task-dialog__grid">
-                    <Field label="状态" error={errors.status?.message}>
-                      <Controller
-                        control={control}
-                        name="status"
-                        render={({ field }) => (
-                          <CustomSelect
-                            ariaLabel="任务状态"
-                            value={field.value}
-                            options={taskStatusOptions}
-                            onChange={field.onChange}
-                            invalid={Boolean(errors.status)}
-                          />
-                        )}
-                      />
-                    </Field>
-
-                    <Field label="优先级" error={errors.priority?.message}>
-                      <Controller
-                        control={control}
-                        name="priority"
-                        render={({ field }) => (
-                          <div className="task-priority-segment" role="group" aria-label="任务优先级">
-                            {taskPriorityOptions.map((option) => (
-                              <button
-                                key={option.value}
-                                type="button"
-                                aria-pressed={field.value === option.value}
-                                className={field.value === option.value ? `is-active is-active--${option.value}` : ""}
-                                onClick={() => field.onChange(option.value)}
-                              >
-                                {option.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      />
-                    </Field>
+                <div className="task-dialog__header">
+                  <div>
+                    <p className="section-eyebrow task-dialog__eyebrow">{dialogEyebrow}</p>
+                    <h2 id={headingId} className="task-dialog__title">
+                      {dialogTitle}
+                    </h2>
+                    <p id={descriptionId} className="task-dialog__description">
+                      {initialValues ? "调整任务内容与安排信息。" : "先写要完成的目标，详细信息可以稍后补充。"}
+                    </p>
                   </div>
+                  <button type="button" onClick={closeDialog} aria-label="关闭任务表单" className="dialog-close-button">
+                    ×
+                  </button>
+                </div>
 
-                  <Field label="标签" optional error={errors.tags?.message}>
-                    <input
-                      {...register("tags")}
-                      className="task-field"
-                      placeholder="例如：设计，首屏，移动端"
-                      onBlur={normalizeTags}
-                      aria-invalid={Boolean(errors.tags)}
-                    />
-                  </Field>
-                  {tagPreview.length ? (
-                    <div className="task-dialog__tag-preview" aria-label="已添加标签">
-                      {tagPreview.map((tag) => <span key={tag}>{tag}</span>)}
-                    </div>
+                <form onSubmit={handleSubmit(onSubmit)} className="task-dialog__form">
+                  {hasSavedDraft && !initialValues ? (
+                    <p className="task-dialog__draft-note" role="status">
+                      已恢复上次未完成的草稿。
+                    </p>
                   ) : null}
 
-                  <section className="task-dialog__schedule" aria-labelledby={`${headingId}-due-date`}>
-                    <div className="task-dialog__schedule-head">
-                      <div>
-                        <span id={`${headingId}-due-date`} className="task-dialog__label">截止日期</span>
-                        <small>可选</small>
-                      </div>
-                      {dueDate ? <button type="button" onClick={clearDueDate}>清除</button> : null}
-                    </div>
-                    <div ref={dateComposerRef} className="task-date-composer">
-                      <div className={selectedDueDate ? "task-date-summary is-selected" : "task-date-summary"} role="status">
-                        <span className="task-date-summary__day">{selectedDueDate ? selectedDueDate.getDate() : "--"}</span>
-                        <span className="task-date-summary__month">{selectedDueDate ? `${selectedDueDate.getMonth() + 1}月` : "日期"}</span>
-                        <span className="task-date-summary__content">
-                          <strong>{selectedDueDate ? getRelativeDateLabel(selectedDueDate, today) : "暂不设置日期"}</strong>
-                          <small>{selectedDueDate ? formatDateDescription(selectedDueDate) : "需要时再为任务安排时间"}</small>
-                        </span>
+                  <section className="task-dialog__core" aria-label="任务内容">
+                    <Field label="任务名称" required error={errors.title?.message}>
+                      <input
+                        {...register("title")}
+                        className="task-field"
+                        ref={(node) => {
+                          register("title").ref(node);
+                          titleInputRef.current = node;
+                        }}
+                        placeholder="例如：完成项目说明文档初稿"
+                        aria-label="任务名称"
+                        aria-invalid={Boolean(errors.title)}
+                      />
+                    </Field>
+
+                    <Field label="备注" optional error={errors.description?.message}>
+                      <textarea
+                        {...register("description")}
+                        className="task-field task-textarea"
+                        ref={(node) => {
+                          register("description").ref(node);
+                          descriptionTextareaRef.current = node;
+                        }}
+                        placeholder="任务的目标、实现过程或者方法，都可以写下补充说明。"
+                        rows={1}
+                        aria-label="备注"
+                        aria-invalid={Boolean(errors.description)}
+                        onInput={(event) => {
+                          const textarea = event.currentTarget;
+                          textarea.style.height = "auto";
+                          textarea.style.height = `${textarea.scrollHeight}px`;
+                        }}
+                      />
+                    </Field>
+                  </section>
+
+                  <button
+                    type="button"
+                    className={showPlanning ? "task-dialog__planning-toggle is-open" : "task-dialog__planning-toggle"}
+                    aria-label="具体描述"
+                    aria-expanded={showPlanning}
+                    onClick={() => setShowPlanning((current) => !current)}
+                  >
+                    <span>具体描述</span>
+                    <small>可选</small>
+                    <span className="task-dialog__planning-caret" aria-hidden="true" />
+                  </button>
+
+                  {showPlanning ? (
+                    <section className="task-dialog__planning" aria-label="具体描述设置">
+                      <div className="task-dialog__grid">
+                        <Field label="状态" error={errors.status?.message}>
+                          <Controller
+                            control={control}
+                            name="status"
+                            render={({ field }) => (
+                              <CustomSelect
+                                ariaLabel="任务状态"
+                                value={field.value}
+                                options={taskStatusOptions}
+                                onChange={field.onChange}
+                                invalid={Boolean(errors.status)}
+                              />
+                            )}
+                          />
+                        </Field>
+
+                        <Field label="优先级" error={errors.priority?.message}>
+                          <Controller
+                            control={control}
+                            name="priority"
+                            render={({ field }) => (
+                              <div className="task-priority-segment" role="group" aria-label="任务优先级">
+                                {taskPriorityOptions.map((option) => (
+                                  <button
+                                    key={option.value}
+                                    type="button"
+                                    aria-pressed={field.value === option.value}
+                                    className={
+                                      field.value === option.value ? `is-active is-active--${option.value}` : ""
+                                    }
+                                    onClick={() => field.onChange(option.value)}
+                                  >
+                                    {option.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          />
+                        </Field>
                       </div>
 
-                      <div className="task-date-rail" role="group" aria-label="未来七天">
-                        {visibleWeek.map((date) => {
-                          const isSelected = isSameDate(date, selectedDueDate);
-                          const relativeLabel = getRelativeDateLabel(date, today);
-
-                          return (
-                            <button
-                              key={formatDateParam(date)}
-                              type="button"
-                              aria-label={`${formatDateDescription(date)}，${relativeLabel}`}
-                              aria-pressed={isSelected}
-                              className={isSelected ? "is-active" : ""}
-                              onClick={() => selectDueDate(date)}
-                            >
-                              <span>{getWeekdayLabel(date)}</span>
-                              <strong>{date.getDate()}</strong>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      <div className="task-date-picker">
-                        <button
-                          ref={dateCalendarTriggerRef}
-                          type="button"
-                          className="task-date-picker__trigger"
-                          aria-expanded={isDateCalendarOpen}
-                          aria-haspopup="dialog"
-                          onClick={openDatePicker}
-                        >
-                          选择具体日期
-                        </button>
+                      <Field label="标签" optional error={errors.tags?.message}>
                         <input
-                          type="date"
-                          {...dueDateField}
-                          ref={(node) => {
-                            dueDateField.ref(node);
-                            dueDateInputRef.current = node;
-                          }}
-                          className="task-date task-date-picker__native-input"
-                          tabIndex={-1}
-                          aria-hidden="true"
-                          aria-invalid={Boolean(errors.dueDate)}
-                          onChange={(event) => {
-                            dueDateField.onChange(event);
-                            setIsDateCalendarOpen(false);
-                            setCalendarPosition(null);
-                          }}
+                          {...register("tags")}
+                          className="task-field"
+                          placeholder="例如：设计，首屏，移动端"
+                          onBlur={normalizeTags}
+                          aria-invalid={Boolean(errors.tags)}
                         />
-                      </div>
+                      </Field>
+                      {tagPreview.length ? (
+                        <div className="task-dialog__tag-preview" aria-label="已添加标签">
+                          {tagPreview.map((tag) => (
+                            <span key={tag}>{tag}</span>
+                          ))}
+                        </div>
+                      ) : null}
 
-                      {isDateCalendarOpen ? (
-                        <div
-                          className="task-date-calendar"
-                          role="dialog"
-                          aria-label="选择截止日期"
-                          ref={dateCalendarRef}
-                          style={calendarPosition ?? undefined}
-                          onKeyDown={(event) => {
-                            if (event.key === "Escape") {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              setIsDateCalendarOpen(false);
-                              setCalendarPosition(null);
-                              dateCalendarTriggerRef.current?.focus();
-                            }
-                          }}
-                        >
-                          <div className="task-date-calendar__head">
-                            <button
-                              type="button"
-                              aria-label="上个月"
-                              onClick={() => setCalendarMonth((current) => shiftMonth(current, -1))}
-                            >
-                              &lt;
-                            </button>
-                            <strong>{calendarMonth.getFullYear()}年{calendarMonth.getMonth() + 1}月</strong>
-                            <button
-                              type="button"
-                              aria-label="下个月"
-                              onClick={() => setCalendarMonth((current) => shiftMonth(current, 1))}
-                            >
-                              &gt;
-                            </button>
+                      <section className="task-dialog__schedule" aria-labelledby={`${headingId}-due-date`}>
+                        <div className="task-dialog__schedule-head">
+                          <div>
+                            <span id={`${headingId}-due-date`} className="task-dialog__label">
+                              截止日期
+                            </span>
+                            <small>可选</small>
                           </div>
-                          <div className="task-date-calendar__weekdays" aria-hidden="true">
-                            {weekdayLabels.map((weekday) => <span key={weekday}>{weekday}</span>)}
+                          {dueDate ? (
+                            <button type="button" onClick={clearDueDate}>
+                              清除
+                            </button>
+                          ) : null}
+                        </div>
+                        <div ref={dateComposerRef} className="task-date-composer">
+                          <div
+                            className={selectedDueDate ? "task-date-summary is-selected" : "task-date-summary"}
+                            role="status"
+                          >
+                            <span className="task-date-summary__day">
+                              {selectedDueDate ? selectedDueDate.getDate() : "--"}
+                            </span>
+                            <span className="task-date-summary__month">
+                              {selectedDueDate ? `${selectedDueDate.getMonth() + 1}月` : "日期"}
+                            </span>
+                            <span className="task-date-summary__content">
+                              <strong>
+                                {selectedDueDate ? getRelativeDateLabel(selectedDueDate, today) : "暂不设置日期"}
+                              </strong>
+                              <small>
+                                {selectedDueDate ? formatDateDescription(selectedDueDate) : "需要时再为任务安排时间"}
+                              </small>
+                            </span>
                           </div>
-                          <div className="task-date-calendar__days" role="grid" aria-label={`${calendarMonth.getFullYear()}年${calendarMonth.getMonth() + 1}月`}>
-                            {calendarDays.map((date) => {
-                              const isCurrentMonth = date.getMonth() === calendarMonth.getMonth();
+
+                          <div className="task-date-rail" role="group" aria-label="未来七天">
+                            {visibleWeek.map((date) => {
                               const isSelected = isSameDate(date, selectedDueDate);
-                              const isToday = isSameDate(date, today);
+                              const relativeLabel = getRelativeDateLabel(date, today);
 
                               return (
                                 <button
                                   key={formatDateParam(date)}
                                   type="button"
-                                  role="gridcell"
-                                  aria-label={`选择 ${formatDateDescription(date)}`}
-                                  aria-selected={isSelected}
-                                  className={`${isCurrentMonth ? "" : "is-outside"}${isSelected ? " is-selected" : ""}${isToday ? " is-today" : ""}`}
+                                  aria-label={`${formatDateDescription(date)}，${relativeLabel}`}
+                                  aria-pressed={isSelected}
+                                  className={isSelected ? "is-active" : ""}
                                   onClick={() => selectDueDate(date)}
                                 >
-                                  {date.getDate()}
+                                  <span>{getWeekdayLabel(date)}</span>
+                                  <strong>{date.getDate()}</strong>
                                 </button>
                               );
                             })}
                           </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  </section>
-                </section>
-              ) : null}
 
-              <div className="task-dialog__actions">
-                <button
-                  type="button"
-                  onClick={closeDialog}
-                  disabled={isSubmitting}
-                  className="tesla-action tesla-action--secondary"
-                >
-                  取消
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="tesla-action tesla-action--primary"
-                >
-                  {isSubmitting ? "保存中..." : submitLabel}
-                </button>
+                          <div className="task-date-picker">
+                            <button
+                              ref={dateCalendarTriggerRef}
+                              type="button"
+                              className="task-date-picker__trigger"
+                              aria-expanded={isDateCalendarOpen}
+                              aria-haspopup="dialog"
+                              onClick={openDatePicker}
+                            >
+                              选择具体日期
+                            </button>
+                            <input
+                              type="date"
+                              {...dueDateField}
+                              ref={(node) => {
+                                dueDateField.ref(node);
+                                dueDateInputRef.current = node;
+                              }}
+                              className="task-date task-date-picker__native-input"
+                              tabIndex={-1}
+                              aria-hidden="true"
+                              aria-invalid={Boolean(errors.dueDate)}
+                              onChange={(event) => {
+                                dueDateField.onChange(event);
+                                setIsDateCalendarOpen(false);
+                                setCalendarPosition(null);
+                              }}
+                            />
+                          </div>
+
+                          {isDateCalendarOpen ? (
+                            <div
+                              className="task-date-calendar"
+                              role="dialog"
+                              aria-label="选择截止日期"
+                              ref={dateCalendarRef}
+                              style={calendarPosition ?? undefined}
+                              onKeyDown={(event) => {
+                                if (event.key === "Escape") {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  setIsDateCalendarOpen(false);
+                                  setCalendarPosition(null);
+                                  dateCalendarTriggerRef.current?.focus();
+                                }
+                              }}
+                            >
+                              <div className="task-date-calendar__head">
+                                <button
+                                  type="button"
+                                  aria-label="上个月"
+                                  onClick={() => setCalendarMonth((current) => shiftMonth(current, -1))}
+                                >
+                                  &lt;
+                                </button>
+                                <strong>
+                                  {calendarMonth.getFullYear()}年{calendarMonth.getMonth() + 1}月
+                                </strong>
+                                <button
+                                  type="button"
+                                  aria-label="下个月"
+                                  onClick={() => setCalendarMonth((current) => shiftMonth(current, 1))}
+                                >
+                                  &gt;
+                                </button>
+                              </div>
+                              <div className="task-date-calendar__weekdays" aria-hidden="true">
+                                {weekdayLabels.map((weekday) => (
+                                  <span key={weekday}>{weekday}</span>
+                                ))}
+                              </div>
+                              <div
+                                className="task-date-calendar__days"
+                                role="grid"
+                                aria-label={`${calendarMonth.getFullYear()}年${calendarMonth.getMonth() + 1}月`}
+                              >
+                                {calendarDays.map((date) => {
+                                  const isCurrentMonth = date.getMonth() === calendarMonth.getMonth();
+                                  const isSelected = isSameDate(date, selectedDueDate);
+                                  const isToday = isSameDate(date, today);
+
+                                  return (
+                                    <button
+                                      key={formatDateParam(date)}
+                                      type="button"
+                                      role="gridcell"
+                                      aria-label={`选择 ${formatDateDescription(date)}`}
+                                      aria-selected={isSelected}
+                                      className={`${isCurrentMonth ? "" : "is-outside"}${isSelected ? " is-selected" : ""}${isToday ? " is-today" : ""}`}
+                                      onClick={() => selectDueDate(date)}
+                                    >
+                                      {date.getDate()}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      </section>
+                    </section>
+                  ) : null}
+
+                  <div className="task-dialog__actions">
+                    <button
+                      type="button"
+                      onClick={closeDialog}
+                      disabled={isSubmitting}
+                      className="tesla-action tesla-action--secondary"
+                    >
+                      取消
+                    </button>
+                    <button type="submit" disabled={isSubmitting} className="tesla-action tesla-action--primary">
+                      {isSubmitting ? "保存中..." : submitLabel}
+                    </button>
+                  </div>
+                  {submitError ? <p className="task-dialog__error">{submitError}</p> : null}
+                </form>
               </div>
-              {submitError ? <p className="task-dialog__error">{submitError}</p> : null}
-            </form>
-          </div>
-        </div>,
-        document.body,
-      )
+            </div>,
+            document.body,
+          )
         : null}
     </>
   );
@@ -706,7 +724,11 @@ function Field({
         {optional ? <small>可选</small> : null}
       </span>
       {children}
-      {error ? <span className="task-dialog__error" role="alert">{error}</span> : null}
+      {error ? (
+        <span className="task-dialog__error" role="alert">
+          {error}
+        </span>
+      ) : null}
     </label>
   );
 }
@@ -762,9 +784,11 @@ function isSameDate(first: Date, second: Date | null) {
     return false;
   }
 
-  return first.getFullYear() === second.getFullYear()
-    && first.getMonth() === second.getMonth()
-    && first.getDate() === second.getDate();
+  return (
+    first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth() &&
+    first.getDate() === second.getDate()
+  );
 }
 
 function getWeekdayLabel(date: Date) {

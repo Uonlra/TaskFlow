@@ -27,13 +27,7 @@ export function AuthInput({ label, type, placeholder, error, registration, icon 
         <span className="auth-input-icon" aria-hidden="true">
           {icon}
         </span>
-        <input
-          id={inputId}
-          type={inputType}
-          placeholder={placeholder}
-          {...registration}
-          className="auth-input"
-        />
+        <input id={inputId} type={inputType} placeholder={placeholder} {...registration} className="auth-input" />
         {isPassword ? (
           <button
             type="button"

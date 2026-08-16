@@ -1,10 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { destroyCurrentSession } from "@/shared/lib/appwrite/server";
-import {
-  clearAppwriteSessionCookie,
-  getAppwriteSessionSecret,
-} from "@/shared/lib/appwrite/session";
+import { clearAppwriteSessionCookie, getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
 
 export async function POST(request: NextRequest) {
   const response = NextResponse.json({ ok: true });

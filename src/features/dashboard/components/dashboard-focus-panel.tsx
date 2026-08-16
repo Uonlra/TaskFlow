@@ -41,13 +41,7 @@ export function DashboardFocusPanel({ tasks, deadlines, range, showFocus = true 
 
 function TaskPreviewList({ tasks, emptyLabel }: { tasks: DashboardTaskPreview[]; emptyLabel: string }) {
   if (!tasks.length) {
-    return (
-      <DataEmptyState
-        variant="panel"
-        title={emptyLabel}
-        description="当前范围内没有符合条件的任务。"
-      />
-    );
+    return <DataEmptyState variant="panel" title={emptyLabel} description="当前范围内没有符合条件的任务。" />;
   }
 
   return (
@@ -106,4 +100,3 @@ const statusLabels: Record<DashboardTaskPreview["status"], string> = {
   in_progress: "进行中",
   done: "已完成",
 };
-

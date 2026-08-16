@@ -3,12 +3,7 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
-export type AuthAccountLookupStatus =
-  | "idle"
-  | "checking"
-  | "registered"
-  | "available"
-  | "unknown";
+export type AuthAccountLookupStatus = "idle" | "checking" | "registered" | "available" | "unknown";
 
 export type AuthPreviewPhase = "anonymous" | "hydrating" | "ready" | "failed";
 
@@ -28,8 +23,7 @@ const AuthPreviewStateContext = createContext<AuthPreviewState | null>(null);
 export function AuthPreviewStateProvider({ children }: { children: ReactNode }) {
   const [preloginName, setPreloginName] = useState("");
   const [preloginEmail, setPreloginEmail] = useState("");
-  const [preloginAccountStatus, setPreloginAccountStatus] =
-    useState<AuthAccountLookupStatus>("idle");
+  const [preloginAccountStatus, setPreloginAccountStatus] = useState<AuthAccountLookupStatus>("idle");
   const [previewPhase, setPreviewPhase] = useState<AuthPreviewPhase>("anonymous");
   const value = useMemo(
     () => ({
@@ -45,11 +39,7 @@ export function AuthPreviewStateProvider({ children }: { children: ReactNode }) 
     [preloginAccountStatus, preloginEmail, preloginName, previewPhase],
   );
 
-  return (
-    <AuthPreviewStateContext.Provider value={value}>
-      {children}
-    </AuthPreviewStateContext.Provider>
-  );
+  return <AuthPreviewStateContext.Provider value={value}>{children}</AuthPreviewStateContext.Provider>;
 }
 
 export function useAuthPreviewState() {

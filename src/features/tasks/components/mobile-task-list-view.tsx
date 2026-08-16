@@ -7,6 +7,7 @@ import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
+import { TASK_DUE_FILTERS } from "@/shared/lib/constants/query-params";
 import { ROUTES } from "@/shared/lib/constants/routes";
 
 type MobileTaskListViewProps = {
@@ -26,10 +27,10 @@ type QuickFilter = {
 };
 
 const quickFilters: QuickFilter[] = [
-  { key: "today", label: "今天", filters: { status: "all", sort: "due_asc" } },
-  { key: "upcoming", label: "即将", filters: { status: "all", sort: "due_asc" } },
-  { key: "project", label: "项目", filters: { status: "all", sort: "priority_desc" } },
-  { key: "done", label: "已完成", filters: { status: "done", sort: "updated_desc" } },
+  { key: "today", label: "今天", filters: { status: "all", due: TASK_DUE_FILTERS.today, sort: "due_asc" } },
+  { key: "near", label: "临近", filters: { status: "all", due: TASK_DUE_FILTERS.near, sort: "due_asc" } },
+  { key: "active", label: "未完成", filters: { status: "active", due: "", sort: "due_asc" } },
+  { key: "done", label: "已完成", filters: { status: "done", due: "", sort: "updated_desc" } },
 ];
 
 const priorityLabel: Record<Task["priority"], string> = {
@@ -65,8 +66,8 @@ export function MobileTaskListView({
   const handleQuickFilter = (item: QuickFilter) => {
     onFiltersChange({
       ...filters,
-      query: item.key === "project" ? filters.query : "",
-      tag: item.key === "project" ? filters.tag : "",
+      query: "",
+      tag: "",
       priority: "all",
       due: "",
       risk: "",
@@ -139,12 +140,20 @@ function StatItem({ label, value }: { label: string; value: number }) {
   );
 }
 
-function MobileTaskItem({ task, onUpdateStatus }: { task: Task; onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void> }) {
+function MobileTaskItem({
+  task,
+  onUpdateStatus,
+}: {
+  task: Task;
+  onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
+}) {
   const dueMeta = getTaskDueMeta(task);
   const nextStatus = task.status === "done" ? "todo" : "done";
 
   return (
-    <article className={`mobile-task-item mobile-task-item--${task.priority}${task.status === "done" ? " mobile-task-item--done" : ""}`}>
+    <article
+      className={`mobile-task-item mobile-task-item--${task.priority}${task.status === "done" ? " mobile-task-item--done" : ""}`}
+    >
       <button
         type="button"
         className="mobile-task-item__check"
@@ -160,7 +169,9 @@ function MobileTaskItem({ task, onUpdateStatus }: { task: Task; onUpdateStatus: 
         <span className="mobile-task-item__meta">
           <span className="mobile-task-item__priority">{priorityLabel[task.priority]}</span>
           {task.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="mobile-task-item__tag">#{tag}</span>
+            <span key={tag} className="mobile-task-item__tag">
+              #{tag}
+            </span>
           ))}
         </span>
       </Link>
@@ -173,11 +184,19 @@ function getSelectedQuickFilter(filters: TaskFilters) {
     return "done";
   }
 
-  if (filters.sort === "priority_desc") {
-    return "project";
+  if (filters.status === "active") {
+    return "active";
   }
 
-  return "today";
+  if (filters.due === TASK_DUE_FILTERS.near) {
+    return "near";
+  }
+
+  if (filters.due === TASK_DUE_FILTERS.today) {
+    return "today";
+  }
+
+  return "";
 }
 
 function formatTaskMeta(task: Task, dueLabel: string) {

@@ -24,10 +24,7 @@ import {
   type DashboardRangeValue,
   type TaskRiskFilter,
 } from "@/shared/lib/constants/query-params";
-import {
-  WorkspaceAuthCheckingNotice,
-  WorkspaceStateNotice,
-} from "@/features/auth/components/workspace-state-notice";
+import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useToast } from "@/shared/providers/toast-provider";
@@ -73,15 +70,9 @@ export function TaskListClient({
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
 
-  const canUseInitialData = Boolean(
-    initialData && (isAuthLoading || user?.id === initialData.userId),
-  );
-  const hasMatchingStoreData = Boolean(
-    initialData && lastLoadedUserId === initialData.userId,
-  );
-  const hasConfirmedUserMismatch = Boolean(
-    initialData && !isAuthLoading && user && user.id !== initialData.userId,
-  );
+  const canUseInitialData = Boolean(initialData && (isAuthLoading || user?.id === initialData.userId));
+  const hasMatchingStoreData = Boolean(initialData && lastLoadedUserId === initialData.userId);
+  const hasConfirmedUserMismatch = Boolean(initialData && !isAuthLoading && user && user.id !== initialData.userId);
 
   const visibleTasks = useMemo(() => {
     if (hasConfirmedUserMismatch) {
@@ -93,13 +84,7 @@ export function TaskListClient({
     }
 
     return tasks;
-  }, [
-    canUseInitialData,
-    hasConfirmedUserMismatch,
-    hasMatchingStoreData,
-    initialData?.tasks,
-    tasks,
-  ]);
+  }, [canUseInitialData, hasConfirmedUserMismatch, hasMatchingStoreData, initialData?.tasks, tasks]);
 
   const visibleIsLoading = hasConfirmedUserMismatch || (canUseInitialData ? false : isLoading);
   const activeUserId = user?.id ?? (isAuthLoading ? initialData?.userId : undefined);
@@ -146,9 +131,12 @@ export function TaskListClient({
         task.description.toLowerCase().includes(filters.query.toLowerCase()) ||
         (task.tags ?? []).some((tag) => tag.toLowerCase().includes(filters.query.toLowerCase()));
 
-      const matchTag = !filters.tag || (task.tags ?? []).some((tag) => tag.toLowerCase().includes(filters.tag.toLowerCase()));
+      const matchTag =
+        !filters.tag || (task.tags ?? []).some((tag) => tag.toLowerCase().includes(filters.tag.toLowerCase()));
 
-      const matchStatus = filters.status === "all" || task.status === filters.status;
+      const matchStatus =
+        filters.status === "all" ||
+        (filters.status === "active" ? task.status !== "done" : task.status === filters.status);
       const matchPriority = filters.priority === "all" || task.priority === filters.priority;
       const hasDateRangeFilter = hasActiveDateRangeFilter(filters.date, filters.range);
       const matchDateRange = matchesDateRangeFilter(task, filters.date, filters.range);
@@ -293,7 +281,9 @@ export function TaskListClient({
           <section className="task-url-filters card-surface" aria-label="当前筛选">
             <div className="task-url-filters__chips">
               {activeFilterLabels.map((label) => (
-                <span key={label} className="task-url-filters__chip">{label}</span>
+                <span key={label} className="task-url-filters__chip">
+                  {label}
+                </span>
               ))}
             </div>
             <button type="button" className="task-url-filters__clear" onClick={handleResetFilters}>
@@ -336,8 +326,12 @@ function getPreferredTaskSort(): TaskFilters["sort"] {
 }
 
 function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null | undefined>>): TaskFilters {
-  const status = input.status === "todo" || input.status === "in_progress" || input.status === "done" ? input.status : "all";
-  const priority = input.priority === "low" || input.priority === "medium" || input.priority === "high" ? input.priority : "all";
+  const status =
+    input.status === "todo" || input.status === "in_progress" || input.status === "done" || input.status === "active"
+      ? input.status
+      : "all";
+  const priority =
+    input.priority === "low" || input.priority === "medium" || input.priority === "high" ? input.priority : "all";
   const due =
     input.due === TASK_DUE_FILTERS.near ||
     input.due === TASK_DUE_FILTERS.today ||
@@ -481,7 +475,11 @@ function buildActiveFilterLabels(filters: TaskFilters) {
   }
 
   if (filters.date && filters.range !== DASHBOARD_RANGE_VALUES.all) {
-    labels.push(filters.range === DASHBOARD_RANGE_VALUES.week ? `本周：${formatShortDate(filters.date)}` : `日期：${filters.date}`);
+    labels.push(
+      filters.range === DASHBOARD_RANGE_VALUES.week
+        ? `本周：${formatShortDate(filters.date)}`
+        : `日期：${filters.date}`,
+    );
   } else if (filters.range === DASHBOARD_RANGE_VALUES.today) {
     labels.push("今天");
   } else if (filters.range === DASHBOARD_RANGE_VALUES.week) {
@@ -514,6 +512,7 @@ function getDueDayOffset(value: string | undefined) {
 }
 
 const statusFilterLabels = {
+  active: "未完成",
   todo: "待开始",
   in_progress: "进行中",
   done: "已完成",

@@ -24,9 +24,7 @@ test.describe("未登录访问工作区", () => {
 
     await expect(page).toHaveURL(/\/tasks$/);
 
-    await expect(
-      page.getByRole("heading", { name: "登录后管理你的任务" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "登录后管理你的任务" })).toBeVisible();
 
     const loginLink = page.getByRole("link", { name: "登录后继续" });
 

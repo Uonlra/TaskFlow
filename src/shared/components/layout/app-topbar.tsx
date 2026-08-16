@@ -42,29 +42,45 @@ export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
     <header className={variant === "mobile" ? "dashboard-topbar dashboard-topbar--mobile" : "dashboard-topbar"}>
       <div className="dashboard-topbar__meta">
         <p className="dashboard-topbar__status">{isAuthenticated ? "账号已连接" : "访客浏览"}</p>
-        <p className="dashboard-topbar__description">{isAuthenticated ? "账号和任务将安全同步。" : "登录后即可管理和同步你的真实任务。"}</p>
+        <p className="dashboard-topbar__description">
+          {isAuthenticated ? "账号和任务将安全同步。" : "登录后即可管理和同步你的真实任务。"}
+        </p>
       </div>
       <div className="dashboard-topbar__actions">
         {variant === "mobile" && isAuthenticated ? (
           <div className="dashboard-avatar-menu" ref={mobileMenuRef}>
-            <button type="button" className="dashboard-avatar dashboard-avatar-button" aria-label="打开账号菜单" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen((current) => !current)}>
+            <button
+              type="button"
+              className="dashboard-avatar dashboard-avatar-button"
+              aria-label="打开账号菜单"
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen((current) => !current)}
+            >
               {avatarContent}
             </button>
             {mobileMenuOpen ? (
               <div className="dashboard-avatar-menu__panel" role="menu">
                 <p className="dashboard-avatar-menu__name">{displayName}</p>
-                <button type="button" role="menuitem" onClick={handleSignOut}>退出登录</button>
+                <button type="button" role="menuitem" onClick={handleSignOut}>
+                  退出登录
+                </button>
               </div>
             ) : null}
           </div>
         ) : (
           <div className="dashboard-avatar">{avatarContent}</div>
         )}
-        <div className="dashboard-topbar__profile" title={displayName}>{displayName}</div>
+        <div className="dashboard-topbar__profile" title={displayName}>
+          {displayName}
+        </div>
         {isAuthenticated ? (
-          <button type="button" onClick={handleSignOut} className="dashboard-signout-button">退出登录</button>
+          <button type="button" onClick={handleSignOut} className="dashboard-signout-button">
+            退出登录
+          </button>
         ) : (
-          <a href={loginHref} className="dashboard-signout-button" data-auth-gate-bypass>登录</a>
+          <a href={loginHref} className="dashboard-signout-button" data-auth-gate-bypass>
+            登录
+          </a>
         )}
       </div>
     </header>

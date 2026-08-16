@@ -58,11 +58,7 @@ export async function getCurrentAuthEnvelope() {
   }
 }
 
-export async function createEmailPasswordSession(input: {
-  email: string;
-  password: string;
-  request?: NextRequest;
-}) {
+export async function createEmailPasswordSession(input: { email: string; password: string; request?: NextRequest }) {
   const session = await appwriteFetch<AppwriteSessionResponse>({
     path: "/account/sessions/email",
     method: "POST",
@@ -156,10 +152,7 @@ export async function updateCurrentProfile(
   return toProfile(updated, updated.email ?? current.email ?? "");
 }
 
-export async function getCurrentAccount(
-  sessionSecret: string,
-  request?: NextRequest,
-) {
+export async function getCurrentAccount(sessionSecret: string, request?: NextRequest) {
   return appwriteFetch<AppwriteAccountResponse>({
     path: "/account",
     sessionSecret,
@@ -182,13 +175,9 @@ export async function getPublicAccountStatusByEmail(email: string, request?: Nex
       },
     });
 
-    const hasExactMatch = (result.users ?? []).some(
-      (user) => user.email?.toLowerCase() === email.toLowerCase(),
-    );
+    const hasExactMatch = (result.users ?? []).some((user) => user.email?.toLowerCase() === email.toLowerCase());
 
-    return hasExactMatch
-      ? ("registered" as const)
-      : ("available" as const);
+    return hasExactMatch ? ("registered" as const) : ("available" as const);
   } catch {
     return "unknown" as const;
   }
@@ -205,11 +194,7 @@ export function toProfile(account: AppwriteAccountResponse, fallbackEmail = ""):
   };
 }
 
-export function toAuthEnvelope(
-  account: AppwriteAccountResponse,
-  fallbackEmail = "",
-  expire?: string,
-): AuthEnvelope {
+export function toAuthEnvelope(account: AppwriteAccountResponse, fallbackEmail = "", expire?: string): AuthEnvelope {
   const email = account.email ?? fallbackEmail;
   const name = account.name ?? "";
 

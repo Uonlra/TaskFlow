@@ -67,6 +67,7 @@ docs/product/
 docs/setup/
 docs/README.md
 docs/performance
+docs/quality
 
 # Playwright artifacts
 blob-report/

@@ -1,5 +1,4 @@
 @media (max-width: 1180px) {
-
   .auth-frame {
     height: auto;
     min-height: 100svh;
@@ -21,7 +20,6 @@
 }
 
 @media (max-width: 960px) {
-
   .auth-page {
     padding: 16px;
   }
@@ -49,8 +47,6 @@
 }
 
 @media (max-width: 640px) {
-
-
   .auth-page {
     width: 100%;
     height: auto;

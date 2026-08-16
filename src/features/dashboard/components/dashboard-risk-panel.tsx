@@ -39,13 +39,8 @@ export function DashboardRiskPanel({ risks, overdueCount, isEmpty = false }: Das
           </div>
         </>
       ) : (
-        <DataEmptyState
-          variant="panel"
-          title="暂无逾期风险"
-          description="出现逾期任务时会在这里提醒。"
-        />
+        <DataEmptyState variant="panel" title="暂无逾期风险" description="出现逾期任务时会在这里提醒。" />
       )}
     </section>
   );
 }
-

@@ -2,16 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [ main, ]
+    branches: [main]
   pull_request:
-    branches: [main, ]
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
   quality:
-    name: Test, Typecheck, Build
+    name: Lint, Format, Test, Typecheck, Build
     runs-on: ubuntu-latest
 
     steps:
@@ -31,6 +31,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check formatting
+        run: pnpm format:check
 
       - name: Run unit and component tests
         run: pnpm test

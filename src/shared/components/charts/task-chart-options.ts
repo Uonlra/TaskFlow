@@ -7,10 +7,7 @@ import type {
 } from "@/features/tasks/utils/task-analytics";
 import type { TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
 
-export function buildTaskTrendOption(
-  trend: DashboardTrendPoint[],
-  options: { sparse?: boolean } = {},
-): EChartsOption {
+export function buildTaskTrendOption(trend: DashboardTrendPoint[], options: { sparse?: boolean } = {}): EChartsOption {
   const maxValue = Math.max(0, ...trend.flatMap((point) => [point.completed, point.created]));
 
   return {

@@ -134,7 +134,18 @@ export function LoginForm() {
       eyebrow={isPreviewReady ? "已连接" : "登录"}
       title={isPreviewReady ? "工作台已准备好" : "欢迎回来"}
       description={isPreviewReady ? "任务已同步，确认后返回刚才的功能页。" : "登录后继续整理你的任务。"}
-      footer={isPreviewReady ? <span className="auth-preview-footer">登录身份已确认，下一步返回刚才的页面。</span> : <>还没有账号？ <Link href={`/register?next=${encodeURIComponent(nextPath)}`} className="auth-form-footer-link">立即注册</Link></>}
+      footer={
+        isPreviewReady ? (
+          <span className="auth-preview-footer">登录身份已确认，下一步返回刚才的页面。</span>
+        ) : (
+          <>
+            还没有账号？{" "}
+            <Link href={`/register?next=${encodeURIComponent(nextPath)}`} className="auth-form-footer-link">
+              立即注册
+            </Link>
+          </>
+        )
+      }
     >
       {isPreviewReady ? (
         <div className="auth-preview-confirmation">
@@ -145,9 +156,23 @@ export function LoginForm() {
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
-          <AuthInput label="邮箱" type="email" placeholder="请输入邮箱地址" error={errors.email?.message} registration={register("email")} icon="@" />
+          <AuthInput
+            label="邮箱"
+            type="email"
+            placeholder="请输入邮箱地址"
+            error={errors.email?.message}
+            registration={register("email")}
+            icon="@"
+          />
           <AccountLookupMessage status={preloginAccountStatus} />
-          <AuthInput label="密码" type="password" placeholder="请输入密码" error={errors.password?.message} registration={register("password")} icon="*" />
+          <AuthInput
+            label="密码"
+            type="password"
+            placeholder="请输入密码"
+            error={errors.password?.message}
+            registration={register("password")}
+            icon="*"
+          />
           <button type="submit" disabled={isSubmitting || isHydrating} className="auth-submit-button">
             {isHydrating ? "正在连接工作台..." : "登录"}
           </button>
@@ -172,13 +197,14 @@ function getAuthErrorMessage(payload: unknown) {
 
 function AccountLookupMessage({ status }: { status: ReturnType<typeof useAuthPreviewState>["preloginAccountStatus"] }) {
   if (status === "idle") return null;
-  const message = status === "checking"
-    ? "正在确认邮箱状态..."
-    : status === "registered"
-      ? "这个邮箱看起来已经有记录，输入密码后即可登录。"
-      : status === "available"
-        ? "这个邮箱还没有记录。可以继续尝试登录，也可以先去注册。"
-        : "暂时无法确认邮箱状态，可以继续登录。";
+  const message =
+    status === "checking"
+      ? "正在确认邮箱状态..."
+      : status === "registered"
+        ? "这个邮箱看起来已经有记录，输入密码后即可登录。"
+        : status === "available"
+          ? "这个邮箱还没有记录。可以继续尝试登录，也可以先去注册。"
+          : "暂时无法确认邮箱状态，可以继续登录。";
   return <p className="auth-form-message auth-form-message--hint auth-form-message--hint-login">{message}</p>;
 }
 

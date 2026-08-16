@@ -163,7 +163,9 @@ describe("task date filters", () => {
       vi.setSystemTime(new Date(2026, 6, 9, 10, 0, 0));
 
       expect(isTaskDueInRange(makeTask({ dueDate: "2026-07-09" }), { range: DASHBOARD_RANGE_VALUES.today })).toBe(true);
-      expect(isTaskDueInRange(makeTask({ dueDate: "2026-07-08" }), { range: DASHBOARD_RANGE_VALUES.today })).toBe(false);
+      expect(isTaskDueInRange(makeTask({ dueDate: "2026-07-08" }), { range: DASHBOARD_RANGE_VALUES.today })).toBe(
+        false,
+      );
       expect(isTaskDueInRange(makeTask({ dueDate: "2026-07-12" }), { range: DASHBOARD_RANGE_VALUES.week })).toBe(true);
     });
   });
@@ -177,9 +179,19 @@ describe("task date filters", () => {
         makeTask({ id: "none", dueDate: undefined }),
       ];
 
-      expect(filterTasksByTaskDateRange(tasks, { date: new Date(2026, 6, 9) }).map((task) => task.id)).toEqual(["today"]);
-      expect(filterTasksByTaskDateRange(tasks, { date: new Date(2026, 6, 9), range: DASHBOARD_RANGE_VALUES.week }).map((task) => task.id)).toEqual(["today", "week"]);
-      expect(filterTasksByTaskDateRange(tasks, { range: DASHBOARD_RANGE_VALUES.all }).map((task) => task.id)).toEqual(["today", "week", "next"]);
+      expect(filterTasksByTaskDateRange(tasks, { date: new Date(2026, 6, 9) }).map((task) => task.id)).toEqual([
+        "today",
+      ]);
+      expect(
+        filterTasksByTaskDateRange(tasks, { date: new Date(2026, 6, 9), range: DASHBOARD_RANGE_VALUES.week }).map(
+          (task) => task.id,
+        ),
+      ).toEqual(["today", "week"]);
+      expect(filterTasksByTaskDateRange(tasks, { range: DASHBOARD_RANGE_VALUES.all }).map((task) => task.id)).toEqual([
+        "today",
+        "week",
+        "next",
+      ]);
       expect(filterTasksByTaskDateRange(tasks, {}).map((task) => task.id)).toEqual(["today", "week", "next", "none"]);
       expect(tasks.map((task) => task.id)).toEqual(["today", "week", "next", "none"]);
     });

@@ -1,11 +1,7 @@
 import type { Task, TaskPriority } from "@/features/tasks/types/task.types";
 import { TASK_DUE_FILTERS, type TaskDueFilter } from "@/shared/lib/constants/query-params";
 
-export type TaskSort =
-  | "created_desc"
-  | "updated_desc"
-  | "due_asc"
-  | "priority_desc";
+export type TaskSort = "created_desc" | "updated_desc" | "due_asc" | "priority_desc";
 
 export type TaskDueTone = "danger" | "warning" | "success" | "muted";
 

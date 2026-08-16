@@ -2,10 +2,12 @@ import type { DashboardRangeValue, TaskDueFilter, TaskRiskFilter } from "@/share
 import type { TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
 import type { TaskSort } from "@/features/tasks/utils/task-deadline";
 
+export type TaskStatusFilter = TaskStatus | "active" | "all";
+
 export type TaskFilters = {
   query: string;
   tag: string;
-  status: TaskStatus | "all";
+  status: TaskStatusFilter;
   priority: TaskPriority | "all";
   due: TaskDueFilter | "";
   risk: TaskRiskFilter | "";

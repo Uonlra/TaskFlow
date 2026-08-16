@@ -121,7 +121,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           const payload = (await response.json()) as { profile: Profile };
           setProfile(payload.profile);
-          setUser((current) => current ? { ...current, name: payload.profile.fullName, email: payload.profile.email } : current);
+          setUser((current) =>
+            current ? { ...current, name: payload.profile.fullName, email: payload.profile.email } : current,
+          );
         } finally {
           setIsProfileLoading(false);
         }
@@ -146,7 +148,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           const savedProfile = payload.profile;
           setProfile(savedProfile);
-          setUser((current) => current ? { ...current, name: savedProfile.fullName, email: savedProfile.email } : current);
+          setUser((current) =>
+            current ? { ...current, name: savedProfile.fullName, email: savedProfile.email } : current,
+          );
           return savedProfile;
         } finally {
           setIsProfileLoading(false);

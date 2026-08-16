@@ -215,7 +215,9 @@ textarea:focus {
   border-right: 2px solid var(--muted);
   border-bottom: 2px solid var(--muted);
   transform: rotate(45deg) translateY(-2px);
-  transition: transform 0.33s, border-color 0.33s;
+  transition:
+    transform 0.33s,
+    border-color 0.33s;
 }
 
 .custom-select__menu {

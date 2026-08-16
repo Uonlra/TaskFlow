@@ -81,60 +81,53 @@ export function ConfirmDialog({
       </button>
       {open && mounted
         ? createPortal(
-        <Overlay
-          onDismiss={() => {
-            if (!isSubmitting) {
-              setOpen(false);
-            }
-          }}
-        >
-          <section
-            className="confirm-dialog card-surface"
-          >
-            <p
-              className={
-                confirmTone === "danger"
-                  ? "section-eyebrow confirm-dialog__eyebrow confirm-dialog__eyebrow--danger"
-                  : "section-eyebrow confirm-dialog__eyebrow"
-              }
-            >
-              请确认操作
-            </p>
-            <h2 className="confirm-dialog__title">{title}</h2>
-            <p className="confirm-dialog__description">{description}</p>
-            {submitError ? <p className="confirm-dialog__error">{submitError}</p> : null}
-            <div className="confirm-dialog__actions">
-              <button type="button" onClick={() => setOpen(false)} className="tesla-action tesla-action--secondary">
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirm}
-                disabled={isSubmitting}
-                className={
-                  confirmTone === "danger"
-                    ? "tesla-action tesla-action--danger confirm-dialog__confirm-danger"
-                    : "tesla-action tesla-action--primary"
+            <Overlay
+              onDismiss={() => {
+                if (!isSubmitting) {
+                  setOpen(false);
                 }
-              >
-                {isSubmitting ? "处理中..." : confirmLabel}
-              </button>
-            </div>
-          </section>
-        </Overlay>
-      , document.body)
+              }}
+            >
+              <section className="confirm-dialog card-surface">
+                <p
+                  className={
+                    confirmTone === "danger"
+                      ? "section-eyebrow confirm-dialog__eyebrow confirm-dialog__eyebrow--danger"
+                      : "section-eyebrow confirm-dialog__eyebrow"
+                  }
+                >
+                  请确认操作
+                </p>
+                <h2 className="confirm-dialog__title">{title}</h2>
+                <p className="confirm-dialog__description">{description}</p>
+                {submitError ? <p className="confirm-dialog__error">{submitError}</p> : null}
+                <div className="confirm-dialog__actions">
+                  <button type="button" onClick={() => setOpen(false)} className="tesla-action tesla-action--secondary">
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirm}
+                    disabled={isSubmitting}
+                    className={
+                      confirmTone === "danger"
+                        ? "tesla-action tesla-action--danger confirm-dialog__confirm-danger"
+                        : "tesla-action tesla-action--primary"
+                    }
+                  >
+                    {isSubmitting ? "处理中..." : confirmLabel}
+                  </button>
+                </div>
+              </section>
+            </Overlay>,
+            document.body,
+          )
         : null}
     </>
   );
 }
 
-function Overlay({
-  children,
-  onDismiss,
-}: {
-  children: ReactNode;
-  onDismiss: () => void;
-}) {
+function Overlay({ children, onDismiss }: { children: ReactNode; onDismiss: () => void }) {
   return (
     <div
       onMouseDown={(event) => {

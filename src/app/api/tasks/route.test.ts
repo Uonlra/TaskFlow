@@ -96,11 +96,6 @@ describe("/api/tasks", () => {
 
     expect(response.status).toBe(201);
     await expect(response.json()).resolves.toEqual({ task: createdTask });
-    expect(mocks.createTask).toHaveBeenCalledWith(
-      "session-secret",
-      "user-1",
-      input,
-      request,
-    );
+    expect(mocks.createTask).toHaveBeenCalledWith("session-secret", "user-1", input, request);
   });
 });

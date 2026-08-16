@@ -55,7 +55,10 @@ export function MobileSettingsView({
   const [settings, setSettings] = useState<MobileSettings>(defaultSettings);
   const [isReady, setIsReady] = useState(false);
   const [activeDialog, setActiveDialog] = useState<"profile" | "language" | "tasks" | "privacy" | "help" | null>(null);
-  const [profileForm, setProfileForm] = useState<ProfileFormValues>({ fullName: displayName, avatarUrl: avatarUrl ?? "" });
+  const [profileForm, setProfileForm] = useState<ProfileFormValues>({
+    fullName: displayName,
+    avatarUrl: avatarUrl ?? "",
+  });
 
   useEffect(() => {
     try {
@@ -80,7 +83,13 @@ export function MobileSettingsView({
     {
       title: "外观",
       items: [
-        { icon: "theme", label: "主题模式", value: settings.darkMode ? "深色" : "浅色", control: "toggle", enabled: settings.darkMode },
+        {
+          icon: "theme",
+          label: "主题模式",
+          value: settings.darkMode ? "深色" : "浅色",
+          control: "toggle",
+          enabled: settings.darkMode,
+        },
         { icon: "language", label: "语言", value: settings.language, control: "arrow" },
       ],
     },
@@ -114,13 +123,17 @@ export function MobileSettingsView({
 
   const handleRowAction = (label: string) => {
     if (label === "语言" || label === "任务偏好" || label === "隐私" || label === "帮助") {
-      setActiveDialog(label === "语言" ? "language" : label === "任务偏好" ? "tasks" : label === "隐私" ? "privacy" : "help");
+      setActiveDialog(
+        label === "语言" ? "language" : label === "任务偏好" ? "tasks" : label === "隐私" ? "privacy" : "help",
+      );
     }
     if (label === "数据备份") exportBackup();
   };
 
   const exportBackup = () => {
-    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), tasks }, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), tasks }, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -136,7 +149,11 @@ export function MobileSettingsView({
       setActiveDialog(null);
       showToast({ title: "资料已保存", description: "你的个人信息已经更新。", tone: "success" });
     } catch (error) {
-      showToast({ title: "资料更新失败", description: error instanceof Error ? error.message : "请稍后再试。", tone: "error" });
+      showToast({
+        title: "资料更新失败",
+        description: error instanceof Error ? error.message : "请稍后再试。",
+        tone: "error",
+      });
     }
   };
 
@@ -162,10 +179,15 @@ export function MobileSettingsView({
           <strong>{displayName}</strong>
           <span>{email}</span>
         </div>
-        <button type="button" className="mobile-settings__profile-action" aria-label="编辑账号" onClick={() => {
-          setProfileForm({ fullName: displayName, avatarUrl: avatarUrl ?? "" });
-          setActiveDialog("profile");
-        }}>
+        <button
+          type="button"
+          className="mobile-settings__profile-action"
+          aria-label="编辑账号"
+          onClick={() => {
+            setProfileForm({ fullName: displayName, avatarUrl: avatarUrl ?? "" });
+            setActiveDialog("profile");
+          }}
+        >
           <span aria-hidden="true" />
         </button>
       </section>
@@ -185,27 +207,105 @@ export function MobileSettingsView({
         退出登录
       </button>
       {isReady && activeDialog ? (
-        <SettingsDialog title={activeDialog === "profile" ? "编辑账号" : activeDialog === "language" ? "语言" : activeDialog === "tasks" ? "任务偏好" : activeDialog === "privacy" ? "隐私" : "帮助"} onClose={() => setActiveDialog(null)}>
+        <SettingsDialog
+          title={
+            activeDialog === "profile"
+              ? "编辑账号"
+              : activeDialog === "language"
+                ? "语言"
+                : activeDialog === "tasks"
+                  ? "任务偏好"
+                  : activeDialog === "privacy"
+                    ? "隐私"
+                    : "帮助"
+          }
+          onClose={() => setActiveDialog(null)}
+        >
           {activeDialog === "profile" ? (
             <div className="mobile-settings__dialog-form">
-              <label>姓名<input value={profileForm.fullName} onChange={(event) => setProfileForm({ ...profileForm, fullName: event.target.value })} /></label>
-              <label>头像地址<input value={profileForm.avatarUrl} onChange={(event) => setProfileForm({ ...profileForm, avatarUrl: event.target.value })} /></label>
-              <button type="button" onClick={saveMobileProfile} disabled={isProfileLoading}>{isProfileLoading ? "保存中..." : "保存资料"}</button>
+              <label>
+                姓名
+                <input
+                  value={profileForm.fullName}
+                  onChange={(event) => setProfileForm({ ...profileForm, fullName: event.target.value })}
+                />
+              </label>
+              <label>
+                头像地址
+                <input
+                  value={profileForm.avatarUrl}
+                  onChange={(event) => setProfileForm({ ...profileForm, avatarUrl: event.target.value })}
+                />
+              </label>
+              <button type="button" onClick={saveMobileProfile} disabled={isProfileLoading}>
+                {isProfileLoading ? "保存中..." : "保存资料"}
+              </button>
             </div>
           ) : activeDialog === "language" ? (
-            <div className="mobile-settings__dialog-options">{(["简体中文", "English"] as const).map((language) => <button key={language} type="button" className={settings.language === language ? "is-selected" : ""} onClick={() => { updateSettings({ ...settings, language }); document.documentElement.lang = language === "English" ? "en" : "zh-CN"; setActiveDialog(null); }}>{language}</button>)}</div>
+            <div className="mobile-settings__dialog-options">
+              {(["简体中文", "English"] as const).map((language) => (
+                <button
+                  key={language}
+                  type="button"
+                  className={settings.language === language ? "is-selected" : ""}
+                  onClick={() => {
+                    updateSettings({ ...settings, language });
+                    document.documentElement.lang = language === "English" ? "en" : "zh-CN";
+                    setActiveDialog(null);
+                  }}
+                >
+                  {language}
+                </button>
+              ))}
+            </div>
           ) : activeDialog === "tasks" ? (
-            <div className="mobile-settings__dialog-options">{(["默认排序", "截止日期优先", "优先级优先"] as const).map((taskSort) => <button key={taskSort} type="button" className={settings.taskSort === taskSort ? "is-selected" : ""} onClick={() => { updateSettings({ ...settings, taskSort }); setActiveDialog(null); }}>{taskSort}</button>)}</div>
-          ) : activeDialog === "privacy" ? <p>你的设置保存在当前浏览器中。任务和个人资料仅通过已配置的账号服务同步。</p> : <p>U&apos;s Task 是一个用于记录、整理和推进个人任务的小工具。你可以在任务页创建任务，在日历和统计页查看进度。</p>}
+            <div className="mobile-settings__dialog-options">
+              {(["默认排序", "截止日期优先", "优先级优先"] as const).map((taskSort) => (
+                <button
+                  key={taskSort}
+                  type="button"
+                  className={settings.taskSort === taskSort ? "is-selected" : ""}
+                  onClick={() => {
+                    updateSettings({ ...settings, taskSort });
+                    setActiveDialog(null);
+                  }}
+                >
+                  {taskSort}
+                </button>
+              ))}
+            </div>
+          ) : activeDialog === "privacy" ? (
+            <p>你的设置保存在当前浏览器中。任务和个人资料仅通过已配置的账号服务同步。</p>
+          ) : (
+            <p>
+              U&apos;s Task 是一个用于记录、整理和推进个人任务的小工具。你可以在任务页创建任务，在日历和统计页查看进度。
+            </p>
+          )}
         </SettingsDialog>
       ) : null}
     </section>
   );
 }
 
-function SettingRow({ item, onToggle, onAction }: { item: SettingItem; onToggle: (label: string) => void; onAction: (label: string) => void }) {
+function SettingRow({
+  item,
+  onToggle,
+  onAction,
+}: {
+  item: SettingItem;
+  onToggle: (label: string) => void;
+  onAction: (label: string) => void;
+}) {
   return (
-    <div className="mobile-settings__row" role={item.control === "arrow" ? "button" : undefined} tabIndex={item.control === "arrow" ? 0 : undefined} onClick={() => item.control === "arrow" && onAction(item.label)} onKeyDown={(event) => { if (item.control === "arrow" && (event.key === "Enter" || event.key === " ")) onAction(item.label); }}>
+    <div
+      className="mobile-settings__row"
+      role={item.control === "arrow" ? "button" : undefined}
+      tabIndex={item.control === "arrow" ? 0 : undefined}
+      onClick={() => item.control === "arrow" && onAction(item.label)}
+      onKeyDown={(event) => {
+        if (item.control === "arrow" && (event.key === "Enter" || event.key === " ")) onAction(item.label);
+      }}
+    >
       <span className={`mobile-settings__icon mobile-settings__icon--${item.icon}`} aria-hidden="true" />
       <span className="mobile-settings__row-label">{item.label}</span>
       {item.value ? <span className="mobile-settings__row-value">{item.value}</span> : null}
@@ -227,10 +327,23 @@ function SettingRow({ item, onToggle, onAction }: { item: SettingItem; onToggle:
 }
 
 function SettingsDialog({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
-  return <div className="mobile-settings__dialog-backdrop" role="presentation" onClick={onClose}>
-    <section className="mobile-settings__dialog" role="dialog" aria-modal="true" aria-labelledby="mobile-settings-dialog-title" onClick={(event) => event.stopPropagation()}>
-      <div className="mobile-settings__dialog-header"><h2 id="mobile-settings-dialog-title">{title}</h2><button type="button" aria-label="关闭" onClick={onClose}>×</button></div>
-      {children}
-    </section>
-  </div>;
+  return (
+    <div className="mobile-settings__dialog-backdrop" role="presentation" onClick={onClose}>
+      <section
+        className="mobile-settings__dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mobile-settings-dialog-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mobile-settings__dialog-header">
+          <h2 id="mobile-settings-dialog-title">{title}</h2>
+          <button type="button" aria-label="关闭" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        {children}
+      </section>
+    </div>
+  );
 }

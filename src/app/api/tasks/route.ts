@@ -34,10 +34,7 @@ export async function POST(request: NextRequest) {
   const parsed = taskSchema.safeParse(payload);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      { message: parsed.error.issues[0]?.message ?? "任务信息格式不正确。" },
-      { status: 400 },
-    );
+    return NextResponse.json({ message: parsed.error.issues[0]?.message ?? "任务信息格式不正确。" }, { status: 400 });
   }
 
   try {

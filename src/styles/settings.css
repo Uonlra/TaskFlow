@@ -22,8 +22,7 @@
   align-content: start;
   gap: 22px;
   padding: 22px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 248, 255, 0.9));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 248, 255, 0.9));
 }
 
 .settings-form-panel {

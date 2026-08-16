@@ -91,11 +91,6 @@ describe("TaskDetailPanel", () => {
 
 function renderPanel(currentTask: Task) {
   return render(
-    <TaskDetailPanel
-      task={currentTask}
-      onUpdateTask={vi.fn()}
-      onUpdateStatus={vi.fn()}
-      onDeleteTask={vi.fn()}
-    />,
+    <TaskDetailPanel task={currentTask} onUpdateTask={vi.fn()} onUpdateStatus={vi.fn()} onDeleteTask={vi.fn()} />,
   );
 }

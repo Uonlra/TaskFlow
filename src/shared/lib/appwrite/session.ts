@@ -1,10 +1,7 @@
 import type { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-import {
-  appwriteSessionCookieName,
-  publicSiteUrl,
-} from "@/shared/lib/appwrite/env";
+import { appwriteSessionCookieName, publicSiteUrl } from "@/shared/lib/appwrite/env";
 
 const cookieBaseOptions = {
   httpOnly: true,
@@ -18,10 +15,7 @@ export async function getAppwriteSessionSecret() {
   return cookieStore.get(appwriteSessionCookieName)?.value ?? null;
 }
 
-export function attachAppwriteSessionCookie(
-  response: NextResponse,
-  input: { secret: string; expire?: string | null },
-) {
+export function attachAppwriteSessionCookie(response: NextResponse, input: { secret: string; expire?: string | null }) {
   response.cookies.set(appwriteSessionCookieName, input.secret, {
     ...cookieBaseOptions,
     expires: input.expire ? new Date(input.expire) : undefined,

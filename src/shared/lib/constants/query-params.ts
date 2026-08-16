@@ -48,7 +48,7 @@ export type DashboardRangeValue = (typeof DASHBOARD_RANGE_VALUES)[keyof typeof D
 export type BuildTasksHrefInput = {
   query?: string;
   tag?: string;
-  status?: "todo" | "in_progress" | "done" | "all";
+  status?: "todo" | "in_progress" | "done" | "active" | "all";
   priority?: "high" | "medium" | "low" | "all";
   sort?: "created_desc" | "updated_desc" | "due_asc" | "priority_desc";
   due?: TaskDueFilter;

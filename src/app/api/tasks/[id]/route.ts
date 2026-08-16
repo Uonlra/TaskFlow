@@ -8,14 +8,13 @@ import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
 import { deleteTask, updateTask, updateTaskStatus } from "@/shared/lib/appwrite/tasks";
 
-const taskStatusSchema = z.object({
-  status: z.enum(["todo", "in_progress", "done"]),
-}).strict();
+const taskStatusSchema = z
+  .object({
+    status: z.enum(["todo", "in_progress", "done"]),
+  })
+  .strict();
 
-export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const sessionSecret = await getAppwriteSessionSecret();
   const auth = await getCurrentAuthEnvelope();
 
@@ -30,12 +29,7 @@ export async function PATCH(
     const parsedStatus = taskStatusSchema.safeParse(payload);
 
     if (parsedStatus.success) {
-      const task = await updateTaskStatus(
-        sessionSecret,
-        id,
-        parsedStatus.data.status as Task["status"],
-        request,
-      );
+      const task = await updateTaskStatus(sessionSecret, id, parsedStatus.data.status as Task["status"], request);
 
       return NextResponse.json({ task });
     }
@@ -56,10 +50,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const sessionSecret = await getAppwriteSessionSecret();
   const auth = await getCurrentAuthEnvelope();
 

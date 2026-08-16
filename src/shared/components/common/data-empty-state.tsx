@@ -7,12 +7,7 @@ type DataEmptyStateProps = {
   variant?: "page" | "table" | "panel";
 };
 
-export function DataEmptyState({
-  title,
-  description,
-  action,
-  variant = "page",
-}: DataEmptyStateProps) {
+export function DataEmptyState({ title, description, action, variant = "page" }: DataEmptyStateProps) {
   return (
     <section className={`data-empty-state data-empty-state--${variant}`} aria-live="polite">
       <div className="data-empty-state__mark" aria-hidden="true" />
