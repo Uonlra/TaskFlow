@@ -51,19 +51,19 @@ function AuthPreviewLayout({ children }: { children: ReactNode }) {
         <div className="auth-preview-stack">
           <div className="auth-product-surface" aria-label="任务工作台预览">
             <div className="auth-preview-main">
-            <header className="auth-preview-main__header">
-              <div>
-                <p>预览工作台</p>
-                <strong>{isReady ? displayName + "的任务概览" : "个人任务概览"}</strong>
-              </div>
-              <span
-                className={
-                  isReady ? "auth-preview-connection auth-preview-connection--ready" : "auth-preview-connection"
-                }
-              >
-                {isReady ? "已连接" : previewPhase === "hydrating" ? "同步中" : "未连接"}
-              </span>
-            </header>
+              <header className="auth-preview-main__header">
+                <div>
+                  <p>预览工作台</p>
+                  <strong>{isReady ? displayName + "的任务概览" : "个人任务概览"}</strong>
+                </div>
+                <span
+                  className={
+                    isReady ? "auth-preview-connection auth-preview-connection--ready" : "auth-preview-connection"
+                  }
+                >
+                  {isReady ? "已连接" : previewPhase === "hydrating" ? "同步中" : "未连接"}
+                </span>
+              </header>
               <div className="auth-preview-status-grid">
                 <div>
                   <span>待处理</span>
@@ -82,7 +82,11 @@ function AuthPreviewLayout({ children }: { children: ReactNode }) {
                   <strong>{isReady ? summary.doneCount : "--"}</strong>
                 </div>
               </div>
-              <p className={isReady ? "auth-preview-sync-notice auth-preview-sync-notice--ready" : "auth-preview-sync-notice"}>
+              <p
+                className={
+                  isReady ? "auth-preview-sync-notice auth-preview-sync-notice--ready" : "auth-preview-sync-notice"
+                }
+              >
                 <span aria-hidden="true" />
                 {isReady ? "个人任务统计已同步完成" : "登录后自动同步你的个人任务数据"}
               </p>
@@ -104,7 +108,9 @@ function AuthPreviewLayout({ children }: { children: ReactNode }) {
           <section className="auth-preview-week" aria-label="本周截止安排">
             <header className="auth-preview-week__header">
               <strong>本周截止安排</strong>
-              <span>{previewWeek[0].dateLabel} - {previewWeek[6].dateLabel}</span>
+              <span>
+                {previewWeek[0].dateLabel} - {previewWeek[6].dateLabel}
+              </span>
             </header>
             <div className="auth-preview-week__grid">
               {previewWeek.map((day) => (
@@ -115,7 +121,9 @@ function AuthPreviewLayout({ children }: { children: ReactNode }) {
                     (day.hasOverdue ? " auth-preview-week__day--overdue" : "")
                   }
                   key={day.key}
-                  aria-label={isReady ? `${day.key}，${day.taskCount} 项截止任务` : `${day.key}，登录后显示截止任务数量`}
+                  aria-label={
+                    isReady ? `${day.key}，${day.taskCount} 项截止任务` : `${day.key}，登录后显示截止任务数量`
+                  }
                 >
                   <span>{`周${day.weekday}`}</span>
                   <strong>{day.dateLabel}</strong>
