@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import type { FocusEventHandler, ReactNode } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 
 type AuthInputProps = {
@@ -10,9 +11,20 @@ type AuthInputProps = {
   error?: string;
   registration: UseFormRegisterReturn;
   icon: string;
+  onFocus?: FocusEventHandler<HTMLInputElement>;
+  supportingContent?: ReactNode;
 };
 
-export function AuthInput({ label, type, placeholder, error, registration, icon }: AuthInputProps) {
+export function AuthInput({
+  label,
+  type,
+  placeholder,
+  error,
+  registration,
+  icon,
+  onFocus,
+  supportingContent,
+}: AuthInputProps) {
   const inputId = useId();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const isPassword = type === "password";
@@ -27,7 +39,14 @@ export function AuthInput({ label, type, placeholder, error, registration, icon 
         <span className="auth-input-icon" aria-hidden="true">
           {icon}
         </span>
-        <input id={inputId} type={inputType} placeholder={placeholder} {...registration} className="auth-input" />
+        <input
+          id={inputId}
+          type={inputType}
+          placeholder={placeholder}
+          {...registration}
+          className="auth-input"
+          onFocus={onFocus}
+        />
         {isPassword ? (
           <button
             type="button"
@@ -40,6 +59,7 @@ export function AuthInput({ label, type, placeholder, error, registration, icon 
           </button>
         ) : null}
       </div>
+      {supportingContent}
       {error ? <span className="auth-input-error">{error}</span> : null}
     </div>
   );

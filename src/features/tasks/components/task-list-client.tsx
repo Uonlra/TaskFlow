@@ -170,6 +170,14 @@ export function TaskListClient({
     }
   };
 
+  const handleImportTasks = async (importedTasks: TaskFormValues[]) => {
+    for (const task of importedTasks) {
+      await createTaskAsync(task, activeUserId);
+    }
+
+    return importedTasks.length;
+  };
+
   const handleUpdateTask = async (id: string, values: TaskFormValues) => {
     try {
       await updateTask(id, values, activeUserId);
@@ -304,6 +312,7 @@ export function TaskListClient({
           onFiltersChange={handleFiltersChange}
           onResetFilters={handleResetFilters}
           onCreateTask={handleCreateTask}
+          onImportTasks={handleImportTasks}
           onUpdateTask={handleUpdateTask}
           onUpdateStatus={handleUpdateStatus}
           onDeleteTask={handleDeleteTask}

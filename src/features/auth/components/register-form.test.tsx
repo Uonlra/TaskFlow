@@ -65,6 +65,27 @@ describe("RegisterForm", () => {
     expect(screen.getByText("请再次输入密码。")).toBeInTheDocument();
   });
 
+  it("在密码交互后提供长度和一致性反馈", async () => {
+    const user = userEvent.setup();
+
+    renderRegisterForm();
+
+    expect(screen.queryByText("至少 8 个字符")).not.toBeInTheDocument();
+
+    await user.click(screen.getByLabelText("密码"));
+    expect(screen.getByText("至少 8 个字符")).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("密码"), "password");
+    expect(screen.getByText("已满足至少 8 个字符")).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("确认密码"), "different");
+    expect(screen.getByText("两次输入的密码不一致")).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText("确认密码"));
+    await user.type(screen.getByLabelText("确认密码"), "password");
+    expect(screen.getByText("两次密码一致")).toBeInTheDocument();
+  });
+
   it("注册接口失败时显示服务端错误并发送错误 Toast", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(

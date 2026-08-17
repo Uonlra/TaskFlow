@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback, useLayoutEffect, useRef } from "react";
+
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 
@@ -14,6 +16,7 @@ type DesktopTaskTableProps = {
   selectedTaskId: string | null;
   onSelectTask: (taskId: string) => void;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
+  scrollPositionRef: { current: number };
 };
 
 const priorityLabel: Record<Task["priority"], string> = {
@@ -34,7 +37,26 @@ export function DesktopTaskTable({
   selectedTaskId,
   onSelectTask,
   onUpdateStatus,
+  scrollPositionRef,
 }: DesktopTaskTableProps) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    if (!body) {
+      return;
+    }
+
+    const maxScrollTop = Math.max(0, body.scrollHeight - body.clientHeight);
+    body.scrollTop = Math.min(scrollPositionRef.current, maxScrollTop);
+  }, [scrollPositionRef, tasks]);
+
+  const handleBodyScroll = useCallback(() => {
+    if (bodyRef.current) {
+      scrollPositionRef.current = bodyRef.current.scrollTop;
+    }
+  }, [scrollPositionRef]);
+
   if (!tasks.length) {
     return (
       <div className="desktop-task-empty">
@@ -46,26 +68,36 @@ export function DesktopTaskTable({
 
   return (
     <div className="desktop-task-table" role="table" aria-label="任务列表">
-      <div className="desktop-task-table__head" role="row">
-        <span role="columnheader" aria-label="完成状态" />
-        <span role="columnheader">任务</span>
-        <span role="columnheader">标签</span>
-        <span role="columnheader">截止时间</span>
-        <span role="columnheader">优先级</span>
-        <span role="columnheader">状态</span>
-        <span role="columnheader">操作</span>
-      </div>
+      <div className="desktop-task-table__viewport">
+        <div className="desktop-task-table__head" role="row">
+          <span role="columnheader" aria-label="完成状态" />
+          <span role="columnheader">任务</span>
+          <span role="columnheader">标签</span>
+          <span role="columnheader">截止时间</span>
+          <span role="columnheader">优先级</span>
+          <span role="columnheader">状态</span>
+          <span role="columnheader">操作</span>
+        </div>
 
-      <div className="desktop-task-table__body">
-        {tasks.map((task) => (
-          <DesktopTaskRow
-            key={task.id}
-            task={task}
-            selected={task.id === selectedTaskId}
-            onSelectTask={onSelectTask}
-            onUpdateStatus={onUpdateStatus}
-          />
-        ))}
+        <div
+          ref={bodyRef}
+          className="desktop-task-table__body"
+          role="rowgroup"
+          tabIndex={0}
+          aria-label="可滚动任务列表"
+          data-lenis-prevent-wheel="true"
+          onScroll={handleBodyScroll}
+        >
+          {tasks.map((task) => (
+            <DesktopTaskRow
+              key={task.id}
+              task={task}
+              selected={task.id === selectedTaskId}
+              onSelectTask={onSelectTask}
+              onUpdateStatus={onUpdateStatus}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -90,6 +122,7 @@ function DesktopTaskRow({
       className={["desktop-task-table__row", selected ? "is-selected" : "", task.status === "done" ? "is-done" : ""]
         .filter(Boolean)
         .join(" ")}
+      data-task-row="true"
       role="row"
       tabIndex={0}
       onClick={() => onSelectTask(task.id)}
