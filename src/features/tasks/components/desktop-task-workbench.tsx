@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 
 import { CustomSelect } from "@/shared/components/common/custom-select";
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
@@ -11,6 +11,8 @@ import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
+import { createTaskExportPayload, parseTaskImportPayload } from "@/features/tasks/utils/task-transfer";
+import { useToast } from "@/shared/providers/toast-provider";
 
 type DesktopTaskWorkbenchProps = {
   tasks: Task[];
@@ -20,16 +22,17 @@ type DesktopTaskWorkbenchProps = {
   onFiltersChange: (filters: TaskFilters) => void;
   onResetFilters: () => void;
   onCreateTask: (values: TaskFormValues) => void | Promise<void>;
+  onImportTasks: (tasks: TaskFormValues[]) => Promise<number>;
   onUpdateTask: (id: string, values: TaskFormValues) => void | Promise<void>;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
   onDeleteTask: (id: string) => void | Promise<void>;
 };
 
 const categoryTabs = [
-  { value: "near", label: "临近" },
-  { value: "overdue", label: "逾期" },
-  { value: "all", label: "全部" },
+  { value: "near", label: "近期" },
+  { value: "active", label: "未完成" },
   { value: "done", label: "已完成" },
+  { value: "all", label: "全部" },
 ] as const;
 
 type CategoryTab = (typeof categoryTabs)[number]["value"];
@@ -46,11 +49,16 @@ export function DesktopTaskWorkbench({
   onFiltersChange,
   onResetFilters,
   onCreateTask,
+  onImportTasks,
   onUpdateTask,
   onUpdateStatus,
   onDeleteTask,
 }: DesktopTaskWorkbenchProps) {
+  const { showToast } = useToast();
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const taskListScrollTopRef = useRef(0);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
   const selectedTask = useMemo(
     () => tasks.find((task) => task.id === selectedTaskId) ?? tasks[0] ?? null,
     [selectedTaskId, tasks],
@@ -75,6 +83,85 @@ export function DesktopTaskWorkbench({
       setSelectedTaskId(tasks[0].id);
     }
   }, [selectedTaskId, tasks]);
+
+  const handleCategoryChange = (value: CategoryTab) => {
+    const nextFilters: TaskFilters = {
+      ...filters,
+      due: "",
+      status: "all",
+      risk: "",
+      date: "",
+      range: "",
+      sort: value === "done" ? "updated_desc" : "due_asc",
+    };
+
+    if (value === "near") {
+      nextFilters.due = "near";
+    }
+
+    if (value === "active") {
+      nextFilters.status = "active";
+    }
+
+    if (value === "done") {
+      nextFilters.status = "done";
+    }
+
+    onFiltersChange(nextFilters);
+  };
+
+  const handleSearchChange = (value: string) => {
+    onFiltersChange({ ...filters, query: value });
+  };
+
+  const handleExportTasks = () => {
+    const payload = createTaskExportPayload(totalTasks);
+    const file = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `taskflow-tasks-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+
+    showToast({
+      title: "任务已导出",
+      description: `已导出 ${totalTasks.length} 项任务。`,
+      tone: "success",
+    });
+  };
+
+  const handleImportFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const payload = JSON.parse(await file.text()) as unknown;
+      const importedTasks = parseTaskImportPayload(payload);
+      const importedCount = await onImportTasks(importedTasks);
+
+      showToast({
+        title: "任务已导入",
+        description: `已追加 ${importedCount} 项任务。`,
+        tone: "success",
+      });
+    } catch (error) {
+      showToast({
+        title: "导入失败",
+        description: error instanceof Error ? error.message : "无法读取任务文件，请稍后再试。",
+        tone: "error",
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   if (isLoading && !totalTasks.length) {
     return (
@@ -101,43 +188,27 @@ export function DesktopTaskWorkbench({
               <h1>任务</h1>
               <p>开始整理当前事项</p>
             </div>
-            <TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="新建任务" />
+            <div className="desktop-task-workbench__data-actions">
+              <input
+                ref={importInputRef}
+                className="desktop-task-import-input"
+                type="file"
+                accept="application/json,.json"
+                tabIndex={-1}
+                aria-hidden="true"
+                onChange={handleImportFile}
+              />
+              <button type="button" onClick={() => importInputRef.current?.click()} disabled={isImporting}>
+                {isImporting ? "正在导入" : "导入任务"}
+              </button>
+              <TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="新建任务" />
+            </div>
           </header>
           <DataEmptyState title="还没有任务" description="新建第一条任务，开始整理当前事项。" />
         </div>
       </section>
     );
   }
-
-  const handleCategoryChange = (value: CategoryTab) => {
-    const nextFilters: TaskFilters = {
-      ...filters,
-      due: "",
-      status: "all",
-      risk: "",
-      date: "",
-      range: "",
-      sort: value === "done" ? "updated_desc" : "due_asc",
-    };
-
-    if (value === "near") {
-      nextFilters.due = "near";
-    }
-
-    if (value === "overdue") {
-      nextFilters.due = "overdue";
-    }
-
-    if (value === "done") {
-      nextFilters.status = "done";
-    }
-
-    onFiltersChange(nextFilters);
-  };
-
-  const handleSearchChange = (value: string) => {
-    onFiltersChange({ ...filters, query: value });
-  };
 
   return (
     <section
@@ -209,6 +280,7 @@ export function DesktopTaskWorkbench({
             selectedTaskId={selectedTask?.id ?? null}
             onSelectTask={setSelectedTaskId}
             onUpdateStatus={onUpdateStatus}
+            scrollPositionRef={taskListScrollTopRef}
           />
         ) : (
           <DataEmptyState
@@ -225,10 +297,23 @@ export function DesktopTaskWorkbench({
 
         {tasks.length ? (
           <footer className="desktop-task-workbench__footer">
-            <span>共 {tasks.length} 项任务</span>
-            <button type="button" onClick={onResetFilters}>
-              重置筛选
-            </button>
+            <input
+              ref={importInputRef}
+              className="desktop-task-import-input"
+              type="file"
+              accept="application/json,.json"
+              tabIndex={-1}
+              aria-hidden="true"
+              onChange={handleImportFile}
+            />
+            <div className="desktop-task-workbench__data-actions">
+              <button type="button" onClick={() => importInputRef.current?.click()} disabled={isImporting}>
+                {isImporting ? "正在导入" : "导入任务"}
+              </button>
+              <button type="button" onClick={handleExportTasks} disabled={isImporting}>
+                导出任务
+              </button>
+            </div>
           </footer>
         ) : null}
       </div>
@@ -291,10 +376,10 @@ function getEmptyStateCopy({
     };
   }
 
-  if (category === "overdue") {
+  if (category === "active") {
     return {
-      title: "没有逾期任务",
-      description: "当前没有需要补救的过期任务。",
+      title: "没有未完成任务",
+      description: "当前筛选下的任务都已经完成。",
     };
   }
 
@@ -323,8 +408,8 @@ function getActiveCategory(filters: TaskFilters): CategoryTab {
     return "done";
   }
 
-  if (filters.due === "overdue") {
-    return "overdue";
+  if (filters.status === "active") {
+    return "active";
   }
 
   if (filters.due === "near" || filters.due === "today" || filters.due === "upcoming") {
@@ -343,19 +428,17 @@ function buildCategoryCounts(tasks: Task[]) {
 
       if (task.status === "done") {
         counts.done += 1;
+      } else {
+        counts.active += 1;
       }
 
       if (task.status !== "done" && (dueMeta.isDueToday || dueMeta.isUpcoming)) {
         counts.near += 1;
       }
 
-      if (task.status !== "done" && dueMeta.isOverdue) {
-        counts.overdue += 1;
-      }
-
       return counts;
     },
-    { near: 0, overdue: 0, all: 0, done: 0 },
+    { near: 0, active: 0, all: 0, done: 0 },
   );
 }
 
