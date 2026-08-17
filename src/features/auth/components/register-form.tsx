@@ -23,6 +23,7 @@ export function RegisterForm() {
   const [submittedName, setSubmittedName] = useState<string | null>(null);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [hasPasswordInteraction, setHasPasswordInteraction] = useState(false);
   const {
     register,
     handleSubmit,
@@ -39,7 +40,14 @@ export function RegisterForm() {
   });
   const watchedName = watch("name");
   const watchedEmail = watch("email");
+  const watchedPassword = watch("password");
+  const watchedConfirmPassword = watch("confirmPassword");
   useAuthAccountLookup(watchedEmail);
+
+  const hasValidPasswordLength = watchedPassword.length >= 8;
+  const shouldShowPasswordFeedback = hasPasswordInteraction || watchedPassword.length > 0;
+  const shouldShowConfirmationFeedback = watchedConfirmPassword.length > 0 && !errors.confirmPassword;
+  const passwordsMatch = watchedPassword === watchedConfirmPassword;
 
   useEffect(() => {
     setPreloginName(watchedName.trim());
@@ -146,10 +154,26 @@ export function RegisterForm() {
         <AuthInput
           label="密码"
           type="password"
-          placeholder="请输入密码"
+          placeholder="请输入至少 8 位密码"
           error={errors.password?.message}
           registration={register("password")}
           icon="*"
+          onFocus={() => setHasPasswordInteraction(true)}
+          supportingContent={
+            shouldShowPasswordFeedback ? (
+              <p
+                className={
+                  hasValidPasswordLength
+                    ? "auth-password-feedback auth-password-feedback--success"
+                    : "auth-password-feedback"
+                }
+                aria-live="polite"
+              >
+                <span aria-hidden="true">{hasValidPasswordLength ? "✓" : "○"}</span>
+                {hasValidPasswordLength ? "已满足至少 8 个字符" : "至少 8 个字符"}
+              </p>
+            ) : null
+          }
         />
         <AuthInput
           label="确认密码"
@@ -158,6 +182,21 @@ export function RegisterForm() {
           error={errors.confirmPassword?.message}
           registration={register("confirmPassword")}
           icon="*"
+          supportingContent={
+            shouldShowConfirmationFeedback ? (
+              <p
+                className={
+                  passwordsMatch
+                    ? "auth-password-feedback auth-password-feedback--success"
+                    : "auth-password-feedback auth-password-feedback--error"
+                }
+                aria-live="polite"
+              >
+                <span aria-hidden="true">{passwordsMatch ? "✓" : "!"}</span>
+                {passwordsMatch ? "两次密码一致" : "两次输入的密码不一致"}
+              </p>
+            ) : null
+          }
         />
         <button type="submit" disabled={isSubmitting} className="auth-submit-button">
           {isSubmitting ? "创建中..." : "创建任务本"}

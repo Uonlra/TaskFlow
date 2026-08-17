@@ -3,6 +3,8 @@
 import { createTimeline, engine } from "animejs";
 import { useEffect, useRef, useState } from "react";
 
+const ENTRY_ANIMATION_DURATION = 2500;
+
 /**
  * A brief, one-time transition that lets the auth workspace settle before it
  * is revealed. It is deliberately kept separate from authentication state.
@@ -45,15 +47,15 @@ export function AuthEntryLoader() {
     }
 
     if (progress) {
-      timeline.add(progress, { scaleX: [0, 1], duration: 620, ease: "inOut(2.4)" }, 240);
+      timeline.add(progress, { scaleX: [0, 1], duration: 1100, ease: "inOut(2.4)" }, 240);
     }
 
     timeline
-      .add(loader, { translateY: ["0%", "-104%"], duration: 720, ease: "inOut(2.4)" }, 900)
+      .add(loader, { translateY: ["0%", "-104%"], duration: 700, ease: "inOut(2.4)" }, 1450)
       .add(
         authFrame,
-        { opacity: [0, 1], translateY: [18, 0], scale: [0.985, 1], duration: 520, ease: "outExpo" },
-        1170,
+        { opacity: [0, 1], translateY: [18, 0], scale: [0.985, 1], duration: 500, ease: "outExpo" },
+        ENTRY_ANIMATION_DURATION - 500,
       );
 
     const handleVisibilityChange = () => {
