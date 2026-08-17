@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import { AuthPageBackground } from "@/features/auth/components/auth-page-background";
+import { AuthEntryLoader } from "@/features/auth/components/auth-entry-loader";
 
 import { AuthPreviewStateProvider, useAuthPreviewState } from "@/features/auth/components/auth-preview-state";
 import { useAuth } from "@/features/auth/providers/auth-provider";
@@ -22,6 +23,7 @@ export function AuthExhibitionShell({ children }: AuthExhibitionShellProps) {
   return (
     <main className="auth-page">
       <AuthPageBackground />
+      <AuthEntryLoader />
       <AuthPreviewStateProvider>
         <AuthPreviewLayout>{children}</AuthPreviewLayout>
       </AuthPreviewStateProvider>
@@ -40,7 +42,7 @@ function AuthPreviewLayout({ children }: { children: ReactNode }) {
     previewPhase === "hydrating" ? "正在同步你的任务" : isReady ? "任务数据已连接" : "登录后同步你的工作台";
 
   return (
-    <section className="auth-frame">
+    <section className="auth-frame" data-auth-entry-target>
       <aside className="auth-brand-panel">
         <div className="auth-brand-copy">
           <div className="auth-brand-row">
