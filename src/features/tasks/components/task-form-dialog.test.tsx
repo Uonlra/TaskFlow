@@ -26,6 +26,54 @@ describe("TaskFormDialog", () => {
     expect(screen.getByRole("heading", { name: "记下一条新的任务" })).toBeInTheDocument();
   });
 
+  it("打开弹窗后将焦点放到任务名称", async () => {
+    const user = userEvent.setup();
+    render(<TaskFormDialog onSubmitTask={() => {}} />);
+
+    await user.click(screen.getByRole("button", { name: "新建任务" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("textbox", { name: "任务名称" })).toHaveFocus();
+    });
+  });
+
+  it("Tab 到弹窗末尾后循环回第一个可聚焦控件", async () => {
+    const user = userEvent.setup();
+    render(<TaskFormDialog onSubmitTask={() => {}} />);
+
+    await user.click(screen.getByRole("button", { name: "新建任务" }));
+
+    const dialog = screen.getByRole("dialog");
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+    const first = focusable[0];
+    const last = focusable.at(-1);
+
+    expect(first).toBeDefined();
+    expect(last).toBeDefined();
+
+    last?.focus();
+    await user.tab();
+
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("关闭弹窗后将焦点还给打开按钮", async () => {
+    const user = userEvent.setup();
+    render(<TaskFormDialog onSubmitTask={() => {}} />);
+
+    const trigger = screen.getByRole("button", { name: "新建任务" });
+    await user.click(trigger);
+    await user.click(screen.getByRole("button", { name: "关闭任务表单" }));
+
+    await waitFor(() => {
+      expect(trigger).toHaveFocus();
+    });
+  });
+
   it("空提交时仅显示标题校验错误", async () => {
     const user = userEvent.setup();
     render(<TaskFormDialog onSubmitTask={() => {}} />);

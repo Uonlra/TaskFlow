@@ -62,12 +62,7 @@ skills/
 skill/
 
 # Local docs
-docs/work_prepare/
-docs/product/
-docs/setup/
-docs/README.md
-docs/performance
-docs/quality
+docs/intro
 
 # Playwright artifacts
 blob-report/
