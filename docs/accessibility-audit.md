@@ -71,6 +71,23 @@ The initial verification found that selection was represented only by a CSS clas
 
 Verification: 6 focused component tests passed, ESLint passed, and TypeScript typecheck passed.
 
+## 2026-08-19: Global navigation and skip link
+
+Initial verification found these issues:
+
+- Dashboard pages had no keyboard path to skip repeated sidebar navigation.
+- The desktop navigation landmark did not have a distinct accessible name.
+
+Implemented and verified:
+
+- Added a first-in-order `跳到主要内容` skip link targeting `#main-content`.
+- Made the main landmark programmatically focusable with `tabindex="-1"`.
+- Added a keyboard-only visible style for the skip link.
+- Named the desktop navigation `主导航`; the mobile navigation remains named `移动导航`.
+- Verified that desktop and mobile links identify the active route with `aria-current="page"`.
+
+Verification: 2 focused component tests passed, ESLint passed, and TypeScript typecheck passed.
+
 Next scope: keyboard operation of the mobile task list and its quick filters.
 
 ## 2026-08-19: Mobile task list
