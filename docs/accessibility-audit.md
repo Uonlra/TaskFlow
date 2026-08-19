@@ -55,3 +55,38 @@ Verified with Testing Library:
 Status: passed for this scope. No component change was required.
 
 Next scope: the task list row selection and keyboard activation path that opens this panel.
+
+## 2026-08-19: Task list to detail panel
+
+Verified with Testing Library:
+
+- Task rows are focusable and expose `role="row"`.
+- Enter and Space activate a focused task row.
+- Activating a row updates the workbench selection and the task detail panel content.
+- The inline completion button stops propagation and does not also select the row.
+- The selected row exposes `aria-selected="true"`; other rows expose `aria-selected="false"`.
+- Focus remains on the activated row while the detail panel updates, so keyboard users retain their place in the list.
+
+The initial verification found that selection was represented only by a CSS class. Added `aria-selected` to the task row.
+
+Verification: 6 focused component tests passed, ESLint passed, and TypeScript typecheck passed.
+
+Next scope: keyboard operation of the mobile task list and its quick filters.
+
+## 2026-08-19: Mobile task list
+
+Verified with Testing Library:
+
+- The search control is exposed as a `searchbox` with the accessible name `搜索任务`.
+- Search input can be reached and edited with the keyboard.
+- Quick filters are native buttons, can be activated with Enter, and expose their state through `aria-pressed`.
+- The active quick filter is reported correctly to assistive technology.
+- The task status button is independently keyboard-operable and retains a separate task detail link.
+- Natural Tab order moves from quick filters to task status action and then to the task detail link.
+
+Implemented:
+
+- Added `type="search"` to the mobile search input.
+- Added visible focus styles for the search field, quick filters, status controls, and task links.
+
+Verification: 6 focused component tests passed, ESLint passed, and TypeScript typecheck passed.

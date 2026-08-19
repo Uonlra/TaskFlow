@@ -125,6 +125,7 @@ function DesktopTaskRow({
       data-task-row="true"
       role="row"
       tabIndex={0}
+      aria-selected={selected}
       onClick={() => onSelectTask(task.id)}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {

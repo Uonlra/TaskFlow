@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { render, screen } from "@testing-library/react";
+import { useState } from "react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -37,20 +38,22 @@ const tasks: Task[] = [
   },
 ];
 
-function renderTaskList(onFiltersChange = vi.fn()) {
+function renderTaskList(
+  onFiltersChange = vi.fn(),
+  currentFilters: TaskFilters = filters,
+  currentTasks: Task[] = tasks,
+  onUpdateStatus = vi.fn(),
+) {
   render(
-    <MobileTaskListView
-      tasks={tasks}
-      totalCount={tasks.length}
-      filters={filters}
-      isLoading={false}
+    <ControlledTaskList
+      initialFilters={currentFilters}
+      tasks={currentTasks}
       onFiltersChange={onFiltersChange}
-      onCreateTask={() => {}}
-      onUpdateStatus={() => {}}
+      onUpdateStatus={onUpdateStatus}
     />,
   );
 
-  return onFiltersChange;
+  return { onFiltersChange, onUpdateStatus };
 }
 
 describe("MobileTaskListView", () => {
@@ -66,7 +69,7 @@ describe("MobileTaskListView", () => {
 
   it("按下快捷筛选时写入明确的日期与状态条件", async () => {
     const user = userEvent.setup();
-    const onFiltersChange = renderTaskList();
+    const { onFiltersChange } = renderTaskList();
 
     await user.click(screen.getByRole("button", { name: "今天" }));
     expect(onFiltersChange).toHaveBeenLastCalledWith(
@@ -88,4 +91,85 @@ describe("MobileTaskListView", () => {
       expect.objectContaining({ status: "done", due: "", sort: "updated_desc", date: "", range: "" }),
     );
   });
+
+  it("通过键盘操作搜索框和快捷筛选", async () => {
+    const user = userEvent.setup();
+    const { onFiltersChange } = renderTaskList();
+
+    const search = screen.getByRole("searchbox", { name: "搜索任务" });
+    search.focus();
+    await user.clear(search);
+    await user.type(search, "task");
+
+    expect(onFiltersChange).toHaveBeenLastCalledWith(expect.objectContaining({ query: "task" }));
+
+    const todayFilter = screen.getByRole("button", { name: "今天" });
+    todayFilter.focus();
+    await user.keyboard("{Enter}");
+
+    expect(onFiltersChange).toHaveBeenLastCalledWith(expect.objectContaining({ due: "today", query: "" }));
+  });
+
+  it("向辅助技术暴露当前快捷筛选状态", () => {
+    renderTaskList(vi.fn(), { ...filters, query: "", due: "near" });
+
+    expect(screen.getByRole("button", { name: "临近" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "今天" })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("通过键盘切换任务完成状态，并保留独立的详情链接", async () => {
+    const user = userEvent.setup();
+    const onUpdateStatus = vi.fn();
+    renderTaskList(vi.fn(), filters, tasks, onUpdateStatus);
+
+    const statusButton = screen.getByRole("button", { name: "标记为完成" });
+    statusButton.focus();
+    await user.keyboard("{Enter}");
+
+    expect(onUpdateStatus).toHaveBeenCalledWith("task-1", "done");
+    expect(screen.getByRole("link", { name: /测试任务/ })).toHaveAttribute("href", "/tasks/task-1");
+  });
+
+  it("按自然顺序从快捷筛选进入任务操作和详情链接", async () => {
+    const user = userEvent.setup();
+    renderTaskList();
+
+    const doneFilter = screen.getByRole("button", { name: "已完成" });
+    doneFilter.focus();
+
+    await user.tab();
+    expect(screen.getByRole("button", { name: "标记为完成" })).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByRole("link", { name: /测试任务/ })).toHaveFocus();
+  });
 });
+
+function ControlledTaskList({
+  initialFilters,
+  tasks: currentTasks,
+  onFiltersChange,
+  onUpdateStatus,
+}: {
+  initialFilters: TaskFilters;
+  tasks: Task[];
+  onFiltersChange: (filters: TaskFilters) => void;
+  onUpdateStatus: (id: string, status: Task["status"]) => void;
+}) {
+  const [currentFilters, setCurrentFilters] = useState(initialFilters);
+
+  return (
+    <MobileTaskListView
+      tasks={currentTasks}
+      totalCount={currentTasks.length}
+      filters={currentFilters}
+      isLoading={false}
+      onFiltersChange={(nextFilters) => {
+        setCurrentFilters(nextFilters);
+        onFiltersChange(nextFilters);
+      }}
+      onCreateTask={() => {}}
+      onUpdateStatus={onUpdateStatus}
+    />
+  );
+}
