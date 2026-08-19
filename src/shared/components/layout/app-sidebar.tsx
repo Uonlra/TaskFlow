@@ -22,7 +22,7 @@ export function AppSidebar() {
         <p className="dashboard-sidebar-subtitle">把要做的事放在一个简单、顺手的地方。</p>
       </div>
 
-      <nav className="dashboard-sidebar-nav">
+      <nav className="dashboard-sidebar-nav" aria-label="主导航">
         {appNavigation.map((item) => {
           const isActive = isAppNavigationActive(pathname, item.href);
 

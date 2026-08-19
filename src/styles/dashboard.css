@@ -30,6 +30,26 @@
   font-family: var(--font-text);
 }
 
+.dashboard-skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 200;
+  padding: 10px 14px;
+  border: 2px solid var(--primary);
+  border-radius: 4px;
+  background: var(--surface-strong);
+  color: var(--foreground);
+  font-weight: 600;
+  transform: translateY(calc(-100% - 16px));
+}
+
+.dashboard-skip-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  transform: translateY(0);
+}
+
 .dashboard-sidebar {
   position: sticky;
   top: 0;

@@ -26,6 +26,54 @@ describe("TaskFormDialog", () => {
     expect(screen.getByRole("heading", { name: "记下一条新的任务" })).toBeInTheDocument();
   });
 
+  it("打开弹窗后将焦点放到任务名称", async () => {
+    const user = userEvent.setup();
+    render(<TaskFormDialog onSubmitTask={() => {}} />);
+
+    await user.click(screen.getByRole("button", { name: "新建任务" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("textbox", { name: "任务名称" })).toHaveFocus();
+    });
+  });
+
+  it("Tab 到弹窗末尾后循环回第一个可聚焦控件", async () => {
+    const user = userEvent.setup();
+    render(<TaskFormDialog onSubmitTask={() => {}} />);
+
+    await user.click(screen.getByRole("button", { name: "新建任务" }));
+
+    const dialog = screen.getByRole("dialog");
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+    const first = focusable[0];
+    const last = focusable.at(-1);
+
+    expect(first).toBeDefined();
+    expect(last).toBeDefined();
+
+    last?.focus();
+    await user.tab();
+
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("关闭弹窗后将焦点还给打开按钮", async () => {
+    const user = userEvent.setup();
+    render(<TaskFormDialog onSubmitTask={() => {}} />);
+
+    const trigger = screen.getByRole("button", { name: "新建任务" });
+    await user.click(trigger);
+    await user.click(screen.getByRole("button", { name: "关闭任务表单" }));
+
+    await waitFor(() => {
+      expect(trigger).toHaveFocus();
+    });
+  });
+
   it("空提交时仅显示标题校验错误", async () => {
     const user = userEvent.setup();
     render(<TaskFormDialog onSubmitTask={() => {}} />);
@@ -35,6 +83,33 @@ describe("TaskFormDialog", () => {
 
     expect(await screen.findByText("标题至少需要 1 个字符。")).toBeInTheDocument();
     expect(screen.queryByText("说明至少需要 3 个字符。")).not.toBeInTheDocument();
+  });
+
+  it("将字段校验错误与无效控件关联", async () => {
+    const user = userEvent.setup();
+    render(<TaskFormDialog onSubmitTask={() => {}} />);
+
+    await user.click(screen.getByRole("button", { name: "新建任务" }));
+    await user.click(screen.getByRole("button", { name: "创建任务" }));
+
+    const titleInput = screen.getByRole("textbox", { name: "任务名称" });
+    const error = await screen.findByText("标题至少需要 1 个字符。");
+
+    expect(titleInput).toHaveAttribute("aria-invalid", "true");
+    expect(titleInput).toHaveAttribute("aria-describedby", error.id);
+    expect(error).toHaveAttribute("role", "alert");
+  });
+
+  it("将保存失败作为可播报的异步错误展示", async () => {
+    const user = userEvent.setup();
+    render(<TaskFormDialog onSubmitTask={() => Promise.reject(new Error("服务暂时不可用。"))} />);
+
+    await user.click(screen.getByRole("button", { name: "新建任务" }));
+    await user.type(screen.getByRole("textbox", { name: "任务名称" }), "测试任务");
+    await user.click(screen.getByRole("button", { name: "创建任务" }));
+
+    const error = await screen.findByRole("alert");
+    expect(error).toHaveTextContent("服务暂时不可用。");
   });
 
   it("仅填写标题也可以创建任务", async () => {

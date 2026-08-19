@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 type ConfirmDialogProps = {
@@ -25,10 +25,20 @@ export function ConfirmDialog({
   triggerStyle,
   confirmTone = "default",
 }: ConfirmDialogProps) {
+  const titleId = useId();
+  const descriptionId = useId();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const dialogRef = useRef<HTMLElement | null>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  const closeDialog = () => {
+    setOpen(false);
+    window.requestAnimationFrame(() => triggerRef.current?.focus());
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -46,9 +56,11 @@ export function ConfirmDialog({
 
     document.body.style.overflow = "hidden";
 
+    cancelButtonRef.current?.focus();
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !isSubmitting) {
-        setOpen(false);
+        closeDialog();
       }
     };
 
@@ -60,13 +72,39 @@ export function ConfirmDialog({
     };
   }, [isSubmitting, mounted, open]);
 
+  const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Tab" || !dialogRef.current) {
+      return;
+    }
+
+    const focusable = Array.from(
+      dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+    const first = focusable[0];
+    const last = focusable.at(-1);
+
+    if (!first || !last) {
+      return;
+    }
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   const handleConfirm = async () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
       await onConfirm();
-      setOpen(false);
+      closeDialog();
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "操作失败，请稍后再试。");
     } finally {
@@ -76,19 +114,33 @@ export function ConfirmDialog({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={triggerClassName} style={triggerStyle}>
-        {triggerLabel}
-      </button>
+       <button
+         ref={triggerRef}
+         type="button"
+         onClick={() => setOpen(true)}
+         className={triggerClassName}
+         style={triggerStyle}
+       >
+         {triggerLabel}
+       </button>
       {open && mounted
         ? createPortal(
             <Overlay
               onDismiss={() => {
                 if (!isSubmitting) {
-                  setOpen(false);
+                  closeDialog();
                 }
               }}
             >
-              <section className="confirm-dialog card-surface">
+               <section
+                 ref={dialogRef}
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby={titleId}
+                 aria-describedby={descriptionId}
+                 className="confirm-dialog card-surface"
+                 onKeyDown={handleDialogKeyDown}
+               >
                 <p
                   className={
                     confirmTone === "danger"
@@ -98,13 +150,27 @@ export function ConfirmDialog({
                 >
                   请确认操作
                 </p>
-                <h2 className="confirm-dialog__title">{title}</h2>
-                <p className="confirm-dialog__description">{description}</p>
-                {submitError ? <p className="confirm-dialog__error">{submitError}</p> : null}
-                <div className="confirm-dialog__actions">
-                  <button type="button" onClick={() => setOpen(false)} className="tesla-action tesla-action--secondary">
-                    取消
-                  </button>
+                 <h2 id={titleId} className="confirm-dialog__title">
+                   {title}
+                 </h2>
+                 <p id={descriptionId} className="confirm-dialog__description">
+                   {description}
+                 </p>
+                 {submitError ? (
+                   <p className="confirm-dialog__error" role="alert">
+                     {submitError}
+                   </p>
+                 ) : null}
+                 <div className="confirm-dialog__actions">
+                   <button
+                     ref={cancelButtonRef}
+                     type="button"
+                     onClick={closeDialog}
+                     disabled={isSubmitting}
+                     className="tesla-action tesla-action--secondary"
+                   >
+                     取消
+                   </button>
                   <button
                     type="button"
                     onClick={handleConfirm}

@@ -90,6 +90,7 @@ export function MobileTaskListView({
       <label className="mobile-task-list__search">
         <span aria-hidden="true" />
         <input
+          type="search"
           value={filters.query}
           onChange={(event) => handleSearchChange(event.target.value)}
           placeholder="搜索任务、标签"

@@ -87,6 +87,56 @@ describe("TaskDetailPanel", () => {
     expect(screen.getByRole("tab", { name: "活动" })).toHaveFocus();
     expect(screen.getByRole("tabpanel", { name: "活动" })).toBeInTheDocument();
   });
+
+  it("exposes the tab and panel relationship with a roving tab stop", async () => {
+    const user = userEvent.setup();
+    renderPanel(task);
+
+    const detailsTab = screen.getByRole("tab", { name: "详情" });
+    const activityTab = screen.getByRole("tab", { name: "活动" });
+    const detailsPanel = screen.getByRole("tabpanel", { name: "详情" });
+
+    expect(detailsTab).toHaveAttribute("aria-controls", detailsPanel.id);
+    expect(detailsPanel).toHaveAttribute("aria-labelledby", detailsTab.id);
+    expect(detailsTab).toHaveAttribute("aria-selected", "true");
+    expect(detailsTab).toHaveAttribute("tabindex", "0");
+    expect(activityTab).toHaveAttribute("aria-selected", "false");
+    expect(activityTab).toHaveAttribute("tabindex", "-1");
+
+    await user.click(activityTab);
+
+    expect(screen.getByRole("tab", { name: "活动" })).toHaveAttribute("tabindex", "0");
+    expect(screen.getByRole("tab", { name: "详情" })).toHaveAttribute("tabindex", "-1");
+    expect(screen.getByRole("tabpanel", { name: "活动" })).toBeInTheDocument();
+  });
+
+  it("supports Home and End keys while keeping focus on the active tab", async () => {
+    const user = userEvent.setup();
+    renderPanel(task);
+
+    const detailsTab = screen.getByRole("tab", { name: "详情" });
+    const activityTab = screen.getByRole("tab", { name: "活动" });
+
+    detailsTab.focus();
+    await user.keyboard("{End}");
+    expect(activityTab).toHaveFocus();
+    expect(activityTab).toHaveAttribute("aria-selected", "true");
+
+    await user.keyboard("{Home}");
+    expect(detailsTab).toHaveFocus();
+    expect(detailsTab).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("moves from the active tab into panel controls with Tab", async () => {
+    const user = userEvent.setup();
+    renderPanel(task);
+
+    const detailsTab = screen.getByRole("tab", { name: "详情" });
+    detailsTab.focus();
+    await user.tab();
+
+    expect(screen.getByRole("button", { name: "待开始" })).toHaveFocus();
+  });
 });
 
 function renderPanel(currentTask: Task) {

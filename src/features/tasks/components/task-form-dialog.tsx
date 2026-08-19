@@ -42,6 +42,12 @@ export function TaskFormDialog({
 }: TaskFormDialogProps) {
   const headingId = useId();
   const descriptionId = useId();
+  const titleErrorId = `${headingId}-title-error`;
+  const descriptionErrorId = `${headingId}-description-error`;
+  const statusErrorId = `${headingId}-status-error`;
+  const priorityErrorId = `${headingId}-priority-error`;
+  const tagsErrorId = `${headingId}-tags-error`;
+  const dueDateErrorId = `${headingId}-due-date-error`;
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -412,7 +418,7 @@ export function TaskFormDialog({
                   ) : null}
 
                   <section className="task-dialog__core" aria-label="任务内容">
-                    <Field label="任务名称" required error={errors.title?.message}>
+                    <Field label="任务名称" required error={errors.title?.message} errorId={titleErrorId}>
                       <input
                         {...register("title")}
                         className="task-field"
@@ -423,10 +429,11 @@ export function TaskFormDialog({
                         placeholder="例如：完成项目说明文档初稿"
                         aria-label="任务名称"
                         aria-invalid={Boolean(errors.title)}
+                        aria-describedby={errors.title ? titleErrorId : undefined}
                       />
                     </Field>
 
-                    <Field label="备注" optional error={errors.description?.message}>
+                    <Field label="备注" optional error={errors.description?.message} errorId={descriptionErrorId}>
                       <textarea
                         {...register("description")}
                         className="task-field task-textarea"
@@ -438,6 +445,7 @@ export function TaskFormDialog({
                         rows={1}
                         aria-label="备注"
                         aria-invalid={Boolean(errors.description)}
+                        aria-describedby={errors.description ? descriptionErrorId : undefined}
                         onInput={(event) => {
                           const textarea = event.currentTarget;
                           textarea.style.height = "auto";
@@ -462,7 +470,7 @@ export function TaskFormDialog({
                   {showPlanning ? (
                     <section className="task-dialog__planning" aria-label="具体描述设置">
                       <div className="task-dialog__grid">
-                        <Field label="状态" error={errors.status?.message}>
+                        <Field label="状态" error={errors.status?.message} errorId={statusErrorId}>
                           <Controller
                             control={control}
                             name="status"
@@ -473,17 +481,24 @@ export function TaskFormDialog({
                                 options={taskStatusOptions}
                                 onChange={field.onChange}
                                 invalid={Boolean(errors.status)}
+                                ariaDescribedBy={errors.status ? statusErrorId : undefined}
                               />
                             )}
                           />
                         </Field>
 
-                        <Field label="优先级" error={errors.priority?.message}>
+                        <Field label="优先级" error={errors.priority?.message} errorId={priorityErrorId}>
                           <Controller
                             control={control}
                             name="priority"
                             render={({ field }) => (
-                              <div className="task-priority-segment" role="group" aria-label="任务优先级">
+                              <div
+                                className="task-priority-segment"
+                                role="group"
+                                aria-label="任务优先级"
+                                aria-invalid={Boolean(errors.priority)}
+                                aria-describedby={errors.priority ? priorityErrorId : undefined}
+                              >
                                 {taskPriorityOptions.map((option) => (
                                   <button
                                     key={option.value}
@@ -503,13 +518,14 @@ export function TaskFormDialog({
                         </Field>
                       </div>
 
-                      <Field label="标签" optional error={errors.tags?.message}>
+                      <Field label="标签" optional error={errors.tags?.message} errorId={tagsErrorId}>
                         <input
                           {...register("tags")}
                           className="task-field"
                           placeholder="例如：设计，首屏，移动端"
                           onBlur={normalizeTags}
                           aria-invalid={Boolean(errors.tags)}
+                          aria-describedby={errors.tags ? tagsErrorId : undefined}
                         />
                       </Field>
                       {tagPreview.length ? (
@@ -598,6 +614,7 @@ export function TaskFormDialog({
                               tabIndex={-1}
                               aria-hidden="true"
                               aria-invalid={Boolean(errors.dueDate)}
+                              aria-describedby={errors.dueDate ? dueDateErrorId : undefined}
                               onChange={(event) => {
                                 dueDateField.onChange(event);
                                 setIsDateCalendarOpen(false);
@@ -673,9 +690,14 @@ export function TaskFormDialog({
                                 })}
                               </div>
                             </div>
-                          ) : null}
-                        </div>
-                      </section>
+                           ) : null}
+                         </div>
+                         {errors.dueDate ? (
+                           <span id={dueDateErrorId} className="task-dialog__error" role="alert">
+                             {errors.dueDate.message}
+                           </span>
+                         ) : null}
+                       </section>
                     </section>
                   ) : null}
 
@@ -692,7 +714,11 @@ export function TaskFormDialog({
                       {isSubmitting ? "保存中..." : submitLabel}
                     </button>
                   </div>
-                  {submitError ? <p className="task-dialog__error">{submitError}</p> : null}
+                  {submitError ? (
+                    <p className="task-dialog__error" role="alert">
+                      {submitError}
+                    </p>
+                  ) : null}
                 </form>
               </div>
             </div>,
@@ -708,12 +734,14 @@ function Field({
   required = false,
   optional = false,
   error,
+  errorId,
   children,
 }: {
   label: string;
   required?: boolean;
   optional?: boolean;
   error?: string;
+  errorId?: string;
   children: ReactNode;
 }) {
   return (
@@ -725,7 +753,7 @@ function Field({
       </span>
       {children}
       {error ? (
-        <span className="task-dialog__error" role="alert">
+        <span id={errorId} className="task-dialog__error" role="alert">
           {error}
         </span>
       ) : null}

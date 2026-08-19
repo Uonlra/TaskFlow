@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
@@ -13,7 +14,6 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "start": "next start",
     "test:e2e": "playwright test",
     "test:e2e:mock": "playwright test test/e2e/login.spec.ts test/e2e/auth-guard.spec.ts test/e2e/task-create.spec.ts"
   },

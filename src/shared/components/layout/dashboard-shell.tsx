@@ -13,10 +13,15 @@ export function DashboardShell({ children }: DashboardShellProps) {
   return (
     <AuthActionGateProvider>
       <div className="app-shell dashboard-shell">
+        <a className="dashboard-skip-link" href="#main-content">
+          跳到主要内容
+        </a>
         <AppSidebar />
         <div className="dashboard-main">
           <AppTopbar />
-          <main className="dashboard-content">{children}</main>
+          <main id="main-content" tabIndex={-1} className="dashboard-content">
+            {children}
+          </main>
         </div>
         <MobileBottomNavigation />
       </div>
