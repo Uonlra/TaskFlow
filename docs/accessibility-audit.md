@@ -37,3 +37,21 @@ Implemented and verified:
 Verification: 3 focused component tests passed and ESLint passed for the component and tests.
 
 Next scope: keyboard and focus behavior of the task detail panel.
+
+## 2026-08-19: Task detail panel
+
+Scope: the non-modal task detail panel and its details/activity tabs.
+
+Verified with Testing Library:
+
+- The panel is exposed as a complementary region named `任务详情`.
+- The tablist exposes a valid tab and tabpanel relationship through `aria-controls` and `aria-labelledby`.
+- Only the active tab is in the normal Tab order; the inactive tab uses `tabindex="-1"`.
+- Arrow keys switch between tabs and move focus to the newly active tab.
+- Home and End move focus to the first and last tab respectively.
+- Tab from the active tab proceeds into the active panel's first interactive control.
+- Switching tabs updates `aria-selected` and renders the matching panel content.
+
+Status: passed for this scope. No component change was required.
+
+Next scope: the task list row selection and keyboard activation path that opens this panel.
