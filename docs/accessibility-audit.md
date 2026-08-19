@@ -16,3 +16,24 @@ Verified with Testing Library:
 Status: passed for this scope.
 
 Next scope: the destructive-action confirmation dialog, including semantic dialog markup, initial focus, focus restoration, Escape handling, and keyboard containment.
+
+## 2026-08-19: Confirmation dialog
+
+Initial verification found these issues:
+
+- The confirmation surface was a `section` without dialog semantics.
+- Opening it did not move focus away from the trigger.
+- Tab could leave the modal surface.
+- Escape and backdrop dismissal did not consistently restore focus.
+
+Implemented and verified:
+
+- Added `role="dialog"`, `aria-modal`, and labelled title/description.
+- Focuses the cancel action on open to make the destructive action opt-in.
+- Keeps Tab navigation inside the dialog.
+- Restores focus to the trigger after Escape, cancel, successful confirmation, or backdrop dismissal.
+- Announces submit failures with `role="alert"`.
+
+Verification: 3 focused component tests passed and ESLint passed for the component and tests.
+
+Next scope: keyboard and focus behavior of the task detail panel.
