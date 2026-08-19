@@ -85,6 +85,33 @@ describe("TaskFormDialog", () => {
     expect(screen.queryByText("说明至少需要 3 个字符。")).not.toBeInTheDocument();
   });
 
+  it("将字段校验错误与无效控件关联", async () => {
+    const user = userEvent.setup();
+    render(<TaskFormDialog onSubmitTask={() => {}} />);
+
+    await user.click(screen.getByRole("button", { name: "新建任务" }));
+    await user.click(screen.getByRole("button", { name: "创建任务" }));
+
+    const titleInput = screen.getByRole("textbox", { name: "任务名称" });
+    const error = await screen.findByText("标题至少需要 1 个字符。");
+
+    expect(titleInput).toHaveAttribute("aria-invalid", "true");
+    expect(titleInput).toHaveAttribute("aria-describedby", error.id);
+    expect(error).toHaveAttribute("role", "alert");
+  });
+
+  it("将保存失败作为可播报的异步错误展示", async () => {
+    const user = userEvent.setup();
+    render(<TaskFormDialog onSubmitTask={() => Promise.reject(new Error("服务暂时不可用。"))} />);
+
+    await user.click(screen.getByRole("button", { name: "新建任务" }));
+    await user.type(screen.getByRole("textbox", { name: "任务名称" }), "测试任务");
+    await user.click(screen.getByRole("button", { name: "创建任务" }));
+
+    const error = await screen.findByRole("alert");
+    expect(error).toHaveTextContent("服务暂时不可用。");
+  });
+
   it("仅填写标题也可以创建任务", async () => {
     const onSubmitTask = vi.fn();
     const user = userEvent.setup();

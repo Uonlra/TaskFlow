@@ -88,6 +88,23 @@ Implemented and verified:
 
 Verification: 2 focused component tests passed, ESLint passed, and TypeScript typecheck passed.
 
+## 2026-08-19: Form errors and async status
+
+Initial verification found these issues in the task form:
+
+- Validation messages had no IDs, so invalid controls were not associated with their errors.
+- Save failures were rendered as ordinary text and were not exposed as an alert.
+- The custom select had no way to expose its invalid state and error description.
+
+Implemented and verified:
+
+- Added stable per-field error IDs and `aria-describedby` for title, description, status, priority, tags, and due date.
+- Kept `aria-invalid` synchronized with validation state for native and custom controls.
+- Added an error association for the priority button group and custom select.
+- Added `role="alert"` to field errors and asynchronous save failures.
+
+Verification: 13 task-form component tests passed, ESLint passed, and TypeScript typecheck passed.
+
 Next scope: keyboard operation of the mobile task list and its quick filters.
 
 ## 2026-08-19: Mobile task list

@@ -15,6 +15,7 @@ type CustomSelectProps<T extends string = string> = {
   options: Array<CustomSelectOption<T>>;
   onChange: (value: T) => void;
   ariaLabel: string;
+  ariaDescribedBy?: string;
   disabled?: boolean;
   invalid?: boolean;
 };
@@ -24,6 +25,7 @@ export function CustomSelect<T extends string = string>({
   options,
   onChange,
   ariaLabel,
+  ariaDescribedBy,
   disabled = false,
   invalid = false,
 }: CustomSelectProps<T>) {
@@ -213,6 +215,8 @@ export function CustomSelect<T extends string = string>({
         ref={buttonRef}
         type="button"
         aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={invalid}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listboxId}
