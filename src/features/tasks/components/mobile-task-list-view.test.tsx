@@ -57,13 +57,13 @@ function renderTaskList(
 }
 
 describe("MobileTaskListView", () => {
-  it("显示今天、临近、未完成和已完成四个快捷筛选", () => {
+  it("显示近期、未完成、已完成和全部四个快捷筛选", () => {
     renderTaskList();
 
-    expect(screen.getByRole("button", { name: "今天" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "临近" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "近期" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "未完成" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "已完成" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "全部" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "重要" })).not.toBeInTheDocument();
   });
 
@@ -71,14 +71,9 @@ describe("MobileTaskListView", () => {
     const user = userEvent.setup();
     const { onFiltersChange } = renderTaskList();
 
-    await user.click(screen.getByRole("button", { name: "今天" }));
+    await user.click(screen.getByRole("button", { name: "近期" }));
     expect(onFiltersChange).toHaveBeenLastCalledWith(
-      expect.objectContaining({ status: "all", due: "today", sort: "due_asc", query: "", tag: "" }),
-    );
-
-    await user.click(screen.getByRole("button", { name: "临近" }));
-    expect(onFiltersChange).toHaveBeenLastCalledWith(
-      expect.objectContaining({ status: "all", due: "near", sort: "due_asc", priority: "all", risk: "" }),
+      expect.objectContaining({ status: "active", due: "near", sort: "due_asc", priority: "all", risk: "" }),
     );
 
     await user.click(screen.getByRole("button", { name: "未完成" }));
@@ -89,6 +84,11 @@ describe("MobileTaskListView", () => {
     await user.click(screen.getByRole("button", { name: "已完成" }));
     expect(onFiltersChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ status: "done", due: "", sort: "updated_desc", date: "", range: "" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "全部" }));
+    expect(onFiltersChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "all", due: "", sort: "due_asc", query: "", tag: "", priority: "all" }),
     );
   });
 
@@ -103,18 +103,20 @@ describe("MobileTaskListView", () => {
 
     expect(onFiltersChange).toHaveBeenLastCalledWith(expect.objectContaining({ query: "task" }));
 
-    const todayFilter = screen.getByRole("button", { name: "今天" });
-    todayFilter.focus();
+    const nearFilter = screen.getByRole("button", { name: "近期" });
+    nearFilter.focus();
     await user.keyboard("{Enter}");
 
-    expect(onFiltersChange).toHaveBeenLastCalledWith(expect.objectContaining({ due: "today", query: "" }));
+    expect(onFiltersChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "active", due: "near", query: "" }),
+    );
   });
 
   it("向辅助技术暴露当前快捷筛选状态", () => {
-    renderTaskList(vi.fn(), { ...filters, query: "", due: "near" });
+    renderTaskList(vi.fn(), { ...filters, query: "", status: "active", due: "near" });
 
-    expect(screen.getByRole("button", { name: "临近" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "今天" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "近期" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "全部" })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("通过键盘切换任务完成状态，并保留独立的详情链接", async () => {
@@ -136,6 +138,9 @@ describe("MobileTaskListView", () => {
 
     const doneFilter = screen.getByRole("button", { name: "已完成" });
     doneFilter.focus();
+
+    await user.tab();
+    expect(screen.getByRole("button", { name: "全部" })).toHaveFocus();
 
     await user.tab();
     expect(screen.getByRole("button", { name: "标记为完成" })).toHaveFocus();

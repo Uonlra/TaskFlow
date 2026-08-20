@@ -359,6 +359,11 @@
     background: var(--surface-strong);
   }
 
+  /* Mobile navigation is handled by the fixed bottom bar. */
+  .dashboard-sidebar {
+    display: none !important;
+  }
+
   .dashboard-sidebar-head {
     width: min(100%, 760px);
     margin-inline: auto;
@@ -450,7 +455,7 @@
 
   .dashboard-main {
     min-width: 0;
-    min-height: calc(100dvh - 71px);
+    min-height: 100dvh !important;
     margin: 0;
     padding: 0 16px calc(96px + env(safe-area-inset-bottom));
     background: var(--page-background);
@@ -463,6 +468,12 @@
   .dashboard-content {
     width: 100%;
     margin: 0;
+  }
+
+  .page-stack > .page-header,
+  .mobile-settings__header,
+  .calendar-toolbar__copy {
+    display: none !important;
   }
 
   .page-stack {
@@ -679,6 +690,15 @@
     justify-content: flex-end;
   }
 
+  .stats-insight {
+    display: none;
+  }
+
+  .calendar-shell .data-empty-state p,
+  .stats-shell .data-empty-state p {
+    display: none;
+  }
+
   .date-switcher.stats-range-tabs,
   .date-switcher.calendar-range-tabs,
   .date-switcher.calendar-date-nav,
@@ -715,7 +735,7 @@
   .date-switcher .date-switcher__button:focus-visible {
     border-color: var(--border-strong);
     color: var(--foreground);
-    background: var(--surface);
+    background: var(--primary-soft);
   }
 
   .date-switcher .date-switcher__button:focus-visible {
@@ -724,9 +744,9 @@
   }
 
   .date-switcher .date-switcher__button.is-active {
-    border-color: var(--foreground);
+    border-color: var(--primary);
     color: var(--primary-foreground);
-    background: var(--foreground);
+    background: var(--primary);
     box-shadow: none;
   }
 

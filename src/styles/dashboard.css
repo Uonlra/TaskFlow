@@ -931,3 +931,45 @@
     margin-top: 0;
   }
 }
+
+html[data-theme="dark"] .dashboard-sidebar,
+html[data-theme="dark"] .dashboard-topbar,
+html[data-theme="dark"] .dashboard-sidebar-link,
+html[data-theme="dark"] .dashboard-sidebar-note,
+html[data-theme="dark"] .dashboard-topbar__profile,
+html[data-theme="dark"] .dashboard-signout-button,
+html[data-theme="dark"] .dashboard-avatar,
+html[data-theme="dark"] .dashboard-avatar-menu__panel,
+html[data-theme="dark"] .stats-card,
+html[data-theme="dark"] .page-header {
+  border-color: var(--border);
+  background: var(--surface-strong);
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .dashboard-main,
+html[data-theme="dark"] .dashboard-shell {
+  background: var(--page-background);
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .dashboard-sidebar-link:hover,
+html[data-theme="dark"] .dashboard-sidebar-link:focus-visible,
+html[data-theme="dark"] .dashboard-sidebar-link--active,
+html[data-theme="dark"] .dashboard-avatar-menu__panel button:hover,
+html[data-theme="dark"] .dashboard-avatar-menu__panel button:focus-visible,
+html[data-theme="dark"] .dashboard-signout-button:hover,
+html[data-theme="dark"] .dashboard-signout-button:focus-visible {
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .dashboard-sidebar-link__icon {
+  border-color: var(--border);
+  background: var(--surface-strong);
+  color: var(--muted-strong);
+}
+
+html[data-theme="dark"] .dashboard-sidebar-link--active .dashboard-sidebar-link__icon {
+  border-color: var(--primary);
+  color: var(--primary);
+}

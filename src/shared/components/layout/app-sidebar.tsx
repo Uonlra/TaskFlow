@@ -35,17 +35,17 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               href={item.href}
               aria-current={isActive ? "page" : undefined}
               className={isActive ? "dashboard-sidebar-link dashboard-sidebar-link--active" : "dashboard-sidebar-link"}
+            >
+              <span
+                className={`dashboard-sidebar-link__icon dashboard-sidebar-link__icon--${item.icon}`}
+                aria-hidden="true"
               >
-                <span
-                  className={`dashboard-sidebar-link__icon dashboard-sidebar-link__icon--${item.icon}`}
-                  aria-hidden="true"
-                >
-                  <span />
-                </span>
-                <span className="dashboard-sidebar-link__copy">
-                  <span className="dashboard-sidebar-link__label">{item.label}</span>
-                </span>
-              </Link>
+                <span />
+              </span>
+              <span className="dashboard-sidebar-link__copy">
+                <span className="dashboard-sidebar-link__label">{item.label}</span>
+              </span>
+            </Link>
           );
         })}
       </nav>

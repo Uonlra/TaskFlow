@@ -161,7 +161,7 @@
 
   .mobile-task-list__chips {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -377,7 +377,108 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .mobile-task-list__chips {
+    gap: 5px;
+  }
+
   .mobile-task-list__stat {
     padding: 10px;
   }
+}
+
+html[data-theme="dark"] .mobile-task-list {
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .mobile-task-list__header p,
+html[data-theme="dark"] .mobile-task-list__stat small,
+html[data-theme="dark"] .mobile-task-item__main small,
+html[data-theme="dark"] .mobile-task-item__tag,
+html[data-theme="dark"] .mobile-task-list__empty span {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .mobile-task-list__header h1,
+html[data-theme="dark"] .mobile-task-list__search input,
+html[data-theme="dark"] .mobile-task-list__stat strong,
+html[data-theme="dark"] .mobile-task-item__main strong,
+html[data-theme="dark"] .mobile-task-list__empty strong {
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .mobile-task-list__search,
+html[data-theme="dark"] .mobile-task-list__chip,
+html[data-theme="dark"] .mobile-task-list__stat,
+html[data-theme="dark"] .mobile-task-item,
+html[data-theme="dark"] .mobile-task-list__empty {
+  border-color: var(--border-soft);
+  background: var(--surface-strong);
+}
+
+html[data-theme="dark"] .mobile-task-list__search {
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .mobile-task-list__search span,
+html[data-theme="dark"] .mobile-task-list__search span::after {
+  border-color: var(--muted);
+}
+
+html[data-theme="dark"] .mobile-task-list__search span {
+  background: transparent;
+}
+
+html[data-theme="dark"] .mobile-task-list__search span::after {
+  background: var(--muted);
+}
+
+html[data-theme="dark"] .mobile-task-list__chip {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .mobile-task-list__chip.is-active {
+  border-color: var(--foreground);
+  background: var(--foreground);
+  color: var(--background);
+}
+
+html[data-theme="dark"] .mobile-task-item {
+  border-left-color: var(--border-strong);
+}
+
+html[data-theme="dark"] .mobile-task-item--high {
+  border-left-color: var(--danger);
+}
+
+html[data-theme="dark"] .mobile-task-item--medium {
+  border-left-color: var(--warning);
+}
+
+html[data-theme="dark"] .mobile-task-item--low {
+  border-left-color: var(--success);
+}
+
+html[data-theme="dark"] .mobile-task-item--done {
+  background: var(--surface-muted);
+}
+
+html[data-theme="dark"] .mobile-task-item__check {
+  border-color: var(--border-strong);
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .mobile-task-item__priority,
+html[data-theme="dark"] .mobile-task-item__tag {
+  background: var(--surface);
+  color: var(--muted-strong);
+}
+
+html[data-theme="dark"] .mobile-task-list__bottom-bar {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--surface-strong) 94%, transparent);
+}
+
+html[data-theme="dark"] .mobile-task-list__bottom-bar > a[aria-current="page"] {
+  background: var(--surface);
+  color: var(--foreground);
 }

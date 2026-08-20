@@ -2643,3 +2643,61 @@
 .desktop-task-workbench--filtered-empty .data-empty-state {
   margin: 20px;
 }
+
+html[data-theme="dark"] .task-signal-panel,
+html[data-theme="dark"] .task-signal-panel__focus,
+html[data-theme="dark"] .task-status-light,
+html[data-theme="dark"] .task-filter,
+html[data-theme="dark"] .tasks-create-card,
+html[data-theme="dark"] .tasks-view-summary,
+html[data-theme="dark"] .tasks-deadline-card,
+html[data-theme="dark"] .task-url-filters,
+html[data-theme="dark"] .task-card,
+html[data-theme="dark"] .desktop-task-workbench,
+html[data-theme="dark"] .desktop-task-table,
+html[data-theme="dark"] .desktop-task-table__head,
+html[data-theme="dark"] .desktop-task-table__row,
+html[data-theme="dark"] .task-detail-panel {
+  border-color: var(--border);
+  background: var(--surface-strong);
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .task-signal-panel__description,
+html[data-theme="dark"] .task-filter__description,
+html[data-theme="dark"] .tasks-view-summary__copy p,
+html[data-theme="dark"] .tasks-deadline-card p,
+html[data-theme="dark"] .task-card__description,
+html[data-theme="dark"] .task-dialog__description,
+html[data-theme="dark"] .desktop-task-table__head {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .task-filter input,
+html[data-theme="dark"] .task-filter select,
+html[data-theme="dark"] .desktop-task-search,
+html[data-theme="dark"] .desktop-task-search input,
+html[data-theme="dark"] .task-dialog input,
+html[data-theme="dark"] .task-dialog textarea {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .task-status-segment,
+html[data-theme="dark"] .task-meta-pill,
+html[data-theme="dark"] .task-badge,
+html[data-theme="dark"] .desktop-task-table__body {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--muted-strong);
+}
+
+html[data-theme="dark"] .task-card--done {
+  background: var(--surface-muted);
+}
+
+html[data-theme="dark"] .desktop-task-table__row:hover,
+html[data-theme="dark"] .desktop-task-table__row:focus-within {
+  background: var(--surface);
+}

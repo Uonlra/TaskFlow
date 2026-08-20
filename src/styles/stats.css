@@ -298,3 +298,52 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+html[data-theme="dark"] .stats-toolbar,
+html[data-theme="dark"] .stats-overview,
+html[data-theme="dark"] .stats-insight,
+html[data-theme="dark"] .stats-panel,
+html[data-theme="dark"] .stats-overview article {
+  border-color: var(--border);
+  background: var(--surface-strong);
+}
+
+html[data-theme="dark"] .stats-range-tabs {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .stats-range-tabs__button {
+  color: var(--muted-strong);
+}
+
+html[data-theme="dark"] .stats-range-tabs__button:hover,
+html[data-theme="dark"] .stats-range-tabs__button:focus-visible {
+  background: var(--primary-soft);
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .stats-range-tabs__button.is-active {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+html[data-theme="dark"] .stats-overview span,
+html[data-theme="dark"] .stats-overview small,
+html[data-theme="dark"] .stats-panel__head span,
+html[data-theme="dark"] .stats-risk-list small {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .stats-overview strong,
+html[data-theme="dark"] .stats-insight p,
+html[data-theme="dark"] .stats-panel__head h2,
+html[data-theme="dark"] .stats-risk-list strong,
+html[data-theme="dark"] .stats-risk-list b {
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .stats-empty-state {
+  border-color: var(--border);
+  background: var(--surface);
+}
