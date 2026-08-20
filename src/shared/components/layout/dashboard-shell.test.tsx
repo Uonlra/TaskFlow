@@ -51,4 +51,22 @@ describe("DashboardShell accessibility", () => {
     expect(within(mobileNavigation).getByRole("link", { name: "任务" })).toHaveAttribute("aria-current", "page");
     expect(within(desktopNavigation).getByRole("link", { name: /总览/ })).not.toHaveAttribute("aria-current");
   });
+
+  it("可以切换侧边栏并更新无障碍标签", async () => {
+    const user = userEvent.setup();
+    render(
+      <DashboardShell>
+        <h1>任务页面</h1>
+      </DashboardShell>,
+    );
+
+    const shell = screen.getByRole("main").parentElement?.parentElement;
+    const collapseButton = screen.getByRole("button", { name: "收起侧边栏" });
+
+    expect(shell).not.toHaveClass("dashboard-shell--sidebar-collapsed");
+    await user.click(collapseButton);
+
+    expect(screen.getByRole("button", { name: "展开侧边栏" })).toHaveAttribute("aria-expanded", "false");
+    expect(shell).toHaveClass("dashboard-shell--sidebar-collapsed");
+  });
 });

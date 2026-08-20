@@ -6,7 +6,12 @@ import { usePathname } from "next/navigation";
 import { AppTopbar } from "@/shared/components/layout/app-topbar";
 import { appNavigation, isAppNavigationActive } from "@/shared/lib/constants/navigation";
 
-export function AppSidebar() {
+type AppSidebarProps = {
+  collapsed: boolean;
+  onToggle: () => void;
+};
+
+export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -15,11 +20,9 @@ export function AppSidebar() {
         <div className="dashboard-sidebar-title-row">
           <div className="dashboard-sidebar-title-copy">
             <p className="dashboard-brand">U&apos;s Task</p>
-            <h1 className="dashboard-sidebar-title">我的任务本</h1>
           </div>
           <AppTopbar variant="mobile" />
         </div>
-        <p className="dashboard-sidebar-subtitle">把要做的事放在一个简单、顺手的地方。</p>
       </div>
 
       <nav className="dashboard-sidebar-nav" aria-label="主导航">
@@ -32,26 +35,32 @@ export function AppSidebar() {
               href={item.href}
               aria-current={isActive ? "page" : undefined}
               className={isActive ? "dashboard-sidebar-link dashboard-sidebar-link--active" : "dashboard-sidebar-link"}
-            >
-              <span
-                className={`dashboard-sidebar-link__icon dashboard-sidebar-link__icon--${item.icon}`}
-                aria-hidden="true"
               >
-                <span />
-              </span>
-              <span className="dashboard-sidebar-link__copy">
-                <span className="dashboard-sidebar-link__label">{item.label}</span>
-                <span className="dashboard-sidebar-link__description">{item.description}</span>
-              </span>
-            </Link>
+                <span
+                  className={`dashboard-sidebar-link__icon dashboard-sidebar-link__icon--${item.icon}`}
+                  aria-hidden="true"
+                >
+                  <span />
+                </span>
+                <span className="dashboard-sidebar-link__copy">
+                  <span className="dashboard-sidebar-link__label">{item.label}</span>
+                </span>
+              </Link>
           );
         })}
       </nav>
 
-      <div className="dashboard-sidebar-note">
-        <p className="dashboard-sidebar-note__label">给自己的提醒</p>
-        <p className="dashboard-sidebar-note__title">先收住正在做的事。</p>
-        <p className="dashboard-sidebar-note__body">少开几个分支，手上的事会更容易做完。</p>
+      <div className="dashboard-sidebar-footer">
+        <button
+          type="button"
+          className="dashboard-sidebar-collapse"
+          aria-label={collapsed ? "展开侧边栏" : "收起侧边栏"}
+          title={collapsed ? "展开侧边栏" : "收起侧边栏"}
+          aria-expanded={!collapsed}
+          onClick={onToggle}
+        >
+          <span className="dashboard-sidebar-collapse__icon" aria-hidden="true" />
+        </button>
       </div>
     </aside>
   );

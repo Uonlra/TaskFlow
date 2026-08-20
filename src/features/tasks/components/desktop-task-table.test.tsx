@@ -88,7 +88,7 @@ describe("DesktopTaskTable", () => {
   it.each([
     ["Enter", "{Enter}"],
     ["Space", "{" + " " + "}"],
-  ])('通过 %s 激活任务行并选择任务', async (_label, key) => {
+  ])("通过 %s 激活任务行并选择任务", async (_label, key) => {
     const onSelectTask = vi.fn();
     const user = userEvent.setup();
     render(

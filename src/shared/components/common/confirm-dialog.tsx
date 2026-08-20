@@ -114,15 +114,15 @@ export function ConfirmDialog({
 
   return (
     <>
-       <button
-         ref={triggerRef}
-         type="button"
-         onClick={() => setOpen(true)}
-         className={triggerClassName}
-         style={triggerStyle}
-       >
-         {triggerLabel}
-       </button>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen(true)}
+        className={triggerClassName}
+        style={triggerStyle}
+      >
+        {triggerLabel}
+      </button>
       {open && mounted
         ? createPortal(
             <Overlay
@@ -132,15 +132,15 @@ export function ConfirmDialog({
                 }
               }}
             >
-               <section
-                 ref={dialogRef}
-                 role="dialog"
-                 aria-modal="true"
-                 aria-labelledby={titleId}
-                 aria-describedby={descriptionId}
-                 className="confirm-dialog card-surface"
-                 onKeyDown={handleDialogKeyDown}
-               >
+              <section
+                ref={dialogRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
+                aria-describedby={descriptionId}
+                className="confirm-dialog card-surface"
+                onKeyDown={handleDialogKeyDown}
+              >
                 <p
                   className={
                     confirmTone === "danger"
@@ -150,27 +150,27 @@ export function ConfirmDialog({
                 >
                   请确认操作
                 </p>
-                 <h2 id={titleId} className="confirm-dialog__title">
-                   {title}
-                 </h2>
-                 <p id={descriptionId} className="confirm-dialog__description">
-                   {description}
-                 </p>
-                 {submitError ? (
-                   <p className="confirm-dialog__error" role="alert">
-                     {submitError}
-                   </p>
-                 ) : null}
-                 <div className="confirm-dialog__actions">
-                   <button
-                     ref={cancelButtonRef}
-                     type="button"
-                     onClick={closeDialog}
-                     disabled={isSubmitting}
-                     className="tesla-action tesla-action--secondary"
-                   >
-                     取消
-                   </button>
+                <h2 id={titleId} className="confirm-dialog__title">
+                  {title}
+                </h2>
+                <p id={descriptionId} className="confirm-dialog__description">
+                  {description}
+                </p>
+                {submitError ? (
+                  <p className="confirm-dialog__error" role="alert">
+                    {submitError}
+                  </p>
+                ) : null}
+                <div className="confirm-dialog__actions">
+                  <button
+                    ref={cancelButtonRef}
+                    type="button"
+                    onClick={closeDialog}
+                    disabled={isSubmitting}
+                    className="tesla-action tesla-action--secondary"
+                  >
+                    取消
+                  </button>
                   <button
                     type="button"
                     onClick={handleConfirm}

@@ -690,14 +690,14 @@ export function TaskFormDialog({
                                 })}
                               </div>
                             </div>
-                           ) : null}
-                         </div>
-                         {errors.dueDate ? (
-                           <span id={dueDateErrorId} className="task-dialog__error" role="alert">
-                             {errors.dueDate.message}
-                           </span>
-                         ) : null}
-                       </section>
+                          ) : null}
+                        </div>
+                        {errors.dueDate ? (
+                          <span id={dueDateErrorId} className="task-dialog__error" role="alert">
+                            {errors.dueDate.message}
+                          </span>
+                        ) : null}
+                      </section>
                     </section>
                   ) : null}
 
