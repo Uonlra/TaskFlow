@@ -159,6 +159,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
           dateParam={dateParam}
           range={range}
           rangeLabel={rangeLabel}
+          days={weekDays}
           isSyncing={isSyncing}
           isAccountEmpty={false}
           onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
@@ -179,6 +180,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
         dateParam={dateParam}
         range={range}
         rangeLabel={rangeLabel}
+        days={weekDays}
         isSyncing={isSyncing}
         isAccountEmpty={isAccountEmpty}
         onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
@@ -188,12 +190,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
       <div className="calendar-layout-grid">
         <main className="calendar-main-stack">
           <CalendarWeekStrip days={weekDays} />
-          <CalendarTimeline
-            tasks={selectedDayTasks}
-            selectedDate={selectedDate}
-            isAccountEmpty={isAccountEmpty}
-            isSyncing={isSyncing}
-          />
+          <CalendarTimeline tasks={selectedDayTasks} selectedDate={selectedDate} isSyncing={isSyncing} />
         </main>
         <aside className="calendar-side-stack">
           <CalendarUpcomingPanel
@@ -215,6 +212,7 @@ function CalendarToolbar({
   dateParam,
   range,
   rangeLabel,
+  days,
   isSyncing,
   isAccountEmpty,
   onDateChange,
@@ -224,6 +222,7 @@ function CalendarToolbar({
   dateParam: string;
   range: DashboardRangeValue;
   rangeLabel: string;
+  days: CalendarDay[];
   isSyncing: boolean;
   isAccountEmpty: boolean;
   onDateChange: (date: Date) => void;
@@ -284,8 +283,35 @@ function CalendarToolbar({
         >
           {dateParam}
         </Link>
+        <CalendarMobileDateStrip days={days} range={range} />
       </div>
     </section>
+  );
+}
+
+function CalendarMobileDateStrip({ days, range }: { days: CalendarDay[]; range: DashboardRangeValue }) {
+  return (
+    <div className="calendar-mobile-date-strip" aria-label="滑动选择日期">
+      {days.map((day) => (
+        <Link
+          key={day.dateParam}
+          href={buildCalendarHref({ date: day.dateParam, range })}
+          className={[
+            "calendar-mobile-date-strip__item",
+            day.isSelected ? "is-selected" : "",
+            day.isToday ? "is-today" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          aria-current={day.isSelected ? "date" : undefined}
+          aria-label={`${day.weekday}${day.dayLabel}，${day.taskCount} 项截止`}
+        >
+          <span>{day.weekday}</span>
+          <strong>{day.dayLabel}</strong>
+          <small>{day.taskCount}</small>
+        </Link>
+      ))}
+    </div>
   );
 }
 
@@ -353,12 +379,10 @@ function CalendarWeekStrip({ days }: { days: CalendarDay[] }) {
 function CalendarTimeline({
   tasks,
   selectedDate,
-  isAccountEmpty,
   isSyncing,
 }: {
   tasks: Task[];
   selectedDate: Date;
-  isAccountEmpty: boolean;
   isSyncing: boolean;
 }) {
   return (

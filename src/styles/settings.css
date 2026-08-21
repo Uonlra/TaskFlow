@@ -351,6 +351,33 @@
   background: rgba(239, 68, 68, 0.08);
 }
 
+html[data-theme="dark"] .settings-profile-panel,
+html[data-theme="dark"] .settings-form-panel,
+html[data-theme="dark"] .settings-profile-card,
+html[data-theme="dark"] .settings-field input,
+html[data-theme="dark"] .settings-readonly-field {
+  border-color: var(--border);
+  background: var(--surface-strong);
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .settings-profile-panel {
+  background: var(--surface-strong);
+}
+
+html[data-theme="dark"] .settings-profile-card {
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .settings-field input:disabled {
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .settings-signout-button {
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
+}
+
 @media (max-width: 1180px) {
   .settings-grid {
     grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.4fr);

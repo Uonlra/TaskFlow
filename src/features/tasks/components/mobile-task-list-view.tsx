@@ -27,10 +27,10 @@ type QuickFilter = {
 };
 
 const quickFilters: QuickFilter[] = [
-  { key: "today", label: "今天", filters: { status: "all", due: TASK_DUE_FILTERS.today, sort: "due_asc" } },
-  { key: "near", label: "临近", filters: { status: "all", due: TASK_DUE_FILTERS.near, sort: "due_asc" } },
+  { key: "near", label: "近期", filters: { status: "active", due: TASK_DUE_FILTERS.near, sort: "due_asc" } },
   { key: "active", label: "未完成", filters: { status: "active", due: "", sort: "due_asc" } },
   { key: "done", label: "已完成", filters: { status: "done", due: "", sort: "updated_desc" } },
+  { key: "all", label: "全部", filters: { status: "all", due: "", sort: "due_asc" } },
 ];
 
 const priorityLabel: Record<Task["priority"], string> = {
@@ -185,16 +185,25 @@ function getSelectedQuickFilter(filters: TaskFilters) {
     return "done";
   }
 
-  if (filters.status === "active") {
-    return "active";
-  }
-
   if (filters.due === TASK_DUE_FILTERS.near) {
     return "near";
   }
 
-  if (filters.due === TASK_DUE_FILTERS.today) {
-    return "today";
+  if (filters.status === "active") {
+    return "active";
+  }
+
+  if (
+    filters.query === "" &&
+    filters.tag === "" &&
+    filters.status === "all" &&
+    filters.priority === "all" &&
+    filters.due === "" &&
+    filters.risk === "" &&
+    filters.date === "" &&
+    filters.range === ""
+  ) {
+    return "all";
   }
 
   return "";

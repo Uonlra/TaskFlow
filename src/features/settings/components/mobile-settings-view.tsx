@@ -203,8 +203,12 @@ export function MobileSettingsView({
         </section>
       ))}
 
-      <button type="button" className="mobile-settings__signout" onClick={onSignOut}>
-        退出登录
+      <button
+        type="button"
+        className={isConfigured ? "mobile-settings__signout" : "mobile-settings__login"}
+        onClick={onSignOut}
+      >
+        {isConfigured ? "退出登录" : "登录"}
       </button>
       {isReady && activeDialog ? (
         <SettingsDialog

@@ -1612,3 +1612,39 @@
     flex-basis: 36px;
   }
 }
+
+html[data-theme="dark"] .dashboard-v2-panel,
+html[data-theme="dark"] .dashboard-v2-range-row,
+html[data-theme="dark"] .dashboard-v2-range-tabs,
+html[data-theme="dark"] .dashboard-workspace__priority,
+html[data-theme="dark"] .dashboard-workspace__progress,
+html[data-theme="dark"] .dashboard-workspace__metric,
+html[data-theme="dark"] .dashboard-range-menu__filter-menu {
+  border-color: var(--border);
+  background: var(--surface-strong);
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .dashboard-v2-range-tabs button,
+html[data-theme="dark"] .dashboard-v2-panel__head span,
+html[data-theme="dark"] .dashboard-v2-panel__head a,
+html[data-theme="dark"] .dashboard-v2-task small,
+html[data-theme="dark"] .dashboard-v2-risk__item small,
+html[data-theme="dark"] .dashboard-workspace__metric-copy span,
+html[data-theme="dark"] .dashboard-workspace__metric-copy small {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .dashboard-v2-range-tabs button.is-active,
+html[data-theme="dark"] .dashboard-range-menu__filter-menu button.is-active {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+html[data-theme="dark"] .dashboard-v2-task,
+html[data-theme="dark"] .dashboard-v2-risk__item,
+html[data-theme="dark"] .dashboard-workspace__task,
+html[data-theme="dark"] .dashboard-workspace__metric-icon {
+  border-color: var(--border);
+  background: var(--surface);
+}

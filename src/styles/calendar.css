@@ -117,8 +117,12 @@
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--border);
-  background: #ffffff;
+  background: var(--surface-strong);
   color: var(--foreground);
+}
+
+.calendar-mobile-date-strip {
+  display: none;
 }
 
 .calendar-overview {
@@ -592,6 +596,66 @@
   .calendar-shell .calendar-layout-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .calendar-shell .calendar-date-nav,
+  .calendar-shell .mobile-date-switcher__date {
+    display: none;
+  }
+
+  .calendar-shell .calendar-mobile-date-strip {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    padding: 2px 0 5px;
+    scrollbar-color: var(--border-strong) transparent;
+    scrollbar-width: thin;
+  }
+
+  .calendar-mobile-date-strip__item {
+    flex: 0 0 58px;
+    min-height: 68px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 3px;
+    padding: 8px 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-strong);
+    color: var(--muted-strong);
+    text-decoration: none;
+  }
+
+  .calendar-mobile-date-strip__item span,
+  .calendar-mobile-date-strip__item small {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.1;
+  }
+
+  .calendar-mobile-date-strip__item strong {
+    color: var(--foreground);
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .calendar-mobile-date-strip__item.is-selected {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  .calendar-mobile-date-strip__item.is-selected span,
+  .calendar-mobile-date-strip__item.is-selected small,
+  .calendar-mobile-date-strip__item.is-selected strong {
+    color: var(--primary-foreground);
+  }
+
+  .calendar-shell .calendar-week-panel {
+    display: none;
+  }
 }
 
 @media (max-width: 760px) {
@@ -697,4 +761,76 @@
   .calendar-shell .calendar-quick-links {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+html[data-theme="dark"] .calendar-toolbar,
+html[data-theme="dark"] .calendar-overview,
+html[data-theme="dark"] .calendar-panel,
+html[data-theme="dark"] .calendar-metric,
+html[data-theme="dark"] .calendar-day,
+html[data-theme="dark"] .calendar-timeline__item,
+html[data-theme="dark"] .calendar-task-row {
+  border-color: var(--border);
+  background: var(--surface-strong);
+}
+
+html[data-theme="dark"] .calendar-range-tabs,
+html[data-theme="dark"] .calendar-date-nav {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .calendar-range-tabs__button,
+html[data-theme="dark"] .calendar-date-nav button,
+html[data-theme="dark"] .calendar-toolbar__date-link {
+  color: var(--muted-strong);
+}
+
+html[data-theme="dark"] .calendar-range-tabs__button:hover,
+html[data-theme="dark"] .calendar-range-tabs__button:focus-visible,
+html[data-theme="dark"] .calendar-date-nav button:hover,
+html[data-theme="dark"] .calendar-date-nav button:focus-visible {
+  background: var(--primary-soft);
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .calendar-range-tabs__button.is-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+html[data-theme="dark"] .calendar-toolbar__date-link {
+  border-color: var(--border);
+  background: var(--surface-strong);
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .calendar-metric span,
+html[data-theme="dark"] .calendar-metric small,
+html[data-theme="dark"] .calendar-day span,
+html[data-theme="dark"] .calendar-day small,
+html[data-theme="dark"] .calendar-timeline__meta span,
+html[data-theme="dark"] .calendar-empty-state p {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .calendar-metric strong,
+html[data-theme="dark"] .calendar-day strong,
+html[data-theme="dark"] .calendar-timeline__body strong {
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .calendar-day.is-selected {
+  border-color: var(--primary);
+  background: var(--primary-surface);
+}
+
+html[data-theme="dark"] .calendar-day.is-today strong {
+  color: var(--primary);
+}
+
+html[data-theme="dark"] .calendar-empty-state {
+  border-color: var(--border);
+  background: var(--surface);
 }

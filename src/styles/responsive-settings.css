@@ -316,6 +316,16 @@
     font-weight: 700;
   }
 
+  .mobile-settings__login {
+    min-height: 48px;
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
   .mobile-settings__row[role="button"] {
     width: 100%;
     border: 0;
@@ -434,4 +444,83 @@
     font-size: 14px;
     line-height: 1.7;
   }
+}
+
+html[data-theme="dark"] .mobile-settings {
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .mobile-settings__header p,
+html[data-theme="dark"] .mobile-settings__profile-copy span,
+html[data-theme="dark"] .mobile-settings__row-value,
+html[data-theme="dark"] .mobile-settings__group h2 {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .mobile-settings__header h1,
+html[data-theme="dark"] .mobile-settings__profile-copy strong,
+html[data-theme="dark"] .mobile-settings__row-label {
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .mobile-settings__profile,
+html[data-theme="dark"] .mobile-settings__list,
+html[data-theme="dark"] .mobile-settings__row,
+html[data-theme="dark"] .mobile-settings__profile-action {
+  border-color: var(--border-soft);
+  background: var(--surface-strong);
+}
+
+html[data-theme="dark"] .mobile-settings__avatar {
+  background: var(--primary-surface);
+  color: var(--primary);
+}
+
+html[data-theme="dark"] .mobile-settings__icon {
+  background: var(--surface);
+  color: var(--muted-strong);
+}
+
+html[data-theme="dark"] .mobile-settings__toggle {
+  background: var(--border-strong);
+}
+
+html[data-theme="dark"] .mobile-settings__toggle.is-on {
+  background: var(--primary);
+}
+
+html[data-theme="dark"] .mobile-settings__signout {
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+html[data-theme="dark"] .mobile-settings__dialog-backdrop {
+  background: var(--overlay);
+}
+
+html[data-theme="dark"] .mobile-settings__dialog,
+html[data-theme="dark"] .mobile-settings__dialog-form input,
+html[data-theme="dark"] .mobile-settings__dialog-form > button,
+html[data-theme="dark"] .mobile-settings__dialog-options button {
+  border-color: var(--border);
+  background: var(--surface-strong);
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .mobile-settings__dialog-header button {
+  background: var(--surface);
+  color: var(--muted-strong);
+}
+
+html[data-theme="dark"] .mobile-settings__dialog-form > button {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+html[data-theme="dark"] .mobile-settings__dialog-options button.is-selected {
+  border-color: var(--primary);
+  background: var(--primary-surface);
+  color: var(--primary);
 }

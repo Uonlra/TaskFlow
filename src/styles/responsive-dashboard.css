@@ -364,3 +364,107 @@
     grid-template-columns: 1fr;
   }
 }
+
+html[data-theme="dark"] .mobile-dashboard {
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .mobile-dashboard__date,
+html[data-theme="dark"] .mobile-dashboard__progress-copy p,
+html[data-theme="dark"] .mobile-dashboard__progress-copy span,
+html[data-theme="dark"] .mobile-dashboard__metric span,
+html[data-theme="dark"] .mobile-dashboard__section-head span,
+html[data-theme="dark"] .mobile-dashboard__section-head a,
+html[data-theme="dark"] .mobile-dashboard__task-copy small,
+html[data-theme="dark"] .mobile-dashboard__timeline-item small,
+html[data-theme="dark"] .mobile-dashboard__project-card small,
+html[data-theme="dark"] .mobile-dashboard__empty {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .mobile-dashboard__header h1,
+html[data-theme="dark"] .mobile-dashboard__progress-copy h2,
+html[data-theme="dark"] .mobile-dashboard__progress-ring span,
+html[data-theme="dark"] .mobile-dashboard__metric strong,
+html[data-theme="dark"] .mobile-dashboard__task-copy strong,
+html[data-theme="dark"] .mobile-dashboard__timeline-item strong,
+html[data-theme="dark"] .mobile-dashboard__project-card strong {
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .mobile-dashboard__icon-button,
+html[data-theme="dark"] .mobile-dashboard__progress-card,
+html[data-theme="dark"] .mobile-dashboard__task-row,
+html[data-theme="dark"] .mobile-dashboard__timeline-item,
+html[data-theme="dark"] .mobile-dashboard__project-card,
+html[data-theme="dark"] .mobile-dashboard__metric,
+html[data-theme="dark"] .mobile-dashboard__empty {
+  border-color: var(--border-soft);
+  background: var(--surface-strong);
+}
+
+html[data-theme="dark"] .mobile-dashboard__icon-button span,
+html[data-theme="dark"] .mobile-dashboard__icon-button span::before,
+html[data-theme="dark"] .mobile-dashboard__icon-button span::after {
+  background: var(--foreground);
+}
+
+html[data-theme="dark"] .mobile-dashboard__range {
+  border-color: var(--border-soft);
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .mobile-dashboard__range-button {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .mobile-dashboard__range-button.is-active {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+html[data-theme="dark"] .mobile-dashboard__progress-ring {
+  background: conic-gradient(var(--primary) var(--mobile-progress), var(--progress-track) 0deg);
+}
+
+html[data-theme="dark"] .mobile-dashboard__progress-ring::before {
+  background: var(--surface-strong);
+}
+
+html[data-theme="dark"] .mobile-dashboard__metric--blue {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+}
+
+html[data-theme="dark"] .mobile-dashboard__metric--red {
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--border));
+}
+
+html[data-theme="dark"] .mobile-dashboard__metric--amber {
+  border-color: color-mix(in srgb, var(--warning) 55%, var(--border));
+}
+
+html[data-theme="dark"] .mobile-dashboard__task-status {
+  background: var(--muted);
+}
+
+html[data-theme="dark"] .mobile-dashboard__task-row--high .mobile-dashboard__task-status {
+  background: var(--danger);
+}
+
+html[data-theme="dark"] .mobile-dashboard__task-row--medium .mobile-dashboard__task-status {
+  background: var(--warning);
+}
+
+html[data-theme="dark"] .mobile-dashboard__task-priority {
+  background: var(--surface);
+  color: var(--muted-strong);
+}
+
+html[data-theme="dark"] .mobile-dashboard__timeline-item time {
+  color: var(--primary);
+}
+
+html[data-theme="dark"] .mobile-dashboard__project-card span {
+  background: var(--primary-surface);
+  color: var(--primary);
+}
