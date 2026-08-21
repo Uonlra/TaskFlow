@@ -27,14 +27,7 @@ describe("TaskFormDialog", () => {
   });
 
   it("支持带无障碍名称和悬停提示的纯加号触发器", () => {
-    render(
-      <TaskFormDialog
-        onSubmitTask={() => {}}
-        triggerLabel="新增"
-        triggerAriaLabel="新增任务"
-        triggerIconOnly
-      />,
-    );
+    render(<TaskFormDialog onSubmitTask={() => {}} triggerLabel="新增" triggerAriaLabel="新增任务" triggerIconOnly />);
 
     const trigger = screen.getByRole("button", { name: "新增任务" });
 

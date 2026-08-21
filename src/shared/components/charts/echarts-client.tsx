@@ -42,7 +42,7 @@ export function EChartsClient({ option, ariaLabel, className, getClickHref }: EC
 
       chart = echarts.init(container, undefined, { renderer: "canvas" });
       instanceRef.current = chart;
-      chart.setOption(optionRef.current, true);
+      chart.setOption(buildMotionSafeOption(optionRef.current), true);
       syncTheme();
       chart.on("click", (params) => {
         const href = getClickHrefRef.current?.(params);
@@ -97,11 +97,20 @@ export function EChartsClient({ option, ariaLabel, className, getClickHref }: EC
       return;
     }
 
-    chart.setOption(option, true);
+    chart.setOption(buildMotionSafeOption(option), true);
     chart.setOption(buildChartThemeOption(document.documentElement.dataset.theme === "dark", option));
   }, [option]);
 
   return <div ref={chartRef} className={className} role="img" aria-label={ariaLabel} />;
+}
+
+function buildMotionSafeOption(option: EChartsOption): EChartsOption {
+  const prefersReducedMotion =
+    typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+  return prefersReducedMotion
+    ? { ...option, animation: false, animationDuration: 0, animationDurationUpdate: 0 }
+    : option;
 }
 
 function buildChartThemeOption(isDark: boolean, option?: EChartsOption): EChartsOption {

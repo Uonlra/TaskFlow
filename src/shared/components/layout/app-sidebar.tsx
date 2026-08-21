@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { AppTopbar } from "@/shared/components/layout/app-topbar";
 import { appNavigation, isAppNavigationActive } from "@/shared/lib/constants/navigation";
+import { SidebarTaskPulse } from "@/shared/components/layout/sidebar-task-pulse";
 
 type AppSidebarProps = {
   collapsed: boolean;
@@ -49,6 +50,8 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
           );
         })}
       </nav>
+
+      <SidebarTaskPulse />
 
       <div className="dashboard-sidebar-footer">
         <button
