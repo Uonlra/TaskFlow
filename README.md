@@ -19,25 +19,15 @@ TaskFlow 将任务记录、截止风险、进度统计和可恢复筛选汇集�
 
 ## 项目亮点
 
-### 从任务清单到行动信号
+- TaskFlow 不把任务仅仅当作静态条目。系统会结合截止日期、完成状态和优先级，为今天到期、未来三天到期和逾期任务提供清晰提示；总览、日历和统计页从不同视角帮助用户判断下一步工作重点。
 
-TaskFlow 不把任务仅仅当作静态条目。系统会结合截止日期、完成状态和优先级，为今天到期、未来三天到期和逾期任务提供清晰提示；总览、日历和统计页从不同视角帮助用户判断下一步工作重点。
+- 任务页与总览页会将关键筛选条件和时间范围同步到 URL。刷新页面、复制链接或在不同页面间往返时，当前工作视图不会丢失，适合将任务列表作为持续使用的工作界面。
 
-### 筛选状态可恢复、可分享
+- 桌面端提供适合扫描、筛选和批量查看的工作台布局；移动端则收紧信息层级，统一日期切换和快捷筛选操作，让查看今日事项与临近任务保持直接。
 
-任务页与总览页会将关键筛选条件和时间范围同步到 URL。刷新页面、复制链接或在不同页面间往返时，当前工作视图不会丢失，适合将任务列表作为持续使用的工作界面。
+- 配置 Appwrite 后，项目提供邮箱认证和真实任务数据同步；没有后端公共配置时，任务状态自动回退至 `localStorage`，便于本地体验和快速演示。
 
-### 桌面效率与移动端可读性兼顾
-
-桌面端提供适合扫描、筛选和批量查看的工作台布局；移动端则收紧信息层级，统一日期切换和快捷筛选操作，让查看今日事项与临近任务保持直接。
-
-### 真实数据优先，离线体验不中断
-
-配置 Appwrite 后，项目提供邮箱认证和真实任务数据同步；没有后端公共配置时，任务状态自动回退至 `localStorage`，便于本地体验和快速演示。
-
-### 明确的数据访问边界
-
-浏览器只与 Next.js API Routes 通信，Appwrite API Key 保留在服务端。会话通过 `httpOnly` Cookie 保存，任务表的行级权限限制为当前用户自身数据，从架构上缩小客户端暴露面。
+- 浏览器只与 Next.js API Routes 通信，Appwrite API Key 保留在服务端。会话通过 `httpOnly` Cookie 保存，任务表的行级权限限制为当前用户自身数据，从架构上缩小客户端暴露面。
 
 ## 界面预览
 
@@ -45,7 +35,7 @@ TaskFlow 不把任务仅仅当作静态条目。系统会结合截止日期、�
 
 | 登录                                                       | 注册                                           |
 | ---------------------------------------------------------- | ---------------------------------------------- |
-| ![TaskFlow 登录](docs/screenshots/auth-login-adjusted.png) | _待补充：`docs/screenshots/auth-register.png`_ |
+| ![TaskFlow 登录](docs/screenshots/auth-login-adjusted.png) | ![TaskFlow](docs/screenshots/auth-register.png) |
 
 ### 桌面端
 
@@ -55,19 +45,18 @@ TaskFlow 不把任务仅仅当作静态条目。系统会结合截止日期、�
 
 | 日历                                                  | 统计                                           |
 | ----------------------------------------------------- | ---------------------------------------------- |
-| ![TaskFlow 桌面端日历](docs/screenshots/calendar.png) | _待补充：`docs/screenshots/desktop-stats.png`_ |
+| ![TaskFlow 桌面端日历](docs/screenshots/calendar.png) | ![TaskFlow 统计](docs/screenshots/desktop-stats.png) |
 
 ### 移动端
 
 | 总览                                              | 任务工作台                                             |
 | ------------------------------------------------- | ------------------------------------------------------ |
-| _待补充：`docs/screenshots/mobile-dashboard.png`_ | ![TaskFlow 任务页](docs/screenshots/mobile-review.png) |
+| ![TaskFlow 总览](docs/screenshots/mobile-dashboard.png)_ | ![TaskFlow 任务页](docs/screenshots/mobile-review.png) |
 
 | 日历                                             | 统计                                          |
 | ------------------------------------------------ | --------------------------------------------- |
-| _待补充：`docs/screenshots/mobile-calendar.png`_ | _待补充：`docs/screenshots/mobile-stats.png`_ |
+| ![TaskFlow 日历](docs/screenshots/mobile-calendar.png)_ | ![TaskFlow 统计](docs/screenshots/mobile-stats.png) |
 
-将对应截图保存到 `docs/screenshots/` 后，替换相应占位文本即可，无需调整预览布局。
 
 ## 功能一览
 
@@ -99,7 +88,7 @@ flowchart LR
 | 应用框架   | Next.js 16（App Router）、React 19、TypeScript 6      |
 | 表单与状态 | React Hook Form、Zod、Zustand                         |
 | 数据与认证 | Appwrite、Next.js API Routes、`httpOnly` Cookie       |
-| 可视化     | ECharts                                               |
+| 可视化     | ECharts、anime.js                                               |
 | 质量保障   | Vitest、Testing Library、Playwright、ESLint、Prettier |
 | 包管理     | pnpm 10.7.0                                           |
 
