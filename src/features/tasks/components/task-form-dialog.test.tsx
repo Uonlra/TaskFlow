@@ -26,6 +26,23 @@ describe("TaskFormDialog", () => {
     expect(screen.getByRole("heading", { name: "记下一条新的任务" })).toBeInTheDocument();
   });
 
+  it("支持带无障碍名称和悬停提示的纯加号触发器", () => {
+    render(
+      <TaskFormDialog
+        onSubmitTask={() => {}}
+        triggerLabel="新增"
+        triggerAriaLabel="新增任务"
+        triggerIconOnly
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "新增任务" });
+
+    expect(trigger).toHaveTextContent("+");
+    expect(trigger).toHaveAttribute("title", "新增任务");
+    expect(trigger).not.toHaveTextContent("新增");
+  });
+
   it("打开弹窗后将焦点放到任务名称", async () => {
     const user = userEvent.setup();
     render(<TaskFormDialog onSubmitTask={() => {}} />);
