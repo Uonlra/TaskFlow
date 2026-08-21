@@ -84,7 +84,13 @@ export function MobileTaskListView({
           <p>{isLoading ? "同步中" : `${totalCount} 项`}</p>
           <h1>任务</h1>
         </div>
-        <TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="新增" />
+        <TaskFormDialog
+          onSubmitTask={onCreateTask}
+          triggerLabel="新增"
+          triggerAriaLabel="新增任务"
+          triggerIconOnly
+          triggerClassName="mobile-add-task-button tesla-action tesla-action--primary"
+        />
       </header>
 
       <label className="mobile-task-list__search">

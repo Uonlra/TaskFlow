@@ -14,6 +14,8 @@ type TaskFormDialogProps = {
   onSubmitTask: (values: TaskFormValues) => void | Promise<void>;
   initialValues?: TaskFormValues;
   triggerLabel?: string;
+  triggerAriaLabel?: string;
+  triggerIconOnly?: boolean;
   dialogEyebrow?: string;
   dialogTitle?: string;
   submitLabel?: string;
@@ -35,6 +37,8 @@ export function TaskFormDialog({
   onSubmitTask,
   initialValues,
   triggerLabel = "新建任务",
+  triggerAriaLabel,
+  triggerIconOnly = false,
   dialogEyebrow = "创建任务",
   dialogTitle = "记下一条新的任务",
   submitLabel = "创建任务",
@@ -361,18 +365,25 @@ export function TaskFormDialog({
     }
   };
 
+  const triggerClasses = [
+    triggerClassName ??
+      (triggerLabel === "新建任务" ? "tesla-action tesla-action--primary" : "tesla-action tesla-action--secondary"),
+    triggerIconOnly ? "task-dialog__trigger--icon-only" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <>
       <button
         ref={triggerRef}
         type="button"
         onClick={openDialog}
-        className={
-          triggerClassName ??
-          (triggerLabel === "新建任务" ? "tesla-action tesla-action--primary" : "tesla-action tesla-action--secondary")
-        }
+        className={triggerClasses}
+        aria-label={triggerIconOnly ? (triggerAriaLabel ?? triggerLabel) : undefined}
+        title={triggerIconOnly ? (triggerAriaLabel ?? triggerLabel) : undefined}
       >
-        {triggerLabel}
+        {triggerIconOnly ? <span aria-hidden="true">+</span> : triggerLabel}
       </button>
 
       {open && mounted

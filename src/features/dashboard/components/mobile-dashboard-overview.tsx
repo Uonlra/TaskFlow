@@ -3,6 +3,8 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 
+import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
+import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { ROUTES } from "@/shared/lib/constants/routes";
@@ -22,6 +24,7 @@ type MobileDashboardOverviewProps = {
   };
   isLoading: boolean;
   onRangeChange: (range: MobileDashboardRange) => void;
+  onCreateTask: (values: TaskFormValues) => void | Promise<void>;
 };
 
 const rangeOptions: Array<{ value: MobileDashboardRange; label: string }> = [
@@ -51,6 +54,7 @@ export function MobileDashboardOverview({
   dueSummary,
   isLoading,
   onRangeChange,
+  onCreateTask,
 }: MobileDashboardOverviewProps) {
   const completedCount = tasks.filter((task) => task.status === "done").length;
   const inProgressCount = tasks.filter((task) => task.status === "in_progress").length;
@@ -84,9 +88,13 @@ export function MobileDashboardOverview({
           <p className="mobile-dashboard__date">{dateLabel}</p>
           <h1>今日</h1>
         </div>
-        <Link href={ROUTES.tasks} className="mobile-dashboard__icon-button" aria-label="打开任务列表">
-          <span aria-hidden="true" />
-        </Link>
+        <TaskFormDialog
+          onSubmitTask={onCreateTask}
+          triggerLabel="新增"
+          triggerAriaLabel="新增任务"
+          triggerIconOnly
+          triggerClassName="mobile-add-task-button tesla-action tesla-action--primary"
+        />
       </header>
 
       <div className="mobile-dashboard__range date-switcher" aria-label="切换统计范围">

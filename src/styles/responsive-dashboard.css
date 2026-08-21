@@ -53,45 +53,6 @@
     line-height: 1.05;
   }
 
-  .mobile-dashboard__icon-button {
-    width: 42px;
-    height: 42px;
-    display: grid;
-    place-items: center;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background: #ffffff;
-  }
-
-  .mobile-dashboard__icon-button span,
-  .mobile-dashboard__icon-button span::before,
-  .mobile-dashboard__icon-button span::after {
-    display: block;
-    width: 15px;
-    height: 2px;
-    border-radius: 999px;
-    background: #111827;
-    content: "";
-  }
-
-  .mobile-dashboard__icon-button span {
-    position: relative;
-  }
-
-  .mobile-dashboard__icon-button span::before,
-  .mobile-dashboard__icon-button span::after {
-    position: absolute;
-    left: 0;
-  }
-
-  .mobile-dashboard__icon-button span::before {
-    top: -6px;
-  }
-
-  .mobile-dashboard__icon-button span::after {
-    top: 6px;
-  }
-
   .mobile-dashboard__range {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -129,8 +90,9 @@
 
   .mobile-dashboard__progress-card {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 18px;
+    grid-template-columns: auto minmax(0, auto);
+    justify-content: center;
+    column-gap: clamp(22px, 8vw, 42px);
     align-items: center;
     min-height: 144px;
     padding: 20px;
@@ -169,6 +131,11 @@
     font-size: 38px;
     font-weight: 700;
     line-height: 1;
+  }
+
+  .mobile-dashboard__progress-copy {
+    min-width: 0;
+    text-align: center;
   }
 
   .mobile-dashboard__metric-grid {
@@ -356,10 +323,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .mobile-dashboard__progress-card {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .mobile-dashboard__project-grid {
     grid-template-columns: 1fr;
   }
@@ -392,7 +355,6 @@ html[data-theme="dark"] .mobile-dashboard__project-card strong {
   color: var(--foreground);
 }
 
-html[data-theme="dark"] .mobile-dashboard__icon-button,
 html[data-theme="dark"] .mobile-dashboard__progress-card,
 html[data-theme="dark"] .mobile-dashboard__task-row,
 html[data-theme="dark"] .mobile-dashboard__timeline-item,
@@ -401,12 +363,6 @@ html[data-theme="dark"] .mobile-dashboard__metric,
 html[data-theme="dark"] .mobile-dashboard__empty {
   border-color: var(--border-soft);
   background: var(--surface-strong);
-}
-
-html[data-theme="dark"] .mobile-dashboard__icon-button span,
-html[data-theme="dark"] .mobile-dashboard__icon-button span::before,
-html[data-theme="dark"] .mobile-dashboard__icon-button span::after {
-  background: var(--foreground);
 }
 
 html[data-theme="dark"] .mobile-dashboard__range {

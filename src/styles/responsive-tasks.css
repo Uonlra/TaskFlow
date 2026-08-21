@@ -101,11 +101,21 @@
     line-height: 1.05;
   }
 
-  .mobile-task-list__header .tesla-action {
-    min-height: 40px;
+  .mobile-add-task-button {
+    width: 42px;
+    height: 42px;
+    min-height: 42px;
+    flex: 0 0 42px;
     border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 14px;
+    padding: 0;
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  .mobile-add-task-button span {
+    display: block;
+    transform: translateY(-1px);
   }
 
   .mobile-task-list__search {

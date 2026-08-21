@@ -170,6 +170,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           dueSummary={dueSummary}
           isLoading={isLoading}
           onRangeChange={handleRangeChange}
+          onCreateTask={handleCreateTask}
         />
       </div>
     </>
