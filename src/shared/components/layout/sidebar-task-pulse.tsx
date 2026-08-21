@@ -116,11 +116,7 @@ export function SidebarTaskPulse() {
         <strong>{completedTotal}</strong>
       </div>
       {tasks.length ? (
-        <EChartsClient
-          className="dashboard-sidebar-pulse__chart"
-          ariaLabel="最近十天任务完成趋势图"
-          option={option}
-        />
+        <EChartsClient className="dashboard-sidebar-pulse__chart" ariaLabel="最近十天任务完成趋势图" option={option} />
       ) : (
         <span className="dashboard-sidebar-pulse__empty">完成任务后显示趋势</span>
       )}
