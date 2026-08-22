@@ -32,10 +32,10 @@ export function TaskDetailClient({ id }: { id: string }) {
   const deleteTask = useTaskStore((state) => state.deleteTask);
 
   useEffect(() => {
-    if (isConfigured && user?.id && lastLoadedUserId !== user.id) {
+    if (isConfigured && !isLoading && user?.id && lastLoadedUserId !== user.id) {
       void syncTasks(user.id);
     }
-  }, [isConfigured, lastLoadedUserId, syncTasks, user?.id]);
+  }, [isConfigured, isLoading, lastLoadedUserId, syncTasks, user?.id]);
 
   if (isConfigured && isLoading && !task) {
     return (

@@ -49,10 +49,10 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   const range = parseStatsRange(searchParams.get(STATS_QUERY_KEYS.range) ?? initialRange);
 
   useEffect(() => {
-    if (isConfigured && user?.id && lastLoadedUserId !== user.id) {
+    if (isConfigured && !isLoading && user?.id && lastLoadedUserId !== user.id) {
       void syncTasks(user.id);
     }
-  }, [isConfigured, lastLoadedUserId, syncTasks, user?.id]);
+  }, [isConfigured, isLoading, lastLoadedUserId, syncTasks, user?.id]);
 
   const stats = useMemo(() => buildDashboardStats(tasks, { range }), [range, tasks]);
   const workspaceState = getWorkspaceState({

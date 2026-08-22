@@ -31,6 +31,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const clearTasks = useTaskStore((state) => state.clearTasks);
+  const syncTasks = useTaskStore((state) => state.syncTasks);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -69,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(payload.session ?? null);
         setUser(payload.user);
         setProfile(payload.profile);
+        void syncTasks(payload.user.id);
       } catch {
         if (!mounted) return;
         setSession(null);
@@ -86,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [clearTasks]);
+  }, [clearTasks, syncTasks]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
