@@ -14,6 +14,14 @@ vi.mock("@/features/auth/components/auth-action-gate", () => ({
   AuthActionGateProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+vi.mock("@/features/auth/providers/auth-provider", () => ({
+  useAuth: () => ({
+    user: null,
+    isLoading: false,
+    isConfigured: false,
+  }),
+}));
+
 vi.mock("@/shared/components/layout/app-topbar", () => ({
   AppTopbar: () => <header>账号工具</header>,
 }));
