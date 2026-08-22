@@ -14,7 +14,7 @@ vi.mock("@/shared/lib/appwrite/request", () => ({
   appwriteFetch: mocks.appwriteFetch,
 }));
 
-import { buildTaskPageQueries, listTasksByDueRange } from "@/shared/lib/appwrite/tasks";
+import { buildTaskPageQueries, buildTaskSearchText, listTasksByDueRange } from "@/shared/lib/appwrite/tasks";
 
 describe("listTasksByDueRange", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -64,6 +64,23 @@ describe("buildTaskPageQueries", () => {
     ]);
   });
 
+  it("将任务和标签搜索映射到统一的 Fulltext 字段", () => {
+    const queries = buildTaskPageQueries({
+      query: "项目复盘",
+      tag: "工作",
+      status: "all",
+      priority: "all",
+      due: "",
+      risk: "",
+      date: "",
+      range: "",
+      sort: "created_desc",
+    });
+
+    expect(queries).toContain('{"method":"search","attribute":"searchText","values":["项目复盘"]}');
+    expect(queries).toContain('{"method":"search","attribute":"searchText","values":["工作"]}');
+  });
+
   it("将临近截止定义为今天到三天后，并排除已完成任务", () => {
     const queries = buildTaskPageQueries({
       query: "",
@@ -81,5 +98,11 @@ describe("buildTaskPageQueries", () => {
     expect(queries).toContain('{"method":"orderAsc","attribute":"dueDate"}');
     expect(queries.filter((query) => query.includes('"method":"greaterThanEqual"')).length).toBe(1);
     expect(queries.filter((query) => query.includes('"method":"lessThan"')).length).toBe(1);
+  });
+});
+
+describe("buildTaskSearchText", () => {
+  it("组合标题、描述和去重后的标签内容", () => {
+    expect(buildTaskSearchText("  项目复盘 ", "整理结论", ["工作", "重要"])).toBe("项目复盘 整理结论 工作 重要");
   });
 });

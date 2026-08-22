@@ -26,6 +26,7 @@ type AppwriteTaskRow = {
   status: Task["status"];
   priority: Task["priority"];
   tags?: string[] | null;
+  searchText?: string | null;
   dueDate?: string | null;
   completedAt?: string | null;
   taskName?: string | null;
@@ -86,7 +87,7 @@ export async function listTasksPage(
 }
 
 export function canUseAppwriteTaskPage(filters: TaskFilters) {
-  return !filters.query.trim() && !filters.tag.trim() && !filters.risk && filters.sort !== "priority_desc";
+  return !filters.risk && filters.sort !== "priority_desc";
 }
 
 export function buildTaskPageQueries(filters: TaskFilters) {
@@ -100,6 +101,14 @@ export function buildTaskPageQueries(filters: TaskFilters) {
 
   if (filters.priority !== "all") {
     queries.push(queryEqual("priority", filters.priority));
+  }
+
+  if (filters.query.trim()) {
+    queries.push(querySearch("searchText", filters.query.trim()));
+  }
+
+  if (filters.tag.trim()) {
+    queries.push(querySearch("searchText", filters.tag.trim()));
   }
 
   appendDateFilters(queries, filters);
@@ -358,6 +367,7 @@ function buildTaskData(input: TaskFormValues, taskKey?: number) {
     title: input.title,
     taskName: input.title,
     description: input.description,
+    searchText: buildTaskSearchText(input.title, input.description, tags),
     status: input.status,
     priority: input.priority,
     tags,
@@ -365,6 +375,13 @@ function buildTaskData(input: TaskFormValues, taskKey?: number) {
     completedAt: input.status === "done" ? new Date().toISOString() : null,
     ...(typeof taskKey === "number" ? { taskId: taskKey } : {}),
   };
+}
+
+export function buildTaskSearchText(title: string, description: string, tags: string[]) {
+  return [title, description, ...tags]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join(" ");
 }
 
 function toAppwriteDateTime(value?: string) {
@@ -393,6 +410,10 @@ function queryEqual(attribute: string, value: string) {
 
 function queryNotEqual(attribute: string, value: string) {
   return buildQuery("notEqual", attribute, value);
+}
+
+function querySearch(attribute: string, value: string) {
+  return buildQuery("search", attribute, value);
 }
 
 function queryGreaterThanEqual(attribute: string, value: string) {
