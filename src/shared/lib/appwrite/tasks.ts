@@ -25,7 +25,10 @@ type AppwriteTaskRow = {
 
 type AppwriteRowsList = {
   rows: AppwriteTaskRow[];
+  total?: number;
 };
+
+const CALENDAR_QUERY_LIMIT = 5000;
 
 export async function listTasks(sessionSecret: string, request?: NextRequest) {
   const payload = await appwriteTaskRequest<AppwriteRowsList>("", {
@@ -34,6 +37,42 @@ export async function listTasks(sessionSecret: string, request?: NextRequest) {
   });
 
   return (payload.rows ?? []).map(mapTaskRow);
+}
+
+export async function listTasksByDueRange(
+  sessionSecret: string,
+  range: { from?: string; to?: string; all?: boolean },
+  request?: NextRequest,
+) {
+  const dueQueries = [queryIsNotNull("dueDate")];
+
+  if (!range.all && range.from) {
+    dueQueries.push(queryGreaterThanEqual("dueDate", toAppwriteDateTime(range.from) as string));
+  }
+
+  if (!range.all && range.to) {
+    dueQueries.push(queryLessThan("dueDate", toAppwriteDateTime(range.to) as string));
+  }
+
+  dueQueries.push(queryOrderAsc("dueDate"), queryLimit(CALENDAR_QUERY_LIMIT));
+
+  const [duePayload, anyTaskPayload] = await Promise.all([
+    appwriteTaskRequest<AppwriteRowsList>("", {
+      sessionSecret,
+      request,
+      searchParams: { queries: dueQueries },
+    }),
+    appwriteTaskRequest<AppwriteRowsList>("", {
+      sessionSecret,
+      request,
+      searchParams: { queries: [queryLimit(1)] },
+    }),
+  ]);
+
+  return {
+    tasks: (duePayload.rows ?? []).map(mapTaskRow),
+    hasAnyTasks: (anyTaskPayload.total ?? anyTaskPayload.rows?.length ?? 0) > 0,
+  };
 }
 
 export async function createTask(sessionSecret: string, userId: string, input: TaskFormValues, request?: NextRequest) {
@@ -160,6 +199,26 @@ function normalizeDateOnly(value?: string | null) {
   }
 
   return value.slice(0, 10);
+}
+
+function queryIsNotNull(attribute: string) {
+  return `isNotNull(${JSON.stringify(attribute)})`;
+}
+
+function queryGreaterThanEqual(attribute: string, value: string) {
+  return `greaterThanEqual(${JSON.stringify(attribute)},${JSON.stringify(value)})`;
+}
+
+function queryLessThan(attribute: string, value: string) {
+  return `lessThan(${JSON.stringify(attribute)},${JSON.stringify(value)})`;
+}
+
+function queryOrderAsc(attribute: string) {
+  return `orderAsc(${JSON.stringify(attribute)})`;
+}
+
+function queryLimit(value: number) {
+  return `limit(${value})`;
 }
 
 async function appwriteTaskRequest<T = unknown>(
