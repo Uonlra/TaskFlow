@@ -3,7 +3,7 @@ import "server-only";
 import type { TaskPageInitialData } from "@/features/tasks/types/task.types";
 import { getCurrentAccount } from "@/shared/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
-import { listTasks } from "@/shared/lib/appwrite/tasks";
+import { canUseAppwriteTaskPage, listTasks, listTasksPage } from "@/shared/lib/appwrite/tasks";
 import { getTaskPage, parseTaskPageParam } from "@/features/tasks/utils/task-list-query";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 
@@ -30,8 +30,12 @@ export async function getTaskPageInitialData(
   }
 
   try {
-    const [account, tasks] = await Promise.all([getCurrentAccount(sessionSecret), listTasks(sessionSecret)]);
-    const page = getTaskPage(tasks, filters, parseTaskPageParam(pageValue ?? null));
+    const pageNumber = parseTaskPageParam(pageValue ?? null);
+    const accountPromise = getCurrentAccount(sessionSecret);
+    const pagePromise = canUseAppwriteTaskPage(filters)
+      ? listTasksPage(sessionSecret, filters, pageNumber)
+      : listTasks(sessionSecret).then((tasks) => getTaskPage(tasks, filters, pageNumber));
+    const [account, page] = await Promise.all([accountPromise, pagePromise]);
 
     return {
       userId: account.$id,

@@ -4,6 +4,16 @@ import type { NextRequest } from "next/server";
 
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
+import type { TaskFilters } from "@/features/tasks/types/task-filters";
+import {
+  addTaskDays,
+  formatTaskDateParam,
+  getTaskWeekStart,
+  parseTaskDateParam,
+  startOfTaskDay,
+} from "@/features/tasks/utils/task-date-filters";
+import { TASK_DUE_FILTERS, DASHBOARD_RANGE_VALUES } from "@/shared/lib/constants/query-params";
+import { DEFAULT_TASK_PAGE_SIZE, MAX_TASK_PAGE_SIZE, type TaskPageResult } from "@/features/tasks/utils/task-list-query";
 import { appwriteDatabaseId, appwriteTasksTableId, hasAppwriteDatabaseEnv } from "@/shared/lib/appwrite/env";
 import { appwriteFetch } from "@/shared/lib/appwrite/request";
 
@@ -37,6 +47,178 @@ export async function listTasks(sessionSecret: string, request?: NextRequest) {
   });
 
   return (payload.rows ?? []).map(mapTaskRow);
+}
+
+/**
+ * Returns a page directly from Appwrite. Filters that depend on array search,
+ * derived risk rules, or custom priority ranking are intentionally handled by
+ * the legacy in-memory path so their existing semantics remain unchanged.
+ */
+export async function listTasksPage(
+  sessionSecret: string,
+  filters: TaskFilters,
+  page = 1,
+  pageSize = DEFAULT_TASK_PAGE_SIZE,
+  request?: NextRequest,
+): Promise<TaskPageResult> {
+  const normalizedPage = Math.max(1, Math.floor(page));
+  const normalizedPageSize = Math.min(MAX_TASK_PAGE_SIZE, Math.max(1, Math.floor(pageSize)));
+  const countsPromise = getTaskCategoryCounts(sessionSecret, request);
+  const baseQueries = buildTaskPageQueries(filters);
+
+  let payload = await fetchTaskPage(sessionSecret, baseQueries, normalizedPage, normalizedPageSize, request);
+  const total = getRowsTotal(payload);
+  const totalPages = Math.max(1, Math.ceil(total / normalizedPageSize));
+  const safePage = Math.min(normalizedPage, totalPages);
+
+  if (safePage !== normalizedPage) {
+    payload = await fetchTaskPage(sessionSecret, baseQueries, safePage, normalizedPageSize, request);
+  }
+
+  return {
+    tasks: (payload.rows ?? []).map(mapTaskRow),
+    total,
+    page: safePage,
+    pageSize: normalizedPageSize,
+    hasNext: safePage < totalPages,
+    categoryCounts: await countsPromise,
+  };
+}
+
+export function canUseAppwriteTaskPage(filters: TaskFilters) {
+  return !filters.query.trim() && !filters.tag.trim() && !filters.risk && filters.sort !== "priority_desc";
+}
+
+export function buildTaskPageQueries(filters: TaskFilters) {
+  const queries: string[] = [];
+
+  if (filters.status === "active") {
+    queries.push(queryNotEqual("status", "done"));
+  } else if (filters.status !== "all") {
+    queries.push(queryEqual("status", filters.status));
+  }
+
+  if (filters.priority !== "all") {
+    queries.push(queryEqual("priority", filters.priority));
+  }
+
+  appendDateFilters(queries, filters);
+
+  if (filters.sort === "created_desc") {
+    queries.push(queryOrderDesc("$createdAt"));
+  } else if (filters.sort === "updated_desc") {
+    queries.push(queryOrderDesc("$updatedAt"));
+  } else {
+    queries.push(queryOrderAsc("dueDate"));
+  }
+
+  return queries;
+}
+
+async function fetchTaskPage(
+  sessionSecret: string,
+  baseQueries: string[],
+  page: number,
+  pageSize: number,
+  request?: NextRequest,
+) {
+  return appwriteTaskRequest<AppwriteRowsList>("", {
+    sessionSecret,
+    request,
+    searchParams: {
+      queries: [...baseQueries, queryOffset((page - 1) * pageSize), queryLimit(pageSize)],
+    },
+  });
+}
+
+async function getTaskCategoryCounts(sessionSecret: string, request?: NextRequest) {
+  const today = startOfTaskDay(new Date());
+  const nearEnd = addTaskDays(today, 4);
+  const [all, active, done, near] = await Promise.all([
+    countTaskRows(sessionSecret, [], request),
+    countTaskRows(sessionSecret, [queryNotEqual("status", "done")], request),
+    countTaskRows(sessionSecret, [queryEqual("status", "done")], request),
+    countTaskRows(
+      sessionSecret,
+      [
+        queryNotEqual("status", "done"),
+        queryGreaterThanEqual("dueDate", toAppwriteDateTime(formatTaskDateParam(today)) as string),
+        queryLessThan("dueDate", toAppwriteDateTime(formatTaskDateParam(nearEnd)) as string),
+      ],
+      request,
+    ),
+  ]);
+
+  return { all, active, done, near };
+}
+
+async function countTaskRows(sessionSecret: string, queries: string[], request?: NextRequest) {
+  const payload = await appwriteTaskRequest<AppwriteRowsList>("", {
+    sessionSecret,
+    request,
+    searchParams: { queries: [...queries, queryLimit(1)] },
+  });
+
+  return getRowsTotal(payload);
+}
+
+function getRowsTotal(payload: AppwriteRowsList) {
+  return payload.total ?? payload.rows?.length ?? 0;
+}
+
+function appendDateFilters(queries: string[], filters: TaskFilters) {
+  const range = getTaskDateRange(filters);
+
+  if (range === "all") {
+    queries.push(queryIsNotNull("dueDate"));
+  } else if (range) {
+    queries.push(
+      queryGreaterThanEqual("dueDate", toAppwriteDateTime(range.from) as string),
+      queryLessThan("dueDate", toAppwriteDateTime(range.to) as string),
+    );
+  }
+
+  if (filters.due === TASK_DUE_FILTERS.overdue) {
+    queries.push(queryLessThan("dueDate", toAppwriteDateTime(formatTaskDateParam(startOfTaskDay(new Date()))) as string));
+    queries.push(queryNotEqual("status", "done"));
+  } else if (filters.due === TASK_DUE_FILTERS.today) {
+    const today = startOfTaskDay(new Date());
+    queries.push(
+      queryGreaterThanEqual("dueDate", toAppwriteDateTime(formatTaskDateParam(today)) as string),
+      queryLessThan("dueDate", toAppwriteDateTime(formatTaskDateParam(addTaskDays(today, 1))) as string),
+      queryNotEqual("status", "done"),
+    );
+  } else if (filters.due === TASK_DUE_FILTERS.upcoming) {
+    const today = startOfTaskDay(new Date());
+    queries.push(
+      queryGreaterThanEqual("dueDate", toAppwriteDateTime(formatTaskDateParam(addTaskDays(today, 1))) as string),
+      queryLessThan("dueDate", toAppwriteDateTime(formatTaskDateParam(addTaskDays(today, 4))) as string),
+      queryNotEqual("status", "done"),
+    );
+  } else if (filters.due === TASK_DUE_FILTERS.near) {
+    const today = startOfTaskDay(new Date());
+    queries.push(
+      queryGreaterThanEqual("dueDate", toAppwriteDateTime(formatTaskDateParam(today)) as string),
+      queryLessThan("dueDate", toAppwriteDateTime(formatTaskDateParam(addTaskDays(today, 4))) as string),
+      queryNotEqual("status", "done"),
+    );
+  }
+}
+
+function getTaskDateRange(filters: TaskFilters) {
+  if (filters.range === DASHBOARD_RANGE_VALUES.all) return "all" as const;
+
+  const selected = parseTaskDateParam(filters.date) ?? startOfTaskDay(new Date());
+  if (filters.range === DASHBOARD_RANGE_VALUES.week) {
+    const from = getTaskWeekStart(selected);
+    return { from: formatTaskDateParam(from), to: formatTaskDateParam(addTaskDays(from, 7)) };
+  }
+
+  if (filters.range === DASHBOARD_RANGE_VALUES.today || filters.date) {
+    return { from: formatTaskDateParam(selected), to: formatTaskDateParam(addTaskDays(selected, 1)) };
+  }
+
+  return null;
 }
 
 export async function listTasksByDueRange(
@@ -202,23 +384,47 @@ function normalizeDateOnly(value?: string | null) {
 }
 
 function queryIsNotNull(attribute: string) {
-  return `isNotNull(${JSON.stringify(attribute)})`;
+  return buildQuery("isNotNull", attribute);
+}
+
+function queryEqual(attribute: string, value: string) {
+  return buildQuery("equal", attribute, value);
+}
+
+function queryNotEqual(attribute: string, value: string) {
+  return buildQuery("notEqual", attribute, value);
 }
 
 function queryGreaterThanEqual(attribute: string, value: string) {
-  return `greaterThanEqual(${JSON.stringify(attribute)},${JSON.stringify(value)})`;
+  return buildQuery("greaterThanEqual", attribute, value);
 }
 
 function queryLessThan(attribute: string, value: string) {
-  return `lessThan(${JSON.stringify(attribute)},${JSON.stringify(value)})`;
+  return buildQuery("lessThan", attribute, value);
+}
+
+function queryOffset(value: number) {
+  return buildQuery("offset", undefined, value);
 }
 
 function queryOrderAsc(attribute: string) {
-  return `orderAsc(${JSON.stringify(attribute)})`;
+  return buildQuery("orderAsc", attribute);
+}
+
+function queryOrderDesc(attribute: string) {
+  return buildQuery("orderDesc", attribute);
 }
 
 function queryLimit(value: number) {
-  return `limit(${value})`;
+  return buildQuery("limit", undefined, value);
+}
+
+function buildQuery(method: string, attribute?: string, value?: string | number) {
+  return JSON.stringify({
+    method,
+    ...(attribute === undefined ? {} : { attribute }),
+    ...(value === undefined ? {} : { values: [value] }),
+  });
 }
 
 async function appwriteTaskRequest<T = unknown>(
