@@ -62,13 +62,17 @@ export function getTaskWeekEnd(date: Date): Date {
 }
 
 export function parseTaskDueDate(task: Task): Date | null {
-  if (!task.dueDate) {
+  return parseTaskDueDateValue(task.dueDate);
+}
+
+export function parseTaskDueDateValue(value: string | null | undefined): Date | null {
+  if (!value) {
     return null;
   }
 
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(task.dueDate)
-    ? parseTaskDateParam(task.dueDate)
-    : startOfTaskDay(new Date(task.dueDate));
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? parseTaskDateParam(value)
+    : startOfTaskDay(new Date(value));
 
   return date && !Number.isNaN(date.getTime()) ? date : null;
 }
@@ -93,6 +97,10 @@ export function isTaskDueInWeek(task: Task, weekAnchorDate: Date): boolean {
 }
 
 export function isTaskDueInRange(task: Task, input: TaskDateRangeInput): boolean {
+  if (!hasTaskDueDate(task)) {
+    return false;
+  }
+
   if (input.range === DASHBOARD_RANGE_VALUES.all) {
     return hasTaskDueDate(task);
   }

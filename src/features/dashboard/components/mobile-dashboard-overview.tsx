@@ -6,6 +6,7 @@ import Link from "next/link";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
+import { parseTaskDueDateValue } from "@/features/tasks/utils/task-date-filters";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { ROUTES } from "@/shared/lib/constants/routes";
 
@@ -273,9 +274,9 @@ function dateScore(value: string | undefined) {
     return Number.MAX_SAFE_INTEGER;
   }
 
-  const timestamp = new Date(value).getTime();
+  const timestamp = parseTaskDueDateValue(value)?.getTime();
 
-  return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
+  return timestamp === undefined ? Number.MAX_SAFE_INTEGER : timestamp;
 }
 
 function formatShortDate(value: string | undefined) {
@@ -283,9 +284,9 @@ function formatShortDate(value: string | undefined) {
     return "--";
   }
 
-  const date = new Date(value);
+  const date = parseTaskDueDateValue(value);
 
-  if (Number.isNaN(date.getTime())) {
+  if (!date) {
     return value;
   }
 

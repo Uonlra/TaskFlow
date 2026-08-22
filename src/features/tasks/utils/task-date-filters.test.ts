@@ -14,6 +14,7 @@ import {
   isTaskDueOnDate,
   parseTaskDateParam,
   parseTaskDueDate,
+  parseTaskDueDateValue,
   startOfTaskDay,
 } from "@/features/tasks/utils/task-date-filters";
 import { DASHBOARD_RANGE_VALUES } from "@/shared/lib/constants/query-params";
@@ -115,6 +116,11 @@ describe("task date filters", () => {
       const dueDate = parseTaskDueDate(makeTask({ dueDate: "2026-07-09" }));
 
       expect(formatTaskDateParam(dueDate as Date)).toBe("2026-07-09");
+    });
+
+    it("parses raw due date strings through the same local-day normalization", () => {
+      expect(formatTaskDateParam(parseTaskDueDateValue("2026-07-09") as Date)).toBe("2026-07-09");
+      expect(formatTaskDateParam(parseTaskDueDateValue("2026-07-09T18:00:00") as Date)).toBe("2026-07-09");
     });
 
     it("returns null for missing or invalid dueDate", () => {

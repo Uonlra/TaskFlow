@@ -75,14 +75,27 @@ const pulseOptionBase: EChartsOption = {
   },
   series: [
     {
-      name: "完成任务",
+      name: "完成量轨迹",
       type: "bar",
-      barMaxWidth: 8,
-      barCategoryGap: "42%",
+      barWidth: 2,
+      barCategoryGap: "44%",
+      itemStyle: {
+        color: "#b9c8f4",
+        borderRadius: [0, 2, 2, 0],
+      },
+      z: 1,
+    },
+    {
+      name: "完成任务",
+      type: "scatter",
+      symbol: "circle",
+      symbolSize: 8,
       itemStyle: {
         color: "#3e6ae1",
-        borderRadius: [0, 4, 4, 0],
+        borderColor: "#ffffff",
+        borderWidth: 1.5,
       },
+      z: 2,
     },
   ],
 };
@@ -105,6 +118,10 @@ export function SidebarTaskPulse() {
       {
         ...(pulseOptionBase.series as Array<Record<string, unknown>>)[0],
         data: completedTrend.map((point) => point.completed),
+      },
+      {
+        ...(pulseOptionBase.series as Array<Record<string, unknown>>)[1],
+        data: completedTrend.map((point) => [point.completed, point.label]),
       },
     ],
   };

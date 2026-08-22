@@ -49,6 +49,9 @@ describe("DashboardShell accessibility", () => {
 
     expect(within(desktopNavigation).getByRole("link", { name: /任务/ })).toHaveAttribute("aria-current", "page");
     expect(within(mobileNavigation).getByRole("link", { name: "任务" })).toHaveAttribute("aria-current", "page");
+    expect(within(mobileNavigation).getByRole("link", { name: "设置" })).toBeInTheDocument();
+    expect(within(desktopNavigation).queryByRole("link", { name: "设置" })).not.toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "账户与偏好" })).toBeInTheDocument();
     expect(within(desktopNavigation).getByRole("link", { name: /总览/ })).not.toHaveAttribute("aria-current");
   });
 

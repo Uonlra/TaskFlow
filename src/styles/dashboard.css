@@ -615,9 +615,13 @@
   .dashboard-main {
     min-height: 100vh;
     margin-left: 248px;
-    padding: 0 24px 48px;
+    padding: 24px 24px 48px;
     background: var(--page-background);
     transition: margin-left 250ms ease;
+  }
+
+  .dashboard-content {
+    margin-top: 0;
   }
 
   .dashboard-sidebar-collapse {
@@ -638,12 +642,111 @@
   }
 
   .dashboard-sidebar-footer {
+    display: grid;
+    gap: 10px;
+    margin-top: auto;
+    padding: 14px 0 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .dashboard-sidebar-settings {
+    min-height: 46px;
+    margin: 0;
+  }
+
+  .dashboard-sidebar-footer-row {
+    min-width: 0;
     display: flex;
     align-items: center;
-    min-height: 57px;
-    margin-top: auto;
-    padding: 16px 10px 0;
-    border-top: 1px solid var(--border);
+    gap: 8px;
+  }
+
+  .dashboard-sidebar-account {
+    position: relative;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .dashboard-sidebar-account__trigger {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--foreground);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 180ms ease,
+      background-color 180ms ease;
+  }
+
+  .dashboard-sidebar-account__trigger:hover,
+  .dashboard-sidebar-account__trigger:focus-visible {
+    border-color: var(--border);
+    background: #f4f4f4;
+  }
+
+  .dashboard-sidebar-account__trigger:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .dashboard-sidebar-account__trigger .dashboard-avatar {
+    flex: 0 0 32px;
+  }
+
+  .dashboard-sidebar-account__copy {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+  }
+
+  .dashboard-sidebar-account__copy strong,
+  .dashboard-sidebar-account__copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dashboard-sidebar-account__copy strong {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .dashboard-sidebar-account__copy small {
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  .dashboard-sidebar-account__panel {
+    top: auto;
+    right: 0;
+    bottom: calc(100% + 10px);
+  }
+
+  .dashboard-sidebar-account__panel a {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    padding: 6px 8px;
+    color: var(--foreground);
+    font-family: var(--font-text);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .dashboard-sidebar-account__panel a:hover,
+  .dashboard-sidebar-account__panel a:focus-visible {
+    background: #f4f4f4;
   }
 
   .dashboard-sidebar-pulse {
@@ -758,6 +861,35 @@
   }
 
   .dashboard-shell--sidebar-collapsed .dashboard-sidebar-footer {
+    padding-inline: 0;
+  }
+
+  .dashboard-shell--sidebar-collapsed .dashboard-sidebar-settings {
+    justify-items: center;
+    padding-inline: 0;
+  }
+
+  .dashboard-shell--sidebar-collapsed .dashboard-sidebar-settings .dashboard-sidebar-link__copy,
+  .dashboard-shell--sidebar-collapsed .dashboard-sidebar-account__copy {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .dashboard-shell--sidebar-collapsed .dashboard-sidebar-footer-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dashboard-shell--sidebar-collapsed .dashboard-sidebar-account,
+  .dashboard-shell--sidebar-collapsed .dashboard-sidebar-account__trigger {
+    width: 40px;
+  }
+
+  .dashboard-shell--sidebar-collapsed .dashboard-sidebar-account__trigger {
     justify-content: center;
     padding-inline: 0;
   }
@@ -1003,6 +1135,8 @@ html[data-theme="dark"] .dashboard-sidebar,
 html[data-theme="dark"] .dashboard-topbar,
 html[data-theme="dark"] .dashboard-sidebar-link,
 html[data-theme="dark"] .dashboard-sidebar-note,
+html[data-theme="dark"] .dashboard-sidebar-account__trigger,
+html[data-theme="dark"] .dashboard-sidebar-footer,
 html[data-theme="dark"] .dashboard-topbar__profile,
 html[data-theme="dark"] .dashboard-signout-button,
 html[data-theme="dark"] .dashboard-avatar,
@@ -1023,8 +1157,12 @@ html[data-theme="dark"] .dashboard-shell {
 html[data-theme="dark"] .dashboard-sidebar-link:hover,
 html[data-theme="dark"] .dashboard-sidebar-link:focus-visible,
 html[data-theme="dark"] .dashboard-sidebar-link--active,
+html[data-theme="dark"] .dashboard-sidebar-account__trigger:hover,
+html[data-theme="dark"] .dashboard-sidebar-account__trigger:focus-visible,
 html[data-theme="dark"] .dashboard-avatar-menu__panel button:hover,
 html[data-theme="dark"] .dashboard-avatar-menu__panel button:focus-visible,
+html[data-theme="dark"] .dashboard-sidebar-account__panel a:hover,
+html[data-theme="dark"] .dashboard-sidebar-account__panel a:focus-visible,
 html[data-theme="dark"] .dashboard-signout-button:hover,
 html[data-theme="dark"] .dashboard-signout-button:focus-visible {
   background: var(--surface);

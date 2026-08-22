@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { AppTopbar } from "@/shared/components/layout/app-topbar";
-import { appNavigation, isAppNavigationActive } from "@/shared/lib/constants/navigation";
+import { appNavigation, appSettingsNavigation, isAppNavigationActive } from "@/shared/lib/constants/navigation";
 import { SidebarTaskPulse } from "@/shared/components/layout/sidebar-task-pulse";
 
 type AppSidebarProps = {
@@ -53,17 +53,41 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
 
       <SidebarTaskPulse />
 
-      <div className="dashboard-sidebar-footer">
-        <button
-          type="button"
-          className="dashboard-sidebar-collapse"
-          aria-label={collapsed ? "展开侧边栏" : "收起侧边栏"}
-          title={collapsed ? "展开侧边栏" : "收起侧边栏"}
-          aria-expanded={!collapsed}
-          onClick={onToggle}
+      <div className="dashboard-sidebar-footer" role="group" aria-label="账户与偏好">
+        <Link
+          href={appSettingsNavigation.href}
+          title={appSettingsNavigation.label}
+          aria-current={isAppNavigationActive(pathname, appSettingsNavigation.href) ? "page" : undefined}
+          className={
+            isAppNavigationActive(pathname, appSettingsNavigation.href)
+              ? "dashboard-sidebar-link dashboard-sidebar-link--active dashboard-sidebar-settings"
+              : "dashboard-sidebar-link dashboard-sidebar-settings"
+          }
         >
-          <span className="dashboard-sidebar-collapse__icon" aria-hidden="true" />
-        </button>
+          <span
+            className={`dashboard-sidebar-link__icon dashboard-sidebar-link__icon--${appSettingsNavigation.icon}`}
+            aria-hidden="true"
+          >
+            <span />
+          </span>
+          <span className="dashboard-sidebar-link__copy">
+            <span className="dashboard-sidebar-link__label">{appSettingsNavigation.label}</span>
+          </span>
+        </Link>
+
+        <div className="dashboard-sidebar-footer-row">
+          <button
+            type="button"
+            className="dashboard-sidebar-collapse"
+            aria-label={collapsed ? "展开侧边栏" : "收起侧边栏"}
+            title={collapsed ? "展开侧边栏" : "收起侧边栏"}
+            aria-expanded={!collapsed}
+            onClick={onToggle}
+          >
+            <span className="dashboard-sidebar-collapse__icon" aria-hidden="true" />
+          </button>
+          <AppTopbar variant="sidebar" />
+        </div>
       </div>
     </aside>
   );

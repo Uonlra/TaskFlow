@@ -13,6 +13,7 @@ import {
   formatTaskDateParam,
   hasActiveTaskDateRangeFilter,
   parseTaskDateParam,
+  parseTaskDueDateValue,
   startOfTaskDay,
 } from "@/features/tasks/utils/task-date-filters";
 import { getTaskDueMeta, matchesTaskDueFilter, sortTasks } from "@/features/tasks/utils/task-deadline";
@@ -509,9 +510,9 @@ function getDueDayOffset(value: string | undefined) {
     return null;
   }
 
-  const dueDate = startOfTaskDay(new Date(value));
+  const dueDate = parseTaskDueDateValue(value);
 
-  if (Number.isNaN(dueDate.getTime())) {
+  if (!dueDate) {
     return null;
   }
 

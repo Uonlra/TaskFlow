@@ -1,4 +1,5 @@
 import type { Task, TaskPriority } from "@/features/tasks/types/task.types";
+import { parseTaskDueDate } from "@/features/tasks/utils/task-date-filters";
 import { TASK_DUE_FILTERS, type TaskDueFilter } from "@/shared/lib/constants/query-params";
 
 export type TaskSort = "created_desc" | "updated_desc" | "due_asc" | "priority_desc";
@@ -44,9 +45,9 @@ export function getTaskDueMeta(task: Task): TaskDueMeta {
   }
 
   const today = startOfDay(new Date());
-  const dueDate = startOfDay(new Date(task.dueDate));
+  const dueDate = parseTaskDueDate(task);
 
-  if (Number.isNaN(dueDate.getTime())) {
+  if (!dueDate) {
     return {
       label: `截止：${task.dueDate}`,
       tone: "muted",

@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { appNavigation, isAppNavigationActive } from "@/shared/lib/constants/navigation";
+import { appMobileNavigation, isAppNavigationActive } from "@/shared/lib/constants/navigation";
 
 export function MobileBottomNavigation() {
   const pathname = usePathname();
 
   return (
     <nav className="mobile-bottom-navigation" aria-label="移动导航">
-      {appNavigation.map((item) => {
+      {appMobileNavigation.map((item) => {
         const isActive = isAppNavigationActive(pathname, item.href);
 
         return (

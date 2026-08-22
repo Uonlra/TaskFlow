@@ -3,6 +3,7 @@
 import { useCallback, useLayoutEffect, useRef } from "react";
 
 import type { Task } from "@/features/tasks/types/task.types";
+import { parseTaskDueDateValue } from "@/features/tasks/utils/task-date-filters";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 
 type DesktopTaskTableEmptyState = {
@@ -203,9 +204,9 @@ function formatDueLabel(task: Task, fallback: string) {
     return fallback;
   }
 
-  const date = new Date(task.dueDate);
+  const date = parseTaskDueDateValue(task.dueDate);
 
-  if (Number.isNaN(date.getTime())) {
+  if (!date) {
     return fallback;
   }
 
