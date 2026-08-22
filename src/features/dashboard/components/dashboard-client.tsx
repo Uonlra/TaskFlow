@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { MobileDashboardOverview } from "@/features/dashboard/components/mobile-dashboard-overview";
 import { DashboardV2Shell } from "@/features/dashboard/components/dashboard-v2-shell";
 import type { DashboardPriorityFilters } from "@/features/dashboard/components/dashboard-range-menu";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
-import { buildDashboardStats, buildFocusTasks, filterTasksByRange } from "@/features/tasks/utils/task-analytics";
-import { getTaskDueMeta, matchesTaskDueFilter } from "@/features/tasks/utils/task-deadline";
+import { buildDashboardStats, type DashboardStats } from "@/features/tasks/utils/task-analytics";
 import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
@@ -32,6 +31,11 @@ type DashboardClientProps = {
   initialRange?: DashboardRange;
 };
 
+type DashboardSummaryResponse = {
+  stats: DashboardStats;
+  hasAnyTasks: boolean;
+};
+
 export function DashboardClient({ initialRange = "today" }: DashboardClientProps) {
   const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
@@ -39,76 +43,59 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const searchParams = useSearchParams();
   const [range, setRange] = useState<DashboardRange>(initialRange);
   const [priorityFilters, setPriorityFilters] = useState<DashboardPriorityFilters>(initialPriorityFilters);
-  const tasks = useTaskStore((state) => state.tasks);
-  const isLoading = useTaskStore((state) => state.isLoading);
-  const error = useTaskStore((state) => state.error);
-  const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
-  const syncTasks = useTaskStore((state) => state.syncTasks);
   const createTaskAsync = useTaskStore((state) => state.createTaskAsync);
-
-  useEffect(() => {
-    if (isConfigured && user?.id && lastLoadedUserId !== user.id) {
-      void syncTasks(user.id);
-    }
-  }, [isConfigured, lastLoadedUserId, syncTasks, user?.id]);
+  const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const nextRange = parseDashboardRange(searchParams.get("range"));
     setRange((current) => (current === nextRange ? current : nextRange));
   }, [searchParams]);
 
-  const scopedTasks = useMemo(() => filterTasksByRange(tasks, range), [range, tasks]);
-  const stats = useMemo(() => buildDashboardStats(tasks, { range }), [tasks, range]);
-  const priorityTasks = useMemo(() => {
-    const filteredTasks = scopedTasks.filter(
-      (task) =>
-        (priorityFilters.status === "all" || task.status === priorityFilters.status) &&
-        (priorityFilters.priority === "all" || task.priority === priorityFilters.priority) &&
-        (!priorityFilters.due || matchesTaskDueFilter(task, priorityFilters.due)),
-    );
+  const loadSummary = useCallback(async () => {
+    if (!isConfigured || !user?.id) return;
 
-    return buildFocusTasks(filteredTasks, {
-      includeCompleted: priorityFilters.status === "done",
-    });
-  }, [priorityFilters, scopedTasks]);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams({ range });
+      if (priorityFilters.status !== "all") params.set("status", priorityFilters.status);
+      if (priorityFilters.priority !== "all") params.set("priority", priorityFilters.priority);
+      if (priorityFilters.due) params.set("due", priorityFilters.due);
+
+      const response = await fetch(`/api/dashboard/summary?${params.toString()}`);
+      const payload = (await response.json().catch(() => null)) as
+        DashboardSummaryResponse | { message?: string } | null;
+
+      if (!response.ok || !payload || !("stats" in payload)) {
+        throw new Error((payload && "message" in payload ? payload.message : undefined) || "无法加载总览数据。");
+      }
+
+      setSummary(payload);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "无法加载总览数据。");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isConfigured, priorityFilters, range, user?.id]);
+
+  useEffect(() => {
+    void loadSummary();
+  }, [loadSummary]);
+
+  const stats = summary?.stats ?? buildDashboardStats([], { range });
+  const hasAnyTasks = summary?.hasAnyTasks ?? false;
   const workspaceState = getWorkspaceState({
     isAuthLoading,
     isTaskLoading: isLoading,
-    taskCount: tasks.length,
+    taskCount: hasAnyTasks ? 1 : 0,
     userId: user?.id,
   });
-  const isAccountEmpty = workspaceState === "account-empty";
-  const isRangeEmpty = isAccountEmpty || (workspaceState === "ready" && stats.totalCount === 0);
-  const activeScopedTasks = useMemo(() => scopedTasks.filter((task) => task.status !== "done"), [scopedTasks]);
+  const isAccountEmpty = workspaceState === "account-empty" && !error;
+  const isRangeEmpty = !isLoading && !error && hasAnyTasks && stats.totalCount === 0;
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "今天";
-
-  const dueSummary = useMemo(() => {
-    return activeScopedTasks.reduce(
-      (summary, task) => {
-        const dueMeta = getTaskDueMeta(task);
-
-        if (dueMeta.isOverdue) {
-          summary.overdue += 1;
-        }
-
-        if (dueMeta.isDueToday) {
-          summary.today += 1;
-        }
-
-        if (dueMeta.isUpcoming) {
-          summary.upcoming += 1;
-        }
-
-        return summary;
-      },
-      { overdue: 0, today: 0, upcoming: 0 },
-    );
-  }, [activeScopedTasks]);
-
-  const completionRate = useMemo(() => {
-    const completed = scopedTasks.filter((task) => task.status === "done").length;
-    return scopedTasks.length ? Math.round((completed / scopedTasks.length) * 100) : 0;
-  }, [scopedTasks]);
 
   const handleRangeChange = (nextRange: DashboardRange) => {
     setRange(nextRange);
@@ -122,6 +109,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
 
   const handleCreateTask = async (values: TaskFormValues) => {
     await createTaskAsync(values, user?.id);
+    await loadSummary();
   };
 
   if (workspaceState === "auth-checking") {
@@ -147,7 +135,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       <div className="dashboard-desktop-only">
         <DashboardV2Shell
           stats={stats}
-          priorityTasks={priorityTasks}
+          priorityTasks={stats.focusTasks}
           range={range}
           rangeLabel={rangeLabel}
           isLoading={isLoading}
@@ -162,12 +150,9 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       </div>
       <div className="dashboard-mobile-only">
         <MobileDashboardOverview
-          tasks={scopedTasks}
-          activeTasks={activeScopedTasks}
+          stats={stats}
           range={range}
           rangeLabel={rangeLabel}
-          completionRate={completionRate}
-          dueSummary={dueSummary}
           isLoading={isLoading}
           onRangeChange={handleRangeChange}
           onCreateTask={handleCreateTask}

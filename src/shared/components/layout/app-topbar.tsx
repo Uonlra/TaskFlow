@@ -6,14 +6,14 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 
 type AppTopbarProps = {
-  variant?: "desktop" | "mobile";
+  variant?: "desktop" | "mobile" | "sidebar";
 };
 
 export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, profile, isAuthenticated, signOut } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const loginHref = `/login?next=${encodeURIComponent(pathname)}`;
 
@@ -30,13 +30,47 @@ export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
   );
 
   useEffect(() => {
-    if (variant !== "mobile" || !mobileMenuOpen) return;
+    if ((variant !== "mobile" && variant !== "sidebar") || !menuOpen) return;
     const handlePointerDown = (event: PointerEvent) => {
-      if (!mobileMenuRef.current?.contains(event.target as Node)) setMobileMenuOpen(false);
+      if (!mobileMenuRef.current?.contains(event.target as Node)) setMenuOpen(false);
     };
     window.addEventListener("pointerdown", handlePointerDown);
     return () => window.removeEventListener("pointerdown", handlePointerDown);
-  }, [mobileMenuOpen, variant]);
+  }, [menuOpen, variant]);
+
+  if (variant === "sidebar") {
+    return (
+      <div className="dashboard-sidebar-account" ref={mobileMenuRef}>
+        <button
+          type="button"
+          className="dashboard-sidebar-account__trigger"
+          aria-label="打开账号菜单"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((current) => !current)}
+        >
+          <span className="dashboard-avatar">{avatarContent}</span>
+          <span className="dashboard-sidebar-account__copy">
+            <strong title={displayName}>{displayName}</strong>
+            <small>{isAuthenticated ? "账号已连接" : "访客浏览"}</small>
+          </span>
+        </button>
+        {menuOpen ? (
+          <div className="dashboard-avatar-menu__panel dashboard-sidebar-account__panel" role="menu">
+            <p className="dashboard-avatar-menu__name">{displayName}</p>
+            {isAuthenticated ? (
+              <button type="button" role="menuitem" onClick={handleSignOut}>
+                退出登录
+              </button>
+            ) : (
+              <a href={loginHref} role="menuitem" data-auth-gate-bypass>
+                登录
+              </a>
+            )}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <header className={variant === "mobile" ? "dashboard-topbar dashboard-topbar--mobile" : "dashboard-topbar"}>
@@ -53,12 +87,12 @@ export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
               type="button"
               className="dashboard-avatar dashboard-avatar-button"
               aria-label="打开账号菜单"
-              aria-expanded={mobileMenuOpen}
-              onClick={() => setMobileMenuOpen((current) => !current)}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((current) => !current)}
             >
               {avatarContent}
             </button>
-            {mobileMenuOpen ? (
+            {menuOpen ? (
               <div className="dashboard-avatar-menu__panel" role="menu">
                 <p className="dashboard-avatar-menu__name">{displayName}</p>
                 <button type="button" role="menuitem" onClick={handleSignOut}>

@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/features/auth/providers/auth-provider";
 
 const mocks = vi.hoisted(() => ({
   clearTasks: vi.fn(),
+  syncTasks: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/appwrite/env", () => ({
@@ -15,9 +16,12 @@ vi.mock("@/shared/lib/appwrite/env", () => ({
 }));
 
 vi.mock("@/features/tasks/store/task-store", () => ({
-  useTaskStore: (selector: (state: { clearTasks: typeof mocks.clearTasks }) => unknown) =>
+  useTaskStore: (
+    selector: (state: { clearTasks: typeof mocks.clearTasks; syncTasks: typeof mocks.syncTasks }) => unknown,
+  ) =>
     selector({
       clearTasks: mocks.clearTasks,
+      syncTasks: mocks.syncTasks,
     }),
 }));
 
@@ -128,6 +132,7 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
     expect(screen.getByTestId("email")).toHaveTextContent("demo@example.com");
     expect(screen.getByTestId("profile")).toHaveTextContent("测试用户");
+    expect(mocks.syncTasks).toHaveBeenCalledWith("user-1");
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/auth/me",

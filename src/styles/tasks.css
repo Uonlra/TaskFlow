@@ -2701,3 +2701,39 @@ html[data-theme="dark"] .desktop-task-table__row:hover,
 html[data-theme="dark"] .desktop-task-table__row:focus-within {
   background: var(--surface);
 }
+
+.task-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.task-pagination button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-strong);
+  color: var(--muted-strong);
+  cursor: pointer;
+  font: inherit;
+}
+
+.task-pagination button:hover:not(:disabled),
+.task-pagination button:focus-visible:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.task-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.task-pagination--mobile {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0 4px;
+}

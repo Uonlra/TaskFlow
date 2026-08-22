@@ -1,6 +1,12 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 
 import { RegisterForm } from "@/features/auth/components/register-form";
+
+export const metadata: Metadata = {
+  title: "注册",
+  description: "创建你的 U's Task Personal workspace。",
+};
 
 export default function RegisterPage() {
   return (

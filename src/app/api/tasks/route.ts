@@ -4,7 +4,8 @@ import { taskSchema } from "@/features/tasks/schemas/task-schema";
 import { handleApiError } from "@/shared/lib/api/error";
 import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
-import { createTask, listTasks } from "@/shared/lib/appwrite/tasks";
+import { canUseAppwriteTaskPage, createTask, listTasks, listTasksPage } from "@/shared/lib/appwrite/tasks";
+import { getTaskPage, parseTaskFiltersFromParams, parseTaskPageParam } from "@/features/tasks/utils/task-list-query";
 
 export async function GET(request: NextRequest) {
   const sessionSecret = await getAppwriteSessionSecret();
@@ -15,8 +16,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const tasks = await listTasks(sessionSecret, request);
-    return NextResponse.json({ tasks });
+    if (request.nextUrl.searchParams.has("page")) {
+      const filters = parseTaskFiltersFromParams(request.nextUrl.searchParams);
+      const page = parseTaskPageParam(request.nextUrl.searchParams.get("page"));
+      const pageSize = Number(request.nextUrl.searchParams.get("limit")) || undefined;
+
+      if (canUseAppwriteTaskPage(filters)) {
+        return NextResponse.json(await listTasksPage(sessionSecret, filters, page, pageSize, request));
+      }
+
+      const tasks = await listTasks(sessionSecret, request);
+      return NextResponse.json(getTaskPage(tasks, filters, page, pageSize));
+    }
+
+    return NextResponse.json({ tasks: await listTasks(sessionSecret, request) });
   } catch (error) {
     return handleApiError(error, "无法加载任务列表，请稍后再试。");
   }

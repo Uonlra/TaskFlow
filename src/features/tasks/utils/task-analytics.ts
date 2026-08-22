@@ -1,6 +1,6 @@
 import type { Task, TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta, sortTasks } from "@/features/tasks/utils/task-deadline";
-import { parseTaskDueDate } from "@/features/tasks/utils/task-date-filters";
+import { parseTaskDueDate, parseTaskDueDateValue } from "@/features/tasks/utils/task-date-filters";
 
 export type DashboardAnalyticsRange = "today" | "week" | "all";
 
@@ -64,6 +64,7 @@ export type DashboardStats = {
   range: DashboardAnalyticsRange;
   totalCount: number;
   activeCount: number;
+  highPriorityActiveCount: number;
   completedCount: number;
   completionRate: number;
   inProgressCount: number;
@@ -119,6 +120,7 @@ export function buildDashboardStats(tasks: Task[], options: DashboardAnalyticsOp
   const referenceDate = startOfDay(options.referenceDate ?? new Date());
   const scopedTasks = filterTasksByRange(tasks, range, referenceDate);
   const activeTasks = scopedTasks.filter((task) => task.status !== "done");
+  const highPriorityActiveCount = activeTasks.filter((task) => task.priority === "high").length;
   const completedCount = scopedTasks.filter((task) => task.status === "done").length;
   const inProgressCount = scopedTasks.filter((task) => task.status === "in_progress").length;
   const dueCounts = buildDueCounts(activeTasks, range, referenceDate);
@@ -131,6 +133,7 @@ export function buildDashboardStats(tasks: Task[], options: DashboardAnalyticsOp
     range,
     totalCount,
     activeCount: activeTasks.length,
+    highPriorityActiveCount,
     completedCount,
     completionRate,
     inProgressCount,
@@ -171,13 +174,17 @@ export function filterTasksByRange(tasks: Task[], range: DashboardAnalyticsRange
   end.setDate(start.getDate() + (range === "today" ? 1 : 7));
 
   return tasks.filter((task) => {
-    const checkpoints = [task.createdAt, task.updatedAt, task.completedAt, task.dueDate].filter(Boolean) as string[];
+    const checkpoints = [task.createdAt, task.updatedAt, task.completedAt].filter(Boolean) as string[];
+    const dueDate = parseTaskDueDate(task);
 
-    return checkpoints.some((value) => {
-      const timestamp = new Date(value).getTime();
+    return (
+      checkpoints.some((value) => {
+        const timestamp = new Date(value).getTime();
 
-      return !Number.isNaN(timestamp) && timestamp >= start.getTime() && timestamp < end.getTime();
-    });
+        return !Number.isNaN(timestamp) && timestamp >= start.getTime() && timestamp < end.getTime();
+      }) ||
+      (dueDate !== null && dueDate.getTime() >= start.getTime() && dueDate.getTime() < end.getTime())
+    );
   });
 }
 
@@ -402,7 +409,8 @@ function buildDueCounts(tasks: Task[], range: DashboardAnalyticsRange, reference
   return tasks.reduce(
     (summary, task) => {
       const dueMeta = getTaskDueMeta(task);
-      const dueTimestamp = task.dueDate ? new Date(task.dueDate).getTime() : Number.NaN;
+      const dueDate = parseTaskDueDate(task);
+      const dueTimestamp = dueDate ? dueDate.getTime() : Number.NaN;
 
       if (dueMeta.isOverdue) {
         summary.overdue += 1;
@@ -450,9 +458,9 @@ function getDueDayOffset(value: string | undefined) {
     return null;
   }
 
-  const dueDate = startOfDay(new Date(value));
+  const dueDate = parseTaskDueDateValue(value);
 
-  if (Number.isNaN(dueDate.getTime())) {
+  if (!dueDate) {
     return null;
   }
 

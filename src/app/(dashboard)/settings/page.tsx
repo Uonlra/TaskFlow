@@ -2,8 +2,11 @@ import "@/styles/settings.css";
 import "@/styles/responsive-settings.css";
 
 import { SettingsClient } from "@/features/settings/components/settings-client";
+import type { Metadata } from "next";
 import { PageContainer } from "@/shared/components/layout/page-container";
 import { PageHeader } from "@/shared/components/layout/page-header";
+
+export const metadata: Metadata = { title: "设置" };
 
 export default function SettingsPage() {
   return (

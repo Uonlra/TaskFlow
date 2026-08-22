@@ -13,10 +13,18 @@ import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { createTaskExportPayload, parseTaskImportPayload } from "@/features/tasks/utils/task-transfer";
 import { useToast } from "@/shared/providers/toast-provider";
+import type { TaskCategoryCounts } from "@/features/tasks/utils/task-list-query";
 
 type DesktopTaskWorkbenchProps = {
   tasks: Task[];
-  totalTasks: Task[];
+  totalCount?: number;
+  categoryCounts?: TaskCategoryCounts;
+  page?: number;
+  pageSize?: number;
+  hasNext?: boolean;
+  onPageChange?: (page: number) => void;
+  onExportTasks?: () => void | Promise<void>;
+  totalTasks?: Task[];
   filters: TaskFilters;
   isLoading: boolean;
   onFiltersChange: (filters: TaskFilters) => void;
@@ -43,7 +51,14 @@ type EmptyStateCopy = {
 
 export function DesktopTaskWorkbench({
   tasks,
-  totalTasks,
+  totalCount,
+  categoryCounts,
+  page = 1,
+  pageSize = 50,
+  hasNext = false,
+  onPageChange,
+  onExportTasks,
+  totalTasks = tasks,
   filters,
   isLoading,
   onFiltersChange,
@@ -64,13 +79,15 @@ export function DesktopTaskWorkbench({
     [selectedTaskId, tasks],
   );
   const category = getActiveCategory(filters);
-  const counts = useMemo(() => buildCategoryCounts(totalTasks), [totalTasks]);
+  const resolvedTotalCount = totalCount ?? totalTasks.length;
+  const computedCounts = useMemo(() => buildCategoryCounts(totalTasks), [totalTasks]);
+  const counts = categoryCounts ?? computedCounts;
   const hasActiveFilters = hasWorkbenchFilters(filters);
   const emptyState = getEmptyStateCopy({
     category,
     filters,
     hasActiveFilters,
-    totalCount: totalTasks.length,
+    totalCount: resolvedTotalCount,
   });
 
   useEffect(() => {
@@ -114,7 +131,12 @@ export function DesktopTaskWorkbench({
     onFiltersChange({ ...filters, query: value });
   };
 
-  const handleExportTasks = () => {
+  const handleExportTasks = async () => {
+    if (onExportTasks) {
+      await onExportTasks();
+      return;
+    }
+
     const payload = createTaskExportPayload(totalTasks);
     const file = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(file);
@@ -163,7 +185,7 @@ export function DesktopTaskWorkbench({
     }
   };
 
-  if (isLoading && !totalTasks.length) {
+  if (isLoading && !resolvedTotalCount) {
     return (
       <section className="desktop-task-workbench desktop-task-workbench--empty" aria-label="任务同步状态">
         <div className="desktop-task-workbench__main">
@@ -179,7 +201,7 @@ export function DesktopTaskWorkbench({
     );
   }
 
-  if (!totalTasks.length) {
+  if (!resolvedTotalCount) {
     return (
       <section className="desktop-task-workbench desktop-task-workbench--empty" aria-label="任务空状态">
         <div className="desktop-task-workbench__main">
@@ -221,7 +243,7 @@ export function DesktopTaskWorkbench({
         <header className="desktop-task-workbench__topbar">
           <div>
             <h1>任务</h1>
-            <p>{isLoading ? "同步中" : `共 ${totalTasks.length} 项任务`}</p>
+            <p>{isLoading ? "同步中" : `共 ${resolvedTotalCount} 项任务`}</p>
           </div>
           <label className="desktop-task-search">
             <span aria-hidden="true" />
@@ -314,6 +336,15 @@ export function DesktopTaskWorkbench({
                 导出任务
               </button>
             </div>
+            {onPageChange && resolvedTotalCount > pageSize ? (
+              <TaskPagination
+                page={page}
+                pageSize={pageSize}
+                total={resolvedTotalCount}
+                hasNext={hasNext}
+                onPageChange={onPageChange}
+              />
+            ) : null}
           </footer>
         ) : null}
       </div>
@@ -439,6 +470,36 @@ function buildCategoryCounts(tasks: Task[]) {
       return counts;
     },
     { near: 0, active: 0, all: 0, done: 0 },
+  );
+}
+
+function TaskPagination({
+  page,
+  pageSize,
+  total,
+  hasNext,
+  onPageChange,
+}: {
+  page: number;
+  pageSize: number;
+  total: number;
+  hasNext: boolean;
+  onPageChange: (page: number) => void;
+}) {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  return (
+    <nav className="task-pagination" aria-label="任务分页">
+      <button type="button" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+        上一页
+      </button>
+      <span>
+        第 {page} / {totalPages} 页
+      </span>
+      <button type="button" disabled={!hasNext} onClick={() => onPageChange(page + 1)}>
+        下一页
+      </button>
+    </nav>
   );
 }
 

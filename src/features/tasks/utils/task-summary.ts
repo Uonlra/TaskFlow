@@ -1,4 +1,5 @@
 import type { Task, TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
+import { parseTaskDueDateValue } from "@/features/tasks/utils/task-date-filters";
 import { getTaskDueMeta, sortTasks } from "@/features/tasks/utils/task-deadline";
 
 export type TaskPreviewTask = {
@@ -206,9 +207,9 @@ function getDueDayOffset(value: string | undefined) {
     return null;
   }
 
-  const dueDate = startOfDay(new Date(value));
+  const dueDate = parseTaskDueDateValue(value);
 
-  if (Number.isNaN(dueDate.getTime())) {
+  if (!dueDate) {
     return null;
   }
 

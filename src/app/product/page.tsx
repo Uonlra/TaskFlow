@@ -3,10 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 
 import styles from "./product.module.css";
+import { BrandMark } from "@/shared/components/layout/brand-mark";
 
 export const metadata: Metadata = {
-  title: "TaskFlow | 把下一步变清楚",
-  description: "一个围绕当下行动设计的个人任务工作台。集中管理任务、截止风险与完成进度。",
+  title: "U's Task | Personal workspace",
+  description: "U's Task 是一个围绕当下行动设计的 Personal workspace，集中管理任务、截止风险与完成进度。",
 };
 
 const focusTasks = [
@@ -19,7 +20,7 @@ const featurePoints = [
   {
     index: "01",
     title: "先看见今天最重要的事",
-    description: "TaskFlow 把优先级、截止时间和任务状态汇集在一个视图里。打开工作台，不再从一长串清单里重新判断。",
+    description: "U's Task 把优先级、截止时间和任务状态汇集在一个视图里。打开工作台，不再从一长串清单里重新判断。",
   },
   {
     index: "02",
@@ -37,11 +38,12 @@ export default function ProductPage() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <Link className={styles.brand} href="/product" aria-label="TaskFlow 产品首页">
-          <span className={styles.brandMark} aria-hidden="true">
-            <span />
+        <Link className={styles.brand} href="/product" aria-label="U's Task 产品首页">
+          <BrandMark className={styles.brandMark} />
+          <span className={styles.brandCopy}>
+            <span>U&apos;s Task</span>
+            <small>Personal workspace</small>
           </span>
-          <span>TaskFlow</span>
         </Link>
 
         <nav className={styles.navigation} aria-label="产品页导航">
@@ -66,7 +68,7 @@ export default function ProductPage() {
             变得<span>清楚。</span>
           </h1>
           <p className={styles.heroDescription}>
-            TaskFlow 将任务、截止风险和进度集中在一个轻量工作台。每次打开，都能直接回到现在最值得推进的事情。
+            U&apos;s Task 将任务、截止风险和进度集中在一个轻量工作台。每次打开，都能直接回到现在最值得推进的事情。
           </p>
           <div className={styles.heroActions}>
             <Link className={styles.primaryAction} href="/register">
@@ -80,7 +82,7 @@ export default function ProductPage() {
           <p className={styles.heroNote}>无需复杂配置，未连接云端时也可在本地直接使用。</p>
         </div>
 
-        <div className={styles.heroVisual} aria-label="TaskFlow 今日任务预览">
+        <div className={styles.heroVisual} aria-label="U's Task 今日任务预览">
           <div className={styles.previewWindow}>
             <div className={styles.previewHeader}>
               <div>
@@ -120,7 +122,7 @@ export default function ProductPage() {
         </div>
       </section>
 
-      <section className={styles.promise} aria-label="TaskFlow 核心价值">
+      <section className={styles.promise} aria-label="U's Task 核心价值">
         <p>记录任务</p>
         <span aria-hidden="true">→</span>
         <p>识别风险</p>
@@ -145,12 +147,12 @@ export default function ProductPage() {
             <span />
             <span />
             <span />
-            <p>TaskFlow / 总览</p>
+            <p>U&apos;s Task / 总览</p>
           </div>
           <Image
             className={styles.dashboardImage}
             src="/../docs/screenshots/dashboard.png"
-            alt="TaskFlow 总览页面，展示今日任务、完成进度、趋势和截止风险"
+            alt="U's Task 总览页面，展示今日任务、完成进度、趋势和截止风险"
             width={2559}
             height={1274}
             priority
@@ -194,7 +196,7 @@ export default function ProductPage() {
           <Image
             className={styles.detailImage}
             src="/../docs/screenshots/tasks.png"
-            alt="TaskFlow 任务工作台，左侧为任务列表，右侧为任务详情"
+            alt="U's Task 任务工作台，左侧为任务列表，右侧为任务详情"
             width={2559}
             height={1274}
           />
@@ -216,10 +218,11 @@ export default function ProductPage() {
 
       <footer className={styles.footer}>
         <Link className={styles.brand} href="/product">
-          <span className={styles.brandMark} aria-hidden="true">
-            <span />
+          <BrandMark className={styles.brandMark} />
+          <span className={styles.brandCopy}>
+            <span>U&apos;s Task</span>
+            <small>Personal workspace</small>
           </span>
-          <span>TaskFlow</span>
         </Link>
         <p>把要做的事，放在一个简单、顺手的地方。</p>
         <nav aria-label="页脚导航">

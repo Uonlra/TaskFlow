@@ -6,22 +6,16 @@ import Link from "next/link";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
-import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
+import type { DashboardStats, DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
+import { parseTaskDueDateValue } from "@/features/tasks/utils/task-date-filters";
 import { ROUTES } from "@/shared/lib/constants/routes";
 
 type MobileDashboardRange = "today" | "week" | "all";
 
 type MobileDashboardOverviewProps = {
-  tasks: Task[];
-  activeTasks: Task[];
+  stats: DashboardStats;
   range: MobileDashboardRange;
   rangeLabel: string;
-  completionRate: number;
-  dueSummary: {
-    overdue: number;
-    today: number;
-    upcoming: number;
-  };
   isLoading: boolean;
   onRangeChange: (range: MobileDashboardRange) => void;
   onCreateTask: (values: TaskFormValues) => void | Promise<void>;
@@ -46,35 +40,16 @@ const statusLabel: Record<Task["status"], string> = {
 };
 
 export function MobileDashboardOverview({
-  tasks,
-  activeTasks,
+  stats,
   range,
   rangeLabel,
-  completionRate,
-  dueSummary,
   isLoading,
   onRangeChange,
   onCreateTask,
 }: MobileDashboardOverviewProps) {
-  const completedCount = tasks.filter((task) => task.status === "done").length;
-  const inProgressCount = tasks.filter((task) => task.status === "in_progress").length;
-  const highPriorityCount = activeTasks.filter((task) => task.priority === "high").length;
-  const focusTasks = [...activeTasks]
-    .sort((left, right) => {
-      const priorityDiff = priorityScore(right.priority) - priorityScore(left.priority);
-
-      if (priorityDiff !== 0) {
-        return priorityDiff;
-      }
-
-      return dateScore(left.dueDate) - dateScore(right.dueDate);
-    })
-    .slice(0, 4);
-  const timelineTasks = [...activeTasks]
-    .filter((task) => task.dueDate)
-    .sort((left, right) => dateScore(left.dueDate) - dateScore(right.dueDate))
-    .slice(0, 5);
-  const projectEntries = buildProjectEntries(tasks);
+  const focusTasks = stats.focusTasks.slice(0, 4);
+  const timelineTasks = stats.upcomingDeadlines.slice(0, 5);
+  const projectEntries = stats.tagTop.slice(0, 4).map((item) => ({ tag: item.tag, count: item.count }));
   const dateLabel = new Intl.DateTimeFormat("zh-CN", {
     month: "long",
     day: "numeric",
@@ -118,31 +93,31 @@ export function MobileDashboardOverview({
       <section className="mobile-dashboard__progress-card" aria-label={`${rangeLabel}任务进度`}>
         <div
           className="mobile-dashboard__progress-ring"
-          style={{ "--mobile-progress": `${completionRate * 3.6}deg` } as CSSProperties}
+          style={{ "--mobile-progress": `${stats.completionRate * 3.6}deg` } as CSSProperties}
           aria-hidden="true"
         >
-          <span>{completionRate}%</span>
+          <span>{stats.completionRate}%</span>
         </div>
         <div className="mobile-dashboard__progress-copy">
           <p>{rangeLabel}进度</p>
           <h2>
-            {completedCount}/{tasks.length || 0}
+            {stats.completedCount}/{stats.totalCount || 0}
           </h2>
           <span>{isLoading ? "同步中" : "已完成"}</span>
         </div>
       </section>
 
       <div className="mobile-dashboard__metric-grid" aria-label="任务统计">
-        <MetricCard label="待办" value={activeTasks.length} tone="neutral" />
-        <MetricCard label="进行中" value={inProgressCount} tone="blue" />
-        <MetricCard label="高优先" value={highPriorityCount} tone="red" />
-        <MetricCard label="今日到期" value={dueSummary.today} tone="amber" />
+        <MetricCard label="待办" value={stats.activeCount} tone="neutral" />
+        <MetricCard label="进行中" value={stats.inProgressCount} tone="blue" />
+        <MetricCard label="高优先" value={stats.highPriorityActiveCount} tone="red" />
+        <MetricCard label="今日到期" value={stats.dueTodayCount} tone="amber" />
       </div>
 
       <section className="mobile-dashboard__section">
         <div className="mobile-dashboard__section-head">
           <h2>优先提醒</h2>
-          <span>{dueSummary.overdue > 0 ? `${dueSummary.overdue} 逾期` : `${dueSummary.upcoming} 近期`}</span>
+          <span>{stats.overdueCount > 0 ? `${stats.overdueCount} 逾期` : `${stats.upcomingCount} 近期`}</span>
         </div>
         <div className="mobile-dashboard__task-stack">
           {focusTasks.length ? (
@@ -211,9 +186,7 @@ function MetricCard({
   );
 }
 
-function MobileTaskRow({ task }: { task: Task }) {
-  const dueMeta = getTaskDueMeta(task);
-
+function MobileTaskRow({ task }: { task: DashboardTaskPreview }) {
   return (
     <Link
       href={`${ROUTES.tasks}/${task.id}`}
@@ -222,14 +195,14 @@ function MobileTaskRow({ task }: { task: Task }) {
       <span className="mobile-dashboard__task-status" aria-hidden="true" />
       <span className="mobile-dashboard__task-copy">
         <strong>{task.title}</strong>
-        <small>{dueMeta.label}</small>
+        <small>{task.dueLabel}</small>
       </span>
       <span className="mobile-dashboard__task-priority">{priorityLabel[task.priority]}</span>
     </Link>
   );
 }
 
-function TimelineItem({ task }: { task: Task }) {
+function TimelineItem({ task }: { task: DashboardTaskPreview }) {
   return (
     <Link href={`${ROUTES.tasks}/${task.id}`} className="mobile-dashboard__timeline-item">
       <time>{formatShortDate(task.dueDate)}</time>
@@ -241,51 +214,14 @@ function TimelineItem({ task }: { task: Task }) {
   );
 }
 
-function buildProjectEntries(tasks: Task[]) {
-  const counter = new Map<string, number>();
-
-  tasks.forEach((task) => {
-    task.tags.forEach((tag) => {
-      counter.set(tag, (counter.get(tag) ?? 0) + 1);
-    });
-  });
-
-  return Array.from(counter.entries())
-    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], "zh-CN"))
-    .slice(0, 4)
-    .map(([tag, count]) => ({ tag, count }));
-}
-
-function priorityScore(priority: Task["priority"]) {
-  if (priority === "high") {
-    return 3;
-  }
-
-  if (priority === "medium") {
-    return 2;
-  }
-
-  return 1;
-}
-
-function dateScore(value: string | undefined) {
-  if (!value) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-
-  const timestamp = new Date(value).getTime();
-
-  return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
-}
-
 function formatShortDate(value: string | undefined) {
   if (!value) {
     return "--";
   }
 
-  const date = new Date(value);
+  const date = parseTaskDueDateValue(value);
 
-  if (Number.isNaN(date.getTime())) {
+  if (!date) {
     return value;
   }
 

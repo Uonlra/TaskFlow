@@ -38,10 +38,12 @@ export async function appwriteFetch<T = unknown>(options: AppwriteFetchOptions):
 
   if (options.searchParams) {
     for (const [key, rawValue] of Object.entries(options.searchParams)) {
-      const values = Array.isArray(rawValue) ? rawValue : [rawValue];
+      const isArrayValue = Array.isArray(rawValue);
+      const parameterKey = isArrayValue && !key.endsWith("[]") ? `${key}[]` : key;
+      const values = isArrayValue ? rawValue : [rawValue];
 
       values.forEach((value) => {
-        url.searchParams.append(key, String(value));
+        url.searchParams.append(parameterKey, String(value));
       });
     }
   }

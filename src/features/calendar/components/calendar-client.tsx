@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
@@ -31,7 +31,6 @@ import {
 import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
-import { useTaskStore } from "@/features/tasks/store/task-store";
 
 type CalendarClientProps = {
   initialDate: string;
@@ -85,24 +84,67 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const tasks = useTaskStore((state) => state.tasks);
-  const isLoading = useTaskStore((state) => state.isLoading);
-  const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
-  const syncTasks = useTaskStore((state) => state.syncTasks);
-
-  useEffect(() => {
-    if (isConfigured && user?.id && lastLoadedUserId !== user.id) {
-      void syncTasks(user.id);
-    }
-  }, [isConfigured, lastLoadedUserId, syncTasks, user?.id]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [hasAnyTasks, setHasAnyTasks] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const dateParam = parseCalendarDate(searchParams.get(CALENDAR_QUERY_KEYS.date) ?? initialDate);
   const range = parseCalendarRange(searchParams.get(CALENDAR_QUERY_KEYS.range) ?? initialRange);
   const selectedDate = useMemo(() => parseTaskDateParam(dateParam) ?? startOfTaskDay(new Date()), [dateParam]);
+  const weekStart = useMemo(() => getTaskWeekStart(selectedDate), [selectedDate]);
+  const rangeFrom = range === DASHBOARD_RANGE_VALUES.all ? undefined : formatTaskDateParam(weekStart);
+  const rangeTo = range === DASHBOARD_RANGE_VALUES.all ? undefined : formatTaskDateParam(addTaskDays(weekStart, 7));
+
+  useEffect(() => {
+    if (!isConfigured || !user?.id || isAuthLoading) return;
+
+    const params = new URLSearchParams();
+    if (range === DASHBOARD_RANGE_VALUES.all) {
+      params.set("range", DASHBOARD_RANGE_VALUES.all);
+    } else {
+      params.set("from", rangeFrom ?? dateParam);
+      params.set("to", rangeTo ?? formatTaskDateParam(addTaskDays(selectedDate, 1)));
+    }
+
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+    void fetch(`/api/tasks/range?${params.toString()}`)
+      .then(async (response) => {
+        const payload = (await response.json().catch(() => null)) as {
+          tasks?: Task[];
+          hasAnyTasks?: boolean;
+          message?: string;
+        } | null;
+        if (!response.ok || !payload?.tasks) {
+          throw new Error(payload?.message || "无法加载日历任务。");
+        }
+        if (!cancelled) {
+          setTasks(payload.tasks);
+          setHasAnyTasks(Boolean(payload.hasAnyTasks));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTasks([]);
+          setHasAnyTasks(false);
+          setError("日历任务暂时无法加载，请稍后重试。");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dateParam, isAuthLoading, isConfigured, range, rangeFrom, rangeTo, selectedDate, user?.id]);
+
   const workspaceState = getWorkspaceState({
     isAuthLoading,
     isTaskLoading: isLoading,
-    taskCount: tasks.length,
+    taskCount: hasAnyTasks ? 1 : 0,
     userId: user?.id,
   });
   const isSyncing = workspaceState === "syncing";
@@ -136,6 +178,25 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   if (workspaceState === "guest") {
     return (
       <WorkspaceStateNotice title="登录后按日期安排任务" description="登录后可查看截止日期、近期提醒和任务时间线。" />
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="calendar-shell calendar-shell--empty">
+        <CalendarToolbar
+          date={selectedDate}
+          dateParam={dateParam}
+          range={range}
+          rangeLabel={rangeLabel}
+          days={weekDays}
+          isSyncing={false}
+          isAccountEmpty={false}
+          onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
+          onRangeChange={(nextRange) => updateCalendar({ range: nextRange })}
+        />
+        <DataEmptyState title="日历加载失败" description={error} />
+      </section>
     );
   }
 

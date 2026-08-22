@@ -3,9 +3,12 @@ import "@/styles/stats.css";
 import { PageContainer } from "@/shared/components/layout/page-container";
 import { PageHeader } from "@/shared/components/layout/page-header";
 import { StatsClient } from "@/features/stats/components/stats-client";
+import type { Metadata } from "next";
 import { DASHBOARD_RANGE_VALUES } from "@/shared/lib/constants/query-params";
 
 const showStatsPageHeader = true;
+
+export const metadata: Metadata = { title: "统计" };
 
 type StatsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

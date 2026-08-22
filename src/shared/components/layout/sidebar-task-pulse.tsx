@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import type { EChartsOption } from "echarts";
+import { useEffect } from "react";
 
+import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 import { buildTrendData } from "@/features/tasks/utils/task-analytics";
 import { EChartsClient } from "@/shared/components/charts/echarts-client";
@@ -75,22 +77,48 @@ const pulseOptionBase: EChartsOption = {
   },
   series: [
     {
-      name: "完成任务",
+      name: "完成量轨迹",
       type: "bar",
-      barMaxWidth: 8,
-      barCategoryGap: "42%",
+      barWidth: 2,
+      barCategoryGap: "44%",
+      itemStyle: {
+        color: "#b9c8f4",
+        borderRadius: [0, 2, 2, 0],
+      },
+      z: 1,
+    },
+    {
+      name: "完成任务",
+      type: "scatter",
+      symbol: "circle",
+      symbolSize: 8,
       itemStyle: {
         color: "#3e6ae1",
-        borderRadius: [0, 4, 4, 0],
+        borderColor: "#ffffff",
+        borderWidth: 1.5,
       },
+      z: 2,
     },
   ],
 };
 
 export function SidebarTaskPulse() {
+  const { user, isLoading: isAuthLoading, isConfigured } = useAuth();
   const tasks = useTaskStore((state) => state.tasks);
+  const isLoading = useTaskStore((state) => state.isLoading);
+  const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
+  const syncTasks = useTaskStore((state) => state.syncTasks);
+  const userId = user?.id;
+
+  useEffect(() => {
+    if (isConfigured && !isAuthLoading && !isLoading && userId && lastLoadedUserId !== userId) {
+      void syncTasks(userId);
+    }
+  }, [isAuthLoading, isConfigured, isLoading, lastLoadedUserId, syncTasks, userId]);
+
   const completedTrend = buildTrendData(tasks, { days: 10 });
   const completedTotal = completedTrend.reduce((total, point) => total + point.completed, 0);
+  const isTrendReady = Boolean(userId) && lastLoadedUserId === userId && !isLoading;
   const option: EChartsOption = {
     ...pulseOptionBase,
     xAxis: {
@@ -106,19 +134,23 @@ export function SidebarTaskPulse() {
         ...(pulseOptionBase.series as Array<Record<string, unknown>>)[0],
         data: completedTrend.map((point) => point.completed),
       },
+      {
+        ...(pulseOptionBase.series as Array<Record<string, unknown>>)[1],
+        data: completedTrend.map((point) => [point.completed, point.label]),
+      },
     ],
   };
 
   return (
     <Link className="dashboard-sidebar-pulse" href={ROUTES.stats} aria-label="查看最近十天的任务完成趋势">
       <div className="dashboard-sidebar-pulse__head">
-        <span>最近 10 天</span>
-        <strong>{completedTotal}</strong>
+        <span>最近 10 天完成数</span>
+        <strong>{isTrendReady ? completedTotal : "--"}</strong>
       </div>
-      {tasks.length ? (
+      {isTrendReady && tasks.length ? (
         <EChartsClient className="dashboard-sidebar-pulse__chart" ariaLabel="最近十天任务完成趋势图" option={option} />
       ) : (
-        <span className="dashboard-sidebar-pulse__empty">完成任务后显示趋势</span>
+        <span className="dashboard-sidebar-pulse__empty">{isTrendReady ? "完成任务后显示趋势" : "正在同步任务"}</span>
       )}
     </Link>
   );

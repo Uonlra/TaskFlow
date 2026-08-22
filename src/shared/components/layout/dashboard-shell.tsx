@@ -4,7 +4,6 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { AuthActionGateProvider } from "@/features/auth/components/auth-action-gate";
 import { AppSidebar } from "@/shared/components/layout/app-sidebar";
-import { AppTopbar } from "@/shared/components/layout/app-topbar";
 import { MobileBottomNavigation } from "@/shared/components/layout/mobile-bottom-navigation";
 
 type DashboardShellProps = {
@@ -50,7 +49,6 @@ export function DashboardShell({ children }: DashboardShellProps) {
         </a>
         <AppSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
         <div className="dashboard-main">
-          <AppTopbar />
           <main id="main-content" tabIndex={-1} className="dashboard-content">
             {children}
           </main>

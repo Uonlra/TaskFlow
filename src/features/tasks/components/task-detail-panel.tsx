@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
+import { parseTaskDueDateValue } from "@/features/tasks/utils/task-date-filters";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { formatTagsInput } from "@/features/tasks/utils/task-tags";
 
@@ -304,9 +305,9 @@ function formatDate(value: string | undefined) {
     return "";
   }
 
-  const date = new Date(value);
+  const date = parseTaskDueDateValue(value);
 
-  if (Number.isNaN(date.getTime())) {
+  if (!date) {
     return value;
   }
 

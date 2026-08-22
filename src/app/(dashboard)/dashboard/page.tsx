@@ -5,6 +5,9 @@ import "@/styles/responsive-dashboard.css";
 
 import { DashboardClient } from "@/features/dashboard/components/dashboard-client";
 import { PageContainer } from "@/shared/components/layout/page-container";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "总览" };
 
 type DashboardPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

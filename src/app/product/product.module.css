@@ -42,6 +42,18 @@
   line-height: 1;
 }
 
+.brandCopy {
+  display: grid;
+  gap: 2px;
+}
+
+.brandCopy small {
+  color: var(--product-muted);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
 .brandMark {
   width: 27px;
   height: 27px;
@@ -721,7 +733,7 @@
 }
 
 @media (max-width: 390px) {
-  .header .brand > span:last-child {
+  .header .brandCopy small {
     display: none;
   }
 

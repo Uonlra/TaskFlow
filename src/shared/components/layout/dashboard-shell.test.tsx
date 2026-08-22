@@ -14,6 +14,14 @@ vi.mock("@/features/auth/components/auth-action-gate", () => ({
   AuthActionGateProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+vi.mock("@/features/auth/providers/auth-provider", () => ({
+  useAuth: () => ({
+    user: null,
+    isLoading: false,
+    isConfigured: false,
+  }),
+}));
+
 vi.mock("@/shared/components/layout/app-topbar", () => ({
   AppTopbar: () => <header>账号工具</header>,
 }));
@@ -47,8 +55,13 @@ describe("DashboardShell accessibility", () => {
     const desktopNavigation = screen.getByRole("navigation", { name: "主导航" });
     const mobileNavigation = screen.getByRole("navigation", { name: "移动导航" });
 
+    expect(screen.getByText("U's Task")).toBeInTheDocument();
+    expect(screen.getByText("Personal workspace")).toBeInTheDocument();
     expect(within(desktopNavigation).getByRole("link", { name: /任务/ })).toHaveAttribute("aria-current", "page");
     expect(within(mobileNavigation).getByRole("link", { name: "任务" })).toHaveAttribute("aria-current", "page");
+    expect(within(mobileNavigation).getByRole("link", { name: "设置" })).toBeInTheDocument();
+    expect(within(desktopNavigation).queryByRole("link", { name: "设置" })).not.toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "账户与偏好" })).toBeInTheDocument();
     expect(within(desktopNavigation).getByRole("link", { name: /总览/ })).not.toHaveAttribute("aria-current");
   });
 

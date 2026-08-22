@@ -1,11 +1,14 @@
 import "@/styles/calendar.css";
 
 import { CalendarClient } from "@/features/calendar/components/calendar-client";
+import type { Metadata } from "next";
 import { PageContainer } from "@/shared/components/layout/page-container";
 import { PageHeader } from "@/shared/components/layout/page-header";
 import { DASHBOARD_RANGE_VALUES, type DashboardRangeValue } from "@/shared/lib/constants/query-params";
 
 const showCalendarPageHeader = true;
+
+export const metadata: Metadata = { title: "日历" };
 
 type CalendarPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

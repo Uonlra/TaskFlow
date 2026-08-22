@@ -44,14 +44,26 @@ test.describe("创建任务", () => {
 
     let tasks: Array<Record<string, unknown>> = [];
 
-    await page.route("**/api/tasks", async (route) => {
+    await page.route("**/api/tasks**", async (route) => {
       const method = route.request().method();
 
       if (method === "GET") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({ tasks }),
+          body: JSON.stringify({
+            tasks,
+            total: tasks.length,
+            page: 1,
+            pageSize: 50,
+            hasNext: false,
+            categoryCounts: {
+              near: 0,
+              active: tasks.filter((task) => task.status !== "done").length,
+              done: tasks.filter((task) => task.status === "done").length,
+              all: tasks.length,
+            },
+          }),
         });
         return;
       }

@@ -10,6 +10,7 @@ export const TASK_QUERY_KEYS = {
   risk: "risk",
   date: "date",
   range: "range",
+  page: "page",
 } as const;
 
 export const TASK_DUE_FILTERS = {
