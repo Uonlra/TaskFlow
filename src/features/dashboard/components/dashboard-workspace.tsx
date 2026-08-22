@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { CheckSquare, Clock3, Play } from "lucide-react";
 
 import {
   DashboardRangeMenu,
@@ -163,7 +164,9 @@ function Metric({
 
   return (
     <div className={className}>
-      <i className={"dashboard-workspace__metric-icon dashboard-workspace__metric-icon--" + icon} aria-hidden="true" />
+      <span className={"dashboard-workspace__metric-icon dashboard-workspace__metric-icon--" + icon} aria-hidden="true">
+        {icon === "todo" ? <CheckSquare /> : icon === "progress" ? <Play /> : <Clock3 />}
+      </span>
       <div className="dashboard-workspace__metric-copy">
         <span>{label}</span>
         <strong>{value}</strong>

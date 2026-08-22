@@ -538,6 +538,11 @@
     place-items: center;
   }
 
+  .mobile-bottom-navigation__icon > svg {
+    width: 18px;
+    height: 18px;
+  }
+
   .mobile-bottom-navigation__icon > .dashboard-sidebar-link__icon {
     position: absolute;
     top: 50%;

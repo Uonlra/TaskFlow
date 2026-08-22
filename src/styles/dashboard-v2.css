@@ -1613,6 +1613,18 @@
   }
 }
 
+.dashboard-workspace__metric-icon::before,
+.dashboard-workspace__metric-icon::after {
+  display: none !important;
+  content: none !important;
+}
+
+.dashboard-workspace__metric-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.8;
+}
+
 html[data-theme="dark"] .dashboard-v2-panel,
 html[data-theme="dark"] .dashboard-v2-range-row,
 html[data-theme="dark"] .dashboard-v2-range-tabs,

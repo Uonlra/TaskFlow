@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { NavigationIcon } from "@/shared/components/layout/navigation-icon";
 import { appMobileNavigation, isAppNavigationActive } from "@/shared/lib/constants/navigation";
 
 export function MobileBottomNavigation() {
@@ -21,9 +22,7 @@ export function MobileBottomNavigation() {
             className={isActive ? "mobile-bottom-navigation__item is-active" : "mobile-bottom-navigation__item"}
           >
             <span className="mobile-bottom-navigation__icon" aria-hidden="true">
-              <span className={`dashboard-sidebar-link__icon dashboard-sidebar-link__icon--${item.icon}`}>
-                <span />
-              </span>
+              <NavigationIcon name={item.icon} />
             </span>
             <span className="mobile-bottom-navigation__label">{item.label}</span>
           </Link>

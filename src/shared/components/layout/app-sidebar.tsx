@@ -5,8 +5,10 @@ import { usePathname } from "next/navigation";
 
 import { AppTopbar } from "@/shared/components/layout/app-topbar";
 import { BrandMark } from "@/shared/components/layout/brand-mark";
+import { NavigationIcon } from "@/shared/components/layout/navigation-icon";
 import { appNavigation, appSettingsNavigation, isAppNavigationActive } from "@/shared/lib/constants/navigation";
 import { SidebarTaskPulse } from "@/shared/components/layout/sidebar-task-pulse";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 type AppSidebarProps = {
   collapsed: boolean;
@@ -46,9 +48,8 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             >
               <span
                 className={`dashboard-sidebar-link__icon dashboard-sidebar-link__icon--${item.icon}`}
-                aria-hidden="true"
               >
-                <span />
+                <NavigationIcon name={item.icon} />
               </span>
               <span className="dashboard-sidebar-link__copy">
                 <span className="dashboard-sidebar-link__label">{item.label}</span>
@@ -73,9 +74,8 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
         >
           <span
             className={`dashboard-sidebar-link__icon dashboard-sidebar-link__icon--${appSettingsNavigation.icon}`}
-            aria-hidden="true"
           >
-            <span />
+            <NavigationIcon name={appSettingsNavigation.icon} />
           </span>
           <span className="dashboard-sidebar-link__copy">
             <span className="dashboard-sidebar-link__label">{appSettingsNavigation.label}</span>
@@ -91,7 +91,11 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             aria-expanded={!collapsed}
             onClick={onToggle}
           >
-            <span className="dashboard-sidebar-collapse__icon" aria-hidden="true" />
+            {collapsed ? (
+              <PanelLeftOpen className="dashboard-sidebar-collapse__icon" aria-hidden="true" size={18} strokeWidth={1.8} />
+            ) : (
+              <PanelLeftClose className="dashboard-sidebar-collapse__icon" aria-hidden="true" size={18} strokeWidth={1.8} />
+            )}
           </button>
           <AppTopbar variant="sidebar" />
         </div>
