@@ -53,7 +53,9 @@ try {
     if (rows.length < pageSize) break;
   }
 
-  console.log(`${dryRun ? "Dry run complete" : "Backfill complete"}: scanned=${scanned}, updated=${updated}, skipped=${skipped}`);
+  console.log(
+    `${dryRun ? "Dry run complete" : "Backfill complete"}: scanned=${scanned}, updated=${updated}, skipped=${skipped}`,
+  );
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   process.exitCode = 1;

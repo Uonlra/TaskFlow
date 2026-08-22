@@ -46,9 +46,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               aria-current={isActive ? "page" : undefined}
               className={isActive ? "dashboard-sidebar-link dashboard-sidebar-link--active" : "dashboard-sidebar-link"}
             >
-              <span
-                className={`dashboard-sidebar-link__icon dashboard-sidebar-link__icon--${item.icon}`}
-              >
+              <span className={`dashboard-sidebar-link__icon dashboard-sidebar-link__icon--${item.icon}`}>
                 <NavigationIcon name={item.icon} />
               </span>
               <span className="dashboard-sidebar-link__copy">
@@ -72,9 +70,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               : "dashboard-sidebar-link dashboard-sidebar-settings"
           }
         >
-          <span
-            className={`dashboard-sidebar-link__icon dashboard-sidebar-link__icon--${appSettingsNavigation.icon}`}
-          >
+          <span className={`dashboard-sidebar-link__icon dashboard-sidebar-link__icon--${appSettingsNavigation.icon}`}>
             <NavigationIcon name={appSettingsNavigation.icon} />
           </span>
           <span className="dashboard-sidebar-link__copy">
@@ -92,9 +88,19 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             onClick={onToggle}
           >
             {collapsed ? (
-              <PanelLeftOpen className="dashboard-sidebar-collapse__icon" aria-hidden="true" size={18} strokeWidth={1.8} />
+              <PanelLeftOpen
+                className="dashboard-sidebar-collapse__icon"
+                aria-hidden="true"
+                size={18}
+                strokeWidth={1.8}
+              />
             ) : (
-              <PanelLeftClose className="dashboard-sidebar-collapse__icon" aria-hidden="true" size={18} strokeWidth={1.8} />
+              <PanelLeftClose
+                className="dashboard-sidebar-collapse__icon"
+                aria-hidden="true"
+                size={18}
+                strokeWidth={1.8}
+              />
             )}
           </button>
           <AppTopbar variant="sidebar" />

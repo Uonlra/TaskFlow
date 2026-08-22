@@ -64,7 +64,6 @@ function TodayPacePanel({ stats }: { stats: DashboardStats }) {
       <div className="dashboard-v2-panel__head">
         <div>
           <h2>今日任务节奏</h2>
-          <p>只显示今天真实的执行信号。</p>
         </div>
         <Link href={buildStatsHref({ range: "today" })}>今日详情</Link>
       </div>

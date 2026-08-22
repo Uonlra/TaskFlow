@@ -1,11 +1,4 @@
-import {
-  CalendarDays,
-  ChartNoAxesCombined,
-  LayoutDashboard,
-  ListTodo,
-  Settings,
-  type LucideIcon,
-} from "lucide-react";
+import { CalendarDays, ChartNoAxesCombined, LayoutDashboard, ListTodo, Settings, type LucideIcon } from "lucide-react";
 
 export type NavigationIconName = "overview" | "tasks" | "calendar" | "stats" | "settings";
 

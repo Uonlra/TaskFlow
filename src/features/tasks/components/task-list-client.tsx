@@ -8,7 +8,11 @@ import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { MobileTaskListView } from "@/features/tasks/components/mobile-task-list-view";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task, TaskPageInitialData } from "@/features/tasks/types/task.types";
-import { formatTaskDateParam, hasActiveTaskDateRangeFilter, parseTaskDateParam } from "@/features/tasks/utils/task-date-filters";
+import {
+  formatTaskDateParam,
+  hasActiveTaskDateRangeFilter,
+  parseTaskDateParam,
+} from "@/features/tasks/utils/task-date-filters";
 import {
   DASHBOARD_RANGE_VALUES,
   TASK_DUE_FILTERS,
@@ -74,9 +78,7 @@ export function TaskListClient({
       const params = buildTaskPageParams(filters, page);
       const response = await fetch(`/api/tasks?${params.toString()}`);
       const payload = (await response.json().catch(() => null)) as
-        | Omit<TaskPageInitialData, "userId">
-        | { message?: string }
-        | null;
+        Omit<TaskPageInitialData, "userId"> | { message?: string } | null;
       if (!response.ok || !payload || !("tasks" in payload) || !("total" in payload)) {
         throw new Error((payload && "message" in payload ? payload.message : undefined) || "无法加载任务列表。");
       }
@@ -121,8 +123,8 @@ export function TaskListClient({
     page,
   ]);
 
-  const visibleTasks = hasConfirmedUserMismatch ? [] : pageData?.tasks ?? [];
-  const totalCount = hasConfirmedUserMismatch ? 0 : pageData?.total ?? 0;
+  const visibleTasks = hasConfirmedUserMismatch ? [] : (pageData?.tasks ?? []);
+  const totalCount = hasConfirmedUserMismatch ? 0 : (pageData?.total ?? 0);
   const categoryCounts = pageData?.categoryCounts ?? { near: 0, active: 0, done: 0, all: 0 };
   const visibleIsLoading = hasConfirmedUserMismatch || pageLoading || (isAuthLoading && !canUseInitialData);
   const error = pageError;
@@ -278,7 +280,13 @@ export function TaskListClient({
       }
 
       const file = new Blob(
-        [JSON.stringify({ version: 1, source: "U's Task", exportedAt: new Date().toISOString(), tasks: payload.tasks }, null, 2)],
+        [
+          JSON.stringify(
+            { version: 1, source: "U's Task", exportedAt: new Date().toISOString(), tasks: payload.tasks },
+            null,
+            2,
+          ),
+        ],
         { type: "application/json" },
       );
       const url = URL.createObjectURL(file);

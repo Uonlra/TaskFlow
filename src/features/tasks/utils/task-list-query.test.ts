@@ -28,10 +28,15 @@ const task = (id: string, title: string, status: Task["status"] = "todo"): Task 
 
 describe("task-list-query", () => {
   it("在服务端筛选后按页返回任务和元数据", () => {
-    const result = getTaskPage([task("1", "Alpha"), task("2", "Beta", "done"), task("3", "Gamma")], {
-      ...filters,
-      query: "beta",
-    }, 1, 1);
+    const result = getTaskPage(
+      [task("1", "Alpha"), task("2", "Beta", "done"), task("3", "Gamma")],
+      {
+        ...filters,
+        query: "beta",
+      },
+      1,
+      1,
+    );
 
     expect(result.tasks.map((item) => item.id)).toEqual(["2"]);
     expect(result.total).toBe(1);

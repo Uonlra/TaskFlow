@@ -10,6 +10,8 @@ export default defineConfig([
     rules: {
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/immutability": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/incompatible-library": "warn",
     },
   },
   prettier,

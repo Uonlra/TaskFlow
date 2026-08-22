@@ -88,7 +88,11 @@ export async function listTasksForDashboard(
       sessionSecret,
       request,
       searchParams: {
-        queries: [...buildDashboardPaceQueries(), querySelect(DASHBOARD_SELECT_FIELDS), queryLimit(DASHBOARD_QUERY_LIMIT)],
+        queries: [
+          ...buildDashboardPaceQueries(),
+          querySelect(DASHBOARD_SELECT_FIELDS),
+          queryLimit(DASHBOARD_QUERY_LIMIT),
+        ],
       },
     }),
     appwriteTaskRequest<AppwriteRowsList>("", {

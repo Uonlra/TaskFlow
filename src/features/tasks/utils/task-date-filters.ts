@@ -70,9 +70,7 @@ export function parseTaskDueDateValue(value: string | null | undefined): Date | 
     return null;
   }
 
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(value)
-    ? parseTaskDateParam(value)
-    : startOfTaskDay(new Date(value));
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? parseTaskDateParam(value) : startOfTaskDay(new Date(value));
 
   return date && !Number.isNaN(date.getTime()) ? date : null;
 }

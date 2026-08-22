@@ -64,6 +64,7 @@ export type DashboardStats = {
   range: DashboardAnalyticsRange;
   totalCount: number;
   activeCount: number;
+  highPriorityActiveCount: number;
   completedCount: number;
   completionRate: number;
   inProgressCount: number;
@@ -119,6 +120,7 @@ export function buildDashboardStats(tasks: Task[], options: DashboardAnalyticsOp
   const referenceDate = startOfDay(options.referenceDate ?? new Date());
   const scopedTasks = filterTasksByRange(tasks, range, referenceDate);
   const activeTasks = scopedTasks.filter((task) => task.status !== "done");
+  const highPriorityActiveCount = activeTasks.filter((task) => task.priority === "high").length;
   const completedCount = scopedTasks.filter((task) => task.status === "done").length;
   const inProgressCount = scopedTasks.filter((task) => task.status === "in_progress").length;
   const dueCounts = buildDueCounts(activeTasks, range, referenceDate);
@@ -131,6 +133,7 @@ export function buildDashboardStats(tasks: Task[], options: DashboardAnalyticsOp
     range,
     totalCount,
     activeCount: activeTasks.length,
+    highPriorityActiveCount,
     completedCount,
     completionRate,
     inProgressCount,

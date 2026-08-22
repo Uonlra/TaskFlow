@@ -71,7 +71,10 @@ export function filterTaskList(tasks: Task[], filters: TaskFilters) {
       filters.status === "all" ||
       (filters.status === "active" ? task.status !== "done" : task.status === filters.status);
     const matchPriority = filters.priority === "all" || task.priority === filters.priority;
-    const hasDateRangeFilter = hasActiveTaskDateRangeFilter({ date: parseTaskDateParam(filters.date), range: filters.range });
+    const hasDateRangeFilter = hasActiveTaskDateRangeFilter({
+      date: parseTaskDateParam(filters.date),
+      range: filters.range,
+    });
     const matchDateRange = matchesDateRangeFilter(task, filters.date, filters.range);
     const matchDue = hasDateRangeFilter || !filters.due || matchesTaskDueFilter(task, filters.due);
     const matchRisk = !filters.risk || matchesRiskFilter(task, filters.risk);
@@ -103,8 +106,7 @@ export function parseTaskFiltersFromParams(params: URLSearchParams): TaskFilters
   const risk = parseEnum(params.get("risk"), Object.values(TASK_RISK_FILTERS) as TaskRiskValue[]) ?? "";
   const sort =
     parseEnum(params.get("sort"), ["created_desc", "updated_desc", "priority_desc", "due_asc"] as const) ?? "due_asc";
-  const range =
-    parseEnum(params.get("range"), Object.values(DASHBOARD_RANGE_VALUES) as DashboardRangeValue[]) ?? "";
+  const range = parseEnum(params.get("range"), Object.values(DASHBOARD_RANGE_VALUES) as DashboardRangeValue[]) ?? "";
   const parsedDate = parseTaskDateParam(params.get("date") ?? undefined);
 
   return {
@@ -114,7 +116,7 @@ export function parseTaskFiltersFromParams(params: URLSearchParams): TaskFilters
     priority,
     due,
     risk,
-    date: parsedDate ? params.get("date") ?? "" : "",
+    date: parsedDate ? (params.get("date") ?? "") : "",
     range,
     sort,
   };
@@ -130,7 +132,8 @@ function matchesRiskFilter(task: Task, risk: string) {
   if (risk === TASK_RISK_FILTERS.overdue) return getTaskDueMeta(task).isOverdue;
   const offset = getDueDayOffset(task.dueDate);
   if (risk === TASK_RISK_FILTERS.high) return task.priority === "high" || getTaskDueMeta(task).isOverdue;
-  if (risk === TASK_RISK_FILTERS.medium) return task.priority === "medium" || (offset !== null && offset >= 0 && offset <= 1);
+  if (risk === TASK_RISK_FILTERS.medium)
+    return task.priority === "medium" || (offset !== null && offset >= 0 && offset <= 1);
   return task.priority === "low" || (offset !== null && offset >= 0 && offset <= 3);
 }
 

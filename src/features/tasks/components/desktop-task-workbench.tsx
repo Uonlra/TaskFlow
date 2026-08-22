@@ -337,7 +337,13 @@ export function DesktopTaskWorkbench({
               </button>
             </div>
             {onPageChange && resolvedTotalCount > pageSize ? (
-              <TaskPagination page={page} pageSize={pageSize} total={resolvedTotalCount} hasNext={hasNext} onPageChange={onPageChange} />
+              <TaskPagination
+                page={page}
+                pageSize={pageSize}
+                total={resolvedTotalCount}
+                hasNext={hasNext}
+                onPageChange={onPageChange}
+              />
             ) : null}
           </footer>
         ) : null}

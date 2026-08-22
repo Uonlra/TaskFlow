@@ -141,8 +141,24 @@ describe("/api/tasks", () => {
   it("无法安全下沉的标签筛选保留内存回退", async () => {
     mocks.canUseAppwriteTaskPage.mockReturnValue(false);
     mocks.listTasks.mockResolvedValue([
-      { id: "tagged-1", title: "带标签", description: "", status: "todo", priority: "low", tags: ["工作"], createdAt: "2026-08-01" },
-      { id: "other-1", title: "其他", description: "", status: "todo", priority: "low", tags: [], createdAt: "2026-08-02" },
+      {
+        id: "tagged-1",
+        title: "带标签",
+        description: "",
+        status: "todo",
+        priority: "low",
+        tags: ["工作"],
+        createdAt: "2026-08-01",
+      },
+      {
+        id: "other-1",
+        title: "其他",
+        description: "",
+        status: "todo",
+        priority: "low",
+        tags: [],
+        createdAt: "2026-08-02",
+      },
     ]);
 
     const request = new NextRequest("http://localhost/api/tasks?tag=工作&page=1&limit=10");
