@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { AuthPageBackground } from "@/features/auth/components/auth-page-background";
 import { AuthEntryLoader } from "@/features/auth/components/auth-entry-loader";
+import { BrandMark } from "@/shared/components/layout/brand-mark";
 
 import { AuthPreviewStateProvider, useAuthPreviewState } from "@/features/auth/components/auth-preview-state";
 import { getAuthPreviewWeek } from "@/features/auth/utils/auth-preview-week";
@@ -39,10 +40,11 @@ function AuthPreviewLayout({ children }: { children: ReactNode }) {
       <aside className="auth-brand-panel">
         <div className="auth-brand-copy">
           <div className="auth-brand-row">
-            <span className="auth-brand-mark" aria-hidden="true">
-              ✓
+            <BrandMark className="auth-brand-mark" />
+            <span className="auth-brand-lockup">
+              <span className="auth-brand-name">U&apos;s Task</span>
+              <span className="auth-brand-tagline">Personal workspace</span>
             </span>
-            <span className="auth-brand-name">U&apos;s Task</span>
           </div>
           <h1 className="auth-brand-title">个人任务工作台</h1>
           <p className="auth-brand-description">集中查看待办、截止时间和完成进度。</p>

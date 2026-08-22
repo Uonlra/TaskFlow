@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { AppTopbar } from "@/shared/components/layout/app-topbar";
+import { BrandMark } from "@/shared/components/layout/brand-mark";
 import { appNavigation, appSettingsNavigation, isAppNavigationActive } from "@/shared/lib/constants/navigation";
 import { SidebarTaskPulse } from "@/shared/components/layout/sidebar-task-pulse";
 
@@ -20,7 +21,13 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       <div className="dashboard-sidebar-head">
         <div className="dashboard-sidebar-title-row">
           <div className="dashboard-sidebar-title-copy">
-            <p className="dashboard-brand">U&apos;s Task</p>
+            <div className="dashboard-brand-lockup">
+              <BrandMark className="dashboard-brand-mark" />
+              <span className="dashboard-brand-copy">
+                <span className="dashboard-brand">U&apos;s Task</span>
+                <span className="dashboard-brand-tagline">Personal workspace</span>
+              </span>
+            </div>
           </div>
           <AppTopbar variant="mobile" />
         </div>

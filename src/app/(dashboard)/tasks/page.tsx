@@ -1,8 +1,11 @@
 import { TaskListClient } from "@/features/tasks/components/task-list-client";
+import type { Metadata } from "next";
 import { getTaskPageInitialData } from "@/features/tasks/server/get-task-page-initial-data";
 import { formatTaskDateParam, parseTaskDateParam } from "@/features/tasks/utils/task-date-filters";
 import { PageContainer } from "@/shared/components/layout/page-container";
 import { DASHBOARD_RANGE_VALUES, TASK_DUE_FILTERS, TASK_RISK_FILTERS } from "@/shared/lib/constants/query-params";
+
+export const metadata: Metadata = { title: "任务" };
 
 type TasksPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

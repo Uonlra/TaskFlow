@@ -7,8 +7,11 @@ import { LenisProvider } from "@/shared/providers/lenis-provider";
 import { ToastProvider } from "@/shared/providers/toast-provider";
 
 export const metadata: Metadata = {
-  title: "U's Task - 我的任务小本",
-  description: "一个独立打磨的个人任务应用，用来记录、整理和慢慢推进手头的事。",
+  title: {
+    default: "U's Task | Personal workspace",
+    template: "U's Task | %s",
+  },
+  description: "U's Task 是一个面向个人节奏的 Personal workspace，用来记录、整理和推进手头的事。",
   icons: {
     icon: "/favicon.svg",
   },

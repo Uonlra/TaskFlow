@@ -70,6 +70,25 @@ html[data-theme="dark"] {
   box-sizing: border-box;
 }
 
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.brand-mark span {
+  width: 9px;
+  height: 9px;
+  display: block;
+  border-top: 2px solid var(--primary-foreground);
+  border-right: 2px solid var(--primary-foreground);
+  transform: rotate(45deg) translate(-1px, 1px);
+}
+
 html {
   font-size: 16px;
   line-height: 1.8;

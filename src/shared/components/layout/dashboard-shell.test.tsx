@@ -47,6 +47,8 @@ describe("DashboardShell accessibility", () => {
     const desktopNavigation = screen.getByRole("navigation", { name: "主导航" });
     const mobileNavigation = screen.getByRole("navigation", { name: "移动导航" });
 
+    expect(screen.getByText("U's Task")).toBeInTheDocument();
+    expect(screen.getByText("Personal workspace")).toBeInTheDocument();
     expect(within(desktopNavigation).getByRole("link", { name: /任务/ })).toHaveAttribute("aria-current", "page");
     expect(within(mobileNavigation).getByRole("link", { name: "任务" })).toHaveAttribute("aria-current", "page");
     expect(within(mobileNavigation).getByRole("link", { name: "设置" })).toBeInTheDocument();

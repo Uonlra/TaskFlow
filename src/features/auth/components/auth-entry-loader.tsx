@@ -3,6 +3,8 @@
 import { createTimeline, engine } from "animejs";
 import { useEffect, useRef, useState } from "react";
 
+import { BrandMark } from "@/shared/components/layout/brand-mark";
+
 const ENTRY_ANIMATION_DURATION = 2500;
 
 /**
@@ -84,12 +86,10 @@ export function AuthEntryLoader() {
   return (
     <div className="auth-entry-loader" ref={loaderRef} aria-live="polite" aria-label="正在准备登录页面">
       <div className="auth-entry-loader__content">
-        <span className="auth-entry-loader__mark" aria-hidden="true">
-          ✓
-        </span>
+        <BrandMark className="auth-entry-loader__mark" />
         <div className="auth-entry-loader__copy">
           <strong>U&apos;s Task</strong>
-          <span>正在准备你的任务工作台</span>
+          <span>Personal workspace · 正在准备你的任务工作台</span>
         </div>
         <span className="auth-entry-loader__progress" aria-hidden="true">
           <i className="auth-entry-loader__progress-fill" />
