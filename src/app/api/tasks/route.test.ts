@@ -98,4 +98,26 @@ describe("/api/tasks", () => {
     await expect(response.json()).resolves.toEqual({ task: createdTask });
     expect(mocks.createTask).toHaveBeenCalledWith("session-secret", "user-1", input, request);
   });
+
+  it("GET 带页码时在 API 层筛选并返回分页元数据", async () => {
+    mocks.getAppwriteSessionSecret.mockResolvedValue("session-secret");
+    mocks.getCurrentAuthEnvelope.mockResolvedValue(authEnvelope);
+    mocks.listTasks.mockResolvedValue([
+      { id: "todo-1", title: "待办", description: "", status: "todo", priority: "high", tags: [], createdAt: "2026-08-01" },
+      { id: "done-1", title: "已完成", description: "", status: "done", priority: "low", tags: [], createdAt: "2026-08-02" },
+    ]);
+
+    const request = new NextRequest("http://localhost/api/tasks?status=active&page=1&limit=1");
+    const response = await GET(request);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      tasks: [{ id: "todo-1" }],
+      total: 1,
+      page: 1,
+      pageSize: 1,
+      hasNext: false,
+      categoryCounts: { all: 2, active: 1, done: 1 },
+    });
+  });
 });

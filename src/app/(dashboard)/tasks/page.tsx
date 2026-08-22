@@ -12,10 +12,7 @@ type TasksPageProps = {
 };
 
 export default async function TasksPage({ searchParams }: TasksPageProps) {
-  const [resolvedSearchParams, initialData] = await Promise.all([
-    searchParams ?? Promise.resolve(undefined),
-    getTaskPageInitialData(),
-  ]);
+  const resolvedSearchParams = await (searchParams ?? Promise.resolve(undefined));
   const parsedDate = parseTaskDateParam(
     typeof resolvedSearchParams?.date === "string" ? resolvedSearchParams.date : undefined,
   );
@@ -64,6 +61,11 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
         ? resolvedSearchParams.sort
         : "due_asc",
   } as const;
+
+  const initialData = await getTaskPageInitialData(
+    initialFilters,
+    typeof resolvedSearchParams?.page === "string" ? resolvedSearchParams.page : undefined,
+  );
 
   return (
     <PageContainer>

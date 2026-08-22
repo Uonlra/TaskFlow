@@ -41,6 +41,11 @@ describe("getTaskPageInitialData", () => {
     await expect(getTaskPageInitialData()).resolves.toEqual({
       userId: "user-1",
       tasks,
+      total: 1,
+      page: 1,
+      pageSize: 50,
+      hasNext: false,
+      categoryCounts: { near: 0, active: 1, done: 0, all: 1 },
     });
     expect(mocks.getCurrentAccount).toHaveBeenCalledWith("session-secret");
     expect(mocks.listTasks).toHaveBeenCalledWith("session-secret");

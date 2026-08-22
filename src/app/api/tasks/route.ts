@@ -5,6 +5,7 @@ import { handleApiError } from "@/shared/lib/api/error";
 import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
 import { createTask, listTasks } from "@/shared/lib/appwrite/tasks";
+import { getTaskPage, parseTaskFiltersFromParams, parseTaskPageParam } from "@/features/tasks/utils/task-list-query";
 
 export async function GET(request: NextRequest) {
   const sessionSecret = await getAppwriteSessionSecret();
@@ -16,6 +17,16 @@ export async function GET(request: NextRequest) {
 
   try {
     const tasks = await listTasks(sessionSecret, request);
+    if (request.nextUrl.searchParams.has("page")) {
+      const page = getTaskPage(
+        tasks,
+        parseTaskFiltersFromParams(request.nextUrl.searchParams),
+        parseTaskPageParam(request.nextUrl.searchParams.get("page")),
+        Number(request.nextUrl.searchParams.get("limit")) || undefined,
+      );
+      return NextResponse.json(page);
+    }
+
     return NextResponse.json({ tasks });
   } catch (error) {
     return handleApiError(error, "无法加载任务列表，请稍后再试。");

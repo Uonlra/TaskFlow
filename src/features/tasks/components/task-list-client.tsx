@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DesktopTaskWorkbench } from "@/features/tasks/components/desktop-task-workbench";
@@ -8,28 +8,20 @@ import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { MobileTaskListView } from "@/features/tasks/components/mobile-task-list-view";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task, TaskPageInitialData } from "@/features/tasks/types/task.types";
-import {
-  filterTasksByTaskDateRange,
-  formatTaskDateParam,
-  hasActiveTaskDateRangeFilter,
-  parseTaskDateParam,
-  parseTaskDueDateValue,
-  startOfTaskDay,
-} from "@/features/tasks/utils/task-date-filters";
-import { getTaskDueMeta, matchesTaskDueFilter, sortTasks } from "@/features/tasks/utils/task-deadline";
+import { formatTaskDateParam, hasActiveTaskDateRangeFilter, parseTaskDateParam } from "@/features/tasks/utils/task-date-filters";
 import {
   DASHBOARD_RANGE_VALUES,
   TASK_DUE_FILTERS,
   TASK_QUERY_KEYS,
   TASK_RISK_FILTERS,
   type DashboardRangeValue,
-  type TaskRiskFilter,
 } from "@/shared/lib/constants/query-params";
 import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
+import { DEFAULT_TASK_PAGE_SIZE, parseTaskPageParam } from "@/features/tasks/utils/task-list-query";
 
 const SETTINGS_STORAGE_KEY = "u-task-settings";
 
@@ -60,49 +52,80 @@ export function TaskListClient({
   const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [filters, setFilters] = useState<TaskFilters>(initialFiltersProp);
-  const tasks = useTaskStore((state) => state.tasks);
-  const isLoading = useTaskStore((state) => state.isLoading);
-  const error = useTaskStore((state) => state.error);
-  const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
-  const initializeTasks = useTaskStore((state) => state.initializeTasks);
-  const syncTasks = useTaskStore((state) => state.syncTasks);
+  const [pageData, setPageData] = useState<TaskPageInitialData | null>(initialData);
+  const [pageLoading, setPageLoading] = useState(!initialData);
+  const [pageError, setPageError] = useState<string | null>(null);
   const createTaskAsync = useTaskStore((state) => state.createTaskAsync);
   const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
 
+  const page = parseTaskPageParam(searchParams.get("page"));
   const canUseInitialData = Boolean(initialData && (isAuthLoading || user?.id === initialData.userId));
-  const hasMatchingStoreData = Boolean(initialData && lastLoadedUserId === initialData.userId);
   const hasConfirmedUserMismatch = Boolean(initialData && !isAuthLoading && user && user.id !== initialData.userId);
-
-  const visibleTasks = useMemo(() => {
-    if (hasConfirmedUserMismatch) {
-      return [];
-    }
-
-    if (canUseInitialData && !hasMatchingStoreData) {
-      return initialData?.tasks ?? [];
-    }
-
-    return tasks;
-  }, [canUseInitialData, hasConfirmedUserMismatch, hasMatchingStoreData, initialData?.tasks, tasks]);
-
-  const visibleIsLoading = hasConfirmedUserMismatch || (canUseInitialData ? false : isLoading);
   const activeUserId = user?.id ?? (isAuthLoading ? initialData?.userId : undefined);
 
-  useEffect(() => {
-    if (initialData) {
-      initializeTasks(initialData.tasks, initialData.userId);
+  const loadPage = useCallback(async () => {
+    if (!activeUserId || !isConfigured) return;
+
+    setPageLoading(true);
+    setPageError(null);
+    try {
+      const params = buildTaskPageParams(filters, page);
+      const response = await fetch(`/api/tasks?${params.toString()}`);
+      const payload = (await response.json().catch(() => null)) as
+        | Omit<TaskPageInitialData, "userId">
+        | { message?: string }
+        | null;
+      if (!response.ok || !payload || !("tasks" in payload) || !("total" in payload)) {
+        throw new Error((payload && "message" in payload ? payload.message : undefined) || "无法加载任务列表。");
+      }
+      setPageData({ userId: activeUserId, ...payload });
+    } catch (error) {
+      setPageError(error instanceof Error ? error.message : "无法加载任务列表。");
+    } finally {
+      setPageLoading(false);
     }
-  }, [initialData, initializeTasks]);
+  }, [activeUserId, filters, isConfigured, page]);
 
   useEffect(() => {
-    const isCoveredByInitialData = initialData?.userId === user?.id;
-
-    if (isConfigured && user?.id && lastLoadedUserId !== user.id && !isCoveredByInitialData) {
-      void syncTasks(user.id);
+    if (hasConfirmedUserMismatch) {
+      setPageData(null);
+      return;
     }
-  }, [initialData?.userId, isConfigured, lastLoadedUserId, syncTasks, user?.id]);
+
+    const matchesInitialData =
+      initialData &&
+      activeUserId === initialData.userId &&
+      page === initialData.page &&
+      areFiltersEqual(filters, initialFiltersProp);
+
+    if (matchesInitialData) {
+      setPageData(initialData);
+      setPageLoading(false);
+      return;
+    }
+
+    if (activeUserId && isConfigured && !isAuthLoading) {
+      void loadPage();
+    }
+  }, [
+    activeUserId,
+    filters,
+    hasConfirmedUserMismatch,
+    initialData,
+    initialFiltersProp,
+    isAuthLoading,
+    isConfigured,
+    loadPage,
+    page,
+  ]);
+
+  const visibleTasks = hasConfirmedUserMismatch ? [] : pageData?.tasks ?? [];
+  const totalCount = hasConfirmedUserMismatch ? 0 : pageData?.total ?? 0;
+  const categoryCounts = pageData?.categoryCounts ?? { near: 0, active: 0, done: 0, all: 0 };
+  const visibleIsLoading = hasConfirmedUserMismatch || pageLoading || (isAuthLoading && !canUseInitialData);
+  const error = pageError;
 
   useEffect(() => {
     const nextFilters = parseTaskFilters({
@@ -124,37 +147,14 @@ export function TaskListClient({
     setFilters((current) => (areFiltersEqual(current, nextFilters) ? current : nextFilters));
   }, [searchParams]);
 
-  const filteredTasks = useMemo(() => {
-    const nextTasks = visibleTasks.filter((task) => {
-      const matchQuery =
-        !filters.query ||
-        task.title.toLowerCase().includes(filters.query.toLowerCase()) ||
-        task.description.toLowerCase().includes(filters.query.toLowerCase()) ||
-        (task.tags ?? []).some((tag) => tag.toLowerCase().includes(filters.query.toLowerCase()));
-
-      const matchTag =
-        !filters.tag || (task.tags ?? []).some((tag) => tag.toLowerCase().includes(filters.tag.toLowerCase()));
-
-      const matchStatus =
-        filters.status === "all" ||
-        (filters.status === "active" ? task.status !== "done" : task.status === filters.status);
-      const matchPriority = filters.priority === "all" || task.priority === filters.priority;
-      const hasDateRangeFilter = hasActiveDateRangeFilter(filters.date, filters.range);
-      const matchDateRange = matchesDateRangeFilter(task, filters.date, filters.range);
-      const matchDue = hasDateRangeFilter || !filters.due || matchesTaskDueFilter(task, filters.due);
-      const matchRisk = !filters.risk || matchesRiskFilter(task, filters.risk);
-
-      return matchQuery && matchTag && matchStatus && matchPriority && matchDateRange && matchDue && matchRisk;
-    });
-
-    return sortTasks(nextTasks, filters.sort);
-  }, [filters, visibleTasks]);
+  const filteredTasks = visibleTasks;
 
   const activeFilterLabels = useMemo(() => buildActiveFilterLabels(filters), [filters]);
 
   const handleCreateTask = async (values: TaskFormValues) => {
     try {
       await createTaskAsync(values, activeUserId);
+      await loadPage();
 
       showToast({
         title: "任务已创建",
@@ -176,12 +176,15 @@ export function TaskListClient({
       await createTaskAsync(task, activeUserId);
     }
 
+    await loadPage();
+
     return importedTasks.length;
   };
 
   const handleUpdateTask = async (id: string, values: TaskFormValues) => {
     try {
       await updateTask(id, values, activeUserId);
+      await loadPage();
       showToast({
         title: "任务已更新",
         description: `“${values.title}” 已更新，改动存好了。`,
@@ -200,6 +203,7 @@ export function TaskListClient({
   const handleUpdateStatus = async (id: string, status: "todo" | "in_progress" | "done") => {
     try {
       await updateTaskStatus(id, status, activeUserId);
+      await loadPage();
       showToast({
         title: "状态已更新",
         description: `任务已切换为${status === "todo" ? "待开始" : status === "in_progress" ? "进行中" : "已完成"}。`,
@@ -217,6 +221,7 @@ export function TaskListClient({
   const handleDeleteTask = async (id: string) => {
     try {
       await deleteTask(id, activeUserId);
+      await loadPage();
       showToast({
         title: "任务已删除",
         description: "这条任务已经从任务本里移除。",
@@ -246,6 +251,7 @@ export function TaskListClient({
     syncParam(params, TASK_QUERY_KEYS.date, nextFilters.date, "");
     syncParam(params, TASK_QUERY_KEYS.range, nextFilters.range, "");
     syncParam(params, TASK_QUERY_KEYS.sort, nextFilters.sort, "due_asc");
+    params.delete(TASK_QUERY_KEYS.page);
 
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
@@ -255,10 +261,47 @@ export function TaskListClient({
     handleFiltersChange(initialFilters);
   };
 
+  const handlePageChange = (nextPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextPage <= 1) params.delete(TASK_QUERY_KEYS.page);
+    else params.set(TASK_QUERY_KEYS.page, String(nextPage));
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
+  const handleExportTasks = async () => {
+    try {
+      const response = await fetch("/api/tasks?export=1");
+      const payload = (await response.json().catch(() => null)) as { tasks?: Task[]; message?: string } | null;
+      if (!response.ok || !payload?.tasks) {
+        throw new Error(payload?.message || "导出任务失败。");
+      }
+
+      const file = new Blob(
+        [JSON.stringify({ version: 1, source: "U's Task", exportedAt: new Date().toISOString(), tasks: payload.tasks }, null, 2)],
+        { type: "application/json" },
+      );
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `taskflow-tasks-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      showToast({
+        title: "导出失败",
+        description: error instanceof Error ? error.message : "无法导出任务，请稍后再试。",
+        tone: "error",
+      });
+    }
+  };
+
   const workspaceState = getWorkspaceState({
     isAuthLoading: isAuthLoading && !canUseInitialData,
     isTaskLoading: visibleIsLoading,
-    taskCount: visibleTasks.length,
+    taskCount: totalCount,
     userId: activeUserId,
   });
 
@@ -277,10 +320,15 @@ export function TaskListClient({
       <div className="tasks-mobile-only">
         <MobileTaskListView
           tasks={filteredTasks}
-          totalCount={visibleTasks.length}
+          totalCount={totalCount}
+          categoryCounts={categoryCounts}
+          page={page}
+          pageSize={pageData?.pageSize ?? DEFAULT_TASK_PAGE_SIZE}
+          hasNext={pageData?.hasNext ?? false}
           filters={filters}
           isLoading={visibleIsLoading}
           onFiltersChange={handleFiltersChange}
+          onPageChange={handlePageChange}
           onCreateTask={handleCreateTask}
           onUpdateStatus={handleUpdateStatus}
         />
@@ -307,7 +355,11 @@ export function TaskListClient({
         ) : null}
         <DesktopTaskWorkbench
           tasks={filteredTasks}
-          totalTasks={visibleTasks}
+          totalCount={totalCount}
+          categoryCounts={categoryCounts}
+          page={page}
+          pageSize={pageData?.pageSize ?? DEFAULT_TASK_PAGE_SIZE}
+          hasNext={pageData?.hasNext ?? false}
           filters={filters}
           isLoading={visibleIsLoading}
           onFiltersChange={handleFiltersChange}
@@ -317,6 +369,7 @@ export function TaskListClient({
           onUpdateTask={handleUpdateTask}
           onUpdateStatus={handleUpdateStatus}
           onDeleteTask={handleDeleteTask}
+          onExportTasks={handleExportTasks}
         />
       </section>
     </>
@@ -390,6 +443,28 @@ function syncParam(params: URLSearchParams, key: string, value: string, fallback
   params.set(key, value);
 }
 
+function buildTaskPageParams(filters: TaskFilters, page: number) {
+  const params = new URLSearchParams();
+  const entries: Array<[string, string, string]> = [
+    [TASK_QUERY_KEYS.query, filters.query, ""],
+    [TASK_QUERY_KEYS.tag, filters.tag, ""],
+    [TASK_QUERY_KEYS.status, filters.status, "all"],
+    [TASK_QUERY_KEYS.priority, filters.priority, "all"],
+    [TASK_QUERY_KEYS.due, filters.due, ""],
+    [TASK_QUERY_KEYS.risk, filters.risk, ""],
+    [TASK_QUERY_KEYS.date, filters.date, ""],
+    [TASK_QUERY_KEYS.range, filters.range, ""],
+    [TASK_QUERY_KEYS.sort, filters.sort, "due_asc"],
+  ];
+
+  entries.forEach(([key, value, fallback]) => {
+    if (value && value !== fallback) params.set(key, value);
+  });
+  params.set(TASK_QUERY_KEYS.page, String(page));
+  params.set("limit", String(DEFAULT_TASK_PAGE_SIZE));
+  return params;
+}
+
 function areFiltersEqual(left: TaskFilters, right: TaskFilters) {
   return (
     left.query === right.query &&
@@ -404,40 +479,8 @@ function areFiltersEqual(left: TaskFilters, right: TaskFilters) {
   );
 }
 
-function matchesRiskFilter(task: Task, risk: TaskRiskFilter) {
-  if (task.status === "done") {
-    return false;
-  }
-
-  if (risk === TASK_RISK_FILTERS.overdue) {
-    return getTaskDueMeta(task).isOverdue;
-  }
-
-  const offset = getDueDayOffset(task.dueDate);
-
-  if (risk === TASK_RISK_FILTERS.high) {
-    return task.priority === "high" || getTaskDueMeta(task).isOverdue;
-  }
-
-  if (risk === TASK_RISK_FILTERS.medium) {
-    return task.priority === "medium" || (offset !== null && offset >= 0 && offset <= 1);
-  }
-
-  return task.priority === "low" || (offset !== null && offset >= 0 && offset <= 3);
-}
-
 function hasActiveDateRangeFilter(date: string, range: DashboardRangeValue | "") {
   return hasActiveTaskDateRangeFilter({ date: parseTaskDateParam(date), range });
-}
-
-function matchesDateRangeFilter(task: Task, date: string, range: DashboardRangeValue | "") {
-  const selectedDate = parseTaskDateParam(date);
-
-  if (!hasActiveTaskDateRangeFilter({ date: selectedDate, range })) {
-    return true;
-  }
-
-  return filterTasksByTaskDateRange([task], { date: selectedDate, range }).length > 0;
 }
 
 function parseTaskRange(value: string | null | undefined): DashboardRangeValue | "" {
@@ -503,22 +546,6 @@ function buildActiveFilterLabels(filters: TaskFilters) {
   }
 
   return labels;
-}
-
-function getDueDayOffset(value: string | undefined) {
-  if (!value) {
-    return null;
-  }
-
-  const dueDate = parseTaskDueDateValue(value);
-
-  if (!dueDate) {
-    return null;
-  }
-
-  const today = startOfTaskDay(new Date());
-
-  return Math.round((dueDate.getTime() - today.getTime()) / 86400000);
 }
 
 const statusFilterLabels = {

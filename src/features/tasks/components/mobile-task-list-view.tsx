@@ -9,13 +9,19 @@ import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { TASK_DUE_FILTERS } from "@/shared/lib/constants/query-params";
 import { ROUTES } from "@/shared/lib/constants/routes";
+import type { TaskCategoryCounts } from "@/features/tasks/utils/task-list-query";
 
 type MobileTaskListViewProps = {
   tasks: Task[];
   totalCount: number;
+  categoryCounts?: TaskCategoryCounts;
+  page?: number;
+  pageSize?: number;
+  hasNext?: boolean;
   filters: TaskFilters;
   isLoading: boolean;
   onFiltersChange: (filters: TaskFilters) => void;
+  onPageChange?: (page: number) => void;
   onCreateTask: (values: TaskFormValues) => void | Promise<void>;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
 };
@@ -48,14 +54,19 @@ const statusLabel: Record<Task["status"], string> = {
 export function MobileTaskListView({
   tasks,
   totalCount,
+  categoryCounts,
+  page = 1,
+  pageSize = 50,
+  hasNext = false,
   filters,
   isLoading,
   onFiltersChange,
+  onPageChange,
   onCreateTask,
   onUpdateStatus,
 }: MobileTaskListViewProps) {
-  const openCount = tasks.filter((task) => task.status !== "done").length;
-  const doneCount = tasks.filter((task) => task.status === "done").length;
+  const openCount = categoryCounts?.active ?? tasks.filter((task) => task.status !== "done").length;
+  const doneCount = categoryCounts?.done ?? tasks.filter((task) => task.status === "done").length;
   const highCount = tasks.filter((task) => task.status !== "done" && task.priority === "high").length;
   const selectedQuickFilter = getSelectedQuickFilter(filters);
 
@@ -134,6 +145,19 @@ export function MobileTaskListView({
           </div>
         )}
       </div>
+      {onPageChange && totalCount > pageSize ? (
+        <nav className="task-pagination task-pagination--mobile" aria-label="任务分页">
+          <button type="button" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+            上一页
+          </button>
+          <span>
+            第 {page} / {Math.max(1, Math.ceil(totalCount / pageSize))} 页
+          </span>
+          <button type="button" disabled={!hasNext} onClick={() => onPageChange(page + 1)}>
+            下一页
+          </button>
+        </nav>
+      ) : null}
     </section>
   );
 }
