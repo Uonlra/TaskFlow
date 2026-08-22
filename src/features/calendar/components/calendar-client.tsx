@@ -112,9 +112,11 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     setError(null);
     void fetch(`/api/tasks/range?${params.toString()}`)
       .then(async (response) => {
-        const payload = (await response.json().catch(() => null)) as
-          | { tasks?: Task[]; hasAnyTasks?: boolean; message?: string }
-          | null;
+        const payload = (await response.json().catch(() => null)) as {
+          tasks?: Task[];
+          hasAnyTasks?: boolean;
+          message?: string;
+        } | null;
         if (!response.ok || !payload?.tasks) {
           throw new Error(payload?.message || "无法加载日历任务。");
         }

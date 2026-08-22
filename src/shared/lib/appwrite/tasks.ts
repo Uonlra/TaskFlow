@@ -5,6 +5,7 @@ import type { NextRequest } from "next/server";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
+import type { DashboardAnalyticsRange } from "@/features/tasks/utils/task-analytics";
 import {
   addTaskDays,
   formatTaskDateParam,
@@ -13,7 +14,11 @@ import {
   startOfTaskDay,
 } from "@/features/tasks/utils/task-date-filters";
 import { TASK_DUE_FILTERS, DASHBOARD_RANGE_VALUES } from "@/shared/lib/constants/query-params";
-import { DEFAULT_TASK_PAGE_SIZE, MAX_TASK_PAGE_SIZE, type TaskPageResult } from "@/features/tasks/utils/task-list-query";
+import {
+  DEFAULT_TASK_PAGE_SIZE,
+  MAX_TASK_PAGE_SIZE,
+  type TaskPageResult,
+} from "@/features/tasks/utils/task-list-query";
 import { appwriteDatabaseId, appwriteTasksTableId, hasAppwriteDatabaseEnv } from "@/shared/lib/appwrite/env";
 import { appwriteFetch } from "@/shared/lib/appwrite/request";
 
@@ -48,6 +53,102 @@ export async function listTasks(sessionSecret: string, request?: NextRequest) {
   });
 
   return (payload.rows ?? []).map(mapTaskRow);
+}
+
+const DASHBOARD_QUERY_LIMIT = 5000;
+const DASHBOARD_SELECT_FIELDS = [
+  "$id",
+  "$createdAt",
+  "$updatedAt",
+  "title",
+  "taskName",
+  "description",
+  "status",
+  "priority",
+  "tags",
+  "dueDate",
+  "completedAt",
+];
+
+export async function listTasksForDashboard(
+  sessionSecret: string,
+  range: DashboardAnalyticsRange,
+  request?: NextRequest,
+) {
+  const scopeQueries = range === "all" ? [] : buildDashboardRangeQueries(range);
+  const [scopedPayload, pacePayload, anyTaskPayload] = await Promise.all([
+    appwriteTaskRequest<AppwriteRowsList>("", {
+      sessionSecret,
+      request,
+      searchParams: {
+        queries: [...scopeQueries, querySelect(DASHBOARD_SELECT_FIELDS), queryLimit(DASHBOARD_QUERY_LIMIT)],
+      },
+    }),
+    appwriteTaskRequest<AppwriteRowsList>("", {
+      sessionSecret,
+      request,
+      searchParams: {
+        queries: [...buildDashboardPaceQueries(), querySelect(DASHBOARD_SELECT_FIELDS), queryLimit(DASHBOARD_QUERY_LIMIT)],
+      },
+    }),
+    appwriteTaskRequest<AppwriteRowsList>("", {
+      sessionSecret,
+      request,
+      searchParams: { queries: [queryLimit(1)] },
+    }),
+  ]);
+
+  return {
+    tasks: (scopedPayload.rows ?? []).map(mapTaskRow),
+    paceTasks: (pacePayload.rows ?? []).map(mapTaskRow),
+    hasAnyTasks: getRowsTotal(anyTaskPayload) > 0,
+  };
+}
+
+function buildDashboardRangeQueries(range: Exclude<DashboardAnalyticsRange, "all">) {
+  const start = startOfTaskDay(new Date());
+  const end = addTaskDays(start, range === "today" ? 1 : 7);
+  const timestampFields = ["$createdAt", "$updatedAt", "completedAt"];
+  const timestampQueries = timestampFields.map((field) =>
+    buildDateRangeQuery(field, start.toISOString(), end.toISOString()),
+  );
+  const dueQueries = buildDateRangeQuery(
+    "dueDate",
+    toAppwriteDateTime(formatTaskDateParam(start)) as string,
+    toAppwriteDateTime(formatTaskDateParam(end)) as string,
+  );
+
+  return [queryOr([...timestampQueries, dueQueries])];
+}
+
+function buildDateRangeQuery(attribute: string, from: string, to: string) {
+  return queryAnd([queryGreaterThanEqual(attribute, from), queryLessThan(attribute, to)]);
+}
+
+function buildDashboardPaceQueries() {
+  const today = startOfTaskDay(new Date());
+  const tomorrow = addTaskDays(today, 1);
+  const todayStart = today.toISOString();
+  const tomorrowStart = tomorrow.toISOString();
+  const todayDue = toAppwriteDateTime(formatTaskDateParam(today)) as string;
+  const tomorrowDue = toAppwriteDateTime(formatTaskDateParam(tomorrow)) as string;
+
+  return [
+    queryOr([
+      queryAnd([
+        queryEqual("status", "done"),
+        queryGreaterThanEqual("completedAt", todayStart),
+        queryLessThan("completedAt", tomorrowStart),
+      ]),
+      queryEqual("status", "in_progress"),
+      queryAnd([queryNotEqual("status", "done"), queryLessThan("dueDate", todayDue)]),
+      queryAnd([
+        queryNotEqual("status", "done"),
+        queryGreaterThanEqual("dueDate", todayDue),
+        queryLessThan("dueDate", tomorrowDue),
+      ]),
+    ]),
+  ];
 }
 
 /**
@@ -188,7 +289,9 @@ function appendDateFilters(queries: string[], filters: TaskFilters) {
   }
 
   if (filters.due === TASK_DUE_FILTERS.overdue) {
-    queries.push(queryLessThan("dueDate", toAppwriteDateTime(formatTaskDateParam(startOfTaskDay(new Date()))) as string));
+    queries.push(
+      queryLessThan("dueDate", toAppwriteDateTime(formatTaskDateParam(startOfTaskDay(new Date()))) as string),
+    );
     queries.push(queryNotEqual("status", "done"));
   } else if (filters.due === TASK_DUE_FILTERS.today) {
     const today = startOfTaskDay(new Date());
@@ -414,6 +517,18 @@ function queryNotEqual(attribute: string, value: string) {
 
 function querySearch(attribute: string, value: string) {
   return buildQuery("search", attribute, value);
+}
+
+function querySelect(attributes: string[]) {
+  return JSON.stringify({ method: "select", values: attributes });
+}
+
+function queryOr(queries: string[]) {
+  return JSON.stringify({ method: "or", values: queries.map((value) => JSON.parse(value)) });
+}
+
+function queryAnd(queries: string[]) {
+  return JSON.stringify({ method: "and", values: queries.map((value) => JSON.parse(value)) });
 }
 
 function queryGreaterThanEqual(attribute: string, value: string) {

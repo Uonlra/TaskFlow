@@ -14,7 +14,12 @@ vi.mock("@/shared/lib/appwrite/request", () => ({
   appwriteFetch: mocks.appwriteFetch,
 }));
 
-import { buildTaskPageQueries, buildTaskSearchText, listTasksByDueRange } from "@/shared/lib/appwrite/tasks";
+import {
+  buildTaskPageQueries,
+  buildTaskSearchText,
+  listTasksByDueRange,
+  listTasksForDashboard,
+} from "@/shared/lib/appwrite/tasks";
 
 describe("listTasksByDueRange", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -22,7 +27,18 @@ describe("listTasksByDueRange", () => {
   it("将日期边界映射为 Appwrite queries，并用轻量查询判断账号是否有任务", async () => {
     mocks.appwriteFetch
       .mockResolvedValueOnce({
-        rows: [{ $id: "task-1", $createdAt: "2026-08-01T00:00:00.000Z", $updatedAt: "2026-08-01T00:00:00.000Z", title: "任务", description: "", status: "todo", priority: "high", dueDate: "2026-08-10T00:00:00.000Z" }],
+        rows: [
+          {
+            $id: "task-1",
+            $createdAt: "2026-08-01T00:00:00.000Z",
+            $updatedAt: "2026-08-01T00:00:00.000Z",
+            title: "任务",
+            description: "",
+            status: "todo",
+            priority: "high",
+            dueDate: "2026-08-10T00:00:00.000Z",
+          },
+        ],
       })
       .mockResolvedValueOnce({ total: 1, rows: [] });
 
@@ -104,5 +120,29 @@ describe("buildTaskPageQueries", () => {
 describe("buildTaskSearchText", () => {
   it("组合标题、描述和去重后的标签内容", () => {
     expect(buildTaskSearchText("  项目复盘 ", "整理结论", ["工作", "重要"])).toBe("项目复盘 整理结论 工作 重要");
+  });
+});
+
+describe("listTasksForDashboard", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("只选择总览字段并按活动范围发送日期 OR 查询", async () => {
+    mocks.appwriteFetch
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ total: 0, rows: [] });
+
+    const result = await listTasksForDashboard("session-secret", "week");
+
+    expect(result).toEqual({ tasks: [], paceTasks: [], hasAnyTasks: false });
+    const scopedCall = mocks.appwriteFetch.mock.calls[0][0];
+    expect(scopedCall.searchParams.queries).toHaveLength(3);
+    expect(scopedCall.searchParams.queries[0]).toContain('"method":"or"');
+    expect(scopedCall.searchParams.queries[1]).toContain('"method":"select"');
+    expect(scopedCall.searchParams.queries[2]).toBe('{"method":"limit","values":[5000]}');
+    expect(mocks.appwriteFetch.mock.calls[1][0].searchParams.queries[0]).toContain('"method":"or"');
+    expect(mocks.appwriteFetch.mock.calls[1][0].searchParams.queries[1]).toContain('"method":"select"');
+    expect(mocks.appwriteFetch.mock.calls[1][0].searchParams.queries[2]).toBe('{"method":"limit","values":[5000]}');
+    expect(mocks.appwriteFetch.mock.calls[2][0].searchParams.queries).toEqual(['{"method":"limit","values":[1]}']);
   });
 });
