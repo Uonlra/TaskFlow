@@ -1660,3 +1660,182 @@ html[data-theme="dark"] .dashboard-workspace__metric-icon {
   border-color: var(--border);
   background: var(--surface);
 }
+
+/* Step 20: Make the action workspace the clear visual anchor. */
+@media (min-width: 761px) {
+  .dashboard-workspace__priority {
+    border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+    background: var(--surface-strong);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    padding: 24px 26px 22px;
+  }
+
+  .dashboard-workspace__priority .dashboard-workspace__head h1 {
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .dashboard-workspace__progress {
+    border-color: var(--border-soft);
+    background: var(--surface-soft);
+    box-shadow: none;
+  }
+
+  .dashboard-workspace__progress .dashboard-workspace__head h2 {
+    color: var(--muted-strong);
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  .dashboard-workspace__status-grid {
+    border-color: var(--border-soft);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .dashboard-workspace__metric {
+    min-height: 72px;
+    padding: 12px 20px;
+  }
+
+  .dashboard-v2-grid .dashboard-v2-panel {
+    border-color: var(--border-soft);
+    background: color-mix(in srgb, var(--surface-strong) 86%, var(--page-background));
+    box-shadow: none;
+  }
+
+  .dashboard-v2-grid .dashboard-v2-panel__head {
+    margin-bottom: 14px;
+  }
+
+  .dashboard-v2-grid .dashboard-v2-panel__head h2 {
+    color: var(--muted-strong);
+    font-size: 16px;
+    font-weight: 500;
+  }
+}
+
+@media (min-width: 1181px) {
+  .dashboard-workspace {
+    grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+    gap: 20px;
+  }
+}
+
+/* Step 22: Let the existing review area occupy the available desktop height. */
+@media (min-width: 1181px) {
+  .dashboard-v2-shell:not(.dashboard-v2-shell--empty) {
+    min-height: calc(100dvh - 72px);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .dashboard-v2-grid {
+    min-height: 0;
+    align-items: stretch;
+  }
+
+  .dashboard-v2-grid__main,
+  .dashboard-v2-grid__aside {
+    min-height: 0;
+    grid-template-rows: minmax(220px, 1.02fr) minmax(220px, 1fr);
+  }
+
+  .dashboard-v2-grid__main > .dashboard-v2-panel,
+  .dashboard-v2-grid__aside > .dashboard-v2-panel {
+    height: 100%;
+  }
+
+  .dashboard-v2-echart--trend,
+  .dashboard-v2-empty-chart {
+    height: clamp(224px, 24vh, 288px);
+    min-height: clamp(224px, 24vh, 288px);
+  }
+
+  .dashboard-v2-echart--compact,
+  .dashboard-v2-echart--donut,
+  .dashboard-v2-donut-layout {
+    height: clamp(154px, 18vh, 210px);
+    min-height: clamp(154px, 18vh, 210px);
+  }
+}
+
+/* Step 23: Shared surfaces with a single elevated action module. */
+@media (min-width: 761px) {
+  .dashboard-workspace__progress {
+    border-color: var(--border);
+    background: var(--surface-strong);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.025);
+  }
+
+  .dashboard-workspace__status-grid {
+    border-color: var(--border);
+    background: var(--surface-strong);
+  }
+}
+
+@media (min-width: 1181px) {
+  .dashboard-main:has(.dashboard-v2-shell) {
+    background: #f1f3f6;
+  }
+
+  .dashboard-v2-grid {
+    gap: 24px;
+    padding: 20px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: var(--surface-strong);
+  }
+
+  .dashboard-v2-grid__main {
+    padding-right: 24px;
+    border-right: 1px solid var(--border-soft);
+  }
+
+  .dashboard-v2-grid .dashboard-v2-panel {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .dashboard-v2-grid .dashboard-v2-distribution-card {
+    padding: 14px 12px 0;
+    border-top: 1px solid var(--border-soft);
+  }
+}
+
+html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
+  background: var(--page-background);
+}
+
+/* Step 24: Soften the primary card while keeping a clear action cue. */
+@media (min-width: 761px) {
+  .dashboard-workspace__priority {
+    position: relative;
+    border-color: var(--border);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+  }
+
+  .dashboard-workspace__priority::before {
+    position: absolute;
+    top: 18px;
+    bottom: 18px;
+    left: 0;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--primary);
+    content: "";
+  }
+
+  .dashboard-workspace__priority .dashboard-workspace__head h1 {
+    font-size: 21px;
+    font-weight: 650;
+  }
+}
+
+@media (min-width: 1181px) {
+  .dashboard-v2-grid {
+    background: var(--surface-soft);
+  }
+}

@@ -1237,3 +1237,16 @@ html[data-theme="dark"] .dashboard-sidebar-link--active .dashboard-sidebar-link_
   border-color: var(--primary);
   color: var(--primary);
 }
+
+/* Step 21: Quiet desktop sidebar boundary and grouped footer. */
+@media (min-width: 1181px) {
+  .dashboard-sidebar {
+    border-right-color: color-mix(in srgb, var(--border-strong) 32%, var(--border));
+    background: var(--surface-strong);
+    box-shadow: 2px 0 14px rgba(15, 23, 42, 0.045);
+  }
+
+  .dashboard-sidebar-footer {
+    border-top-color: var(--border-soft);
+  }
+}
