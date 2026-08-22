@@ -34,7 +34,7 @@ test("任务详情可以切换到活动时间线", async ({ context, page }) => 
     });
   });
 
-  await page.route("**/api/tasks", async (route) => {
+  await page.route("**/api/tasks**", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -53,6 +53,16 @@ test("任务详情可以切换到活动时间线", async ({ context, page }) => 
             completedAt: "2026-08-15T10:00:00.000Z",
           },
         ],
+        total: 1,
+        page: 1,
+        pageSize: 50,
+        hasNext: false,
+        categoryCounts: {
+          near: 0,
+          active: 0,
+          done: 1,
+          all: 1,
+        },
       }),
     });
   });
