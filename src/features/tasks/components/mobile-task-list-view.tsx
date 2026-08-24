@@ -24,6 +24,7 @@ type MobileTaskListViewProps = {
   onPageChange?: (page: number) => void;
   onCreateTask: (values: TaskFormValues) => void | Promise<void>;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
+  onPreviewTask?: (task: Task) => void;
 };
 
 type QuickFilter = {
@@ -64,6 +65,7 @@ export function MobileTaskListView({
   onPageChange,
   onCreateTask,
   onUpdateStatus,
+  onPreviewTask = () => {},
 }: MobileTaskListViewProps) {
   const openCount = categoryCounts?.active ?? tasks.filter((task) => task.status !== "done").length;
   const doneCount = categoryCounts?.done ?? tasks.filter((task) => task.status === "done").length;
@@ -137,7 +139,9 @@ export function MobileTaskListView({
 
       <div className="mobile-task-list__items">
         {tasks.length ? (
-          tasks.map((task) => <MobileTaskItem key={task.id} task={task} onUpdateStatus={onUpdateStatus} />)
+          tasks.map((task) => (
+            <MobileTaskItem key={task.id} task={task} onUpdateStatus={onUpdateStatus} onPreviewTask={onPreviewTask} />
+          ))
         ) : (
           <div className="mobile-task-list__empty mobile-empty-state">
             <strong>没有任务</strong>
@@ -174,9 +178,11 @@ function StatItem({ label, value }: { label: string; value: number }) {
 function MobileTaskItem({
   task,
   onUpdateStatus,
+  onPreviewTask,
 }: {
   task: Task;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
+  onPreviewTask: (task: Task) => void;
 }) {
   const dueMeta = getTaskDueMeta(task);
   const nextStatus = task.status === "done" ? "todo" : "done";
@@ -192,7 +198,14 @@ function MobileTaskItem({
         aria-pressed={task.status === "done"}
         onClick={() => onUpdateStatus(task.id, nextStatus)}
       />
-      <Link href={`${ROUTES.tasks}/${task.id}`} className="mobile-task-item__body">
+      <Link
+        href={`${ROUTES.tasks}/${task.id}`}
+        className="mobile-task-item__body"
+        onClick={(event) => {
+          event.preventDefault();
+          onPreviewTask(task);
+        }}
+      >
         <span className="mobile-task-item__main">
           <strong>{task.title}</strong>
           <small>{formatTaskMeta(task, dueMeta.label)}</small>

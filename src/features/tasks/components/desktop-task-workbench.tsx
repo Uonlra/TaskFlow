@@ -34,6 +34,7 @@ type DesktopTaskWorkbenchProps = {
   onUpdateTask: (id: string, values: TaskFormValues) => void | Promise<void>;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
   onDeleteTask: (id: string) => void | Promise<void>;
+  onPreviewTask?: (task: Task) => void;
 };
 
 const categoryTabs = [
@@ -68,6 +69,7 @@ export function DesktopTaskWorkbench({
   onUpdateTask,
   onUpdateStatus,
   onDeleteTask,
+  onPreviewTask = () => {},
 }: DesktopTaskWorkbenchProps) {
   const { showToast } = useToast();
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -301,6 +303,7 @@ export function DesktopTaskWorkbench({
             emptyState={emptyState}
             selectedTaskId={selectedTask?.id ?? null}
             onSelectTask={setSelectedTaskId}
+            onPreviewTask={onPreviewTask}
             onUpdateStatus={onUpdateStatus}
             scrollPositionRef={taskListScrollTopRef}
           />

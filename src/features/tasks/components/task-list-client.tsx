@@ -26,6 +26,7 @@ import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 import { DEFAULT_TASK_PAGE_SIZE, parseTaskPageParam } from "@/features/tasks/utils/task-list-query";
+import { TaskQuickViewDialog } from "@/features/tasks/components/task-quick-view-dialog";
 
 const SETTINGS_STORAGE_KEY = "u-task-settings";
 
@@ -59,6 +60,7 @@ export function TaskListClient({
   const [pageData, setPageData] = useState<TaskPageInitialData | null>(initialData);
   const [pageLoading, setPageLoading] = useState(!initialData);
   const [pageError, setPageError] = useState<string | null>(null);
+  const [previewTask, setPreviewTask] = useState<Task | null>(null);
   const createTaskAsync = useTaskStore((state) => state.createTaskAsync);
   const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
@@ -339,6 +341,7 @@ export function TaskListClient({
           onPageChange={handlePageChange}
           onCreateTask={handleCreateTask}
           onUpdateStatus={handleUpdateStatus}
+          onPreviewTask={setPreviewTask}
         />
       </div>
       <section className="tasks-toolbar tasks-desktop-only">
@@ -377,9 +380,26 @@ export function TaskListClient({
           onUpdateTask={handleUpdateTask}
           onUpdateStatus={handleUpdateStatus}
           onDeleteTask={handleDeleteTask}
+          onPreviewTask={setPreviewTask}
           onExportTasks={handleExportTasks}
         />
       </section>
+      <TaskQuickViewDialog
+        task={previewTask}
+        onClose={() => setPreviewTask(null)}
+        onEdit={(task) => {
+          setPreviewTask(null);
+          router.push(`${pathname}/${task.id}`);
+        }}
+        onToggleComplete={async (task) => {
+          await handleUpdateStatus(task.id, task.status === "done" ? "todo" : "done");
+          setPreviewTask(null);
+        }}
+        onDelete={async (task) => {
+          await handleDeleteTask(task.id);
+          setPreviewTask(null);
+        }}
+      />
     </>
   );
 }
