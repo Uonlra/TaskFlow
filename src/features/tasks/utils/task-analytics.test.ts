@@ -59,4 +59,13 @@ describe("buildDashboardStats", () => {
     expect(stats.todayPace.completedCount).toBe(1);
     expect(stats.todayPace.inProgressCount).toBe(1);
   });
+
+  it("保留总览任务速览所需的任务描述", () => {
+    const stats = buildDashboardStats([makeTask({ description: "这是总览速览需要展示的描述。" })], { range: "all" });
+
+    expect(stats.focusTasks[0]).toMatchObject({
+      id: "task-1",
+      description: "这是总览速览需要展示的描述。",
+    });
+  });
 });

@@ -25,6 +25,7 @@ type DashboardWorkspaceProps = {
   priorityFilters: DashboardPriorityFilters;
   onPriorityFiltersChange: (filters: DashboardPriorityFilters) => void;
   onCreateTask: (values: TaskFormValues) => Promise<void>;
+  onPreviewTask: (task: DashboardTaskPreview) => void;
 };
 
 export function DashboardWorkspace({
@@ -38,6 +39,7 @@ export function DashboardWorkspace({
   priorityFilters,
   onPriorityFiltersChange,
   onCreateTask,
+  onPreviewTask,
 }: DashboardWorkspaceProps) {
   const progress = stats.totalCount ? Math.round((stats.completedCount / stats.totalCount) * 360) : 0;
   const remainingCount = Math.max(stats.totalCount - stats.completedCount, 0);
@@ -63,7 +65,7 @@ export function DashboardWorkspace({
           {priorityTasks.length ? (
             <div className="dashboard-workspace__task-list">
               {priorityTasks.map((task) => (
-                <PriorityTaskRow key={task.id} task={task} />
+                <PriorityTaskRow key={task.id} task={task} onPreviewTask={onPreviewTask} />
               ))}
             </div>
           ) : (
@@ -129,11 +131,17 @@ export function DashboardWorkspace({
   );
 }
 
-function PriorityTaskRow({ task }: { task: DashboardTaskPreview }) {
+function PriorityTaskRow({
+  task,
+  onPreviewTask,
+}: {
+  task: DashboardTaskPreview;
+  onPreviewTask: (task: DashboardTaskPreview) => void;
+}) {
   const className = ["dashboard-workspace__task", "dashboard-workspace__task--" + task.priority].join(" ");
 
   return (
-    <a href={"/tasks/" + task.id} className={className}>
+    <button type="button" className={className} onClick={() => onPreviewTask(task)}>
       <span className="dashboard-workspace__check" aria-hidden="true" />
       <strong>{task.title}</strong>
       <span className="dashboard-workspace__priority-label">{priorityLabels[task.priority]}优先级</span>
@@ -141,7 +149,7 @@ function PriorityTaskRow({ task }: { task: DashboardTaskPreview }) {
       <span className={["dashboard-workspace__status", "dashboard-workspace__status--" + task.status].join(" ")}>
         {statusLabels[task.status]}
       </span>
-    </a>
+    </button>
   );
 }
 

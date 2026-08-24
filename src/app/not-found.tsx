@@ -20,9 +20,9 @@ export default function NotFoundPage() {
         }}
       >
         <p style={{ margin: 0, color: "var(--primary)", fontWeight: 700, letterSpacing: "0.08em" }}>未找到页面</p>
-        <h1 style={{ margin: "12px 0 0", fontSize: "2rem" }}>这个页面暂时不存在</h1>
+        <h1 style={{ margin: "12px 0 0", fontSize: "2rem" }}>页面暂时不存在</h1>
         <p style={{ margin: "14px 0 0", color: "var(--muted)", lineHeight: 1.7 }}>
-          你打开的路径目前还没有内容，可以先回到总览继续整理任务。
+          当前路径内容为空，返回总览继续整理任务。
         </p>
         <Link
           href="/dashboard"

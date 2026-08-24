@@ -339,6 +339,7 @@ export function TaskListClient({
           onPageChange={handlePageChange}
           onCreateTask={handleCreateTask}
           onUpdateStatus={handleUpdateStatus}
+          onPreviewTask={(task) => router.push(`${pathname}/${task.id}`)}
         />
       </div>
       <section className="tasks-toolbar tasks-desktop-only">
@@ -377,6 +378,7 @@ export function TaskListClient({
           onUpdateTask={handleUpdateTask}
           onUpdateStatus={handleUpdateStatus}
           onDeleteTask={handleDeleteTask}
+          onPreviewTask={(task) => router.push(`${pathname}/${task.id}`)}
           onExportTasks={handleExportTasks}
         />
       </section>

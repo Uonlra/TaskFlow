@@ -385,6 +385,14 @@
   align-items: center;
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .dashboard-v2-task:last-child {
@@ -672,8 +680,16 @@
   align-items: center;
   min-height: 52px;
   border-bottom: 1px solid var(--border);
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  padding: 0;
+  background: transparent;
   color: var(--foreground);
   text-decoration: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   transition:
     background-color 160ms ease,
     color 160ms ease;

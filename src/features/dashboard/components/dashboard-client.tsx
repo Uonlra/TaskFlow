@@ -12,6 +12,10 @@ import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/au
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useTaskStore } from "@/features/tasks/store/task-store";
+import { TaskQuickViewDialog } from "@/features/tasks/components/task-quick-view-dialog";
+import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
+import type { Task } from "@/features/tasks/types/task.types";
+import { ROUTES } from "@/shared/lib/constants/routes";
 
 type DashboardRange = "today" | "week" | "all";
 
@@ -44,6 +48,10 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const [range, setRange] = useState<DashboardRange>(initialRange);
   const [priorityFilters, setPriorityFilters] = useState<DashboardPriorityFilters>(initialPriorityFilters);
   const createTaskAsync = useTaskStore((state) => state.createTaskAsync);
+  const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
+  const deleteTask = useTaskStore((state) => state.deleteTask);
+  const syncedTasks = useTaskStore((state) => state.tasks);
+  const [previewTask, setPreviewTask] = useState<Task | null>(null);
   const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +120,25 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     await loadSummary();
   };
 
+  const handlePreviewTask = (task: DashboardTaskPreview) => {
+    const syncedTask = syncedTasks.find((item) => item.id === task.id);
+    setPreviewTask(
+      syncedTask ? { ...syncedTask, description: syncedTask.description || task.description } : toTaskPreview(task),
+    );
+  };
+
+  const handlePreviewStatus = async (task: Task) => {
+    await updateTaskStatus(task.id, task.status === "done" ? "todo" : "done", user?.id);
+    await loadSummary();
+    setPreviewTask(null);
+  };
+
+  const handlePreviewDelete = async (task: Task) => {
+    await deleteTask(task.id, user?.id);
+    await loadSummary();
+    setPreviewTask(null);
+  };
+
   if (workspaceState === "auth-checking") {
     return <WorkspaceAuthCheckingNotice />;
   }
@@ -146,6 +173,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           priorityFilters={priorityFilters}
           onPriorityFiltersChange={setPriorityFilters}
           onCreateTask={handleCreateTask}
+          onPreviewTask={handlePreviewTask}
         />
       </div>
       <div className="dashboard-mobile-only">
@@ -156,8 +184,19 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           isLoading={isLoading}
           onRangeChange={handleRangeChange}
           onCreateTask={handleCreateTask}
+          onPreviewTask={handlePreviewTask}
         />
       </div>
+      <TaskQuickViewDialog
+        task={previewTask}
+        onClose={() => setPreviewTask(null)}
+        onEdit={(task) => {
+          setPreviewTask(null);
+          router.push(`${ROUTES.tasks}/${task.id}`);
+        }}
+        onToggleComplete={handlePreviewStatus}
+        onDelete={handlePreviewDelete}
+      />
     </>
   );
 }
@@ -168,4 +207,17 @@ function parseDashboardRange(value: string | null | undefined): DashboardRange {
   }
 
   return "today";
+}
+
+function toTaskPreview(task: DashboardTaskPreview): Task {
+  return {
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    status: task.status,
+    priority: task.priority,
+    tags: task.tags,
+    dueDate: task.dueDate,
+    createdAt: "",
+  };
 }

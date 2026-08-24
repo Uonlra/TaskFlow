@@ -151,7 +151,7 @@ export default function ProductPage() {
           </div>
           <Image
             className={styles.dashboardImage}
-            src="/../docs/screenshots/dashboard.png"
+            src="/screenshots/dashboard.png"
             alt="U's Task 总览页面，展示今日任务、完成进度、趋势和截止风险"
             width={2559}
             height={1274}

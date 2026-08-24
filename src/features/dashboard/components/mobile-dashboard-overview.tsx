@@ -19,6 +19,7 @@ type MobileDashboardOverviewProps = {
   isLoading: boolean;
   onRangeChange: (range: MobileDashboardRange) => void;
   onCreateTask: (values: TaskFormValues) => void | Promise<void>;
+  onPreviewTask: (task: DashboardTaskPreview) => void;
 };
 
 const rangeOptions: Array<{ value: MobileDashboardRange; label: string }> = [
@@ -46,6 +47,7 @@ export function MobileDashboardOverview({
   isLoading,
   onRangeChange,
   onCreateTask,
+  onPreviewTask,
 }: MobileDashboardOverviewProps) {
   const focusTasks = stats.focusTasks.slice(0, 4);
   const timelineTasks = stats.upcomingDeadlines.slice(0, 5);
@@ -121,7 +123,7 @@ export function MobileDashboardOverview({
         </div>
         <div className="mobile-dashboard__task-stack">
           {focusTasks.length ? (
-            focusTasks.map((task) => <MobileTaskRow key={task.id} task={task} />)
+            focusTasks.map((task) => <MobileTaskRow key={task.id} task={task} onPreviewTask={onPreviewTask} />)
           ) : (
             <p className="mobile-dashboard__empty mobile-empty-state">暂无待处理任务</p>
           )}
@@ -135,7 +137,7 @@ export function MobileDashboardOverview({
         </div>
         <div className="mobile-dashboard__timeline">
           {timelineTasks.length ? (
-            timelineTasks.map((task) => <TimelineItem key={task.id} task={task} />)
+            timelineTasks.map((task) => <TimelineItem key={task.id} task={task} onPreviewTask={onPreviewTask} />)
           ) : (
             <p className="mobile-dashboard__empty mobile-empty-state">没有临近日程</p>
           )}
@@ -186,11 +188,18 @@ function MetricCard({
   );
 }
 
-function MobileTaskRow({ task }: { task: DashboardTaskPreview }) {
+function MobileTaskRow({
+  task,
+  onPreviewTask,
+}: {
+  task: DashboardTaskPreview;
+  onPreviewTask: (task: DashboardTaskPreview) => void;
+}) {
   return (
-    <Link
-      href={`${ROUTES.tasks}/${task.id}`}
+    <button
+      type="button"
       className={`mobile-dashboard__task-row mobile-dashboard__task-row--${task.priority}`}
+      onClick={() => onPreviewTask(task)}
     >
       <span className="mobile-dashboard__task-status" aria-hidden="true" />
       <span className="mobile-dashboard__task-copy">
@@ -198,19 +207,25 @@ function MobileTaskRow({ task }: { task: DashboardTaskPreview }) {
         <small>{task.dueLabel}</small>
       </span>
       <span className="mobile-dashboard__task-priority">{priorityLabel[task.priority]}</span>
-    </Link>
+    </button>
   );
 }
 
-function TimelineItem({ task }: { task: DashboardTaskPreview }) {
+function TimelineItem({
+  task,
+  onPreviewTask,
+}: {
+  task: DashboardTaskPreview;
+  onPreviewTask: (task: DashboardTaskPreview) => void;
+}) {
   return (
-    <Link href={`${ROUTES.tasks}/${task.id}`} className="mobile-dashboard__timeline-item">
+    <button type="button" className="mobile-dashboard__timeline-item" onClick={() => onPreviewTask(task)}>
       <time>{formatShortDate(task.dueDate)}</time>
       <span>
         <strong>{task.title}</strong>
         <small>{statusLabel[task.status]}</small>
       </span>
-    </Link>
+    </button>
   );
 }
 

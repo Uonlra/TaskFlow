@@ -9,9 +9,16 @@ type DashboardFocusPanelProps = {
   deadlines: DashboardTaskPreview[];
   range: DashboardAnalyticsRange;
   showFocus?: boolean;
+  onPreviewTask: (task: DashboardTaskPreview) => void;
 };
 
-export function DashboardFocusPanel({ tasks, deadlines, range, showFocus = true }: DashboardFocusPanelProps) {
+export function DashboardFocusPanel({
+  tasks,
+  deadlines,
+  range,
+  showFocus = true,
+  onPreviewTask,
+}: DashboardFocusPanelProps) {
   const copy = getFocusCopy(range);
   const taskIds = new Set(tasks.map((task) => task.id));
   const visibleDeadlines = deadlines.filter((task) => !taskIds.has(task.id));
@@ -24,7 +31,7 @@ export function DashboardFocusPanel({ tasks, deadlines, range, showFocus = true 
             <h2>{copy.focusTitle}</h2>
             <Link href={buildTasksHref({ priority: "high" })}>查看全部</Link>
           </div>
-          <TaskPreviewList tasks={tasks} emptyLabel={copy.focusEmpty} />
+          <TaskPreviewList tasks={tasks} emptyLabel={copy.focusEmpty} onPreviewTask={onPreviewTask} />
         </section>
       ) : null}
 
@@ -33,13 +40,21 @@ export function DashboardFocusPanel({ tasks, deadlines, range, showFocus = true 
           <h2>{copy.deadlineTitle}</h2>
           <Link href={buildTasksHref({ due: range === "today" ? "today" : "upcoming" })}>查看全部</Link>
         </div>
-        <TaskPreviewList tasks={visibleDeadlines} emptyLabel={copy.deadlineEmpty} />
+        <TaskPreviewList tasks={visibleDeadlines} emptyLabel={copy.deadlineEmpty} onPreviewTask={onPreviewTask} />
       </section>
     </>
   );
 }
 
-function TaskPreviewList({ tasks, emptyLabel }: { tasks: DashboardTaskPreview[]; emptyLabel: string }) {
+function TaskPreviewList({
+  tasks,
+  emptyLabel,
+  onPreviewTask,
+}: {
+  tasks: DashboardTaskPreview[];
+  emptyLabel: string;
+  onPreviewTask: (task: DashboardTaskPreview) => void;
+}) {
   if (!tasks.length) {
     return <DataEmptyState variant="panel" title={emptyLabel} description="当前范围内没有符合条件的任务。" />;
   }
@@ -47,7 +62,12 @@ function TaskPreviewList({ tasks, emptyLabel }: { tasks: DashboardTaskPreview[];
   return (
     <div className="dashboard-v2-task-list">
       {tasks.map((task) => (
-        <article key={task.id} className={`dashboard-v2-task dashboard-v2-task--${task.priority}`}>
+        <button
+          key={task.id}
+          type="button"
+          className={`dashboard-v2-task dashboard-v2-task--${task.priority}`}
+          onClick={() => onPreviewTask(task)}
+        >
           <span className="dashboard-v2-task__flag" aria-hidden="true" />
           <div>
             <strong>{task.title}</strong>
@@ -57,7 +77,7 @@ function TaskPreviewList({ tasks, emptyLabel }: { tasks: DashboardTaskPreview[];
               <b>{statusLabels[task.status]}</b>
             </span>
           </div>
-        </article>
+        </button>
       ))}
     </div>
   );

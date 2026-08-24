@@ -16,6 +16,7 @@ type DesktopTaskTableProps = {
   emptyState: DesktopTaskTableEmptyState;
   selectedTaskId: string | null;
   onSelectTask: (taskId: string) => void;
+  onPreviewTask?: (task: Task) => void;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
   scrollPositionRef: { current: number };
 };
@@ -37,6 +38,7 @@ export function DesktopTaskTable({
   emptyState,
   selectedTaskId,
   onSelectTask,
+  onPreviewTask = () => {},
   onUpdateStatus,
   scrollPositionRef,
 }: DesktopTaskTableProps) {
@@ -95,6 +97,7 @@ export function DesktopTaskTable({
               task={task}
               selected={task.id === selectedTaskId}
               onSelectTask={onSelectTask}
+              onPreviewTask={onPreviewTask}
               onUpdateStatus={onUpdateStatus}
             />
           ))}
@@ -108,11 +111,13 @@ function DesktopTaskRow({
   task,
   selected,
   onSelectTask,
+  onPreviewTask,
   onUpdateStatus,
 }: {
   task: Task;
   selected: boolean;
   onSelectTask: (taskId: string) => void;
+  onPreviewTask: (task: Task) => void;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
 }) {
   const dueMeta = getTaskDueMeta(task);
@@ -127,11 +132,15 @@ function DesktopTaskRow({
       role="row"
       tabIndex={0}
       aria-selected={selected}
-      onClick={() => onSelectTask(task.id)}
+      onClick={() => {
+        onSelectTask(task.id);
+        onPreviewTask(task);
+      }}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           onSelectTask(task.id);
+          onPreviewTask(task);
         }
       }}
     >

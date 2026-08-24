@@ -90,6 +90,7 @@ describe("DesktopTaskTable", () => {
     ["Space", "{" + " " + "}"],
   ])("通过 %s 激活任务行并选择任务", async (_label, key) => {
     const onSelectTask = vi.fn();
+    const onPreviewTask = vi.fn();
     const user = userEvent.setup();
     render(
       <DesktopTaskTable
@@ -97,6 +98,7 @@ describe("DesktopTaskTable", () => {
         emptyState={{ title: "没有任务", description: "" }}
         selectedTaskId={null}
         onSelectTask={onSelectTask}
+        onPreviewTask={onPreviewTask}
         onUpdateStatus={() => {}}
         scrollPositionRef={{ current: 0 }}
       />,
@@ -107,7 +109,30 @@ describe("DesktopTaskTable", () => {
     await user.keyboard(key);
 
     expect(onSelectTask).toHaveBeenCalledWith("task-1");
+    expect(onPreviewTask).toHaveBeenCalledWith(tasks[0]);
     expect(firstRow).toHaveAttribute("tabindex", "0");
+  });
+
+  it("点击任务行时同时选择右侧详情并打开轻量查看", async () => {
+    const onSelectTask = vi.fn();
+    const onPreviewTask = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <DesktopTaskTable
+        tasks={tasks}
+        emptyState={{ title: "没有任务", description: "" }}
+        selectedTaskId={null}
+        onSelectTask={onSelectTask}
+        onPreviewTask={onPreviewTask}
+        onUpdateStatus={() => {}}
+        scrollPositionRef={{ current: 0 }}
+      />,
+    );
+
+    await user.click(screen.getAllByRole("row")[1]);
+
+    expect(onSelectTask).toHaveBeenCalledWith("task-1");
+    expect(onPreviewTask).toHaveBeenCalledWith(tasks[0]);
   });
 
   it("在行内操作按钮上按键时不会重复选择任务行", async () => {
