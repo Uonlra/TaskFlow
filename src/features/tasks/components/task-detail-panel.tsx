@@ -1,14 +1,13 @@
 "use client";
 
-import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
+import { TaskDetailPropertyList, TaskDetailTags } from "@/features/tasks/components/task-detail-sections";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
-import { parseTaskDueDateValue } from "@/features/tasks/utils/task-date-filters";
-import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { formatTagsInput } from "@/features/tasks/utils/task-tags";
 
 type TaskDetailPanelProps = {
@@ -25,18 +24,6 @@ type TaskActivityItem = {
   label: string;
   description: string;
   occurredAt: string;
-};
-
-const priorityLabel: Record<Task["priority"], string> = {
-  high: "高",
-  medium: "中",
-  low: "低",
-};
-
-const statusLabel: Record<Task["status"], string> = {
-  todo: "待开始",
-  in_progress: "进行中",
-  done: "已完成",
 };
 
 export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTask }: TaskDetailPanelProps) {
@@ -56,7 +43,6 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
     );
   }
 
-  const dueMeta = getTaskDueMeta(task);
   const taskValues: TaskFormValues = {
     title: task.title,
     description: task.description,
@@ -143,58 +129,11 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
             </div>
           </section>
 
-          <div className="task-detail-panel__fields">
-            <DetailRow label="状态">
-              <button
-                type="button"
-                className={`task-detail-status task-detail-status--${task.status}`}
-                onClick={() => void onUpdateStatus(task.id, task.status === "done" ? "todo" : "done")}
-              >
-                {statusLabel[task.status]}
-              </button>
-            </DetailRow>
-
-            <DetailRow label="优先级">
-              <span className="task-detail-priority">
-                <span className={`task-detail-priority__dot task-detail-priority__dot--${task.priority}`} />
-                {priorityLabel[task.priority]}
-              </span>
-            </DetailRow>
-
-            <DetailRow label="截止时间">
-              <span className={`task-detail-due task-detail-due--${dueMeta.tone}`}>
-                {formatDate(task.dueDate) || dueMeta.label}
-              </span>
-            </DetailRow>
-
-            <DetailRow label="创建时间">
-              <span>{formatDateTime(task.createdAt)}</span>
-            </DetailRow>
-
-            <DetailRow label="更新时间">
-              <span>{task.updatedAt ? formatDateTime(task.updatedAt) : "未更新"}</span>
-            </DetailRow>
-
-            <DetailRow label="完成时间">
-              <span>{task.completedAt ? formatDateTime(task.completedAt) : "未完成"}</span>
-            </DetailRow>
-          </div>
-
-          <section className="task-detail-panel__tag-board" aria-labelledby="task-detail-tags-title">
-            <div className="task-detail-panel__tag-board-head">
-              <h3 id="task-detail-tags-title">标签</h3>
-              <span>{task.tags.length ? `${task.tags.length} 个` : "未添加"}</span>
-            </div>
-            {task.tags.length ? (
-              <div className="task-detail-panel__tag-list" aria-label="任务标签">
-                {task.tags.map((tag) => (
-                  <span key={tag}>#{tag}</span>
-                ))}
-              </div>
-            ) : (
-              <p className="task-detail-panel__tag-empty">暂无标签，可通过编辑任务添加。</p>
-            )}
-          </section>
+          <TaskDetailPropertyList
+            task={task}
+            onStatusClick={() => void onUpdateStatus(task.id, task.status === "done" ? "todo" : "done")}
+          />
+          <TaskDetailTags task={task} />
         </div>
       ) : (
         <section
@@ -289,29 +228,6 @@ function toTimestamp(value: string) {
   const timestamp = new Date(value).getTime();
 
   return Number.isNaN(timestamp) ? 0 : timestamp;
-}
-
-function DetailRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="task-detail-row">
-      <span>{label}</span>
-      <strong>{children}</strong>
-    </div>
-  );
-}
-
-function formatDate(value: string | undefined) {
-  if (!value) {
-    return "";
-  }
-
-  const date = parseTaskDueDateValue(value);
-
-  if (!date) {
-    return value;
-  }
-
-  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function formatDateTime(value: string) {
