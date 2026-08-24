@@ -11,6 +11,7 @@ import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import type { DashboardAnalyticsRange, DashboardStats } from "@/features/tasks/utils/task-analytics";
+import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
 
 type DashboardV2ShellProps = {
   stats: DashboardStats;
@@ -25,6 +26,7 @@ type DashboardV2ShellProps = {
   priorityFilters: DashboardPriorityFilters;
   onPriorityFiltersChange: (filters: DashboardPriorityFilters) => void;
   onCreateTask: (values: TaskFormValues) => Promise<void>;
+  onPreviewTask: (task: DashboardTaskPreview) => void;
 };
 
 export function DashboardV2Shell({
@@ -40,6 +42,7 @@ export function DashboardV2Shell({
   priorityFilters,
   onPriorityFiltersChange,
   onCreateTask,
+  onPreviewTask,
 }: DashboardV2ShellProps) {
   if (isAccountEmpty) {
     return (
@@ -67,6 +70,7 @@ export function DashboardV2Shell({
           priorityFilters={priorityFilters}
           onPriorityFiltersChange={onPriorityFiltersChange}
           onCreateTask={onCreateTask}
+          onPreviewTask={onPreviewTask}
         />
         <DataEmptyState
           variant="table"
@@ -90,6 +94,7 @@ export function DashboardV2Shell({
         priorityFilters={priorityFilters}
         onPriorityFiltersChange={onPriorityFiltersChange}
         onCreateTask={onCreateTask}
+        onPreviewTask={onPreviewTask}
       />
       <div className="dashboard-v2-grid">
         <div className="dashboard-v2-grid__main">
@@ -115,6 +120,7 @@ export function DashboardV2Shell({
             deadlines={stats.upcomingDeadlines}
             range={range}
             showFocus={false}
+            onPreviewTask={onPreviewTask}
           />
           <DashboardRiskPanel risks={stats.overdueRisk} overdueCount={stats.overdueCount} isEmpty={isEmpty} />
         </aside>

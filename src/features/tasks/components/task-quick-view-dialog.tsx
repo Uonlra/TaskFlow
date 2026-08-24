@@ -90,7 +90,7 @@ export function TaskQuickViewDialog({ task, onClose, onEdit, onToggleComplete, o
       >
         <header className="task-quick-view-dialog__header">
           <div>
-            <p className="section-eyebrow">任务查看</p>
+            <p className="section-eyebrow">任务速览</p>
             <h2 id={titleId}>{task.title}</h2>
           </div>
           <button
