@@ -63,6 +63,7 @@ skill/
 
 # Local docs
 docs/intro
+.agents
 
 # Playwright artifacts
 blob-report/
