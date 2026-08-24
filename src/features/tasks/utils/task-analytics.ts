@@ -47,6 +47,7 @@ export type DashboardOverdueRiskItem = {
 export type DashboardTaskPreview = {
   id: string;
   title: string;
+  description: string;
   status: TaskStatus;
   priority: TaskPriority;
   dueDate?: string;
@@ -349,6 +350,7 @@ function toDashboardTaskPreview(task: Task): DashboardTaskPreview {
   return {
     id: task.id,
     title: task.title,
+    description: task.description,
     status: task.status,
     priority: task.priority,
     dueDate: task.dueDate,

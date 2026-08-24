@@ -6,13 +6,30 @@ import type { Task } from "@/features/tasks/types/task.types";
 import { handleApiError } from "@/shared/lib/api/error";
 import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
-import { deleteTask, updateTask, updateTaskStatus } from "@/shared/lib/appwrite/tasks";
+import { deleteTask, getTask, updateTask, updateTaskStatus } from "@/shared/lib/appwrite/tasks";
 
 const taskStatusSchema = z
   .object({
     status: z.enum(["todo", "in_progress", "done"]),
   })
   .strict();
+
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const sessionSecret = await getAppwriteSessionSecret();
+  const auth = await getCurrentAuthEnvelope();
+
+  if (!sessionSecret || !auth?.user) {
+    return NextResponse.json({ message: "请先登录后再查看任务详情。" }, { status: 401 });
+  }
+
+  try {
+    const { id } = await context.params;
+    const task = await getTask(sessionSecret, id, request);
+    return NextResponse.json({ task });
+  } catch (error) {
+    return handleApiError(error, "无法加载任务详情，请稍后再试。");
+  }
+}
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const sessionSecret = await getAppwriteSessionSecret();

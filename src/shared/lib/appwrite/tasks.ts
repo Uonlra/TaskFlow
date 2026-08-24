@@ -438,7 +438,7 @@ export async function getTask(sessionSecret: string, taskId: string, request?: N
     request,
   });
 
-  return row;
+  return mapTaskRow(row);
 }
 
 export function mapTaskRow(row: AppwriteTaskRow): Task {

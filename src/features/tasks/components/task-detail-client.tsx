@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { EmptyState } from "@/shared/components/common/empty-state";
@@ -11,6 +11,7 @@ import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import { TaskPriorityBadge } from "@/features/tasks/components/task-priority-badge";
 import { TaskStatusBadge } from "@/features/tasks/components/task-status-badge";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
+import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { formatTagsInput } from "@/features/tasks/utils/task-tags";
 import { useAuth } from "@/features/auth/providers/auth-provider";
@@ -23,13 +24,18 @@ export function TaskDetailClient({ id }: { id: string }) {
   const router = useRouter();
   const { user, isConfigured } = useAuth();
   const { showToast } = useToast();
-  const task = useTaskStore((state) => state.tasks.find((item) => item.id === id));
+  const storedTask = useTaskStore((state) => state.tasks.find((item) => item.id === id));
   const isLoading = useTaskStore((state) => state.isLoading);
   const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
   const syncTasks = useTaskStore((state) => state.syncTasks);
   const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
+  const [fetchedTask, setFetchedTask] = useState<Task | null>(null);
+  const [finishedRequestId, setFinishedRequestId] = useState<string | null>(null);
+
+  const task = (fetchedTask?.id === id ? fetchedTask : null) ?? storedTask;
+  const isDetailLoading = Boolean(isConfigured && user?.id && finishedRequestId !== id);
 
   useEffect(() => {
     if (isConfigured && !isLoading && user?.id && lastLoadedUserId !== user.id) {
@@ -37,7 +43,39 @@ export function TaskDetailClient({ id }: { id: string }) {
     }
   }, [isConfigured, isLoading, lastLoadedUserId, syncTasks, user?.id]);
 
-  if (isConfigured && isLoading && !task) {
+  useEffect(() => {
+    if (!isConfigured || !user?.id) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void fetch(`/api/tasks/${encodeURIComponent(id)}`, { cache: "no-store" })
+      .then(async (response) => {
+        const payload = (await response.json().catch(() => null)) as { task?: Task } | null;
+        if (!response.ok || !payload?.task) {
+          throw new Error("无法加载任务详情。");
+        }
+
+        if (!cancelled) {
+          setFetchedTask(payload.task);
+        }
+      })
+      .catch(() => {
+        // The global task sync remains the fallback for an already loaded task.
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setFinishedRequestId(id);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, isConfigured, user?.id]);
+
+  if (isConfigured && (isDetailLoading || isLoading) && !task) {
     return (
       <PageContainer>
         <section className="card-surface" style={{ borderRadius: 28, padding: 28 }}>

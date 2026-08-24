@@ -121,7 +121,10 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   };
 
   const handlePreviewTask = (task: DashboardTaskPreview) => {
-    setPreviewTask(syncedTasks.find((item) => item.id === task.id) ?? toTaskPreview(task));
+    const syncedTask = syncedTasks.find((item) => item.id === task.id);
+    setPreviewTask(
+      syncedTask ? { ...syncedTask, description: syncedTask.description || task.description } : toTaskPreview(task),
+    );
   };
 
   const handlePreviewStatus = async (task: Task) => {
@@ -210,7 +213,7 @@ function toTaskPreview(task: DashboardTaskPreview): Task {
   return {
     id: task.id,
     title: task.title,
-    description: "",
+    description: task.description,
     status: task.status,
     priority: task.priority,
     tags: task.tags,
