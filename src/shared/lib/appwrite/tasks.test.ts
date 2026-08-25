@@ -20,6 +20,7 @@ import {
   listTasksByDueRange,
   listTasksForDashboard,
 } from "@/shared/lib/appwrite/tasks";
+import { appwriteTaskRowSchema } from "@/shared/lib/appwrite/schemas/task-row.schema";
 
 describe("listTasksByDueRange", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -54,6 +55,22 @@ describe("listTasksByDueRange", () => {
       '{"method":"limit","values":[5000]}',
     ]);
     expect(mocks.appwriteFetch.mock.calls[1][0].searchParams.queries).toEqual(['{"method":"limit","values":[1]}']);
+  });
+});
+
+describe("Appwrite task response schema", () => {
+  it("rejects an unknown task status at the external data boundary", () => {
+    expect(() =>
+      appwriteTaskRowSchema.parse({
+        $id: "task-1",
+        $createdAt: "2026-08-01T00:00:00.000Z",
+        $updatedAt: "2026-08-01T00:00:00.000Z",
+        title: "任务",
+        description: "",
+        status: "unknown",
+        priority: "high",
+      }),
+    ).toThrow();
   });
 });
 

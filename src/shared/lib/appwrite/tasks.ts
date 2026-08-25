@@ -1,5 +1,6 @@
 import "server-only";
 
+import { z } from "zod";
 import type { NextRequest } from "next/server";
 
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
@@ -21,28 +22,12 @@ import {
 } from "@/features/tasks/utils/task-list-query";
 import { appwriteDatabaseId, appwriteTasksTableId, hasAppwriteDatabaseEnv } from "@/shared/lib/appwrite/env";
 import { appwriteFetch } from "@/shared/lib/appwrite/request";
-
-type AppwriteTaskRow = {
-  $id: string;
-  $createdAt: string;
-  $updatedAt: string;
-  title: string;
-  description: string;
-  status: Task["status"];
-  priority: Task["priority"];
-  tags?: string[] | null;
-  searchText?: string | null;
-  dueDate?: string | null;
-  completedAt?: string | null;
-  taskName?: string | null;
-  taskId?: number | null;
-  assignedTo?: string | null;
-};
-
-type AppwriteRowsList = {
-  rows: AppwriteTaskRow[];
-  total?: number;
-};
+import {
+  appwriteRowsListSchema,
+  appwriteTaskRowSchema,
+  type AppwriteRowsList,
+  type AppwriteTaskRow,
+} from "@/shared/lib/appwrite/schemas/task-row.schema";
 
 const CALENDAR_QUERY_LIMIT = 5000;
 
@@ -50,7 +35,7 @@ export async function listTasks(sessionSecret: string, request?: NextRequest) {
   const payload = await appwriteTaskRequest<AppwriteRowsList>("", {
     sessionSecret,
     request,
-  });
+  }, appwriteRowsListSchema);
 
   return (payload.rows ?? []).map(mapTaskRow);
 }
@@ -83,7 +68,7 @@ export async function listTasksForDashboard(
       searchParams: {
         queries: [...scopeQueries, querySelect(DASHBOARD_SELECT_FIELDS), queryLimit(DASHBOARD_QUERY_LIMIT)],
       },
-    }),
+    }, appwriteRowsListSchema),
     appwriteTaskRequest<AppwriteRowsList>("", {
       sessionSecret,
       request,
@@ -94,12 +79,12 @@ export async function listTasksForDashboard(
           queryLimit(DASHBOARD_QUERY_LIMIT),
         ],
       },
-    }),
+    }, appwriteRowsListSchema),
     appwriteTaskRequest<AppwriteRowsList>("", {
       sessionSecret,
       request,
       searchParams: { queries: [queryLimit(1)] },
-    }),
+    }, appwriteRowsListSchema),
   ]);
 
   return {
@@ -242,7 +227,7 @@ async function fetchTaskPage(
     searchParams: {
       queries: [...baseQueries, queryOffset((page - 1) * pageSize), queryLimit(pageSize)],
     },
-  });
+  }, appwriteRowsListSchema);
 }
 
 async function getTaskCategoryCounts(sessionSecret: string, request?: NextRequest) {
@@ -271,7 +256,7 @@ async function countTaskRows(sessionSecret: string, queries: string[], request?:
     sessionSecret,
     request,
     searchParams: { queries: [...queries, queryLimit(1)] },
-  });
+  }, appwriteRowsListSchema);
 
   return getRowsTotal(payload);
 }
@@ -359,12 +344,12 @@ export async function listTasksByDueRange(
       sessionSecret,
       request,
       searchParams: { queries: dueQueries },
-    }),
+    }, appwriteRowsListSchema),
     appwriteTaskRequest<AppwriteRowsList>("", {
       sessionSecret,
       request,
       searchParams: { queries: [queryLimit(1)] },
-    }),
+    }, appwriteRowsListSchema),
   ]);
 
   return {
@@ -385,7 +370,7 @@ export async function createTask(sessionSecret: string, userId: string, input: T
       data: buildTaskData(input, taskKey),
       permissions: buildTaskPermissions(userId),
     },
-  });
+  }, appwriteTaskRowSchema);
 
   return mapTaskRow(row);
 }
@@ -398,7 +383,7 @@ export async function updateTask(sessionSecret: string, taskId: string, input: T
     body: {
       data: buildTaskData(input),
     },
-  });
+  }, appwriteTaskRowSchema);
 
   return mapTaskRow(row);
 }
@@ -419,7 +404,7 @@ export async function updateTaskStatus(
         completedAt: status === "done" ? new Date().toISOString() : null,
       },
     },
-  });
+  }, appwriteTaskRowSchema);
 
   return mapTaskRow(row);
 }
@@ -436,7 +421,7 @@ export async function getTask(sessionSecret: string, taskId: string, request?: N
   const row = await appwriteTaskRequest<AppwriteTaskRow>(`/${taskId}`, {
     sessionSecret,
     request,
-  });
+  }, appwriteTaskRowSchema);
 
   return mapTaskRow(row);
 }
@@ -576,12 +561,13 @@ async function appwriteTaskRequest<T = unknown>(
     request?: NextRequest;
     searchParams?: Record<string, string | string[]>;
   },
+  schema?: z.ZodType<T>,
 ) {
   if (!hasAppwriteDatabaseEnv || !appwriteDatabaseId || !appwriteTasksTableId) {
     throw new Error("Appwrite database configuration is incomplete.");
   }
 
-  return appwriteFetch<T>({
+  const payload = await appwriteFetch<unknown>({
     path: `/tablesdb/${appwriteDatabaseId}/tables/${appwriteTasksTableId}/rows${path}`,
     method: options.method,
     body: options.body,
@@ -590,4 +576,6 @@ async function appwriteTaskRequest<T = unknown>(
     searchParams: options.searchParams as Record<string, string | number | boolean | Array<string>> | undefined,
     errorMessage: "Task request failed.",
   });
+
+  return schema ? schema.parse(payload) : (payload as T);
 }
