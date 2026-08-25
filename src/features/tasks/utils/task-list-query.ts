@@ -1,5 +1,6 @@
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import type { Task } from "@/features/tasks/types/task.types";
+import { TASK_PRIORITIES, TASK_STATUSES } from "@/features/tasks/types/task-values";
 import {
   DASHBOARD_RANGE_VALUES,
   TASK_DUE_FILTERS,
@@ -100,8 +101,8 @@ export function buildTaskCategoryCounts(tasks: Task[]): TaskCategoryCounts {
 }
 
 export function parseTaskFiltersFromParams(params: URLSearchParams): TaskFilters {
-  const status = parseEnum(params.get("status"), ["todo", "in_progress", "done", "active", "all"] as const) ?? "all";
-  const priority = parseEnum(params.get("priority"), ["low", "medium", "high", "all"] as const) ?? "all";
+  const status = parseEnum(params.get("status"), [...TASK_STATUSES, "active", "all"] as const) ?? "all";
+  const priority = parseEnum(params.get("priority"), [...TASK_PRIORITIES, "all"] as const) ?? "all";
   const due = parseEnum(params.get("due"), Object.values(TASK_DUE_FILTERS) as TaskDueValue[]) ?? "";
   const risk = parseEnum(params.get("risk"), Object.values(TASK_RISK_FILTERS) as TaskRiskValue[]) ?? "";
   const sort =

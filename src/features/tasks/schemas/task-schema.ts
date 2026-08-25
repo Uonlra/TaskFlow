@@ -1,10 +1,12 @@
 import { z } from "zod";
 
+import { taskPrioritySchema, taskStatusSchema } from "@/features/tasks/types/task-values";
+
 export const taskSchema = z.object({
   title: z.string().min(1, "标题至少需要 1 个字符。"),
   description: z.string(),
-  status: z.enum(["todo", "in_progress", "done"]),
-  priority: z.enum(["low", "medium", "high"]),
+  status: taskStatusSchema,
+  priority: taskPrioritySchema,
   tags: z.string().optional(),
   dueDate: z.string().optional(),
 });

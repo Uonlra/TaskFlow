@@ -4,6 +4,7 @@ import { getTaskPageInitialData } from "@/features/tasks/server/get-task-page-in
 import { formatTaskDateParam, parseTaskDateParam } from "@/features/tasks/utils/task-date-filters";
 import { PageContainer } from "@/shared/components/layout/page-container";
 import { DASHBOARD_RANGE_VALUES, TASK_DUE_FILTERS, TASK_RISK_FILTERS } from "@/shared/lib/constants/query-params";
+import { TASK_PRIORITIES, TASK_STATUSES } from "@/features/tasks/types/task-values";
 
 export const metadata: Metadata = { title: "任务" };
 
@@ -19,19 +20,8 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
   const initialFilters = {
     query: typeof resolvedSearchParams?.query === "string" ? resolvedSearchParams.query : "",
     tag: typeof resolvedSearchParams?.tag === "string" ? resolvedSearchParams.tag : "",
-    status:
-      resolvedSearchParams?.status === "todo" ||
-      resolvedSearchParams?.status === "in_progress" ||
-      resolvedSearchParams?.status === "done" ||
-      resolvedSearchParams?.status === "active"
-        ? resolvedSearchParams.status
-        : "all",
-    priority:
-      resolvedSearchParams?.priority === "low" ||
-      resolvedSearchParams?.priority === "medium" ||
-      resolvedSearchParams?.priority === "high"
-        ? resolvedSearchParams.priority
-        : "all",
+    status: isTaskStatusFilter(resolvedSearchParams?.status) ? resolvedSearchParams.status : "all",
+    priority: isTaskPriorityFilter(resolvedSearchParams?.priority) ? resolvedSearchParams.priority : "all",
     due:
       resolvedSearchParams?.due === TASK_DUE_FILTERS.near ||
       resolvedSearchParams?.due === TASK_DUE_FILTERS.today ||
@@ -72,4 +62,15 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
       <TaskListClient initialFilters={initialFilters} initialData={initialData} />
     </PageContainer>
   );
+}
+
+function isTaskStatusFilter(value: string | string[] | undefined): value is (typeof TASK_STATUSES)[number] | "active" {
+  return (
+    typeof value === "string" &&
+    [...TASK_STATUSES, "active"].includes(value as (typeof TASK_STATUSES)[number] | "active")
+  );
+}
+
+function isTaskPriorityFilter(value: string | string[] | undefined): value is (typeof TASK_PRIORITIES)[number] {
+  return typeof value === "string" && TASK_PRIORITIES.includes(value as (typeof TASK_PRIORITIES)[number]);
 }
