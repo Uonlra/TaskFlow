@@ -2,15 +2,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { taskSchema } from "@/features/tasks/schemas/task-schema";
+import { taskStatusSchema as taskStatusValueSchema } from "@/features/tasks/types/task-values";
 import type { Task } from "@/features/tasks/types/task.types";
 import { handleApiError } from "@/shared/lib/api/error";
 import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
 import { deleteTask, getTask, updateTask, updateTaskStatus } from "@/shared/lib/appwrite/tasks";
 
-const taskStatusSchema = z
+const taskStatusRequestSchema = z
   .object({
-    status: z.enum(["todo", "in_progress", "done"]),
+    status: taskStatusValueSchema,
   })
   .strict();
 
@@ -43,7 +44,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const { id } = await context.params;
 
     const payload = await request.json().catch(() => null);
-    const parsedStatus = taskStatusSchema.safeParse(payload);
+    const parsedStatus = taskStatusRequestSchema.safeParse(payload);
 
     if (parsedStatus.success) {
       const task = await updateTaskStatus(sessionSecret, id, parsedStatus.data.status as Task["status"], request);

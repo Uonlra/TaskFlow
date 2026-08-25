@@ -1,6 +1,6 @@
-export type TaskStatus = "todo" | "in_progress" | "done";
+export type { TaskPriority, TaskStatus } from "./task-values";
 
-export type TaskPriority = "low" | "medium" | "high";
+import type { TaskPriority, TaskStatus } from "./task-values";
 
 export type Task = {
   id: string;

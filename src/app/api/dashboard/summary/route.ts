@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { buildFocusTasks, buildDashboardStats } from "@/features/tasks/utils/task-analytics";
 import type { DashboardAnalyticsRange } from "@/features/tasks/utils/task-analytics";
 import type { Task, TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
+import { TASK_PRIORITIES, TASK_STATUSES } from "@/features/tasks/types/task-values";
 import { matchesTaskDueFilter } from "@/features/tasks/utils/task-deadline";
 import { handleApiError } from "@/shared/lib/api/error";
 import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
@@ -54,13 +55,17 @@ function parseRange(value: string | null): DashboardAnalyticsRange {
 }
 
 function parseStatus(value: string | null): TaskStatus | "all" {
-  return value === "todo" || value === "in_progress" || value === "done" ? value : "all";
+  return parseEnum(value, TASK_STATUSES) ?? "all";
 }
 
 function parsePriority(value: string | null): TaskPriority | "all" {
-  return value === "low" || value === "medium" || value === "high" ? value : "all";
+  return parseEnum(value, TASK_PRIORITIES) ?? "all";
 }
 
 function parseDue(value: string | null): TaskDueFilter | "" {
   return value === "near" || value === "today" || value === "upcoming" || value === "overdue" ? value : "";
+}
+
+function parseEnum<const T extends readonly string[]>(value: string | null, values: T): T[number] | undefined {
+  return value && (values as readonly string[]).includes(value) ? (value as T[number]) : undefined;
 }

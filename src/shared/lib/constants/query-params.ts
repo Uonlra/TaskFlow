@@ -1,4 +1,5 @@
 import { ROUTES } from "@/shared/lib/constants/routes";
+import type { TaskPriority, TaskStatus } from "@/features/tasks/types/task-values";
 
 export const TASK_QUERY_KEYS = {
   query: "query",
@@ -49,8 +50,8 @@ export type DashboardRangeValue = (typeof DASHBOARD_RANGE_VALUES)[keyof typeof D
 export type BuildTasksHrefInput = {
   query?: string;
   tag?: string;
-  status?: "todo" | "in_progress" | "done" | "active" | "all";
-  priority?: "high" | "medium" | "low" | "all";
+  status?: TaskStatus | "active" | "all";
+  priority?: TaskPriority | "all";
   sort?: "created_desc" | "updated_desc" | "due_asc" | "priority_desc";
   due?: TaskDueFilter;
   risk?: TaskRiskFilter;
