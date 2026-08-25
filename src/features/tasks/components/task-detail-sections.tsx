@@ -1,4 +1,8 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 
 import type { Task } from "@/features/tasks/types/task.types";
 import { parseTaskDueDateValue } from "@/features/tasks/utils/task-date-filters";
@@ -163,20 +167,44 @@ export function TaskDetailActivity({ task }: { task: Task }) {
 }
 
 export function TaskDetailMoreContent() {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <details className="task-detail-more-content">
-      <summary>更多内容</summary>
-      <div className="task-detail-more-content__grid">
-        <div>
-          <h3>子任务</h3>
-          <p>暂无子任务，后续可在这里拆分执行步骤。</p>
-        </div>
-        <div>
-          <h3>评论与附件</h3>
-          <p>评论和附件功能尚未启用。</p>
-        </div>
-      </div>
-    </details>
+    <section className={`task-detail-more-content${isOpen ? " is-open" : ""}`}>
+      <button
+        type="button"
+        className="task-detail-more-content__trigger"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        <span>更多内容</span>
+        <span className="task-detail-more-content__icon" aria-hidden="true">
+          {isOpen ? "-" : "+"}
+        </span>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen ? (
+          <motion.div
+            className="task-detail-more-content__body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          >
+            <div className="task-detail-more-content__grid">
+              <div>
+                <h3>子任务</h3>
+                <p>暂无子任务，后续可在这里拆分执行步骤。</p>
+              </div>
+              <div>
+                <h3>评论与附件</h3>
+                <p>评论和附件功能尚未启用。</p>
+              </div>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </section>
   );
 }
 

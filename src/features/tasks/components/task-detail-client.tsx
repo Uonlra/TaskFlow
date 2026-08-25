@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { EmptyState } from "@/shared/components/common/empty-state";
@@ -159,7 +160,12 @@ export function TaskDetailClient({ id }: { id: string }) {
           <span>任务工作台</span>
         </div>
 
-        <div className="task-detail-layout">
+        <motion.div
+          className="task-detail-layout"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, ease: "easeOut" }}
+        >
           <main className="task-detail-main">
             <TaskDetailHero task={task} />
             <TaskDetailDescription task={task} />
@@ -218,7 +224,7 @@ export function TaskDetailClient({ id }: { id: string }) {
               </div>
             </section>
           </aside>
-        </div>
+        </motion.div>
       </div>
     </PageContainer>
   );
