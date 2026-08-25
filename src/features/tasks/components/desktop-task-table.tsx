@@ -134,13 +134,11 @@ function DesktopTaskRow({
       aria-selected={selected}
       onClick={() => {
         onSelectTask(task.id);
-        onPreviewTask(task);
       }}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           onSelectTask(task.id);
-          onPreviewTask(task);
         }
       }}
     >
@@ -195,10 +193,11 @@ function DesktopTaskRow({
       <span role="cell" className="desktop-task-table__actions">
         <button
           type="button"
-          aria-label="更多操作"
+          aria-label="打开任务详情"
+          title="打开任务详情"
           onClick={(event) => {
             event.stopPropagation();
-            onSelectTask(task.id);
+            onPreviewTask(task);
           }}
         >
           ...
