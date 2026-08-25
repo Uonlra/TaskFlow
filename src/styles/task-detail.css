@@ -148,6 +148,11 @@
   justify-content: flex-end;
 }
 
+.task-detail-status-pulse {
+  display: inline-flex;
+  border-radius: 4px;
+}
+
 .task-detail-description,
 .task-detail-activity,
 .task-detail-sidebar__section,
