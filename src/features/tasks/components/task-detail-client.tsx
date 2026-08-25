@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { EmptyState } from "@/shared/components/common/empty-state";
@@ -38,6 +39,7 @@ export function TaskDetailClient({ id }: { id: string }) {
   const deleteTask = useTaskStore((state) => state.deleteTask);
   const [fetchedTask, setFetchedTask] = useState<Task | null>(null);
   const [finishedRequestId, setFinishedRequestId] = useState<string | null>(null);
+  const [statusAnimationKey, setStatusAnimationKey] = useState(0);
 
   const task = (fetchedTask?.id === id ? fetchedTask : null) ?? storedTask;
   const isDetailLoading = Boolean(isConfigured && user?.id && finishedRequestId !== id);
@@ -135,6 +137,7 @@ export function TaskDetailClient({ id }: { id: string }) {
   const handleStatusChange = async () => {
     try {
       await updateTaskStatus(task.id, nextStatus, user?.id);
+      setStatusAnimationKey((current) => current + 1);
       showToast({
         title: "状态已更新",
         description: `任务已切换为${nextStatus === "todo" ? "待开始" : nextStatus === "in_progress" ? "进行中" : "已完成"}。`,
@@ -159,9 +162,14 @@ export function TaskDetailClient({ id }: { id: string }) {
           <span>任务工作台</span>
         </div>
 
-        <div className="task-detail-layout">
+        <motion.div
+          className="task-detail-layout"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, ease: "easeOut" }}
+        >
           <main className="task-detail-main">
-            <TaskDetailHero task={task} />
+            <TaskDetailHero task={task} statusAnimationKey={statusAnimationKey} />
             <TaskDetailDescription task={task} />
             <TaskDetailActivity task={task} />
             <TaskDetailMoreContent />
@@ -173,7 +181,7 @@ export function TaskDetailClient({ id }: { id: string }) {
                 <p className="task-detail-kicker">属性</p>
                 <h2>任务信息</h2>
               </div>
-              <TaskDetailPropertyList task={task} includeOwner />
+              <TaskDetailPropertyList task={task} includeOwner statusAnimationKey={statusAnimationKey} />
             </section>
             <TaskDetailTags task={task} />
             <section className="task-detail-sidebar__section task-detail-actions">
@@ -218,7 +226,7 @@ export function TaskDetailClient({ id }: { id: string }) {
               </div>
             </section>
           </aside>
-        </div>
+        </motion.div>
       </div>
     </PageContainer>
   );

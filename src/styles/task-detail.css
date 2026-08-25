@@ -148,6 +148,11 @@
   justify-content: flex-end;
 }
 
+.task-detail-status-pulse {
+  display: inline-flex;
+  border-radius: 4px;
+}
+
 .task-detail-description,
 .task-detail-activity,
 .task-detail-sidebar__section,
@@ -378,36 +383,41 @@
   overflow: hidden;
 }
 
-.task-detail-more-content summary {
+.task-detail-more-content__trigger {
+  width: 100%;
   display: flex;
   min-height: 48px;
   align-items: center;
   justify-content: space-between;
+  border: 0;
   padding: 0 20px;
   color: var(--muted-strong);
+  background: transparent;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  list-style: none;
+  text-align: left;
 }
 
-.task-detail-more-content summary::-webkit-details-marker {
-  display: none;
+.task-detail-more-content__trigger:hover,
+.task-detail-more-content__trigger:focus-visible {
+  color: var(--foreground);
+  background: var(--surface-soft);
+  outline: none;
 }
 
-.task-detail-more-content summary::after {
+.task-detail-more-content__icon {
   color: var(--muted);
-  content: "+";
   font-size: 18px;
   line-height: 1;
 }
 
-.task-detail-more-content[open] summary {
+.task-detail-more-content.is-open .task-detail-more-content__trigger {
   border-bottom: 1px solid var(--border);
 }
 
-.task-detail-more-content[open] summary::after {
-  content: "-";
+.task-detail-more-content__body {
+  overflow: hidden;
 }
 
 .task-detail-more-content__grid {

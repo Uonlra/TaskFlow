@@ -109,11 +109,11 @@ describe("DesktopTaskTable", () => {
     await user.keyboard(key);
 
     expect(onSelectTask).toHaveBeenCalledWith("task-1");
-    expect(onPreviewTask).toHaveBeenCalledWith(tasks[0]);
+    expect(onPreviewTask).not.toHaveBeenCalled();
     expect(firstRow).toHaveAttribute("tabindex", "0");
   });
 
-  it("点击任务行时同时选择右侧详情并打开轻量查看", async () => {
+  it("点击任务行时只切换右侧详情", async () => {
     const onSelectTask = vi.fn();
     const onPreviewTask = vi.fn();
     const user = userEvent.setup();
@@ -132,7 +132,29 @@ describe("DesktopTaskTable", () => {
     await user.click(screen.getAllByRole("row")[1]);
 
     expect(onSelectTask).toHaveBeenCalledWith("task-1");
+    expect(onPreviewTask).not.toHaveBeenCalled();
+  });
+
+  it("点击最右侧操作按钮时打开独立任务详情页", async () => {
+    const onSelectTask = vi.fn();
+    const onPreviewTask = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <DesktopTaskTable
+        tasks={tasks}
+        emptyState={{ title: "没有任务", description: "" }}
+        selectedTaskId={null}
+        onSelectTask={onSelectTask}
+        onPreviewTask={onPreviewTask}
+        onUpdateStatus={() => {}}
+        scrollPositionRef={{ current: 0 }}
+      />,
+    );
+
+    await user.click(screen.getAllByRole("button", { name: "打开任务详情" })[0]);
+
     expect(onPreviewTask).toHaveBeenCalledWith(tasks[0]);
+    expect(onSelectTask).not.toHaveBeenCalled();
   });
 
   it("在行内操作按钮上按键时不会重复选择任务行", async () => {

@@ -1,4 +1,9 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import { gsap } from "gsap";
+import { AnimatePresence, motion } from "motion/react";
 
 import type { Task } from "@/features/tasks/types/task.types";
 import { parseTaskDueDateValue } from "@/features/tasks/utils/task-date-filters";
@@ -18,7 +23,9 @@ const statusLabel: Record<Task["status"], string> = {
   done: "已完成",
 };
 
-export function TaskDetailHero({ task }: { task: Task }) {
+export function TaskDetailHero({ task, statusAnimationKey }: { task: Task; statusAnimationKey?: number }) {
+  const statusRef = useStatusPulse(statusAnimationKey);
+
   return (
     <section className="task-detail-hero">
       <div className="task-detail-hero__copy">
@@ -27,7 +34,9 @@ export function TaskDetailHero({ task }: { task: Task }) {
         <p className="task-detail-hero__summary">{task.description || "暂无描述。"}</p>
       </div>
       <div className="task-detail-hero__badges" aria-label="任务状态和优先级">
-        <TaskStatusBadge status={task.status} />
+        <span ref={statusRef} className="task-detail-status-pulse">
+          <TaskStatusBadge status={task.status} />
+        </span>
         <TaskPriorityBadge priority={task.priority} />
       </div>
     </section>
@@ -38,27 +47,32 @@ export function TaskDetailPropertyList({
   task,
   includeOwner = false,
   onStatusClick,
+  statusAnimationKey,
 }: {
   task: Task;
   includeOwner?: boolean;
   onStatusClick?: () => void;
+  statusAnimationKey?: number;
 }) {
   const dueMeta = getTaskDueMeta(task);
+  const statusRef = useStatusPulse(statusAnimationKey);
 
   return (
     <div className="task-detail-properties">
       <TaskDetailProperty label="状态">
-        {onStatusClick ? (
-          <button
-            type="button"
-            className={`task-detail-status task-detail-status--${task.status}`}
-            onClick={onStatusClick}
-          >
-            {statusLabel[task.status]}
-          </button>
-        ) : (
-          <span className={`task-detail-status task-detail-status--${task.status}`}>{statusLabel[task.status]}</span>
-        )}
+        <span ref={statusRef} className="task-detail-status-pulse">
+          {onStatusClick ? (
+            <button
+              type="button"
+              className={`task-detail-status task-detail-status--${task.status}`}
+              onClick={onStatusClick}
+            >
+              {statusLabel[task.status]}
+            </button>
+          ) : (
+            <span className={`task-detail-status task-detail-status--${task.status}`}>{statusLabel[task.status]}</span>
+          )}
+        </span>
       </TaskDetailProperty>
       <TaskDetailProperty label="优先级">
         <span className="task-detail-priority">
@@ -93,6 +107,45 @@ export function TaskDetailProperty({ label, children }: { label: string; childre
       <strong>{children}</strong>
     </div>
   );
+}
+
+function useStatusPulse(animationKey?: number) {
+  const statusRef = useRef<HTMLSpanElement | null>(null);
+
+  useEffect(() => {
+    if (!animationKey || !statusRef.current) {
+      return;
+    }
+
+    const context = gsap.context(() => {
+      gsap
+        .timeline({ defaults: { ease: "power2.out" } })
+        .fromTo(
+          statusRef.current,
+          {
+            scale: 1,
+            boxShadow: "0 0 0 0 rgba(62, 106, 225, 0)",
+            transformOrigin: "center",
+          },
+          {
+            scale: 1.06,
+            boxShadow: "0 0 0 5px rgba(62, 106, 225, 0.14)",
+            duration: 0.16,
+          },
+        )
+        .to(statusRef.current, {
+          scale: 1,
+          boxShadow: "0 0 0 0 rgba(62, 106, 225, 0)",
+          duration: 0.24,
+          ease: "power2.inOut",
+          clearProps: "transform,boxShadow",
+        });
+    }, statusRef);
+
+    return () => context.revert();
+  }, [animationKey]);
+
+  return statusRef;
 }
 
 export function TaskDetailTags({ task }: { task: Task }) {
@@ -134,9 +187,29 @@ type TaskActivityItem = {
 
 export function TaskDetailActivity({ task }: { task: Task }) {
   const activityItems = buildTaskActivity(task);
+  const activityRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!activityRef.current) {
+      return;
+    }
+
+    const context = gsap.context(() => {
+      gsap.from(".task-detail-timeline__item", {
+        autoAlpha: 0,
+        y: 12,
+        duration: 0.34,
+        stagger: 0.07,
+        ease: "power2.out",
+        clearProps: "all",
+      });
+    }, activityRef);
+
+    return () => context.revert();
+  }, [activityItems.length]);
 
   return (
-    <section className="task-detail-activity" aria-labelledby="task-detail-activity-title">
+    <section ref={activityRef} className="task-detail-activity" aria-labelledby="task-detail-activity-title">
       <div className="task-detail-activity__head">
         <div>
           <p className="task-detail-kicker">活动</p>
@@ -163,20 +236,44 @@ export function TaskDetailActivity({ task }: { task: Task }) {
 }
 
 export function TaskDetailMoreContent() {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <details className="task-detail-more-content">
-      <summary>更多内容</summary>
-      <div className="task-detail-more-content__grid">
-        <div>
-          <h3>子任务</h3>
-          <p>暂无子任务，后续可在这里拆分执行步骤。</p>
-        </div>
-        <div>
-          <h3>评论与附件</h3>
-          <p>评论和附件功能尚未启用。</p>
-        </div>
-      </div>
-    </details>
+    <section className={`task-detail-more-content${isOpen ? " is-open" : ""}`}>
+      <button
+        type="button"
+        className="task-detail-more-content__trigger"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        <span>更多内容</span>
+        <span className="task-detail-more-content__icon" aria-hidden="true">
+          {isOpen ? "-" : "+"}
+        </span>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen ? (
+          <motion.div
+            className="task-detail-more-content__body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+          >
+            <div className="task-detail-more-content__grid">
+              <div>
+                <h3>子任务</h3>
+                <p>暂无子任务，后续可在这里拆分执行步骤。</p>
+              </div>
+              <div>
+                <h3>评论与附件</h3>
+                <p>评论和附件功能尚未启用。</p>
+              </div>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </section>
   );
 }
 

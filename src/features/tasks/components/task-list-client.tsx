@@ -318,7 +318,7 @@ export function TaskListClient({
     return (
       <WorkspaceStateNotice
         title="登录后管理你的任务"
-        description="登录后即可创建、筛选和更新任务，并在右侧查看完整详情。"
+        description="登录后即可创建、筛选和更新任务，点击任务查看右侧详情，或从操作按钮进入完整详情页。"
       />
     );
   }
