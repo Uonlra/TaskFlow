@@ -2109,3 +2109,158 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
     background: var(--surface-soft);
   }
 }
+
+/* Step 25: Emphasize status, count, and icon while keeping progress secondary. */
+.dashboard-workspace__status-grid {
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+.dashboard-workspace__metric {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) 4px;
+  column-gap: 16px;
+  row-gap: 12px;
+  align-items: center;
+  min-height: 124px;
+  padding: 20px 24px 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.dashboard-workspace__metric + .dashboard-workspace__metric {
+  border-left: 1px solid var(--border);
+}
+
+.dashboard-workspace__metric:hover {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--primary) 4%, var(--surface-strong));
+  box-shadow: none;
+  transform: none;
+}
+
+.dashboard-workspace__metric:focus-visible {
+  border-color: var(--border);
+  outline: 0;
+  box-shadow: inset 0 0 0 2px var(--primary);
+  transform: none;
+}
+
+.dashboard-workspace__metric-icon {
+  grid-row: 1;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 8px;
+}
+
+.dashboard-workspace__metric-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.9;
+}
+
+.dashboard-workspace__metric-icon--todo {
+  background: rgba(100, 116, 139, 0.12);
+  color: #526174;
+}
+
+.dashboard-workspace__metric-icon--deadline {
+  background: color-mix(in srgb, var(--warning) 13%, var(--surface-strong));
+  color: var(--warning);
+}
+
+.dashboard-workspace__metric-copy {
+  grid-row: 1;
+  gap: 3px;
+}
+
+.dashboard-workspace__metric-copy span {
+  color: var(--muted-strong);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dashboard-workspace__metric-copy strong {
+  font-size: 34px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.dashboard-workspace__metric--progress .dashboard-workspace__metric-copy strong {
+  color: var(--primary);
+}
+
+.dashboard-workspace__metric-copy small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dashboard-workspace__metric-bar {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 4px;
+  margin-top: 0;
+  background: color-mix(in srgb, var(--border) 58%, transparent);
+}
+
+html[data-theme="dark"] .dashboard-workspace__status-grid {
+  border-color: var(--border);
+  background: var(--surface-strong);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+html[data-theme="dark"] .dashboard-workspace__metric {
+  background: transparent;
+}
+
+@media (max-width: 760px) {
+  .dashboard-workspace__metric {
+    grid-template-columns: 1fr;
+    grid-template-rows: 40px minmax(0, 1fr) 4px;
+    gap: 10px;
+    min-height: 142px;
+    padding: 16px 12px 14px;
+  }
+
+  .dashboard-workspace__metric-icon {
+    grid-row: 1;
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .dashboard-workspace__metric-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .dashboard-workspace__metric-copy {
+    grid-row: 2;
+  }
+
+  .dashboard-workspace__metric-copy span {
+    font-size: 12px;
+  }
+
+  .dashboard-workspace__metric-copy strong {
+    font-size: 28px;
+  }
+
+  .dashboard-workspace__metric-copy small {
+    font-size: 11px;
+  }
+
+  .dashboard-workspace__metric-bar {
+    grid-row: 3;
+  }
+}
