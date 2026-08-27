@@ -25,6 +25,7 @@ type DashboardWorkspaceProps = {
   priorityFilters: DashboardPriorityFilters;
   onPriorityFiltersChange: (filters: DashboardPriorityFilters) => void;
   onCreateTask: (values: TaskFormValues) => Promise<void>;
+  onStatusFilter: (filter: "active" | "in_progress" | "near") => void;
   onPreviewTask: (task: DashboardTaskPreview) => void;
 };
 
@@ -40,6 +41,7 @@ export function DashboardWorkspace({
   onPriorityFiltersChange,
   onCreateTask,
   onPreviewTask,
+  onStatusFilter,
 }: DashboardWorkspaceProps) {
   const progress = stats.totalCount ? Math.round((stats.completedCount / stats.totalCount) * 360) : 0;
   const remainingCount = Math.max(stats.totalCount - stats.completedCount, 0);
@@ -117,14 +119,30 @@ export function DashboardWorkspace({
       </section>
 
       <section className="dashboard-workspace__status-grid" aria-label="任务状态概览">
-        <Metric label="待处理" value={stats.activeCount} helper="未完成" icon="todo" />
-        <Metric label="进行中" value={stats.inProgressCount} helper="正在推进" icon="progress" />
+        <Metric
+          label="待处理"
+          value={isLoading ? "--" : stats.activeCount}
+          helper="未完成任务"
+          progress={getMetricProgress(stats.activeCount, stats.totalCount, isLoading)}
+          icon="todo"
+          onClick={() => onStatusFilter("active")}
+        />
+        <Metric
+          label="进行中"
+          value={isLoading ? "--" : stats.inProgressCount}
+          helper="正在推进"
+          progress={getMetricProgress(stats.inProgressCount, stats.totalCount, isLoading)}
+          icon="progress"
+          onClick={() => onStatusFilter("in_progress")}
+        />
         <Metric
           label="临近截止"
-          value={stats.upcomingCount}
-          helper="3 天内"
+          value={isLoading ? "--" : stats.upcomingCount}
+          helper="3 天内到期"
+          progress={getMetricProgress(stats.upcomingCount, stats.totalCount, isLoading)}
           icon="deadline"
           tone={stats.upcomingCount > 0 ? "warning" : undefined}
+          onClick={() => onStatusFilter("near")}
         />
       </section>
     </>
@@ -159,19 +177,27 @@ function Metric({
   helper,
   icon,
   tone,
+  onClick,
+  progress,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   helper: string;
   icon: "todo" | "progress" | "deadline";
   tone?: "warning";
+  onClick: () => void;
+  progress: number;
 }) {
-  const className = tone
-    ? "dashboard-workspace__metric dashboard-workspace__metric--" + tone
-    : "dashboard-workspace__metric";
+  const className = [
+    "dashboard-workspace__metric",
+    "dashboard-workspace__metric--" + icon,
+    tone ? "dashboard-workspace__metric--" + tone : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className={className}>
+    <button type="button" className={className} onClick={onClick} aria-label={`${label} ${value}，${helper}`}>
       <span className={"dashboard-workspace__metric-icon dashboard-workspace__metric-icon--" + icon} aria-hidden="true">
         {icon === "todo" ? <CheckSquare /> : icon === "progress" ? <Play /> : <Clock3 />}
       </span>
@@ -180,8 +206,19 @@ function Metric({
         <strong>{value}</strong>
         <small>{helper}</small>
       </div>
-    </div>
+      <span className="dashboard-workspace__metric-bar" aria-hidden="true">
+        <span className="dashboard-workspace__metric-bar-fill" style={{ width: `${progress}%` }} />
+      </span>
+    </button>
   );
+}
+
+function getMetricProgress(value: number, total: number, isLoading: boolean) {
+  if (isLoading || total <= 0) {
+    return 0;
+  }
+
+  return Math.min(100, Math.round((value / total) * 100));
 }
 
 const priorityLabels: Record<DashboardTaskPreview["priority"], string> = { high: "高", medium: "中", low: "低" };

@@ -16,6 +16,7 @@ import { TaskQuickViewDialog } from "@/features/tasks/components/task-quick-view
 import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
 import type { Task } from "@/features/tasks/types/task.types";
 import { ROUTES } from "@/shared/lib/constants/routes";
+import { buildTasksHref } from "@/shared/lib/constants/query-params";
 
 type DashboardRange = "today" | "week" | "all";
 
@@ -115,6 +116,11 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   };
 
+  const handleStatusFilter = (filter: "active" | "in_progress" | "near") => {
+    const href = filter === "near" ? buildTasksHref({ due: "near" }) : buildTasksHref({ status: filter });
+    router.push(href);
+  };
+
   const handleCreateTask = async (values: TaskFormValues) => {
     await createTaskAsync(values, user?.id);
     await loadSummary();
@@ -167,6 +173,9 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           rangeLabel={rangeLabel}
           isLoading={isLoading}
           isEmpty={isRangeEmpty}
+          error={error}
+          onRetry={() => void loadSummary()}
+          hasPreviousData={Boolean(summary)}
           isAccountEmpty={isAccountEmpty}
           rangeOptions={rangeOptions}
           onRangeChange={handleRangeChange}
@@ -174,6 +183,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           onPriorityFiltersChange={setPriorityFilters}
           onCreateTask={handleCreateTask}
           onPreviewTask={handlePreviewTask}
+          onStatusFilter={handleStatusFilter}
         />
       </div>
       <div className="dashboard-mobile-only">
