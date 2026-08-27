@@ -32,10 +32,14 @@ import {
 const CALENDAR_QUERY_LIMIT = 5000;
 
 export async function listTasks(sessionSecret: string, request?: NextRequest) {
-  const payload = await appwriteTaskRequest<AppwriteRowsList>("", {
-    sessionSecret,
-    request,
-  }, appwriteRowsListSchema);
+  const payload = await appwriteTaskRequest<AppwriteRowsList>(
+    "",
+    {
+      sessionSecret,
+      request,
+    },
+    appwriteRowsListSchema,
+  );
 
   return (payload.rows ?? []).map(mapTaskRow);
 }
@@ -62,29 +66,41 @@ export async function listTasksForDashboard(
 ) {
   const scopeQueries = range === "all" ? [] : buildDashboardRangeQueries(range);
   const [scopedPayload, pacePayload, anyTaskPayload] = await Promise.all([
-    appwriteTaskRequest<AppwriteRowsList>("", {
-      sessionSecret,
-      request,
-      searchParams: {
-        queries: [...scopeQueries, querySelect(DASHBOARD_SELECT_FIELDS), queryLimit(DASHBOARD_QUERY_LIMIT)],
+    appwriteTaskRequest<AppwriteRowsList>(
+      "",
+      {
+        sessionSecret,
+        request,
+        searchParams: {
+          queries: [...scopeQueries, querySelect(DASHBOARD_SELECT_FIELDS), queryLimit(DASHBOARD_QUERY_LIMIT)],
+        },
       },
-    }, appwriteRowsListSchema),
-    appwriteTaskRequest<AppwriteRowsList>("", {
-      sessionSecret,
-      request,
-      searchParams: {
-        queries: [
-          ...buildDashboardPaceQueries(),
-          querySelect(DASHBOARD_SELECT_FIELDS),
-          queryLimit(DASHBOARD_QUERY_LIMIT),
-        ],
+      appwriteRowsListSchema,
+    ),
+    appwriteTaskRequest<AppwriteRowsList>(
+      "",
+      {
+        sessionSecret,
+        request,
+        searchParams: {
+          queries: [
+            ...buildDashboardPaceQueries(),
+            querySelect(DASHBOARD_SELECT_FIELDS),
+            queryLimit(DASHBOARD_QUERY_LIMIT),
+          ],
+        },
       },
-    }, appwriteRowsListSchema),
-    appwriteTaskRequest<AppwriteRowsList>("", {
-      sessionSecret,
-      request,
-      searchParams: { queries: [queryLimit(1)] },
-    }, appwriteRowsListSchema),
+      appwriteRowsListSchema,
+    ),
+    appwriteTaskRequest<AppwriteRowsList>(
+      "",
+      {
+        sessionSecret,
+        request,
+        searchParams: { queries: [queryLimit(1)] },
+      },
+      appwriteRowsListSchema,
+    ),
   ]);
 
   return {
@@ -221,13 +237,17 @@ async function fetchTaskPage(
   pageSize: number,
   request?: NextRequest,
 ) {
-  return appwriteTaskRequest<AppwriteRowsList>("", {
-    sessionSecret,
-    request,
-    searchParams: {
-      queries: [...baseQueries, queryOffset((page - 1) * pageSize), queryLimit(pageSize)],
+  return appwriteTaskRequest<AppwriteRowsList>(
+    "",
+    {
+      sessionSecret,
+      request,
+      searchParams: {
+        queries: [...baseQueries, queryOffset((page - 1) * pageSize), queryLimit(pageSize)],
+      },
     },
-  }, appwriteRowsListSchema);
+    appwriteRowsListSchema,
+  );
 }
 
 async function getTaskCategoryCounts(sessionSecret: string, request?: NextRequest) {
@@ -252,11 +272,15 @@ async function getTaskCategoryCounts(sessionSecret: string, request?: NextReques
 }
 
 async function countTaskRows(sessionSecret: string, queries: string[], request?: NextRequest) {
-  const payload = await appwriteTaskRequest<AppwriteRowsList>("", {
-    sessionSecret,
-    request,
-    searchParams: { queries: [...queries, queryLimit(1)] },
-  }, appwriteRowsListSchema);
+  const payload = await appwriteTaskRequest<AppwriteRowsList>(
+    "",
+    {
+      sessionSecret,
+      request,
+      searchParams: { queries: [...queries, queryLimit(1)] },
+    },
+    appwriteRowsListSchema,
+  );
 
   return getRowsTotal(payload);
 }
@@ -340,16 +364,24 @@ export async function listTasksByDueRange(
   dueQueries.push(queryOrderAsc("dueDate"), queryLimit(CALENDAR_QUERY_LIMIT));
 
   const [duePayload, anyTaskPayload] = await Promise.all([
-    appwriteTaskRequest<AppwriteRowsList>("", {
-      sessionSecret,
-      request,
-      searchParams: { queries: dueQueries },
-    }, appwriteRowsListSchema),
-    appwriteTaskRequest<AppwriteRowsList>("", {
-      sessionSecret,
-      request,
-      searchParams: { queries: [queryLimit(1)] },
-    }, appwriteRowsListSchema),
+    appwriteTaskRequest<AppwriteRowsList>(
+      "",
+      {
+        sessionSecret,
+        request,
+        searchParams: { queries: dueQueries },
+      },
+      appwriteRowsListSchema,
+    ),
+    appwriteTaskRequest<AppwriteRowsList>(
+      "",
+      {
+        sessionSecret,
+        request,
+        searchParams: { queries: [queryLimit(1)] },
+      },
+      appwriteRowsListSchema,
+    ),
   ]);
 
   return {
@@ -361,29 +393,37 @@ export async function listTasksByDueRange(
 export async function createTask(sessionSecret: string, userId: string, input: TaskFormValues, request?: NextRequest) {
   const rowId = crypto.randomUUID();
   const taskKey = Date.now();
-  const row = await appwriteTaskRequest<AppwriteTaskRow>("", {
-    method: "POST",
-    sessionSecret,
-    request,
-    body: {
-      rowId,
-      data: buildTaskData(input, taskKey),
-      permissions: buildTaskPermissions(userId),
+  const row = await appwriteTaskRequest<AppwriteTaskRow>(
+    "",
+    {
+      method: "POST",
+      sessionSecret,
+      request,
+      body: {
+        rowId,
+        data: buildTaskData(input, taskKey),
+        permissions: buildTaskPermissions(userId),
+      },
     },
-  }, appwriteTaskRowSchema);
+    appwriteTaskRowSchema,
+  );
 
   return mapTaskRow(row);
 }
 
 export async function updateTask(sessionSecret: string, taskId: string, input: TaskFormValues, request?: NextRequest) {
-  const row = await appwriteTaskRequest<AppwriteTaskRow>(`/${taskId}`, {
-    method: "PATCH",
-    sessionSecret,
-    request,
-    body: {
-      data: buildTaskData(input),
+  const row = await appwriteTaskRequest<AppwriteTaskRow>(
+    `/${taskId}`,
+    {
+      method: "PATCH",
+      sessionSecret,
+      request,
+      body: {
+        data: buildTaskData(input),
+      },
     },
-  }, appwriteTaskRowSchema);
+    appwriteTaskRowSchema,
+  );
 
   return mapTaskRow(row);
 }
@@ -394,17 +434,21 @@ export async function updateTaskStatus(
   status: Task["status"],
   request?: NextRequest,
 ) {
-  const row = await appwriteTaskRequest<AppwriteTaskRow>(`/${taskId}`, {
-    method: "PATCH",
-    sessionSecret,
-    request,
-    body: {
-      data: {
-        status,
-        completedAt: status === "done" ? new Date().toISOString() : null,
+  const row = await appwriteTaskRequest<AppwriteTaskRow>(
+    `/${taskId}`,
+    {
+      method: "PATCH",
+      sessionSecret,
+      request,
+      body: {
+        data: {
+          status,
+          completedAt: status === "done" ? new Date().toISOString() : null,
+        },
       },
     },
-  }, appwriteTaskRowSchema);
+    appwriteTaskRowSchema,
+  );
 
   return mapTaskRow(row);
 }
@@ -418,10 +462,14 @@ export async function deleteTask(sessionSecret: string, taskId: string, request?
 }
 
 export async function getTask(sessionSecret: string, taskId: string, request?: NextRequest) {
-  const row = await appwriteTaskRequest<AppwriteTaskRow>(`/${taskId}`, {
-    sessionSecret,
-    request,
-  }, appwriteTaskRowSchema);
+  const row = await appwriteTaskRequest<AppwriteTaskRow>(
+    `/${taskId}`,
+    {
+      sessionSecret,
+      request,
+    },
+    appwriteTaskRowSchema,
+  );
 
   return mapTaskRow(row);
 }

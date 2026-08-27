@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-import {
-  taskPrioritySchema,
-  taskStatusSchema,
-} from "@/features/tasks/types/task-values";
+import { taskPrioritySchema, taskStatusSchema } from "@/features/tasks/types/task-values";
 
 export const appwriteTaskRowSchema = z.object({
   $id: z.string(),
