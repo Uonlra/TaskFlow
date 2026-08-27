@@ -173,6 +173,9 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           rangeLabel={rangeLabel}
           isLoading={isLoading}
           isEmpty={isRangeEmpty}
+          error={error}
+          onRetry={() => void loadSummary()}
+          hasPreviousData={Boolean(summary)}
           isAccountEmpty={isAccountEmpty}
           rangeOptions={rangeOptions}
           onRangeChange={handleRangeChange}
