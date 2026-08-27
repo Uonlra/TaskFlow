@@ -27,6 +27,7 @@ type DashboardV2ShellProps = {
   onPriorityFiltersChange: (filters: DashboardPriorityFilters) => void;
   onCreateTask: (values: TaskFormValues) => Promise<void>;
   onPreviewTask: (task: DashboardTaskPreview) => void;
+  onStatusFilter: (filter: "active" | "in_progress" | "near") => void;
 };
 
 export function DashboardV2Shell({
@@ -43,6 +44,7 @@ export function DashboardV2Shell({
   onPriorityFiltersChange,
   onCreateTask,
   onPreviewTask,
+  onStatusFilter,
 }: DashboardV2ShellProps) {
   if (isAccountEmpty) {
     return (
@@ -71,6 +73,7 @@ export function DashboardV2Shell({
           onPriorityFiltersChange={onPriorityFiltersChange}
           onCreateTask={onCreateTask}
           onPreviewTask={onPreviewTask}
+          onStatusFilter={onStatusFilter}
         />
         <DataEmptyState
           variant="table"
@@ -95,6 +98,7 @@ export function DashboardV2Shell({
         onPriorityFiltersChange={onPriorityFiltersChange}
         onCreateTask={onCreateTask}
         onPreviewTask={onPreviewTask}
+        onStatusFilter={onStatusFilter}
       />
       <div className="dashboard-v2-grid">
         <div className="dashboard-v2-grid__main">
