@@ -315,6 +315,137 @@
   color: var(--primary);
 }
 
+.calendar-month-panel {
+  gap: 14px;
+}
+
+.calendar-weekday-row,
+.calendar-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-weekday-row {
+  gap: 8px;
+  padding: 0 1px;
+}
+
+.calendar-weekday-row span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.calendar-month-grid {
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--border);
+}
+
+.calendar-month-day {
+  min-width: 0;
+  min-height: 104px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-content: stretch;
+  gap: 8px;
+  padding: 11px 12px 9px;
+  background: var(--surface-strong);
+  color: var(--foreground);
+  text-decoration: none;
+  transition:
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.calendar-month-day:hover,
+.calendar-month-day:focus-visible {
+  position: relative;
+  z-index: 1;
+  background: var(--primary-surface);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.calendar-month-day:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.calendar-month-day.is-outside-month {
+  background: var(--surface-muted);
+}
+
+.calendar-month-day.is-outside-month .calendar-month-day__number,
+.calendar-month-day.is-outside-month .calendar-month-day__count {
+  color: var(--muted);
+}
+
+.calendar-month-day.is-today .calendar-month-day__number {
+  color: var(--primary);
+}
+
+.calendar-month-day.is-selected {
+  background: var(--primary-surface);
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+.calendar-month-day.is-selected .calendar-month-day__number {
+  color: var(--primary-strong);
+  font-weight: 700;
+}
+
+.calendar-month-day__number {
+  color: var(--foreground);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.calendar-month-day__count {
+  min-height: 16px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.calendar-status-dots {
+  align-self: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.calendar-status-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.calendar-status-dot--done {
+  background: var(--success);
+}
+
+.calendar-status-dot--in_progress {
+  background: var(--warning);
+}
+
+.calendar-status-dot--todo {
+  background: var(--muted-strong);
+}
+
+.calendar-status-dot--overdue {
+  background: var(--danger);
+  box-shadow: 0 0 0 2px var(--danger-soft);
+}
+
 .calendar-week-strip {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -575,6 +706,38 @@
   .calendar-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .calendar-weekday-row {
+    gap: 4px;
+  }
+
+  .calendar-month-grid {
+    border-radius: 6px;
+  }
+
+  .calendar-month-day {
+    min-height: 78px;
+    gap: 6px;
+    padding: 9px 7px 7px;
+  }
+
+  .calendar-month-day__number {
+    font-size: 16px;
+  }
+
+  .calendar-status-dots {
+    gap: 4px;
+  }
+
+  .calendar-status-dot {
+    width: 6px;
+    height: 6px;
+    flex-basis: 6px;
+  }
+
+  .calendar-month-day__count {
+    font-size: 10px;
   }
 
   .calendar-toolbar__controls {
@@ -851,6 +1014,19 @@
   .calendar-shell .calendar-quick-links {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .calendar-month-day {
+    min-height: 68px;
+    padding-inline: 5px;
+  }
+
+  .calendar-month-day__number {
+    font-size: 15px;
+  }
+
+  .calendar-month-day__count {
+    display: none;
+  }
 }
 
 html[data-theme="dark"] .calendar-toolbar,
@@ -934,4 +1110,17 @@ html[data-theme="dark"] .calendar-day.is-today strong {
 html[data-theme="dark"] .calendar-empty-state {
   border-color: var(--border);
   background: var(--surface);
+}
+
+html[data-theme="dark"] .calendar-month-day.is-outside-month {
+  background: var(--surface);
+}
+
+html[data-theme="dark"] .calendar-month-day.is-selected {
+  background: var(--primary-surface);
+}
+
+html[data-theme="dark"] .calendar-month-day.is-selected .calendar-month-day__number,
+html[data-theme="dark"] .calendar-month-day.is-today .calendar-month-day__number {
+  color: var(--primary);
 }

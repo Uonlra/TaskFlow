@@ -11,7 +11,6 @@ import {
   addTaskDays,
   filterTasksByTaskDateRange,
   formatTaskDateParam,
-  getTaskWeekStart,
   hasTaskDueDate,
   isTaskDueOnDate,
   parseTaskDateParam,
@@ -43,8 +42,12 @@ type CalendarDay = {
   dayLabel: string;
   isToday: boolean;
   isSelected: boolean;
+  isCurrentMonth: boolean;
   taskCount: number;
+  statusDots: CalendarStatus[];
 };
+
+type CalendarStatus = "done" | "in_progress" | "todo" | "overdue";
 
 const rangeOptions: Array<{ value: DashboardRangeValue; label: string }> = [
   { value: DASHBOARD_RANGE_VALUES.today, label: "今天" },
@@ -83,9 +86,10 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   const dateParam = parseCalendarDate(searchParams.get(CALENDAR_QUERY_KEYS.date) ?? initialDate);
   const range = parseCalendarRange(searchParams.get(CALENDAR_QUERY_KEYS.range) ?? initialRange);
   const selectedDate = useMemo(() => parseTaskDateParam(dateParam) ?? startOfTaskDay(new Date()), [dateParam]);
-  const weekStart = useMemo(() => getTaskWeekStart(selectedDate), [selectedDate]);
-  const rangeFrom = range === DASHBOARD_RANGE_VALUES.all ? undefined : formatTaskDateParam(weekStart);
-  const rangeTo = range === DASHBOARD_RANGE_VALUES.all ? undefined : formatTaskDateParam(addTaskDays(weekStart, 7));
+  const monthGridStart = useMemo(() => getCalendarGridStart(selectedDate), [selectedDate]);
+  const rangeFrom = range === DASHBOARD_RANGE_VALUES.all ? undefined : formatTaskDateParam(monthGridStart);
+  const rangeTo =
+    range === DASHBOARD_RANGE_VALUES.all ? undefined : formatTaskDateParam(addTaskDays(monthGridStart, 42));
 
   useEffect(() => {
     if (!isConfigured || !user?.id || isAuthLoading) return;
@@ -145,7 +149,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     () => sortCalendarTasks(dueTasks.filter((task) => isTaskDueOnDate(task, selectedDate))),
     [dueTasks, selectedDate],
   );
-  const weekDays = useMemo(() => buildWeekDays(selectedDate, dueTasks), [dueTasks, selectedDate]);
+  const monthDays = useMemo(() => buildMonthDays(selectedDate, dueTasks), [dueTasks, selectedDate]);
   const upcomingTasks = useMemo(
     () => buildUpcomingTasks(dueTasks, selectedDate, range),
     [dueTasks, range, selectedDate],
@@ -177,7 +181,6 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
           dateParam={dateParam}
           range={range}
           rangeLabel={rangeLabel}
-          days={weekDays}
           isSyncing={false}
           isAccountEmpty={false}
           onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
@@ -208,7 +211,6 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
           dateParam={dateParam}
           range={range}
           rangeLabel={rangeLabel}
-          days={weekDays}
           isSyncing={isSyncing}
           isAccountEmpty={false}
           onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
@@ -229,7 +231,6 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
         dateParam={dateParam}
         range={range}
         rangeLabel={rangeLabel}
-        days={weekDays}
         isSyncing={isSyncing}
         isAccountEmpty={isAccountEmpty}
         onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
@@ -238,7 +239,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
       {attention ? <CalendarAttentionBar attention={attention} /> : null}
       <div className="calendar-layout-grid">
         <main className="calendar-main-stack">
-          <CalendarWeekStrip days={weekDays} />
+          <CalendarMonthGrid days={monthDays} range={range} selectedDate={selectedDate} />
           <CalendarTimeline tasks={selectedDayTasks} selectedDate={selectedDate} isSyncing={isSyncing} />
         </main>
         <aside className="calendar-side-stack">
@@ -261,7 +262,6 @@ function CalendarToolbar({
   dateParam,
   range,
   rangeLabel,
-  days,
   isSyncing,
   isAccountEmpty,
   onDateChange,
@@ -271,7 +271,6 @@ function CalendarToolbar({
   dateParam: string;
   range: DashboardRangeValue;
   rangeLabel: string;
-  days: CalendarDay[];
   isSyncing: boolean;
   isAccountEmpty: boolean;
   onDateChange: (date: Date) => void;
@@ -309,8 +308,8 @@ function CalendarToolbar({
           <button
             type="button"
             className="date-switcher__button"
-            onClick={() => onDateChange(addTaskDays(date, -1))}
-            aria-label="上一天"
+            onClick={() => onDateChange(shiftCalendarMonth(date, -1))}
+            aria-label="上个月"
           >
             <span aria-hidden="true">‹</span>
           </button>
@@ -320,8 +319,8 @@ function CalendarToolbar({
           <button
             type="button"
             className="date-switcher__button"
-            onClick={() => onDateChange(addTaskDays(date, 1))}
-            aria-label="下一天"
+            onClick={() => onDateChange(shiftCalendarMonth(date, 1))}
+            aria-label="下个月"
           >
             <span aria-hidden="true">›</span>
           </button>
@@ -332,35 +331,8 @@ function CalendarToolbar({
         >
           {dateParam}
         </Link>
-        <CalendarMobileDateStrip days={days} range={range} />
       </div>
     </section>
-  );
-}
-
-function CalendarMobileDateStrip({ days, range }: { days: CalendarDay[]; range: DashboardRangeValue }) {
-  return (
-    <div className="calendar-mobile-date-strip" aria-label="滑动选择日期">
-      {days.map((day) => (
-        <Link
-          key={day.dateParam}
-          href={buildCalendarHref({ date: day.dateParam, range })}
-          className={[
-            "calendar-mobile-date-strip__item",
-            day.isSelected ? "is-selected" : "",
-            day.isToday ? "is-today" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          aria-current={day.isSelected ? "date" : undefined}
-          aria-label={`${day.weekday}${day.dayLabel}，${day.taskCount} 项截止`}
-        >
-          <span>{day.weekday}</span>
-          <strong>{day.dayLabel}</strong>
-          <small>{day.taskCount}</small>
-        </Link>
-      ))}
-    </div>
   );
 }
 
@@ -406,35 +378,62 @@ function CalendarAttentionBar({ attention }: { attention: CalendarAttention }) {
   );
 }
 
-function CalendarWeekStrip({ days }: { days: CalendarDay[] }) {
+function CalendarMonthGrid({
+  days,
+  range,
+  selectedDate,
+}: {
+  days: CalendarDay[];
+  range: DashboardRangeValue;
+  selectedDate: Date;
+}) {
   return (
-    <section className="calendar-panel calendar-week-panel card-surface">
+    <section className="calendar-panel calendar-month-panel card-surface">
       <div className="calendar-panel__head calendar-panel__head--inline">
         <div>
-          <span className="calendar-eyebrow">周视图</span>
-          <h2>7 天任务分布</h2>
+          <span className="calendar-eyebrow">月视图</span>
+          <h2>{formatCalendarMonth(selectedDate)}</h2>
         </div>
         <Link
           href={buildTasksHref({
-            date: days.find((day) => day.isSelected)?.dateParam,
+            date: formatTaskDateParam(selectedDate),
             range: DASHBOARD_RANGE_VALUES.week,
           })}
         >
           查看任务
         </Link>
       </div>
-      <div className="calendar-week-strip" aria-label="周视图日期">
+      <div className="calendar-weekday-row" aria-hidden="true">
+        {weekdayLabels.map((label) => (
+          <span key={label}>{label}</span>
+        ))}
+      </div>
+      <div className="calendar-month-grid" aria-label={`${formatCalendarMonth(selectedDate)}日期`} role="grid">
         {days.map((day) => (
           <Link
             key={day.dateParam}
-            href={buildCalendarHref({ date: day.dateParam, range: DASHBOARD_RANGE_VALUES.week })}
-            className={["calendar-day", day.isSelected ? "is-selected" : "", day.isToday ? "is-today" : ""]
+            href={buildCalendarHref({ date: day.dateParam, range })}
+            className={[
+              "calendar-month-day",
+              day.isSelected ? "is-selected" : "",
+              day.isToday ? "is-today" : "",
+              day.isCurrentMonth ? "" : "is-outside-month",
+            ]
               .filter(Boolean)
               .join(" ")}
+            aria-current={day.isSelected ? "date" : undefined}
+            aria-label={`${day.dateParam}，${day.taskCount} 项任务`}
+            role="gridcell"
           >
-            <span>{day.weekday}</span>
-            <strong>{day.dayLabel}</strong>
-            <small>{day.taskCount} 截止</small>
+            <span className="calendar-month-day__number">{day.dayLabel}</span>
+            {day.statusDots.length ? (
+              <span className="calendar-status-dots" aria-hidden="true">
+                {day.statusDots.map((status) => (
+                  <span key={status} className={`calendar-status-dot calendar-status-dot--${status}`} />
+                ))}
+              </span>
+            ) : null}
+            <small className="calendar-month-day__count">{day.taskCount ? `${day.taskCount} 项` : ""}</small>
           </Link>
         ))}
       </div>
@@ -596,12 +595,16 @@ function buildCalendarAttention(dueTasks: Task[]): CalendarAttention | null {
   return { overdueCount, nearDueCount };
 }
 
-function buildWeekDays(selectedDate: Date, dueTasks: Task[]): CalendarDay[] {
-  const start = getTaskWeekStart(selectedDate);
+const weekdayLabels = ["一", "二", "三", "四", "五", "六", "日"];
+
+function buildMonthDays(selectedDate: Date, dueTasks: Task[]): CalendarDay[] {
+  const start = getCalendarGridStart(selectedDate);
   const today = startOfTaskDay(new Date());
 
-  return Array.from({ length: 7 }, (_, index) => {
+  return Array.from({ length: 42 }, (_, index) => {
     const date = addTaskDays(start, index);
+    const tasksForDay = dueTasks.filter((task) => isTaskDueOnDate(task, date));
+    const statusDots = getCalendarStatusDots(tasksForDay);
     return {
       date,
       dateParam: formatTaskDateParam(date),
@@ -609,9 +612,31 @@ function buildWeekDays(selectedDate: Date, dueTasks: Task[]): CalendarDay[] {
       dayLabel: String(date.getDate()),
       isToday: isSameCalendarDay(date, today),
       isSelected: isSameCalendarDay(date, selectedDate),
-      taskCount: dueTasks.filter((task) => task.status !== "done" && isTaskDueOnDate(task, date)).length,
+      isCurrentMonth: date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear(),
+      taskCount: tasksForDay.length,
+      statusDots,
     };
   });
+}
+
+function getCalendarGridStart(date: Date) {
+  const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+  const mondayOffset = monthStart.getDay() === 0 ? 6 : monthStart.getDay() - 1;
+  return addTaskDays(monthStart, -mondayOffset);
+}
+
+function getCalendarStatusDots(tasks: Task[]): CalendarStatus[] {
+  const statuses = new Set<CalendarStatus>();
+
+  tasks.forEach((task) => {
+    const dueMeta = getTaskDueMeta(task);
+    if (dueMeta.isOverdue) statuses.add("overdue");
+    statuses.add(task.status);
+  });
+
+  return ["overdue", "in_progress", "todo", "done"]
+    .filter((status) => statuses.has(status as CalendarStatus))
+    .slice(0, 3) as CalendarStatus[];
 }
 
 function buildUpcomingTasks(dueTasks: Task[], selectedDate: Date, range: DashboardRangeValue) {
@@ -700,6 +725,19 @@ function formatReadableDate(value: Date) {
     day: "2-digit",
     weekday: "short",
   }).format(value);
+}
+
+function formatCalendarMonth(value: Date) {
+  return new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long" }).format(value);
+}
+
+function shiftCalendarMonth(value: Date, amount: number) {
+  const originalDay = value.getDate();
+  const target = new Date(value.getFullYear(), value.getMonth() + amount, 1);
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+
+  target.setDate(Math.min(originalDay, lastDay));
+  return startOfTaskDay(target);
 }
 
 function formatMonthDay(value: Date) {
