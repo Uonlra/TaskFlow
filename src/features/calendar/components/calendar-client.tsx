@@ -13,7 +13,6 @@ import {
   formatTaskDateParam,
   getTaskWeekStart,
   hasTaskDueDate,
-  isTaskDueInWeek,
   isTaskDueOnDate,
   parseTaskDateParam,
   parseTaskDueDate,
@@ -35,14 +34,6 @@ import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 type CalendarClientProps = {
   initialDate: string;
   initialRange: DashboardRangeValue;
-};
-
-type CalendarMetric = {
-  label: string;
-  value: string;
-  helper: string;
-  tone: "blue" | "green" | "orange" | "red" | "purple";
-  href: string;
 };
 
 type CalendarDay = {
@@ -159,11 +150,8 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     () => buildUpcomingTasks(dueTasks, selectedDate, range),
     [dueTasks, range, selectedDate],
   );
+  const attention = useMemo(() => buildCalendarAttention(dueTasks), [dueTasks]);
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "本周";
-  const metrics = useMemo(
-    () => buildCalendarMetrics(dueTasks, scopedTasks, selectedDate, dateParam, range),
-    [dateParam, dueTasks, range, scopedTasks, selectedDate],
-  );
   const isAccountEmpty = workspaceState === "account-empty";
   const isRangeEmpty = isAccountEmpty || (workspaceState === "ready" && scopedTasks.length === 0);
 
@@ -247,7 +235,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
         onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
         onRangeChange={(nextRange) => updateCalendar({ range: nextRange })}
       />
-      <CalendarSummaryGrid metrics={metrics} isLoading={isSyncing} isRangeEmpty={isRangeEmpty} />
+      {attention ? <CalendarAttentionBar attention={attention} /> : null}
       <div className="calendar-layout-grid">
         <main className="calendar-main-stack">
           <CalendarWeekStrip days={weekDays} />
@@ -376,27 +364,44 @@ function CalendarMobileDateStrip({ days, range }: { days: CalendarDay[]; range: 
   );
 }
 
-function CalendarSummaryGrid({
-  metrics,
-  isLoading,
-  isRangeEmpty,
-}: {
-  metrics: CalendarMetric[];
-  isLoading: boolean;
-  isRangeEmpty: boolean;
-}) {
+type CalendarAttention = {
+  overdueCount: number;
+  nearDueCount: number;
+};
+
+function CalendarAttentionBar({ attention }: { attention: CalendarAttention }) {
+  const allAttentionHref = buildTasksHref({ due: attention.nearDueCount ? "near" : "overdue" });
+
   return (
-    <section className="calendar-overview card-surface" aria-label="日历摘要">
-      {metrics.map((metric) => (
-        <Link key={metric.label} href={metric.href} className={`calendar-metric calendar-metric--${metric.tone}`}>
-          <span className="calendar-metric__icon" aria-hidden="true" />
-          <div>
-            <span>{metric.label}</span>
-            <strong>{isLoading ? "--" : metric.value}</strong>
-            <small>{isRangeEmpty ? "当前范围" : metric.helper}</small>
-          </div>
-        </Link>
-      ))}
+    <section className="calendar-attention card-surface" aria-label="任务提醒" aria-live="polite">
+      <span className="calendar-attention__label">需要关注</span>
+      <div className="calendar-attention__items">
+        {attention.overdueCount ? (
+          <Link
+            className="calendar-attention__item calendar-attention__item--overdue"
+            href={buildTasksHref({ due: "overdue" })}
+          >
+            <span className="calendar-attention__dot" aria-hidden="true" />
+            <span>已逾期</span>
+            <strong>{attention.overdueCount}</strong>
+            <span>项</span>
+          </Link>
+        ) : null}
+        {attention.nearDueCount ? (
+          <Link
+            className="calendar-attention__item calendar-attention__item--near"
+            href={buildTasksHref({ due: "near" })}
+          >
+            <span className="calendar-attention__dot" aria-hidden="true" />
+            <span>近期到期</span>
+            <strong>{attention.nearDueCount}</strong>
+            <span>项</span>
+          </Link>
+        ) : null}
+      </div>
+      <Link className="calendar-attention__all" href={allAttentionHref}>
+        查看任务
+      </Link>
     </section>
   );
 }
@@ -578,58 +583,17 @@ function buildCalendarTasksHref(dateParam: string, range: DashboardRangeValue, i
 
   return buildTasksHref({ ...input, date: dateParam });
 }
-function buildCalendarMetrics(
-  dueTasks: Task[],
-  scopedTasks: Task[],
-  selectedDate: Date,
-  dateParam: string,
-  range: DashboardRangeValue,
-): CalendarMetric[] {
-  const activeDueTasks = dueTasks.filter((task) => task.status !== "done");
-  const activeScopedTasks = scopedTasks.filter((task) => task.status !== "done");
-  const selectedDayCount = activeDueTasks.filter((task) => isTaskDueOnDate(task, selectedDate)).length;
-  const weekCount = activeDueTasks.filter((task) => isTaskDueInWeek(task, selectedDate)).length;
-  const overdueCount = activeDueTasks.filter((task) => getTaskDueMeta(task).isOverdue).length;
-  const highCount = activeScopedTasks.filter((task) => task.priority === "high").length;
-  const completedCount = scopedTasks.filter((task) => task.status === "done").length;
+function buildCalendarAttention(dueTasks: Task[]): CalendarAttention | null {
+  const activeTasks = dueTasks.filter((task) => task.status !== "done");
+  const overdueCount = activeTasks.filter((task) => getTaskDueMeta(task).isOverdue).length;
+  const nearDueCount = activeTasks.filter((task) => {
+    const dueMeta = getTaskDueMeta(task);
+    return dueMeta.isDueToday || dueMeta.isUpcoming;
+  }).length;
 
-  return [
-    {
-      label: "当日截止",
-      value: String(selectedDayCount),
-      helper: "选中日期",
-      tone: "blue",
-      href: buildTasksHref({ date: dateParam }),
-    },
-    {
-      label: "本周到期",
-      value: String(weekCount),
-      helper: "7 天分布",
-      tone: "green",
-      href: buildTasksHref({ date: dateParam, range: DASHBOARD_RANGE_VALUES.week }),
-    },
-    {
-      label: "已逾期",
-      value: String(overdueCount),
-      helper: "需要处理",
-      tone: "red",
-      href: buildTasksHref({ due: "overdue" }),
-    },
-    {
-      label: "高优先级",
-      value: String(highCount),
-      helper: "当前范围",
-      tone: "orange",
-      href: buildCalendarTasksHref(dateParam, range, { priority: "high" }),
-    },
-    {
-      label: "已完成",
-      value: String(completedCount),
-      helper: "当前范围",
-      tone: "purple",
-      href: buildCalendarTasksHref(dateParam, range, { status: "done" }),
-    },
-  ];
+  if (!overdueCount && !nearDueCount) return null;
+
+  return { overdueCount, nearDueCount };
 }
 
 function buildWeekDays(selectedDate: Date, dueTasks: Task[]): CalendarDay[] {

@@ -18,6 +18,79 @@
   padding: 18px 20px;
 }
 
+.calendar-attention {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 14px;
+  border-color: var(--border-soft);
+  background: var(--surface-strong);
+}
+
+.calendar-attention__label {
+  flex: 0 0 auto;
+  color: var(--muted-strong);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.calendar-attention__items {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1 1 auto;
+}
+
+.calendar-attention__item {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-strong);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.calendar-attention__item:hover,
+.calendar-attention__item:focus-visible,
+.calendar-attention__all:hover,
+.calendar-attention__all:focus-visible {
+  color: var(--primary);
+}
+
+.calendar-attention__item--overdue:hover,
+.calendar-attention__item--overdue:focus-visible {
+  color: var(--danger);
+}
+
+.calendar-attention__dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 999px;
+  background: var(--warning);
+}
+
+.calendar-attention__item--overdue .calendar-attention__dot {
+  background: var(--danger);
+}
+
+.calendar-attention__item strong {
+  color: var(--foreground);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-attention__all {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .calendar-toolbar__copy {
   min-width: 0;
 }
@@ -482,6 +555,23 @@
 }
 
 @media (max-width: 760px) {
+  .calendar-attention {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 12px 14px;
+  }
+
+  .calendar-attention__items {
+    gap: 10px 14px;
+    flex-wrap: wrap;
+  }
+
+  .calendar-attention__all {
+    width: 100%;
+    padding-left: 19px;
+  }
+
   .calendar-toolbar {
     align-items: stretch;
     flex-direction: column;
@@ -764,6 +854,7 @@
 }
 
 html[data-theme="dark"] .calendar-toolbar,
+html[data-theme="dark"] .calendar-attention,
 html[data-theme="dark"] .calendar-overview,
 html[data-theme="dark"] .calendar-panel,
 html[data-theme="dark"] .calendar-metric,
@@ -818,6 +909,16 @@ html[data-theme="dark"] .calendar-empty-state p {
 html[data-theme="dark"] .calendar-metric strong,
 html[data-theme="dark"] .calendar-day strong,
 html[data-theme="dark"] .calendar-timeline__body strong {
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .calendar-attention__label,
+html[data-theme="dark"] .calendar-attention__item,
+html[data-theme="dark"] .calendar-attention__all {
+  color: var(--muted-strong);
+}
+
+html[data-theme="dark"] .calendar-attention__item strong {
   color: var(--foreground);
 }
 
