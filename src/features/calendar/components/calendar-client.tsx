@@ -408,7 +408,7 @@ function CalendarMonthGrid({
           <span key={label}>{label}</span>
         ))}
       </div>
-      <div className="calendar-month-grid" aria-label={`${formatCalendarMonth(selectedDate)}日期`} role="grid">
+      <div className="calendar-month-grid" aria-label={`${formatCalendarMonth(selectedDate)}日期`}>
         {days.map((day) => (
           <Link
             key={day.dateParam}
@@ -423,7 +423,6 @@ function CalendarMonthGrid({
               .join(" ")}
             aria-current={day.isSelected ? "date" : undefined}
             aria-label={`${day.dateParam}，${day.taskCount} 项任务`}
-            role="gridcell"
           >
             <span className="calendar-month-day__number">{day.dayLabel}</span>
             {day.statusDots.length ? (
