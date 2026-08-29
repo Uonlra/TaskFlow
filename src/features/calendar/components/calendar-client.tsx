@@ -107,7 +107,10 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
       if (!isAuthLoading && !user) {
         setTasks(storeTasks);
         setHasAnyTasks(storeTasks.length > 0);
-        setAttentionCounts({ overdueCount: countGuestOverdue(storeTasks), nearDueCount: countGuestNearDue(storeTasks) });
+        setAttentionCounts({
+          overdueCount: countGuestOverdue(storeTasks),
+          nearDueCount: countGuestNearDue(storeTasks),
+        });
         setIsLoading(false);
         return true;
       }
@@ -239,7 +242,11 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
       if (isGuest) {
         await createTask(values);
         setTasks(useTaskStore.getState().tasks);
-        showToast({ title: "任务已创建", description: `“${values.title}” 已添加到 ${values.dueDate || dateParam}。`, tone: "success" });
+        showToast({
+          title: "任务已创建",
+          description: `“${values.title}” 已添加到 ${values.dueDate || dateParam}。`,
+          tone: "success",
+        });
         return;
       }
 
@@ -299,7 +306,11 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
       if (isGuest) {
         await updateTaskStatus(task.id, status);
         setTasks(useTaskStore.getState().tasks);
-        showToast({ title: "状态已更新", description: `“${task.title}” 已标记为${status === "done" ? "已完成" : "待开始"}。`, tone: "success" });
+        showToast({
+          title: "状态已更新",
+          description: `“${task.title}” 已标记为${status === "done" ? "已完成" : "待开始"}。`,
+          tone: "success",
+        });
         return;
       }
 
@@ -874,7 +885,9 @@ function countGuestOverdue(tasks: Task[]) {
 }
 
 function countGuestNearDue(tasks: Task[]) {
-  return tasks.filter((task) => task.status !== "done" && (getTaskDueMeta(task).isDueToday || getTaskDueMeta(task).isUpcoming)).length;
+  return tasks.filter(
+    (task) => task.status !== "done" && (getTaskDueMeta(task).isDueToday || getTaskDueMeta(task).isUpcoming),
+  ).length;
 }
 
 function parseCalendarRange(value: string | null | undefined): DashboardRangeValue {

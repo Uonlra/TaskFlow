@@ -200,7 +200,13 @@ export function MobileSettingsView({
           <h2>{group.title}</h2>
           <div className="mobile-settings__list">
             {group.items.map((item) => (
-              <SettingRow key={item.label} item={item} isAuthenticated={isAuthenticated} onToggle={handleToggle} onAction={handleRowAction} />
+              <SettingRow
+                key={item.label}
+                item={item}
+                isAuthenticated={isAuthenticated}
+                onToggle={handleToggle}
+                onAction={handleRowAction}
+              />
             ))}
           </div>
         </section>
@@ -313,7 +319,8 @@ function SettingRow({
       data-auth-required={!isAuthenticated && item.status === "login" ? true : undefined}
       onClick={() => item.control === "arrow" && item.status !== "coming-soon" && onAction(item.label)}
       onKeyDown={(event) => {
-        if (item.control === "arrow" && item.status !== "coming-soon" && (event.key === "Enter" || event.key === " ")) onAction(item.label);
+        if (item.control === "arrow" && item.status !== "coming-soon" && (event.key === "Enter" || event.key === " "))
+          onAction(item.label);
       }}
     >
       <span className={`mobile-settings__icon mobile-settings__icon--${item.icon}`} aria-hidden="true" />

@@ -161,7 +161,7 @@ function updateGuestTask(task: Task, input: TaskFormValues): Task {
     tags: parseTags(input.tags),
     dueDate: input.dueDate || undefined,
     updatedAt,
-    completedAt: input.status === "done" ? task.completedAt ?? updatedAt : undefined,
+    completedAt: input.status === "done" ? (task.completedAt ?? updatedAt) : undefined,
   };
 }
 
@@ -171,7 +171,7 @@ function updateGuestTaskStatus(task: Task, status: Task["status"]): Task {
     ...task,
     status,
     updatedAt,
-    completedAt: status === "done" ? task.completedAt ?? updatedAt : undefined,
+    completedAt: status === "done" ? (task.completedAt ?? updatedAt) : undefined,
   };
 }
 

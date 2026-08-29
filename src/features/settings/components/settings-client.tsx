@@ -139,8 +139,14 @@ export function SettingsClient() {
                 <div className="settings-form__fields">
                   <label className="settings-field">
                     <span>姓名</span>
-                    <input {...register("fullName")} placeholder="请输入你的昵称" disabled={!isAuthenticated || isProfileLoading} />
-                    <small>{isAuthenticated ? "用于顶栏、头像菜单和任务归属提示。" : "登录后可编辑个人身份信息。"}</small>
+                    <input
+                      {...register("fullName")}
+                      placeholder="请输入你的昵称"
+                      disabled={!isAuthenticated || isProfileLoading}
+                    />
+                    <small>
+                      {isAuthenticated ? "用于顶栏、头像菜单和任务归属提示。" : "登录后可编辑个人身份信息。"}
+                    </small>
                   </label>
 
                   <label className="settings-field">
@@ -150,7 +156,9 @@ export function SettingsClient() {
                       placeholder="https://example.com/avatar.jpg"
                       disabled={!isAuthenticated || isProfileLoading}
                     />
-                    <small>{isAuthenticated ? "建议使用稳定、可公开访问的图片地址。" : "登录后可编辑个人身份信息。"}</small>
+                    <small>
+                      {isAuthenticated ? "建议使用稳定、可公开访问的图片地址。" : "登录后可编辑个人身份信息。"}
+                    </small>
                   </label>
 
                   <div className="settings-field">
@@ -164,21 +172,32 @@ export function SettingsClient() {
                 </div>
 
                 <div className="settings-form__footer">
-                  <span>{isAuthenticated ? "最后一次修改会立即同步到当前工作区。" : "访客资料为只读，登录后可同步个人信息。"}</span>
+                  <span>
+                    {isAuthenticated
+                      ? "最后一次修改会立即同步到当前工作区。"
+                      : "访客资料为只读，登录后可同步个人信息。"}
+                  </span>
                   {isAuthenticated ? (
                     <button type="submit" disabled={isSubmitting || isProfileLoading}>
                       <span aria-hidden="true">↗</span>
                       {isSubmitting ? "保存中..." : "保存资料"}
                     </button>
                   ) : (
-                    <button type="button" onClick={() => router.push(`/login?next=${encodeURIComponent(`${pathname}?section=account`)}`)}>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/login?next=${encodeURIComponent(`${pathname}?section=account`)}`)}
+                    >
                       登录后编辑
                     </button>
                   )}
                 </div>
               </form>
             ) : (
-              <SettingsReadOnlySection section={activeSection} isAuthenticated={isAuthenticated} onLogin={() => router.push(`/login?next=${encodeURIComponent(`${pathname}?section=${activeSection}`)}`)} />
+              <SettingsReadOnlySection
+                section={activeSection}
+                isAuthenticated={isAuthenticated}
+                onLogin={() => router.push(`/login?next=${encodeURIComponent(`${pathname}?section=${activeSection}`)}`)}
+              />
             )}
           </section>
         </section>
@@ -254,7 +273,9 @@ function SettingsReadOnlySection({
             <strong>访客工作区</strong>
             <p>当前设置仅供查看。登录后可以修改已支持的账号和偏好设置。</p>
           </div>
-          <button type="button" onClick={onLogin}>登录并同步</button>
+          <button type="button" onClick={onLogin}>
+            登录并同步
+          </button>
         </div>
       ) : null}
       <div className="settings-option-list">
@@ -268,7 +289,9 @@ function SettingsReadOnlySection({
           </div>
         ))}
       </div>
-      {section === "data" ? <p className="settings-inline-note">访客任务只存在于当前标签页，关闭标签页后会自动清除。</p> : null}
+      {section === "data" ? (
+        <p className="settings-inline-note">访客任务只存在于当前标签页，关闭标签页后会自动清除。</p>
+      ) : null}
     </div>
   );
 }

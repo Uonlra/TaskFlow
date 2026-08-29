@@ -2,16 +2,16 @@
 
 The calendar range endpoint sends Appwrite `queries[]` directly to the Tasks table. Create these indexes in the Appwrite TablesDB console or deployment configuration before enabling the range endpoint in production.
 
-| Index key                   | Type     | Attributes    | Order | Used by                                        |
-| --------------------------- | -------- | ------------- | ----- | ---------------------------------------------- |
-| `task_due_date_key`         | Key      | `dueDate`     | ASC   | Calendar ranges, ordering, and risk counts     |
-| `task_status_key`           | Key      | `status`      | ASC   | Task filters and calendar risk counts          |
-| `task_priority_key`         | Key      | `priority`    | ASC   | Task list priority filters                     |
-| `task_created_at_key`       | Key      | `$createdAt`  | DESC  | Task list created-time sorting                 |
-| `task_updated_at_key`       | Key      | `$updatedAt`  | DESC  | Task list updated-time sorting                 |
-| `task_title_fulltext`       | Fulltext | `title`       | -     | Task search                                    |
-| `task_description_fulltext` | Fulltext | `description` | -     | Task search                                    |
-| `task_search_fulltext`      | Fulltext | `searchText`  | -     | Unified task and tag search                    |
+| Index key                   | Type     | Attributes    | Order | Used by                                    |
+| --------------------------- | -------- | ------------- | ----- | ------------------------------------------ |
+| `task_due_date_key`         | Key      | `dueDate`     | ASC   | Calendar ranges, ordering, and risk counts |
+| `task_status_key`           | Key      | `status`      | ASC   | Task filters and calendar risk counts      |
+| `task_priority_key`         | Key      | `priority`    | ASC   | Task list priority filters                 |
+| `task_created_at_key`       | Key      | `$createdAt`  | DESC  | Task list created-time sorting             |
+| `task_updated_at_key`       | Key      | `$updatedAt`  | DESC  | Task list updated-time sorting             |
+| `task_title_fulltext`       | Fulltext | `title`       | -     | Task search                                |
+| `task_description_fulltext` | Fulltext | `description` | -     | Task search                                |
+| `task_search_fulltext`      | Fulltext | `searchText`  | -     | Unified task and tag search                |
 
 The range query uses Appwrite query objects for `isNotNull`, `greaterThanEqual`, `lessThan`, `orderAsc`, and `limit`. The date values are stored as UTC midnight DateTime values, so the index must be created on the DateTime column rather than on a derived string field.
 

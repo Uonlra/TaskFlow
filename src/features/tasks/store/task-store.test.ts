@@ -255,7 +255,9 @@ describe("task store", () => {
     const taskId = await useTaskStore.getState().createTaskAsync(formValues);
 
     expect(taskId).toBe(useTaskStore.getState().tasks[0]?.id);
-    expect(useTaskStore.getState().tasks[0]).toEqual(expect.objectContaining({ title: "新任务", tags: ["测试", "学习"] }));
+    expect(useTaskStore.getState().tasks[0]).toEqual(
+      expect.objectContaining({ title: "新任务", tags: ["测试", "学习"] }),
+    );
     expect(window.sessionStorage.getItem(GUEST_TASKS_STORAGE_KEY)).toContain("新任务");
     expect(fetchMock).not.toHaveBeenCalled();
   });

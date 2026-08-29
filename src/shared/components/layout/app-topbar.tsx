@@ -112,7 +112,7 @@ export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
             退出登录
           </button>
         ) : (
-            <a href={loginHref} className="dashboard-signout-button" data-auth-gate-bypass>
+          <a href={loginHref} className="dashboard-signout-button" data-auth-gate-bypass>
             登录并同步
           </a>
         )}

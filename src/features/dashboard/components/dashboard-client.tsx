@@ -95,7 +95,9 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
 
   const isGuest = !isAuthLoading && !user;
   const isSummaryLoading = isGuest ? false : isLoading;
-  const stats = isGuest ? buildDashboardStats(syncedTasks, { range }) : (summary?.stats ?? buildDashboardStats([], { range }));
+  const stats = isGuest
+    ? buildDashboardStats(syncedTasks, { range })
+    : (summary?.stats ?? buildDashboardStats([], { range }));
   const hasAnyTasks = isGuest ? syncedTasks.length > 0 : (summary?.hasAnyTasks ?? false);
   const isAccountEmpty = !isAuthLoading && !isSummaryLoading && !hasAnyTasks && !error;
   const isRangeEmpty = !isSummaryLoading && !error && hasAnyTasks && stats.totalCount === 0;
