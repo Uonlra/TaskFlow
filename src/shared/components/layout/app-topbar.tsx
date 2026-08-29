@@ -51,7 +51,7 @@ export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
           <span className="dashboard-avatar">{avatarContent}</span>
           <span className="dashboard-sidebar-account__copy">
             <strong title={displayName}>{displayName}</strong>
-            <small>{isAuthenticated ? "账号已连接" : "访客浏览"}</small>
+            <small>{isAuthenticated ? "账号已连接" : "访客工作区"}</small>
           </span>
         </button>
         {menuOpen ? (
@@ -75,9 +75,9 @@ export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
   return (
     <header className={variant === "mobile" ? "dashboard-topbar dashboard-topbar--mobile" : "dashboard-topbar"}>
       <div className="dashboard-topbar__meta">
-        <p className="dashboard-topbar__status">{isAuthenticated ? "账号已连接" : "访客浏览"}</p>
+        <p className="dashboard-topbar__status">{isAuthenticated ? "账号已连接" : "访客工作区"}</p>
         <p className="dashboard-topbar__description">
-          {isAuthenticated ? "账号和任务将安全同步。" : "登录后即可管理和同步你的真实任务。"}
+          {isAuthenticated ? "账号和任务将安全同步。" : "任务仅保存在此标签页，登录后可同步。"}
         </p>
       </div>
       <div className="dashboard-topbar__actions">
@@ -112,8 +112,8 @@ export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
             退出登录
           </button>
         ) : (
-          <a href={loginHref} className="dashboard-signout-button" data-auth-gate-bypass>
-            登录
+            <a href={loginHref} className="dashboard-signout-button" data-auth-gate-bypass>
+            登录并同步
           </a>
         )}
       </div>

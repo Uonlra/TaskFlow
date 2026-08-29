@@ -5,6 +5,7 @@
 }
 
 .settings-grid {
+  display: grid;
   grid-template-columns: minmax(238px, 0.72fr) minmax(0, 1.7fr);
   gap: 16px;
 }
@@ -22,7 +23,192 @@
   align-content: start;
   gap: 22px;
   padding: 22px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 248, 255, 0.9));
+  background: var(--surface-strong);
+}
+
+.settings-navigation-panel {
+  align-content: start;
+  gap: 16px;
+}
+
+.settings-navigation-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-navigation-intro > div {
+  display: grid;
+  gap: 3px;
+}
+
+.settings-navigation-intro strong {
+  color: var(--foreground);
+  font-size: 13px;
+}
+
+.settings-navigation-intro span:not(.settings-status-dot) {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.settings-section-nav {
+  display: grid;
+  gap: 4px;
+}
+
+.settings-section-nav button {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 9px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+}
+
+.settings-section-nav button:hover,
+.settings-section-nav button:focus-visible,
+.settings-section-nav button.is-active {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--foreground);
+}
+
+.settings-section-nav button.is-active {
+  border-left: 2px solid var(--primary);
+  padding-left: 8px;
+}
+
+.settings-section-nav button > span {
+  display: grid;
+  gap: 2px;
+}
+
+.settings-section-nav strong {
+  color: inherit;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.settings-section-nav small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.settings-nav-account-action {
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-strong);
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.settings-nav-account-action:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.settings-readonly-section {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.settings-guest-banner {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 13px 14px;
+  border: 1px solid rgba(62, 106, 225, 0.2);
+  border-radius: 6px;
+  background: var(--primary-surface);
+  color: var(--primary);
+}
+
+.settings-guest-banner > div {
+  display: grid;
+  gap: 2px;
+}
+
+.settings-guest-banner strong {
+  font-size: 12px;
+}
+
+.settings-guest-banner p {
+  margin: 0;
+  color: var(--muted-strong);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.settings-guest-banner button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--primary);
+  border-radius: 5px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.settings-option-list {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.settings-option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 66px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-option-row:last-child {
+  border-bottom: 0;
+}
+
+.settings-option-row > div {
+  display: grid;
+  gap: 3px;
+}
+
+.settings-option-row strong {
+  color: var(--foreground);
+  font-size: 13px;
+}
+
+.settings-option-row small,
+.settings-inline-note {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.settings-option-row > span {
+  flex: 0 0 auto;
+  color: var(--muted-strong);
+  font-size: 12px;
+}
+
+.settings-inline-note {
+  margin: 0;
 }
 
 .settings-form-panel {
@@ -262,6 +448,11 @@
   font-weight: 700;
 }
 
+.settings-readonly-field b.is-locked {
+  background: var(--surface);
+  color: var(--muted);
+}
+
 .settings-form__footer {
   display: flex;
   align-items: center;
@@ -363,6 +554,11 @@ html[data-theme="dark"] .settings-readonly-field {
 
 html[data-theme="dark"] .settings-profile-panel {
   background: var(--surface-strong);
+}
+
+html[data-theme="dark"] .settings-guest-banner {
+  border-color: var(--border);
+  background: var(--primary-surface);
 }
 
 html[data-theme="dark"] .settings-profile-card {

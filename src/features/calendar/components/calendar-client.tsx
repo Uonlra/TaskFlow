@@ -33,10 +33,11 @@ import {
   type BuildTasksHrefInput,
   type DashboardRangeValue,
 } from "@/shared/lib/constants/query-params";
-import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
+import { WorkspaceAuthCheckingNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useToast } from "@/shared/providers/toast-provider";
+import { useTaskStore } from "@/features/tasks/store/task-store";
 
 type CalendarClientProps = {
   initialDate: string;
@@ -79,6 +80,11 @@ const priorityScore: Record<TaskPriority, number> = {
 export function CalendarClient({ initialDate, initialRange }: CalendarClientProps) {
   const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
   const { showToast } = useToast();
+  const storeTasks = useTaskStore((state) => state.tasks);
+  const createTask = useTaskStore((state) => state.createTaskAsync);
+  const updateTask = useTaskStore((state) => state.updateTask);
+  const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
+  const deleteTask = useTaskStore((state) => state.deleteTask);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -99,6 +105,14 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
 
   const loadCalendarTasks = useCallback(
     async (signal?: AbortSignal) => {
+      if (!isAuthLoading && !user) {
+        setTasks(storeTasks);
+        setHasAnyTasks(storeTasks.length > 0);
+        setAttentionCounts({ overdueCount: countGuestOverdue(storeTasks), nearDueCount: countGuestNearDue(storeTasks) });
+        setIsLoading(false);
+        return true;
+      }
+
       if (!isConfigured || !user?.id || isAuthLoading) return false;
 
       setIsLoading(true);
@@ -135,7 +149,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
         if (!signal?.aborted) setIsLoading(false);
       }
     },
-    [isAuthLoading, isConfigured, rangeFrom, rangeTo, user?.id],
+    [isAuthLoading, isConfigured, rangeFrom, rangeTo, storeTasks, user],
   );
 
   useEffect(() => {
@@ -172,7 +186,17 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   );
   const attention = attentionCounts.overdueCount || attentionCounts.nearDueCount ? attentionCounts : null;
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "本周";
-  const isAccountEmpty = workspaceState === "account-empty";
+  const isAccountEmpty = !isAuthLoading && !hasAnyTasks;
+  const isGuest = !isAuthLoading && !user;
+
+  useEffect(() => {
+    if (isGuest) {
+      setTasks(storeTasks);
+      setHasAnyTasks(storeTasks.length > 0);
+      setAttentionCounts({ overdueCount: countGuestOverdue(storeTasks), nearDueCount: countGuestNearDue(storeTasks) });
+      setIsLoading(false);
+    }
+  }, [isGuest, storeTasks]);
 
   const updateCalendar = (input: { date?: string; range?: DashboardRangeValue }) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -213,6 +237,13 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
 
   const handleCreateTask = async (values: TaskFormValues) => {
     try {
+      if (isGuest) {
+        await createTask(values);
+        setTasks(useTaskStore.getState().tasks);
+        showToast({ title: "任务已创建", description: `“${values.title}” 已添加到 ${values.dueDate || dateParam}。`, tone: "success" });
+        return;
+      }
+
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -241,6 +272,13 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
 
   const handleUpdateTask = async (task: Task, values: TaskFormValues) => {
     try {
+      if (isGuest) {
+        await updateTask(task.id, values);
+        setTasks(useTaskStore.getState().tasks);
+        showToast({ title: "任务已更新", description: `“${values.title}” 的修改已保存。`, tone: "success" });
+        return;
+      }
+
       const payload = await requestTaskMutation<{ task: Task }>(task.id, { method: "PATCH", body: values });
       setTasks((current) => current.map((item) => (item.id === task.id ? payload.task : item)));
       const refreshed = await loadCalendarTasks();
@@ -259,6 +297,13 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   const handleToggleTaskComplete = async (task: Task) => {
     const status = task.status === "done" ? "todo" : "done";
     try {
+      if (isGuest) {
+        await updateTaskStatus(task.id, status);
+        setTasks(useTaskStore.getState().tasks);
+        showToast({ title: "状态已更新", description: `“${task.title}” 已标记为${status === "done" ? "已完成" : "待开始"}。`, tone: "success" });
+        return;
+      }
+
       const payload = await requestTaskMutation<{ task: Task }>(task.id, { method: "PATCH", body: { status } });
       setTasks((current) => current.map((item) => (item.id === task.id ? payload.task : item)));
       const refreshed = await loadCalendarTasks();
@@ -280,6 +325,14 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
 
   const handleDeleteTask = async (task: Task) => {
     try {
+      if (isGuest) {
+        await deleteTask(task.id);
+        closeTaskPreview();
+        setTasks(useTaskStore.getState().tasks);
+        showToast({ title: "任务已删除", description: `“${task.title}” 已从当前日期移除。`, tone: "success" });
+        return;
+      }
+
       await requestTaskMutation(task.id, { method: "DELETE" });
       closeTaskPreview();
       setTasks((current) => current.filter((item) => item.id !== task.id));
@@ -297,11 +350,6 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   };
 
   if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
-  if (workspaceState === "guest") {
-    return (
-      <WorkspaceStateNotice title="登录后按日期安排任务" description="登录后可查看截止日期、近期提醒和任务时间线。" />
-    );
-  }
 
   if (error) {
     return (
@@ -822,6 +870,14 @@ function getTaskCalendarHref(task: Task) {
 
 function hasValidDueDate(task: Task) {
   return hasTaskDueDate(task);
+}
+
+function countGuestOverdue(tasks: Task[]) {
+  return tasks.filter((task) => task.status !== "done" && getTaskDueMeta(task).isOverdue).length;
+}
+
+function countGuestNearDue(tasks: Task[]) {
+  return tasks.filter((task) => task.status !== "done" && (getTaskDueMeta(task).isDueToday || getTaskDueMeta(task).isUpcoming)).length;
 }
 
 function parseCalendarRange(value: string | null | undefined): DashboardRangeValue {

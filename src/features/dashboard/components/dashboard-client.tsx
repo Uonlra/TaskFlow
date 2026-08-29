@@ -8,7 +8,7 @@ import { DashboardV2Shell } from "@/features/dashboard/components/dashboard-v2-s
 import type { DashboardPriorityFilters } from "@/features/dashboard/components/dashboard-range-menu";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { buildDashboardStats, type DashboardStats } from "@/features/tasks/utils/task-analytics";
-import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
+import { WorkspaceAuthCheckingNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useTaskStore } from "@/features/tasks/store/task-store";
@@ -94,15 +94,16 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     void loadSummary();
   }, [loadSummary]);
 
-  const stats = summary?.stats ?? buildDashboardStats([], { range });
-  const hasAnyTasks = summary?.hasAnyTasks ?? false;
+  const isGuest = !isAuthLoading && !user;
+  const stats = isGuest ? buildDashboardStats(syncedTasks, { range }) : (summary?.stats ?? buildDashboardStats([], { range }));
+  const hasAnyTasks = isGuest ? syncedTasks.length > 0 : (summary?.hasAnyTasks ?? false);
   const workspaceState = getWorkspaceState({
     isAuthLoading,
     isTaskLoading: isLoading,
     taskCount: hasAnyTasks ? 1 : 0,
     userId: user?.id,
   });
-  const isAccountEmpty = workspaceState === "account-empty" && !error;
+  const isAccountEmpty = !hasAnyTasks && !error;
   const isRangeEmpty = !isLoading && !error && hasAnyTasks && stats.totalCount === 0;
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "今天";
 
@@ -149,15 +150,6 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     return <WorkspaceAuthCheckingNotice />;
   }
 
-  if (workspaceState === "guest") {
-    return (
-      <WorkspaceStateNotice
-        title="登录后开始管理任务"
-        description="登录后即可创建任务、查看今日重点，并在这里同步你的真实进度。"
-      />
-    );
-  }
-
   return (
     <>
       {error ? (
@@ -171,7 +163,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           priorityTasks={stats.focusTasks}
           range={range}
           rangeLabel={rangeLabel}
-          isLoading={isLoading}
+          isLoading={isGuest ? false : isLoading}
           isEmpty={isRangeEmpty}
           error={error}
           onRetry={() => void loadSummary()}
@@ -191,7 +183,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           stats={stats}
           range={range}
           rangeLabel={rangeLabel}
-          isLoading={isLoading}
+          isLoading={isGuest ? false : isLoading}
           onRangeChange={handleRangeChange}
           onCreateTask={handleCreateTask}
           onPreviewTask={handlePreviewTask}

@@ -10,7 +10,7 @@ type MobileSettingsViewProps = {
   displayName: string;
   email: string;
   avatarUrl?: string;
-  isConfigured: boolean;
+  isAuthenticated: boolean;
   isProfileLoading: boolean;
   onSaveProfile: (values: ProfileFormValues) => Promise<Profile | null>;
   onSignOut: () => void | Promise<void>;
@@ -22,6 +22,7 @@ type SettingItem = {
   value?: string;
   control?: "toggle" | "arrow";
   enabled?: boolean;
+  status?: "editable" | "login" | "coming-soon" | "action";
 };
 
 type MobileSettings = {
@@ -45,7 +46,7 @@ export function MobileSettingsView({
   displayName,
   email,
   avatarUrl,
-  isConfigured,
+  isAuthenticated,
   isProfileLoading,
   onSaveProfile,
   onSignOut,
@@ -89,24 +90,25 @@ export function MobileSettingsView({
           value: settings.darkMode ? "深色" : "浅色",
           control: "toggle",
           enabled: settings.darkMode,
+          status: isAuthenticated ? "editable" : "login",
         },
-        { icon: "language", label: "语言", value: settings.language, control: "arrow" },
+        { icon: "language", label: "语言", value: settings.language, control: "arrow", status: "coming-soon" },
       ],
     },
     {
       title: "任务",
       items: [
-        { icon: "bell", label: "通知", control: "toggle", enabled: settings.notifications },
-        { icon: "task", label: "任务偏好", value: settings.taskSort, control: "arrow" },
-        { icon: "calendar", label: "日历同步", control: "toggle", enabled: settings.calendar },
+        { icon: "bell", label: "通知", control: "toggle", enabled: settings.notifications, status: "coming-soon" },
+        { icon: "task", label: "任务偏好", value: settings.taskSort, control: "arrow", status: "coming-soon" },
+        { icon: "calendar", label: "日历同步", control: "toggle", enabled: settings.calendar, status: "coming-soon" },
       ],
     },
     {
       title: "数据",
       items: [
-        { icon: "backup", label: "数据备份", value: "导出", control: "arrow" },
-        { icon: "lock", label: "隐私", control: "arrow" },
-        { icon: "help", label: "帮助", control: "arrow" },
+        { icon: "backup", label: "数据备份", value: "导出", control: "arrow", status: "action" },
+        { icon: "lock", label: "隐私", control: "arrow", status: "action" },
+        { icon: "help", label: "帮助", control: "arrow", status: "action" },
       ],
     },
   ];
@@ -161,7 +163,7 @@ export function MobileSettingsView({
     <section className="mobile-settings" aria-label="移动端设置">
       <header className="mobile-page-header mobile-settings__header">
         <div className="mobile-page-header__copy">
-          <p>{isConfigured ? "已登录" : "未登录"}</p>
+          <p>{isAuthenticated ? "已登录" : "访客工作区"}</p>
           <h1>设置</h1>
         </div>
       </header>
@@ -183,6 +185,7 @@ export function MobileSettingsView({
           type="button"
           className="mobile-settings__profile-action"
           aria-label="编辑账号"
+          data-auth-required={!isAuthenticated ? true : undefined}
           onClick={() => {
             setProfileForm({ fullName: displayName, avatarUrl: avatarUrl ?? "" });
             setActiveDialog("profile");
@@ -197,7 +200,7 @@ export function MobileSettingsView({
           <h2>{group.title}</h2>
           <div className="mobile-settings__list">
             {group.items.map((item) => (
-              <SettingRow key={item.label} item={item} onToggle={handleToggle} onAction={handleRowAction} />
+              <SettingRow key={item.label} item={item} isAuthenticated={isAuthenticated} onToggle={handleToggle} onAction={handleRowAction} />
             ))}
           </div>
         </section>
@@ -205,10 +208,10 @@ export function MobileSettingsView({
 
       <button
         type="button"
-        className={isConfigured ? "mobile-settings__signout" : "mobile-settings__login"}
+        className={isAuthenticated ? "mobile-settings__signout" : "mobile-settings__login"}
         onClick={onSignOut}
       >
-        {isConfigured ? "退出登录" : "登录"}
+        {isAuthenticated ? "退出登录" : "登录并同步"}
       </button>
       {isReady && activeDialog ? (
         <SettingsDialog
@@ -295,30 +298,36 @@ function SettingRow({
   item,
   onToggle,
   onAction,
+  isAuthenticated,
 }: {
   item: SettingItem;
+  isAuthenticated: boolean;
   onToggle: (label: string) => void;
   onAction: (label: string) => void;
 }) {
   return (
     <div
-      className="mobile-settings__row"
-      role={item.control === "arrow" ? "button" : undefined}
-      tabIndex={item.control === "arrow" ? 0 : undefined}
-      onClick={() => item.control === "arrow" && onAction(item.label)}
+      className={`mobile-settings__row ${item.status === "coming-soon" ? "is-coming-soon" : ""}`}
+      role={item.control === "arrow" && item.status !== "coming-soon" ? "button" : undefined}
+      tabIndex={item.control === "arrow" && item.status !== "coming-soon" ? 0 : undefined}
+      data-auth-required={!isAuthenticated && item.status === "login" ? true : undefined}
+      onClick={() => item.control === "arrow" && item.status !== "coming-soon" && onAction(item.label)}
       onKeyDown={(event) => {
-        if (item.control === "arrow" && (event.key === "Enter" || event.key === " ")) onAction(item.label);
+        if (item.control === "arrow" && item.status !== "coming-soon" && (event.key === "Enter" || event.key === " ")) onAction(item.label);
       }}
     >
       <span className={`mobile-settings__icon mobile-settings__icon--${item.icon}`} aria-hidden="true" />
       <span className="mobile-settings__row-label">{item.label}</span>
       {item.value ? <span className="mobile-settings__row-value">{item.value}</span> : null}
-      {item.control === "toggle" ? (
+      {item.status === "coming-soon" ? (
+        <span className="mobile-settings__coming-soon">即将支持</span>
+      ) : item.control === "toggle" ? (
         <button
           type="button"
           className={item.enabled ? "mobile-settings__toggle is-on" : "mobile-settings__toggle"}
           aria-label={`切换${item.label}`}
           aria-pressed={item.enabled}
+          data-auth-required={!isAuthenticated && item.status === "login" ? true : undefined}
           onClick={() => onToggle(item.label)}
         >
           <span />
