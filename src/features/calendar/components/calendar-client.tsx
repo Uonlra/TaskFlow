@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 
+import { CalendarDayDrawer } from "@/features/calendar/components/calendar-day-drawer";
+import { TaskQuickViewDialog } from "@/features/tasks/components/task-quick-view-dialog";
+import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task, TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
 import {
   addTaskDays,
@@ -33,6 +36,7 @@ import {
 import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
+import { useToast } from "@/shared/providers/toast-provider";
 
 type CalendarClientProps = {
   initialDate: string;
@@ -74,6 +78,7 @@ const priorityScore: Record<TaskPriority, number> = {
 
 export function CalendarClient({ initialDate, initialRange }: CalendarClientProps) {
   const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -85,23 +90,25 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
 
   const dateParam = parseCalendarDate(searchParams.get(CALENDAR_QUERY_KEYS.date) ?? initialDate);
   const range = parseCalendarRange(searchParams.get(CALENDAR_QUERY_KEYS.range) ?? initialRange);
+  const isDateDrawerOpen = searchParams.get(CALENDAR_QUERY_KEYS.drawer) === "date";
+  const previewTaskId = searchParams.get(CALENDAR_QUERY_KEYS.task);
   const selectedDate = useMemo(() => parseTaskDateParam(dateParam) ?? startOfTaskDay(new Date()), [dateParam]);
   const monthGridStart = useMemo(() => getCalendarGridStart(selectedDate), [selectedDate]);
   const rangeFrom = formatTaskDateParam(monthGridStart);
   const rangeTo = formatTaskDateParam(addTaskDays(monthGridStart, 42));
 
-  useEffect(() => {
-    if (!isConfigured || !user?.id || isAuthLoading) return;
+  const loadCalendarTasks = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!isConfigured || !user?.id || isAuthLoading) return false;
 
-    const params = new URLSearchParams();
-    params.set("from", rangeFrom);
-    params.set("to", rangeTo);
+      setIsLoading(true);
+      setError(null);
+      const params = new URLSearchParams();
+      params.set("from", rangeFrom);
+      params.set("to", rangeTo);
 
-    let cancelled = false;
-    setIsLoading(true);
-    setError(null);
-    void fetch(`/api/tasks/range?${params.toString()}`)
-      .then(async (response) => {
+      try {
+        const response = await fetch(`/api/tasks/range?${params.toString()}`, { signal });
         const payload = (await response.json().catch(() => null)) as {
           tasks?: Task[];
           hasAnyTasks?: boolean;
@@ -111,28 +118,37 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
         if (!response.ok || !payload?.tasks) {
           throw new Error(payload?.message || "无法加载日历任务。");
         }
-        if (!cancelled) {
-          setTasks(payload.tasks);
-          setHasAnyTasks(Boolean(payload.hasAnyTasks));
-          setAttentionCounts(payload.attention ?? { overdueCount: 0, nearDueCount: 0 });
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setTasks([]);
-          setHasAnyTasks(false);
-          setAttentionCounts({ overdueCount: 0, nearDueCount: 0 });
-          setError("日历任务暂时无法加载，请稍后重试。");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
+
+        setTasks(payload.tasks);
+        setHasAnyTasks(Boolean(payload.hasAnyTasks));
+        setAttentionCounts(payload.attention ?? { overdueCount: 0, nearDueCount: 0 });
+        return true;
+      } catch {
+        if (signal?.aborted) return false;
+
+        setTasks([]);
+        setHasAnyTasks(false);
+        setAttentionCounts({ overdueCount: 0, nearDueCount: 0 });
+        setError("日历任务暂时无法加载，请稍后重试。");
+        return false;
+      } finally {
+        if (!signal?.aborted) setIsLoading(false);
+      }
+    },
+    [isAuthLoading, isConfigured, rangeFrom, rangeTo, user?.id],
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const loadTimer = window.setTimeout(() => {
+      void loadCalendarTasks(controller.signal);
+    }, 0);
 
     return () => {
-      cancelled = true;
+      window.clearTimeout(loadTimer);
+      controller.abort();
     };
-  }, [isAuthLoading, isConfigured, rangeFrom, rangeTo, user?.id]);
+  }, [loadCalendarTasks]);
 
   const workspaceState = getWorkspaceState({
     isAuthLoading,
@@ -147,6 +163,8 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     [dueTasks, selectedDate],
   );
   const taskSummaries = useMemo(() => buildCalendarTaskSummaries(dueTasks), [dueTasks]);
+  const previewTask = useMemo(() => tasks.find((task) => task.id === previewTaskId) ?? null, [previewTaskId, tasks]);
+  const selectedDaySummary = taskSummaries[dateParam] ?? createEmptyCalendarDaySummary();
   const monthDays = useMemo(() => buildMonthDays(selectedDate, taskSummaries), [selectedDate, taskSummaries]);
   const upcomingTasks = useMemo(
     () => buildUpcomingTasks(dueTasks, selectedDate, range),
@@ -160,7 +178,122 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     const params = new URLSearchParams(searchParams.toString());
     params.set(CALENDAR_QUERY_KEYS.date, input.date ?? dateParam);
     params.set(CALENDAR_QUERY_KEYS.range, input.range ?? range);
+    params.delete(CALENDAR_QUERY_KEYS.drawer);
+    params.delete(CALENDAR_QUERY_KEYS.task);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const closeDateDrawer = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete(CALENDAR_QUERY_KEYS.drawer);
+    params.delete(CALENDAR_QUERY_KEYS.task);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  const openTaskPreview = useCallback(
+    (task: Task) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(CALENDAR_QUERY_KEYS.task, task.id);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
+  const closeTaskPreview = useCallback(() => {
+    const taskId = searchParams.get(CALENDAR_QUERY_KEYS.task);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete(CALENDAR_QUERY_KEYS.task);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    window.requestAnimationFrame(() => {
+      if (taskId) document.querySelector<HTMLElement>(`[data-calendar-task-id="${taskId}"]`)?.focus();
+    });
+  }, [pathname, router, searchParams]);
+
+  const handleCreateTask = async (values: TaskFormValues) => {
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "创建任务失败，请稍后再试。");
+      }
+
+      const refreshed = await loadCalendarTasks();
+      showToast({
+        title: "任务已创建",
+        description: refreshed
+          ? `“${values.title}” 已添加到 ${values.dueDate || dateParam}。`
+          : "任务已保存，但日历刷新失败，请稍后重试。",
+        tone: refreshed ? "success" : "info",
+      });
+    } catch (createError) {
+      const message = createError instanceof Error ? createError.message : "请稍后再试。";
+      showToast({ title: "创建任务失败", description: message, tone: "error" });
+      throw createError;
+    }
+  };
+
+  const handleUpdateTask = async (task: Task, values: TaskFormValues) => {
+    try {
+      const payload = await requestTaskMutation<{ task: Task }>(task.id, { method: "PATCH", body: values });
+      setTasks((current) => current.map((item) => (item.id === task.id ? payload.task : item)));
+      const refreshed = await loadCalendarTasks();
+      showToast({
+        title: "任务已更新",
+        description: refreshed ? `“${values.title}” 的修改已保存。` : "修改已保存，但日历刷新失败，请稍后重试。",
+        tone: refreshed ? "success" : "info",
+      });
+    } catch (updateError) {
+      const message = updateError instanceof Error ? updateError.message : "请稍后再试。";
+      showToast({ title: "更新失败", description: message, tone: "error" });
+      throw updateError;
+    }
+  };
+
+  const handleToggleTaskComplete = async (task: Task) => {
+    const status = task.status === "done" ? "todo" : "done";
+    try {
+      const payload = await requestTaskMutation<{ task: Task }>(task.id, { method: "PATCH", body: { status } });
+      setTasks((current) => current.map((item) => (item.id === task.id ? payload.task : item)));
+      const refreshed = await loadCalendarTasks();
+      showToast({
+        title: "状态已更新",
+        description: refreshed
+          ? `“${task.title}” 已标记为${status === "done" ? "已完成" : "待开始"}。`
+          : "状态已保存，但日历刷新失败，请稍后重试。",
+        tone: refreshed ? "success" : "info",
+      });
+    } catch (statusError) {
+      showToast({
+        title: "状态更新失败",
+        description: statusError instanceof Error ? statusError.message : "请稍后再试。",
+        tone: "error",
+      });
+    }
+  };
+
+  const handleDeleteTask = async (task: Task) => {
+    try {
+      await requestTaskMutation(task.id, { method: "DELETE" });
+      closeTaskPreview();
+      setTasks((current) => current.filter((item) => item.id !== task.id));
+      const refreshed = await loadCalendarTasks();
+      showToast({
+        title: "任务已删除",
+        description: refreshed ? `“${task.title}” 已从当前日期移除。` : "任务已删除，但日历刷新失败。",
+        tone: refreshed ? "success" : "info",
+      });
+    } catch (deleteError) {
+      const message = deleteError instanceof Error ? deleteError.message : "请稍后再试。";
+      showToast({ title: "删除失败", description: message, tone: "error" });
+      throw deleteError;
+    }
   };
 
   if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
@@ -229,8 +362,40 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
           <CalendarQuickLinks />
         </aside>
       </div>
+      <CalendarDayDrawer
+        open={isDateDrawerOpen}
+        dateParam={dateParam}
+        tasks={selectedDayTasks}
+        summary={selectedDaySummary}
+        isLoading={isLoading}
+        onClose={closeDateDrawer}
+        onCreateTask={handleCreateTask}
+        onPreviewTask={openTaskPreview}
+      />
+      <TaskQuickViewDialog
+        task={previewTask}
+        onClose={closeTaskPreview}
+        onUpdateTask={handleUpdateTask}
+        onToggleComplete={handleToggleTaskComplete}
+        onDelete={handleDeleteTask}
+      />
     </section>
   );
+}
+
+async function requestTaskMutation<T = unknown>(taskId: string, init: { method: "PATCH" | "DELETE"; body?: unknown }) {
+  const response = await fetch(`/api/tasks/${encodeURIComponent(taskId)}`, {
+    method: init.method,
+    headers: init.body === undefined ? undefined : { "Content-Type": "application/json" },
+    body: init.body === undefined ? undefined : JSON.stringify(init.body),
+  });
+  const payload = (await response.json().catch(() => null)) as (T & { message?: string }) | null;
+
+  if (!response.ok || !payload) {
+    throw new Error(payload?.message || "任务操作失败，请稍后再试。");
+  }
+
+  return payload;
 }
 
 function CalendarToolbar({
@@ -389,7 +554,8 @@ function CalendarMonthGrid({
         {days.map((day) => (
           <Link
             key={day.dateParam}
-            href={buildCalendarHref({ date: day.dateParam, range })}
+            href={buildCalendarHref({ date: day.dateParam, range, drawer: "date" })}
+            data-calendar-date={day.dateParam}
             className={[
               "calendar-month-day",
               day.isSelected ? "is-selected" : "",
