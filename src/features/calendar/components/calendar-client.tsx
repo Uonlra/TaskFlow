@@ -90,7 +90,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   const [tasks, setTasks] = useState<Task[]>([]);
   const [hasAnyTasks, setHasAnyTasks] = useState(false);
   const [attentionCounts, setAttentionCounts] = useState<CalendarAttention>({ overdueCount: 0, nearDueCount: 0 });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const dateParam = parseCalendarDate(searchParams.get(CALENDAR_QUERY_KEYS.date) ?? initialDate);
@@ -169,7 +169,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     taskCount: hasAnyTasks ? 1 : 0,
     userId: user?.id,
   });
-  const isSyncing = workspaceState === "syncing";
+  const isSyncing = isLoading || workspaceState === "syncing";
   const dueTasks = useMemo(() => tasks.filter(hasValidDueDate), [tasks]);
   const selectedDayTasks = useMemo(
     () => sortCalendarTasks(dueTasks.filter((task) => isTaskDueOnDate(task, selectedDate))),
@@ -185,7 +185,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   );
   const attention = attentionCounts.overdueCount || attentionCounts.nearDueCount ? attentionCounts : null;
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "本周";
-  const isAccountEmpty = !isAuthLoading && !hasAnyTasks;
+  const isAccountEmpty = !isAuthLoading && !isLoading && !hasAnyTasks;
   const isGuest = !isAuthLoading && !user;
 
   useEffect(() => {
