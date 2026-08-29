@@ -22,7 +22,6 @@ import {
   STATS_QUERY_KEYS,
   type DashboardRangeValue,
 } from "@/shared/lib/constants/query-params";
-import { WorkspaceAuthCheckingNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useTaskStore } from "@/features/tasks/store/task-store";
@@ -75,8 +74,6 @@ export function StatsClient({ initialRange }: StatsClientProps) {
     params.set(STATS_QUERY_KEYS.range, nextRange);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
-
-  if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
 
   if (isAccountEmpty) {
     return (

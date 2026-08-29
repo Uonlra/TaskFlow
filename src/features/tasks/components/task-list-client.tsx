@@ -20,9 +20,8 @@ import {
   TASK_RISK_FILTERS,
   type DashboardRangeValue,
 } from "@/shared/lib/constants/query-params";
-import { WorkspaceAuthCheckingNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
-import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
+import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 import { DEFAULT_TASK_PAGE_SIZE, getTaskPage, parseTaskPageParam } from "@/features/tasks/utils/task-list-query";
@@ -86,7 +85,7 @@ export function TaskListClient({
       }
       setPageData({ userId: activeUserId, ...payload });
     } catch (error) {
-      setPageError(error instanceof Error ? error.message : "无法加载任务列表。");
+      setPageError(getWorkspaceErrorMessage(error, "任务列表暂时无法加载，请稍后重试。"));
     } finally {
       setPageLoading(false);
     }
@@ -320,15 +319,6 @@ export function TaskListClient({
       });
     }
   };
-
-  const workspaceState = getWorkspaceState({
-    isAuthLoading: isAuthLoading && !canUseInitialData,
-    isTaskLoading: visibleIsLoading,
-    taskCount: totalCount,
-    userId: activeUserId,
-  });
-
-  if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
 
   return (
     <>

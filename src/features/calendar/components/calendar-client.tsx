@@ -33,7 +33,6 @@ import {
   type BuildTasksHrefInput,
   type DashboardRangeValue,
 } from "@/shared/lib/constants/query-params";
-import { WorkspaceAuthCheckingNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useToast } from "@/shared/providers/toast-provider";
@@ -348,8 +347,6 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
       throw deleteError;
     }
   };
-
-  if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
 
   if (error) {
     return (
