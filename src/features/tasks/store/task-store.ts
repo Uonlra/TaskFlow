@@ -6,12 +6,15 @@ import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
 
+export const GUEST_TASKS_STORAGE_KEY = "u-task-guest-tasks";
+
 type TaskStore = {
   tasks: Task[];
   isLoading: boolean;
   error: string | null;
   lastLoadedUserId: string | null;
   clearTasks: () => void;
+  hydrateGuestTasks: () => void;
   initializeTasks: (tasks: Task[], userId: string) => void;
   syncTasks: (userId?: string) => Promise<void>;
   createTaskAsync: (input: TaskFormValues, userId?: string) => Promise<string>;
@@ -26,6 +29,10 @@ export const useTaskStore = create<TaskStore>()((set) => ({
   error: null,
   lastLoadedUserId: null,
   clearTasks: () => set({ tasks: [], error: null, lastLoadedUserId: null }),
+  hydrateGuestTasks: () => {
+    const tasks = readGuestTasks();
+    set({ tasks, error: null, lastLoadedUserId: null, isLoading: false });
+  },
   initializeTasks: (tasks, userId) =>
     set((state) => {
       if (state.lastLoadedUserId === userId) {
@@ -41,12 +48,14 @@ export const useTaskStore = create<TaskStore>()((set) => ({
     }),
   syncTasks: async (userId?: string): Promise<void> => {
     if (!hasAppwritePublicEnv || !userId) {
-      set({ tasks: [], error: null, lastLoadedUserId: null, isLoading: false });
+      const guestTasks = readGuestTasks();
+      set({ tasks: guestTasks, error: null, lastLoadedUserId: null, isLoading: false });
       return;
     }
 
     set({ isLoading: true, error: null, tasks: [] });
     try {
+      await mergeGuestTasks();
       const payload = await apiRequest<{ tasks: Task[] }>("/api/tasks");
       set({ tasks: (payload.tasks ?? []).map(normalizeTask), isLoading: false, error: null, lastLoadedUserId: userId });
     } catch (error) {
@@ -54,14 +63,31 @@ export const useTaskStore = create<TaskStore>()((set) => ({
     }
   },
   createTaskAsync: async (input, userId) => {
-    assertSignedIn(userId, "创建");
+    if (!userId) {
+      const task = createGuestTask(input);
+      set((state) => {
+        const tasks = [task, ...state.tasks];
+        writeGuestTasks(tasks);
+        return { tasks, error: null };
+      });
+      return task.id;
+    }
+
     const payload = await apiRequest<{ task: Task }>("/api/tasks", { method: "POST", body: input });
     const createdTask = normalizeTask(payload.task);
     set((state) => ({ tasks: [createdTask, ...state.tasks], error: null }));
     return createdTask.id;
   },
   updateTask: async (id, input, userId) => {
-    assertSignedIn(userId, "编辑");
+    if (!userId) {
+      set((state) => {
+        const tasks = state.tasks.map((task) => (task.id === id ? updateGuestTask(task, input) : task));
+        writeGuestTasks(tasks);
+        return { tasks, error: null };
+      });
+      return;
+    }
+
     const payload = await apiRequest<{ task: Task }>(`/api/tasks/${id}`, { method: "PATCH", body: input });
     set((state) => ({
       tasks: state.tasks.map((task) => (task.id === id ? normalizeTask(payload.task) : task)),
@@ -69,7 +95,15 @@ export const useTaskStore = create<TaskStore>()((set) => ({
     }));
   },
   updateTaskStatus: async (id, status, userId) => {
-    assertSignedIn(userId, "更新");
+    if (!userId) {
+      set((state) => {
+        const tasks = state.tasks.map((task) => (task.id === id ? updateGuestTaskStatus(task, status) : task));
+        writeGuestTasks(tasks);
+        return { tasks, error: null };
+      });
+      return;
+    }
+
     const payload = await apiRequest<{ task: Task }>(`/api/tasks/${id}`, { method: "PATCH", body: { status } });
     set((state) => ({
       tasks: state.tasks.map((task) => (task.id === id ? normalizeTask(payload.task) : task)),
@@ -77,14 +111,114 @@ export const useTaskStore = create<TaskStore>()((set) => ({
     }));
   },
   deleteTask: async (id, userId) => {
-    assertSignedIn(userId, "删除");
+    if (!userId) {
+      set((state) => {
+        const tasks = state.tasks.filter((task) => task.id !== id);
+        writeGuestTasks(tasks);
+        return { tasks, error: null };
+      });
+      return;
+    }
+
     await apiRequest(`/api/tasks/${id}`, { method: "DELETE" });
     set((state) => ({ tasks: state.tasks.filter((task) => task.id !== id), error: null }));
   },
 }));
 
-function assertSignedIn(userId: string | undefined, action: string) {
-  if (!hasAppwritePublicEnv || !userId) throw new Error(`请先登录后再${action}任务。`);
+async function mergeGuestTasks() {
+  const guestTasks = readGuestTasks();
+
+  for (const task of guestTasks) {
+    await apiRequest("/api/tasks", { method: "POST", body: taskToFormValues(task) });
+    writeGuestTasks(readGuestTasks().filter((candidate) => candidate.id !== task.id));
+  }
+}
+
+function createGuestTask(input: TaskFormValues): Task {
+  const now = new Date().toISOString();
+  return {
+    id: crypto.randomUUID(),
+    title: input.title,
+    description: input.description,
+    status: input.status,
+    priority: input.priority,
+    tags: parseTags(input.tags),
+    dueDate: input.dueDate || undefined,
+    createdAt: now,
+    updatedAt: now,
+    completedAt: input.status === "done" ? now : undefined,
+  };
+}
+
+function updateGuestTask(task: Task, input: TaskFormValues): Task {
+  const updatedAt = new Date().toISOString();
+  return {
+    ...task,
+    title: input.title,
+    description: input.description,
+    status: input.status,
+    priority: input.priority,
+    tags: parseTags(input.tags),
+    dueDate: input.dueDate || undefined,
+    updatedAt,
+    completedAt: input.status === "done" ? (task.completedAt ?? updatedAt) : undefined,
+  };
+}
+
+function updateGuestTaskStatus(task: Task, status: Task["status"]): Task {
+  const updatedAt = new Date().toISOString();
+  return {
+    ...task,
+    status,
+    updatedAt,
+    completedAt: status === "done" ? (task.completedAt ?? updatedAt) : undefined,
+  };
+}
+
+function taskToFormValues(task: Task): TaskFormValues {
+  return {
+    title: task.title,
+    description: task.description,
+    status: task.status,
+    priority: task.priority,
+    tags: task.tags.join(", "),
+    dueDate: task.dueDate ?? "",
+  };
+}
+
+function parseTags(value?: string) {
+  return Array.from(
+    new Set(
+      (value ?? "")
+        .split(/[，,]/)
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function readGuestTasks(): Task[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = window.sessionStorage.getItem(GUEST_TASKS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map(normalizeTask) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeGuestTasks(tasks: Task[]) {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (tasks.length) window.sessionStorage.setItem(GUEST_TASKS_STORAGE_KEY, JSON.stringify(tasks));
+    else window.sessionStorage.removeItem(GUEST_TASKS_STORAGE_KEY);
+  } catch {
+    // Local persistence can be unavailable; the in-memory workspace remains usable.
+  }
 }
 
 function normalizeTask(task: Task): Task {

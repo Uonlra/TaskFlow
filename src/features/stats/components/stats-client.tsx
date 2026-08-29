@@ -22,7 +22,6 @@ import {
   STATS_QUERY_KEYS,
   type DashboardRangeValue,
 } from "@/shared/lib/constants/query-params";
-import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useTaskStore } from "@/features/tasks/store/task-store";
@@ -61,9 +60,9 @@ export function StatsClient({ initialRange }: StatsClientProps) {
     taskCount: tasks.length,
     userId: user?.id,
   });
-  const isSyncing = workspaceState === "syncing";
-  const isAccountEmpty = workspaceState === "account-empty";
-  const isRangeEmpty = isAccountEmpty || (workspaceState === "ready" && stats.totalCount === 0);
+  const isSyncing = Boolean(user && workspaceState === "syncing");
+  const isAccountEmpty = !isAuthLoading && tasks.length === 0;
+  const isRangeEmpty = isAccountEmpty || stats.totalCount === 0;
   const hasTrendData = !isRangeEmpty && stats.trend.some((point) => point.completed > 0 || point.created > 0);
   const hasStatusData = !isRangeEmpty && stats.statusDistribution.some((item) => item.count > 0);
   const hasPriorityData = !isRangeEmpty && stats.priorityDistribution.some((item) => item.count > 0);
@@ -75,13 +74,6 @@ export function StatsClient({ initialRange }: StatsClientProps) {
     params.set(STATS_QUERY_KEYS.range, nextRange);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
-
-  if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
-  if (workspaceState === "guest") {
-    return (
-      <WorkspaceStateNotice title="登录后查看任务运行状态" description="登录后即可查看完成趋势、状态分布和逾期风险。" />
-    );
-  }
 
   if (isAccountEmpty) {
     return (

@@ -20,12 +20,11 @@ import {
   TASK_RISK_FILTERS,
   type DashboardRangeValue,
 } from "@/shared/lib/constants/query-params";
-import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
-import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
+import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
-import { DEFAULT_TASK_PAGE_SIZE, parseTaskPageParam } from "@/features/tasks/utils/task-list-query";
+import { DEFAULT_TASK_PAGE_SIZE, getTaskPage, parseTaskPageParam } from "@/features/tasks/utils/task-list-query";
 
 const SETTINGS_STORAGE_KEY = "u-task-settings";
 
@@ -63,11 +62,13 @@ export function TaskListClient({
   const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
+  const localTasks = useTaskStore((state) => state.tasks);
 
   const page = parseTaskPageParam(searchParams.get("page"));
   const canUseInitialData = Boolean(initialData && (isAuthLoading || user?.id === initialData.userId));
   const hasConfirmedUserMismatch = Boolean(initialData && !isAuthLoading && user && user.id !== initialData.userId);
   const activeUserId = user?.id ?? (isAuthLoading ? initialData?.userId : undefined);
+  const isGuest = !isAuthLoading && !user;
 
   const loadPage = useCallback(async () => {
     if (!activeUserId || !isConfigured) return;
@@ -84,13 +85,20 @@ export function TaskListClient({
       }
       setPageData({ userId: activeUserId, ...payload });
     } catch (error) {
-      setPageError(error instanceof Error ? error.message : "无法加载任务列表。");
+      setPageError(getWorkspaceErrorMessage(error, "任务列表暂时无法加载，请稍后重试。"));
     } finally {
       setPageLoading(false);
     }
   }, [activeUserId, filters, isConfigured, page]);
 
   useEffect(() => {
+    if (isGuest) {
+      setPageData({ userId: "guest", ...getTaskPage(localTasks, filters, page) });
+      setPageLoading(false);
+      setPageError(null);
+      return;
+    }
+
     if (hasConfirmedUserMismatch) {
       setPageData(null);
       return;
@@ -118,8 +126,10 @@ export function TaskListClient({
     initialData,
     initialFiltersProp,
     isAuthLoading,
+    isGuest,
     isConfigured,
     loadPage,
+    localTasks,
     page,
   ]);
 
@@ -273,16 +283,20 @@ export function TaskListClient({
 
   const handleExportTasks = async () => {
     try {
-      const response = await fetch("/api/tasks?export=1");
-      const payload = (await response.json().catch(() => null)) as { tasks?: Task[]; message?: string } | null;
-      if (!response.ok || !payload?.tasks) {
-        throw new Error(payload?.message || "导出任务失败。");
+      let tasksToExport = localTasks;
+      if (!isGuest) {
+        const response = await fetch("/api/tasks?export=1");
+        const payload = (await response.json().catch(() => null)) as { tasks?: Task[]; message?: string } | null;
+        if (!response.ok || !payload?.tasks) {
+          throw new Error(payload?.message || "导出任务失败。");
+        }
+        tasksToExport = payload.tasks;
       }
 
       const file = new Blob(
         [
           JSON.stringify(
-            { version: 1, source: "U's Task", exportedAt: new Date().toISOString(), tasks: payload.tasks },
+            { version: 1, source: "U's Task", exportedAt: new Date().toISOString(), tasks: tasksToExport },
             null,
             2,
           ),
@@ -305,23 +319,6 @@ export function TaskListClient({
       });
     }
   };
-
-  const workspaceState = getWorkspaceState({
-    isAuthLoading: isAuthLoading && !canUseInitialData,
-    isTaskLoading: visibleIsLoading,
-    taskCount: totalCount,
-    userId: activeUserId,
-  });
-
-  if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
-  if (workspaceState === "guest") {
-    return (
-      <WorkspaceStateNotice
-        title="登录后管理你的任务"
-        description="登录后即可创建、筛选和更新任务，点击任务查看右侧详情，或从操作按钮进入完整详情页。"
-      />
-    );
-  }
 
   return (
     <>

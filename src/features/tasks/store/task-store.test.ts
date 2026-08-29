@@ -1,8 +1,10 @@
+// @vitest-environment jsdom
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Task } from "@/features/tasks/types/task.types";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
-import { useTaskStore } from "@/features/tasks/store/task-store";
+import { GUEST_TASKS_STORAGE_KEY, useTaskStore } from "@/features/tasks/store/task-store";
 
 vi.mock("@/shared/lib/appwrite/env", () => ({
   hasAppwritePublicEnv: true,
@@ -39,6 +41,7 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 afterEach(() => {
+  window.sessionStorage.removeItem(GUEST_TASKS_STORAGE_KEY);
   useTaskStore.setState({
     tasks: [],
     isLoading: false,
@@ -246,11 +249,16 @@ describe("task store", () => {
     expect(useTaskStore.getState().lastLoadedUserId).toBeNull();
   });
 
-  it("未登录创建任务时直接拒绝且不请求 API", async () => {
+  it("未登录创建任务时写入当前标签页且不请求 API", async () => {
     const fetchMock = vi.spyOn(global, "fetch");
 
-    await expect(useTaskStore.getState().createTaskAsync(formValues)).rejects.toThrow("请先登录后再创建任务。");
+    const taskId = await useTaskStore.getState().createTaskAsync(formValues);
 
+    expect(taskId).toBe(useTaskStore.getState().tasks[0]?.id);
+    expect(useTaskStore.getState().tasks[0]).toEqual(
+      expect.objectContaining({ title: "新任务", tags: ["测试", "学习"] }),
+    );
+    expect(window.sessionStorage.getItem(GUEST_TASKS_STORAGE_KEY)).toContain("新任务");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

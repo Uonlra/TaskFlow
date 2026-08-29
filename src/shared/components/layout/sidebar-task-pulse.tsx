@@ -118,7 +118,7 @@ export function SidebarTaskPulse() {
 
   const completedTrend = buildTrendData(tasks, { days: 10 });
   const completedTotal = completedTrend.reduce((total, point) => total + point.completed, 0);
-  const isTrendReady = Boolean(userId) && lastLoadedUserId === userId && !isLoading;
+  const isTrendReady = !isAuthLoading && (!userId || lastLoadedUserId === userId) && !isLoading;
   const option: EChartsOption = {
     ...pulseOptionBase,
     xAxis: {

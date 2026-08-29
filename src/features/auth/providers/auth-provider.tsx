@@ -31,6 +31,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const clearTasks = useTaskStore((state) => state.clearTasks);
+  const hydrateGuestTasks = useTaskStore((state) => state.hydrateGuestTasks ?? state.clearTasks);
   const syncTasks = useTaskStore((state) => state.syncTasks);
   const [session, setSession] = useState<AuthSession | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null);
       setUser(null);
       setProfile(null);
-      clearTasks();
+      hydrateGuestTasks();
       setIsLoading(false);
       return;
     }
@@ -62,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(null);
           setUser(null);
           setProfile(null);
-          clearTasks();
+          hydrateGuestTasks();
           return;
         }
 
@@ -76,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(null);
         setUser(null);
         setProfile(null);
-        clearTasks();
+        hydrateGuestTasks();
       } finally {
         window.clearTimeout(timeoutId);
         if (mounted) setIsLoading(false);
@@ -88,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [clearTasks, syncTasks]);
+  }, [clearTasks, hydrateGuestTasks, syncTasks]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -111,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(null);
         setUser(null);
         setProfile(null);
-        clearTasks();
+        hydrateGuestTasks();
       },
       refreshProfile: async () => {
         if (!hasAppwritePublicEnv || !user) return;
@@ -159,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
     }),
-    [clearTasks, isLoading, isProfileLoading, profile, session, user],
+    [clearTasks, hydrateGuestTasks, isLoading, isProfileLoading, profile, session, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

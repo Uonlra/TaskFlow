@@ -13,6 +13,7 @@ import { formatTagsInput, parseTagsInput } from "@/features/tasks/utils/task-tag
 type TaskFormDialogProps = {
   onSubmitTask: (values: TaskFormValues) => void | Promise<void>;
   initialValues?: TaskFormValues;
+  createDefaults?: Partial<TaskFormValues>;
   triggerLabel?: string;
   triggerAriaLabel?: string;
   triggerIconOnly?: boolean;
@@ -36,6 +37,7 @@ const CREATE_DRAFT_STORAGE_KEY = "u-task-create-draft";
 export function TaskFormDialog({
   onSubmitTask,
   initialValues,
+  createDefaults,
   triggerLabel = "新建任务",
   triggerAriaLabel,
   triggerIconOnly = false,
@@ -44,6 +46,7 @@ export function TaskFormDialog({
   submitLabel = "创建任务",
   triggerClassName,
 }: TaskFormDialogProps) {
+  const createValues = { ...createTaskDefaults, ...createDefaults };
   const headingId = useId();
   const descriptionId = useId();
   const titleErrorId = `${headingId}-title-error`;
@@ -78,7 +81,7 @@ export function TaskFormDialog({
     formState: { errors, isDirty, isSubmitting },
   } = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
-    defaultValues: initialValues ?? createTaskDefaults,
+    defaultValues: initialValues ?? createValues,
   });
   const values = watch();
   const dueDate = watch("dueDate");
@@ -233,7 +236,7 @@ export function TaskFormDialog({
         setHasSavedDraft(false);
       }
 
-      reset(initialValues ?? createTaskDefaults);
+      reset(initialValues ?? createValues);
       closeDialog();
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "保存任务时出了点问题，稍后再试。");
@@ -241,14 +244,14 @@ export function TaskFormDialog({
   };
 
   const openDialog = () => {
-    let nextValues = initialValues ?? createTaskDefaults;
+    let nextValues = initialValues ?? createValues;
 
     if (!initialValues) {
       try {
         const savedDraft = window.sessionStorage.getItem(CREATE_DRAFT_STORAGE_KEY);
 
         if (savedDraft) {
-          nextValues = { ...createTaskDefaults, ...JSON.parse(savedDraft) };
+          nextValues = { ...createTaskDefaults, ...JSON.parse(savedDraft), ...createDefaults };
           setHasSavedDraft(true);
         } else {
           setHasSavedDraft(false);

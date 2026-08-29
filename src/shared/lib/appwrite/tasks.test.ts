@@ -41,11 +41,17 @@ describe("listTasksByDueRange", () => {
           },
         ],
       })
-      .mockResolvedValueOnce({ total: 1, rows: [] });
+      .mockResolvedValueOnce({ total: 1, rows: [] })
+      .mockResolvedValueOnce({ total: 2, rows: [] })
+      .mockResolvedValueOnce({ total: 3, rows: [] });
 
     const result = await listTasksByDueRange("session-secret", { from: "2026-08-10", to: "2026-08-17" });
 
-    expect(result).toMatchObject({ hasAnyTasks: true, tasks: [{ id: "task-1", dueDate: "2026-08-10" }] });
+    expect(result).toMatchObject({
+      hasAnyTasks: true,
+      tasks: [{ id: "task-1", dueDate: "2026-08-10" }],
+      attention: { overdueCount: 2, nearDueCount: 3 },
+    });
     const firstCall = mocks.appwriteFetch.mock.calls[0][0];
     expect(firstCall.searchParams.queries).toEqual([
       '{"method":"isNotNull","attribute":"dueDate"}',
@@ -55,6 +61,20 @@ describe("listTasksByDueRange", () => {
       '{"method":"limit","values":[5000]}',
     ]);
     expect(mocks.appwriteFetch.mock.calls[1][0].searchParams.queries).toEqual(['{"method":"limit","values":[1]}']);
+    expect(mocks.appwriteFetch.mock.calls[2][0].searchParams.queries).toEqual(
+      expect.arrayContaining([
+        '{"method":"isNotNull","attribute":"dueDate"}',
+        '{"method":"notEqual","attribute":"status","values":["done"]}',
+        '{"method":"limit","values":[1]}',
+      ]),
+    );
+    expect(mocks.appwriteFetch.mock.calls[3][0].searchParams.queries).toEqual(
+      expect.arrayContaining([
+        '{"method":"isNotNull","attribute":"dueDate"}',
+        '{"method":"notEqual","attribute":"status","values":["done"]}',
+        '{"method":"limit","values":[1]}',
+      ]),
+    );
   });
 });
 

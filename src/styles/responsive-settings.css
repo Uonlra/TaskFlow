@@ -52,6 +52,26 @@
     line-height: 1.35;
   }
 
+  .mobile-settings__coming-soon {
+    flex: 0 0 auto;
+    color: #9ca3af;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .mobile-settings__row.is-coming-soon {
+    color: #9ca3af;
+  }
+
+  .mobile-settings__row.is-coming-soon .mobile-settings__row-label,
+  .mobile-settings__row.is-coming-soon .mobile-settings__icon {
+    color: #6b7280;
+  }
+
+  .mobile-settings__row[data-auth-required="true"] {
+    cursor: pointer;
+  }
+
   .mobile-settings__header h1 {
     margin: 3px 0 0;
     color: #111827;
@@ -487,6 +507,10 @@ html[data-theme="dark"] .mobile-settings__toggle {
 
 html[data-theme="dark"] .mobile-settings__toggle.is-on {
   background: var(--primary);
+}
+
+html[data-theme="dark"] .mobile-settings__coming-soon {
+  color: var(--muted);
 }
 
 html[data-theme="dark"] .mobile-settings__signout {

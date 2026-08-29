@@ -35,14 +35,14 @@ export function AuthActionGateProvider({ children }: { children: ReactNode }) {
 
       const link = target.closest("a[href]") as HTMLAnchorElement | null;
       if (link) {
-        if (isBrowseNavigation(link.getAttribute("href"))) return;
+        if (!link.closest("[data-auth-required]") || isBrowseNavigation(link.getAttribute("href"))) return;
         event.preventDefault();
         event.stopPropagation();
         requireAuth("使用此功能");
         return;
       }
 
-      if (target.closest("button, input, select, textarea, [role='button']")) {
+      if (target.closest("[data-auth-required]")) {
         event.preventDefault();
         event.stopPropagation();
         requireAuth("使用此功能");
@@ -58,6 +58,7 @@ export function AuthActionGateProvider({ children }: { children: ReactNode }) {
       if (
         !(target instanceof HTMLElement) ||
         target.closest("[data-auth-gate-bypass]") ||
+        !target.closest("[data-auth-required]") ||
         !target.matches("input, select, textarea")
       )
         return;
@@ -118,6 +119,11 @@ export function AuthActionGateProvider({ children }: { children: ReactNode }) {
 function isBrowseNavigation(href: string | null) {
   if (!href || !href.startsWith("/")) return true;
   return (
-    href === "/dashboard" || href === "/tasks" || href === "/calendar" || href === "/stats" || href === "/settings"
+    href === "/dashboard" ||
+    href === "/tasks" ||
+    href.startsWith("/tasks/") ||
+    href === "/calendar" ||
+    href === "/stats" ||
+    href === "/settings"
   );
 }

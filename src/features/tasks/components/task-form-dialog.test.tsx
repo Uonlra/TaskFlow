@@ -147,6 +147,34 @@ describe("TaskFormDialog", () => {
     });
   });
 
+  it("创建默认值会预填并提交指定日期", async () => {
+    const onSubmitTask = vi.fn();
+    const user = userEvent.setup();
+    window.sessionStorage.setItem(
+      "u-task-create-draft",
+      JSON.stringify({
+        title: "草稿任务",
+        description: "",
+        status: "todo",
+        priority: "medium",
+        tags: "",
+        dueDate: "2026-08-28",
+      }),
+    );
+
+    render(<TaskFormDialog onSubmitTask={onSubmitTask} createDefaults={{ dueDate: "2026-08-29" }} />);
+
+    await user.click(screen.getByRole("button", { name: "新建任务" }));
+    expect(screen.getByDisplayValue("2026-08-29")).toHaveAttribute("name", "dueDate");
+    await user.clear(screen.getByRole("textbox", { name: "任务名称" }));
+    await user.type(screen.getByRole("textbox", { name: "任务名称" }), "日历任务");
+    await user.click(screen.getByRole("button", { name: "创建任务" }));
+
+    await waitFor(() => {
+      expect(onSubmitTask).toHaveBeenCalledWith(expect.objectContaining({ title: "日历任务", dueDate: "2026-08-29" }));
+    });
+  });
+
   it("备注会根据内容高度自动扩展", async () => {
     const user = userEvent.setup();
     render(<TaskFormDialog onSubmitTask={() => {}} />);

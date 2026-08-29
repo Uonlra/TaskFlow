@@ -52,7 +52,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           position: "fixed",
           right: 20,
           bottom: 20,
-          zIndex: 100,
+          zIndex: 3000,
           display: "grid",
           gap: 12,
           width: "min(360px, calc(100vw - 32px))",

@@ -32,6 +32,7 @@ describe("/api/tasks/range", () => {
     mocks.listTasksByDueRange.mockResolvedValue({
       tasks: [{ id: "inside", dueDate: "2026-08-10" }],
       hasAnyTasks: true,
+      attention: { overdueCount: 2, nearDueCount: 3 },
     });
 
     const response = await GET(new NextRequest("http://localhost/api/tasks/range?from=2026-08-10&to=2026-08-17"));
@@ -45,6 +46,7 @@ describe("/api/tasks/range", () => {
     await expect(response.json()).resolves.toMatchObject({
       tasks: [{ id: "inside", dueDate: "2026-08-10" }],
       hasAnyTasks: true,
+      attention: { overdueCount: 2, nearDueCount: 3 },
       range: "bounded",
     });
   });
@@ -53,6 +55,7 @@ describe("/api/tasks/range", () => {
     mocks.listTasksByDueRange.mockResolvedValue({
       tasks: [{ id: "dated", dueDate: "2026-08-10" }],
       hasAnyTasks: true,
+      attention: { overdueCount: 0, nearDueCount: 1 },
     });
 
     const response = await GET(new NextRequest("http://localhost/api/tasks/range?range=all"));
@@ -60,6 +63,7 @@ describe("/api/tasks/range", () => {
     expect(mocks.listTasksByDueRange).toHaveBeenCalledWith("session-secret", { all: true }, expect.any(NextRequest));
     await expect(response.json()).resolves.toMatchObject({
       tasks: [{ id: "dated", dueDate: "2026-08-10" }],
+      attention: { overdueCount: 0, nearDueCount: 1 },
       range: "all",
     });
   });

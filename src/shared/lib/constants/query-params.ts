@@ -35,6 +35,8 @@ export const STATS_QUERY_KEYS = {
 export const CALENDAR_QUERY_KEYS = {
   date: "date",
   range: "range",
+  drawer: "drawer",
+  task: "task",
 } as const;
 
 export const DASHBOARD_RANGE_VALUES = {
@@ -66,6 +68,8 @@ export type BuildStatsHrefInput = {
 export type BuildCalendarHrefInput = {
   date?: string;
   range?: DashboardRangeValue;
+  drawer?: "date";
+  task?: string;
 };
 
 export function buildTasksHref(input: BuildTasksHrefInput = {}) {

@@ -352,6 +352,9 @@ export async function listTasksByDueRange(
   request?: NextRequest,
 ) {
   const dueQueries = [queryIsNotNull("dueDate")];
+  const today = startOfTaskDay(new Date());
+  const todayDue = toAppwriteDateTime(formatTaskDateParam(today)) as string;
+  const nearEndDue = toAppwriteDateTime(formatTaskDateParam(addTaskDays(today, 4))) as string;
 
   if (!range.all && range.from) {
     dueQueries.push(queryGreaterThanEqual("dueDate", toAppwriteDateTime(range.from) as string));
@@ -363,7 +366,7 @@ export async function listTasksByDueRange(
 
   dueQueries.push(queryOrderAsc("dueDate"), queryLimit(CALENDAR_QUERY_LIMIT));
 
-  const [duePayload, anyTaskPayload] = await Promise.all([
+  const [duePayload, anyTaskPayload, overdueCount, nearDueCount] = await Promise.all([
     appwriteTaskRequest<AppwriteRowsList>(
       "",
       {
@@ -382,11 +385,27 @@ export async function listTasksByDueRange(
       },
       appwriteRowsListSchema,
     ),
+    countTaskRows(
+      sessionSecret,
+      [queryIsNotNull("dueDate"), queryNotEqual("status", "done"), queryLessThan("dueDate", todayDue)],
+      request,
+    ),
+    countTaskRows(
+      sessionSecret,
+      [
+        queryIsNotNull("dueDate"),
+        queryNotEqual("status", "done"),
+        queryGreaterThanEqual("dueDate", todayDue),
+        queryLessThan("dueDate", nearEndDue),
+      ],
+      request,
+    ),
   ]);
 
   return {
     tasks: (duePayload.rows ?? []).map(mapTaskRow),
     hasAnyTasks: (anyTaskPayload.total ?? anyTaskPayload.rows?.length ?? 0) > 0,
+    attention: { overdueCount, nearDueCount },
   };
 }
 

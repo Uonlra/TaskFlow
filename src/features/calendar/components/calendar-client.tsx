@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 
+import { CalendarDayDrawer } from "@/features/calendar/components/calendar-day-drawer";
+import { TaskQuickViewDialog } from "@/features/tasks/components/task-quick-view-dialog";
+import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task, TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
 import {
   addTaskDays,
-  filterTasksByTaskDateRange,
   formatTaskDateParam,
   hasTaskDueDate,
   isTaskDueOnDate,
@@ -19,6 +21,11 @@ import {
 } from "@/features/tasks/utils/task-date-filters";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import {
+  buildCalendarTaskSummaries,
+  type CalendarDaySummary,
+  type CalendarStatus,
+} from "@/features/calendar/utils/calendar-task-summary";
+import {
   buildCalendarHref,
   buildTasksHref,
   CALENDAR_QUERY_KEYS,
@@ -26,9 +33,10 @@ import {
   type BuildTasksHrefInput,
   type DashboardRangeValue,
 } from "@/shared/lib/constants/query-params";
-import { WorkspaceAuthCheckingNotice, WorkspaceStateNotice } from "@/features/auth/components/workspace-state-notice";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
+import { useToast } from "@/shared/providers/toast-provider";
+import { useTaskStore } from "@/features/tasks/store/task-store";
 
 type CalendarClientProps = {
   initialDate: string;
@@ -36,18 +44,13 @@ type CalendarClientProps = {
 };
 
 type CalendarDay = {
-  date: Date;
   dateParam: string;
-  weekday: string;
   dayLabel: string;
   isToday: boolean;
   isSelected: boolean;
   isCurrentMonth: boolean;
-  taskCount: number;
-  statusDots: CalendarStatus[];
+  summary: CalendarDaySummary;
 };
-
-type CalendarStatus = "done" | "in_progress" | "todo" | "overdue";
 
 const rangeOptions: Array<{ value: DashboardRangeValue; label: string }> = [
   { value: DASHBOARD_RANGE_VALUES.today, label: "今天" },
@@ -75,66 +78,93 @@ const priorityScore: Record<TaskPriority, number> = {
 
 export function CalendarClient({ initialDate, initialRange }: CalendarClientProps) {
   const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
+  const { showToast } = useToast();
+  const storeTasks = useTaskStore((state) => state.tasks);
+  const createTask = useTaskStore((state) => state.createTaskAsync);
+  const updateTask = useTaskStore((state) => state.updateTask);
+  const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
+  const deleteTask = useTaskStore((state) => state.deleteTask);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [hasAnyTasks, setHasAnyTasks] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [attentionCounts, setAttentionCounts] = useState<CalendarAttention>({ overdueCount: 0, nearDueCount: 0 });
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const dateParam = parseCalendarDate(searchParams.get(CALENDAR_QUERY_KEYS.date) ?? initialDate);
   const range = parseCalendarRange(searchParams.get(CALENDAR_QUERY_KEYS.range) ?? initialRange);
+  const isDateDrawerOpen = searchParams.get(CALENDAR_QUERY_KEYS.drawer) === "date";
+  const previewTaskId = searchParams.get(CALENDAR_QUERY_KEYS.task);
   const selectedDate = useMemo(() => parseTaskDateParam(dateParam) ?? startOfTaskDay(new Date()), [dateParam]);
   const monthGridStart = useMemo(() => getCalendarGridStart(selectedDate), [selectedDate]);
-  const rangeFrom = range === DASHBOARD_RANGE_VALUES.all ? undefined : formatTaskDateParam(monthGridStart);
-  const rangeTo =
-    range === DASHBOARD_RANGE_VALUES.all ? undefined : formatTaskDateParam(addTaskDays(monthGridStart, 42));
+  const rangeFrom = formatTaskDateParam(monthGridStart);
+  const rangeTo = formatTaskDateParam(addTaskDays(monthGridStart, 42));
 
-  useEffect(() => {
-    if (!isConfigured || !user?.id || isAuthLoading) return;
+  const loadCalendarTasks = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!isAuthLoading && !user) {
+        setTasks(storeTasks);
+        setHasAnyTasks(storeTasks.length > 0);
+        setAttentionCounts({
+          overdueCount: countGuestOverdue(storeTasks),
+          nearDueCount: countGuestNearDue(storeTasks),
+        });
+        setIsLoading(false);
+        return true;
+      }
 
-    const params = new URLSearchParams();
-    if (range === DASHBOARD_RANGE_VALUES.all) {
-      params.set("range", DASHBOARD_RANGE_VALUES.all);
-    } else {
-      params.set("from", rangeFrom ?? dateParam);
-      params.set("to", rangeTo ?? formatTaskDateParam(addTaskDays(selectedDate, 1)));
-    }
+      if (!isConfigured || !user?.id || isAuthLoading) return false;
 
-    let cancelled = false;
-    setIsLoading(true);
-    setError(null);
-    void fetch(`/api/tasks/range?${params.toString()}`)
-      .then(async (response) => {
+      setIsLoading(true);
+      setError(null);
+      const params = new URLSearchParams();
+      params.set("from", rangeFrom);
+      params.set("to", rangeTo);
+
+      try {
+        const response = await fetch(`/api/tasks/range?${params.toString()}`, { signal });
         const payload = (await response.json().catch(() => null)) as {
           tasks?: Task[];
           hasAnyTasks?: boolean;
+          attention?: CalendarAttention;
           message?: string;
         } | null;
         if (!response.ok || !payload?.tasks) {
           throw new Error(payload?.message || "无法加载日历任务。");
         }
-        if (!cancelled) {
-          setTasks(payload.tasks);
-          setHasAnyTasks(Boolean(payload.hasAnyTasks));
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setTasks([]);
-          setHasAnyTasks(false);
-          setError("日历任务暂时无法加载，请稍后重试。");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
+
+        setTasks(payload.tasks);
+        setHasAnyTasks(Boolean(payload.hasAnyTasks));
+        setAttentionCounts(payload.attention ?? { overdueCount: 0, nearDueCount: 0 });
+        return true;
+      } catch {
+        if (signal?.aborted) return false;
+
+        setTasks([]);
+        setHasAnyTasks(false);
+        setAttentionCounts({ overdueCount: 0, nearDueCount: 0 });
+        setError("日历任务暂时无法加载，请稍后重试。");
+        return false;
+      } finally {
+        if (!signal?.aborted) setIsLoading(false);
+      }
+    },
+    [isAuthLoading, isConfigured, rangeFrom, rangeTo, storeTasks, user],
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const loadTimer = window.setTimeout(() => {
+      void loadCalendarTasks(controller.signal);
+    }, 0);
 
     return () => {
-      cancelled = true;
+      window.clearTimeout(loadTimer);
+      controller.abort();
     };
-  }, [dateParam, isAuthLoading, isConfigured, range, rangeFrom, rangeTo, selectedDate, user?.id]);
+  }, [loadCalendarTasks]);
 
   const workspaceState = getWorkspaceState({
     isAuthLoading,
@@ -142,36 +172,192 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     taskCount: hasAnyTasks ? 1 : 0,
     userId: user?.id,
   });
-  const isSyncing = workspaceState === "syncing";
+  const isSyncing = isLoading || workspaceState === "syncing";
   const dueTasks = useMemo(() => tasks.filter(hasValidDueDate), [tasks]);
-  const scopedTasks = useMemo(() => filterTasksByRange(dueTasks, range, selectedDate), [dueTasks, range, selectedDate]);
   const selectedDayTasks = useMemo(
     () => sortCalendarTasks(dueTasks.filter((task) => isTaskDueOnDate(task, selectedDate))),
     [dueTasks, selectedDate],
   );
-  const monthDays = useMemo(() => buildMonthDays(selectedDate, dueTasks), [dueTasks, selectedDate]);
+  const taskSummaries = useMemo(() => buildCalendarTaskSummaries(dueTasks), [dueTasks]);
+  const previewTask = useMemo(() => tasks.find((task) => task.id === previewTaskId) ?? null, [previewTaskId, tasks]);
+  const selectedDaySummary = taskSummaries[dateParam] ?? createEmptyCalendarDaySummary();
+  const monthDays = useMemo(() => buildMonthDays(selectedDate, taskSummaries), [selectedDate, taskSummaries]);
   const upcomingTasks = useMemo(
     () => buildUpcomingTasks(dueTasks, selectedDate, range),
     [dueTasks, range, selectedDate],
   );
-  const attention = useMemo(() => buildCalendarAttention(dueTasks), [dueTasks]);
+  const attention = attentionCounts.overdueCount || attentionCounts.nearDueCount ? attentionCounts : null;
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "本周";
-  const isAccountEmpty = workspaceState === "account-empty";
-  const isRangeEmpty = isAccountEmpty || (workspaceState === "ready" && scopedTasks.length === 0);
+  const isAccountEmpty = !isAuthLoading && !isLoading && !hasAnyTasks;
+  const isGuest = !isAuthLoading && !user;
+
+  useEffect(() => {
+    if (isGuest) {
+      setTasks(storeTasks);
+      setHasAnyTasks(storeTasks.length > 0);
+      setAttentionCounts({ overdueCount: countGuestOverdue(storeTasks), nearDueCount: countGuestNearDue(storeTasks) });
+      setIsLoading(false);
+    }
+  }, [isGuest, storeTasks]);
 
   const updateCalendar = (input: { date?: string; range?: DashboardRangeValue }) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set(CALENDAR_QUERY_KEYS.date, input.date ?? dateParam);
     params.set(CALENDAR_QUERY_KEYS.range, input.range ?? range);
+    params.delete(CALENDAR_QUERY_KEYS.drawer);
+    params.delete(CALENDAR_QUERY_KEYS.task);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  if (workspaceState === "auth-checking") return <WorkspaceAuthCheckingNotice />;
-  if (workspaceState === "guest") {
-    return (
-      <WorkspaceStateNotice title="登录后按日期安排任务" description="登录后可查看截止日期、近期提醒和任务时间线。" />
-    );
-  }
+  const closeDateDrawer = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete(CALENDAR_QUERY_KEYS.drawer);
+    params.delete(CALENDAR_QUERY_KEYS.task);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  const openTaskPreview = useCallback(
+    (task: Task) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(CALENDAR_QUERY_KEYS.task, task.id);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
+  const closeTaskPreview = useCallback(() => {
+    const taskId = searchParams.get(CALENDAR_QUERY_KEYS.task);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete(CALENDAR_QUERY_KEYS.task);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    window.requestAnimationFrame(() => {
+      if (taskId) document.querySelector<HTMLElement>(`[data-calendar-task-id="${taskId}"]`)?.focus();
+    });
+  }, [pathname, router, searchParams]);
+
+  const handleCreateTask = async (values: TaskFormValues) => {
+    try {
+      if (isGuest) {
+        await createTask(values);
+        setTasks(useTaskStore.getState().tasks);
+        showToast({
+          title: "任务已创建",
+          description: `“${values.title}” 已添加到 ${values.dueDate || dateParam}。`,
+          tone: "success",
+        });
+        return;
+      }
+
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "创建任务失败，请稍后再试。");
+      }
+
+      const refreshed = await loadCalendarTasks();
+      showToast({
+        title: "任务已创建",
+        description: refreshed
+          ? `“${values.title}” 已添加到 ${values.dueDate || dateParam}。`
+          : "任务已保存，但日历刷新失败，请稍后重试。",
+        tone: refreshed ? "success" : "info",
+      });
+    } catch (createError) {
+      const message = createError instanceof Error ? createError.message : "请稍后再试。";
+      showToast({ title: "创建任务失败", description: message, tone: "error" });
+      throw createError;
+    }
+  };
+
+  const handleUpdateTask = async (task: Task, values: TaskFormValues) => {
+    try {
+      if (isGuest) {
+        await updateTask(task.id, values);
+        setTasks(useTaskStore.getState().tasks);
+        showToast({ title: "任务已更新", description: `“${values.title}” 的修改已保存。`, tone: "success" });
+        return;
+      }
+
+      const payload = await requestTaskMutation<{ task: Task }>(task.id, { method: "PATCH", body: values });
+      setTasks((current) => current.map((item) => (item.id === task.id ? payload.task : item)));
+      const refreshed = await loadCalendarTasks();
+      showToast({
+        title: "任务已更新",
+        description: refreshed ? `“${values.title}” 的修改已保存。` : "修改已保存，但日历刷新失败，请稍后重试。",
+        tone: refreshed ? "success" : "info",
+      });
+    } catch (updateError) {
+      const message = updateError instanceof Error ? updateError.message : "请稍后再试。";
+      showToast({ title: "更新失败", description: message, tone: "error" });
+      throw updateError;
+    }
+  };
+
+  const handleToggleTaskComplete = async (task: Task) => {
+    const status = task.status === "done" ? "todo" : "done";
+    try {
+      if (isGuest) {
+        await updateTaskStatus(task.id, status);
+        setTasks(useTaskStore.getState().tasks);
+        showToast({
+          title: "状态已更新",
+          description: `“${task.title}” 已标记为${status === "done" ? "已完成" : "待开始"}。`,
+          tone: "success",
+        });
+        return;
+      }
+
+      const payload = await requestTaskMutation<{ task: Task }>(task.id, { method: "PATCH", body: { status } });
+      setTasks((current) => current.map((item) => (item.id === task.id ? payload.task : item)));
+      const refreshed = await loadCalendarTasks();
+      showToast({
+        title: "状态已更新",
+        description: refreshed
+          ? `“${task.title}” 已标记为${status === "done" ? "已完成" : "待开始"}。`
+          : "状态已保存，但日历刷新失败，请稍后重试。",
+        tone: refreshed ? "success" : "info",
+      });
+    } catch (statusError) {
+      showToast({
+        title: "状态更新失败",
+        description: statusError instanceof Error ? statusError.message : "请稍后再试。",
+        tone: "error",
+      });
+    }
+  };
+
+  const handleDeleteTask = async (task: Task) => {
+    try {
+      if (isGuest) {
+        await deleteTask(task.id);
+        closeTaskPreview();
+        setTasks(useTaskStore.getState().tasks);
+        showToast({ title: "任务已删除", description: `“${task.title}” 已从当前日期移除。`, tone: "success" });
+        return;
+      }
+
+      await requestTaskMutation(task.id, { method: "DELETE" });
+      closeTaskPreview();
+      setTasks((current) => current.filter((item) => item.id !== task.id));
+      const refreshed = await loadCalendarTasks();
+      showToast({
+        title: "任务已删除",
+        description: refreshed ? `“${task.title}” 已从当前日期移除。` : "任务已删除，但日历刷新失败。",
+        tone: refreshed ? "success" : "info",
+      });
+    } catch (deleteError) {
+      const message = deleteError instanceof Error ? deleteError.message : "请稍后再试。";
+      showToast({ title: "删除失败", description: message, tone: "error" });
+      throw deleteError;
+    }
+  };
 
   if (error) {
     return (
@@ -203,27 +389,6 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     );
   }
 
-  if (isRangeEmpty) {
-    return (
-      <section className="calendar-shell calendar-shell--empty">
-        <CalendarToolbar
-          date={selectedDate}
-          dateParam={dateParam}
-          range={range}
-          rangeLabel={rangeLabel}
-          isSyncing={isSyncing}
-          isAccountEmpty={false}
-          onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
-          onRangeChange={(nextRange) => updateCalendar({ range: nextRange })}
-        />
-        <DataEmptyState
-          variant="table"
-          title={`${rangeLabel}暂无截止任务`}
-          description="切换日期或范围，查看其他时间的任务安排。"
-        />
-      </section>
-    );
-  }
   return (
     <section className="calendar-shell">
       <CalendarToolbar
@@ -253,8 +418,40 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
           <CalendarQuickLinks />
         </aside>
       </div>
+      <CalendarDayDrawer
+        open={isDateDrawerOpen}
+        dateParam={dateParam}
+        tasks={selectedDayTasks}
+        summary={selectedDaySummary}
+        isLoading={isLoading}
+        onClose={closeDateDrawer}
+        onCreateTask={handleCreateTask}
+        onPreviewTask={openTaskPreview}
+      />
+      <TaskQuickViewDialog
+        task={previewTask}
+        onClose={closeTaskPreview}
+        onUpdateTask={handleUpdateTask}
+        onToggleComplete={handleToggleTaskComplete}
+        onDelete={handleDeleteTask}
+      />
     </section>
   );
+}
+
+async function requestTaskMutation<T = unknown>(taskId: string, init: { method: "PATCH" | "DELETE"; body?: unknown }) {
+  const response = await fetch(`/api/tasks/${encodeURIComponent(taskId)}`, {
+    method: init.method,
+    headers: init.body === undefined ? undefined : { "Content-Type": "application/json" },
+    body: init.body === undefined ? undefined : JSON.stringify(init.body),
+  });
+  const payload = (await response.json().catch(() => null)) as (T & { message?: string }) | null;
+
+  if (!response.ok || !payload) {
+    throw new Error(payload?.message || "任务操作失败，请稍后再试。");
+  }
+
+  return payload;
 }
 
 function CalendarToolbar({
@@ -403,16 +600,18 @@ function CalendarMonthGrid({
           查看任务
         </Link>
       </div>
+      <CalendarStatusLegend />
       <div className="calendar-weekday-row" aria-hidden="true">
         {weekdayLabels.map((label) => (
           <span key={label}>{label}</span>
         ))}
       </div>
-      <div className="calendar-month-grid" aria-label={`${formatCalendarMonth(selectedDate)}日期`} role="grid">
+      <div className="calendar-month-grid" aria-label={`${formatCalendarMonth(selectedDate)}日期`}>
         {days.map((day) => (
           <Link
             key={day.dateParam}
-            href={buildCalendarHref({ date: day.dateParam, range })}
+            href={buildCalendarHref({ date: day.dateParam, range, drawer: "date" })}
+            data-calendar-date={day.dateParam}
             className={[
               "calendar-month-day",
               day.isSelected ? "is-selected" : "",
@@ -422,22 +621,41 @@ function CalendarMonthGrid({
               .filter(Boolean)
               .join(" ")}
             aria-current={day.isSelected ? "date" : undefined}
-            aria-label={`${day.dateParam}，${day.taskCount} 项任务`}
-            role="gridcell"
+            aria-label={formatCalendarDayAriaLabel(day)}
           >
             <span className="calendar-month-day__number">{day.dayLabel}</span>
-            {day.statusDots.length ? (
+            {day.summary.statusDots.length ? (
               <span className="calendar-status-dots" aria-hidden="true">
-                {day.statusDots.map((status) => (
+                {day.summary.statusDots.map((status) => (
                   <span key={status} className={`calendar-status-dot calendar-status-dot--${status}`} />
                 ))}
               </span>
             ) : null}
-            <small className="calendar-month-day__count">{day.taskCount ? `${day.taskCount} 项` : ""}</small>
+            <small className="calendar-month-day__count">{day.summary.total ? `${day.summary.total} 项` : ""}</small>
           </Link>
         ))}
       </div>
     </section>
+  );
+}
+
+const calendarStatusLegend: Array<{ status: CalendarStatus; label: string }> = [
+  { status: "done", label: "已完成" },
+  { status: "in_progress", label: "进行中" },
+  { status: "todo", label: "待开始" },
+  { status: "overdue", label: "已逾期" },
+];
+
+function CalendarStatusLegend() {
+  return (
+    <div className="calendar-status-legend" aria-label="任务状态图例">
+      {calendarStatusLegend.map((item) => (
+        <span key={item.status}>
+          <span className={`calendar-status-dot calendar-status-dot--${item.status}`} aria-hidden="true" />
+          {item.label}
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -582,39 +800,22 @@ function buildCalendarTasksHref(dateParam: string, range: DashboardRangeValue, i
 
   return buildTasksHref({ ...input, date: dateParam });
 }
-function buildCalendarAttention(dueTasks: Task[]): CalendarAttention | null {
-  const activeTasks = dueTasks.filter((task) => task.status !== "done");
-  const overdueCount = activeTasks.filter((task) => getTaskDueMeta(task).isOverdue).length;
-  const nearDueCount = activeTasks.filter((task) => {
-    const dueMeta = getTaskDueMeta(task);
-    return dueMeta.isDueToday || dueMeta.isUpcoming;
-  }).length;
-
-  if (!overdueCount && !nearDueCount) return null;
-
-  return { overdueCount, nearDueCount };
-}
-
 const weekdayLabels = ["一", "二", "三", "四", "五", "六", "日"];
 
-function buildMonthDays(selectedDate: Date, dueTasks: Task[]): CalendarDay[] {
+function buildMonthDays(selectedDate: Date, summaries: Record<string, CalendarDaySummary>): CalendarDay[] {
   const start = getCalendarGridStart(selectedDate);
   const today = startOfTaskDay(new Date());
 
   return Array.from({ length: 42 }, (_, index) => {
     const date = addTaskDays(start, index);
-    const tasksForDay = dueTasks.filter((task) => isTaskDueOnDate(task, date));
-    const statusDots = getCalendarStatusDots(tasksForDay);
+    const dateParam = formatTaskDateParam(date);
     return {
-      date,
-      dateParam: formatTaskDateParam(date),
-      weekday: formatWeekday(date),
+      dateParam,
       dayLabel: String(date.getDate()),
       isToday: isSameCalendarDay(date, today),
       isSelected: isSameCalendarDay(date, selectedDate),
       isCurrentMonth: date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear(),
-      taskCount: tasksForDay.length,
-      statusDots,
+      summary: summaries[dateParam] ?? createEmptyCalendarDaySummary(),
     };
   });
 }
@@ -623,20 +824,6 @@ function getCalendarGridStart(date: Date) {
   const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
   const mondayOffset = monthStart.getDay() === 0 ? 6 : monthStart.getDay() - 1;
   return addTaskDays(monthStart, -mondayOffset);
-}
-
-function getCalendarStatusDots(tasks: Task[]): CalendarStatus[] {
-  const statuses = new Set<CalendarStatus>();
-
-  tasks.forEach((task) => {
-    const dueMeta = getTaskDueMeta(task);
-    if (dueMeta.isOverdue) statuses.add("overdue");
-    statuses.add(task.status);
-  });
-
-  return ["overdue", "in_progress", "todo", "done"]
-    .filter((status) => statuses.has(status as CalendarStatus))
-    .slice(0, 3) as CalendarStatus[];
 }
 
 function buildUpcomingTasks(dueTasks: Task[], selectedDate: Date, range: DashboardRangeValue) {
@@ -653,10 +840,6 @@ function buildUpcomingTasks(dueTasks: Task[], selectedDate: Date, range: Dashboa
       return dueDate && dueDate >= start && dueDate < end;
     }),
   ).slice(0, 6);
-}
-
-function filterTasksByRange(tasks: Task[], range: DashboardRangeValue, selectedDate: Date) {
-  return sortCalendarTasks(filterTasksByTaskDateRange(tasks, { date: selectedDate, range }));
 }
 
 function sortCalendarTasks(tasks: Task[]) {
@@ -695,6 +878,16 @@ function getTaskCalendarHref(task: Task) {
 
 function hasValidDueDate(task: Task) {
   return hasTaskDueDate(task);
+}
+
+function countGuestOverdue(tasks: Task[]) {
+  return tasks.filter((task) => task.status !== "done" && getTaskDueMeta(task).isOverdue).length;
+}
+
+function countGuestNearDue(tasks: Task[]) {
+  return tasks.filter(
+    (task) => task.status !== "done" && (getTaskDueMeta(task).isDueToday || getTaskDueMeta(task).isUpcoming),
+  ).length;
 }
 
 function parseCalendarRange(value: string | null | undefined): DashboardRangeValue {
@@ -744,10 +937,24 @@ function formatMonthDay(value: Date) {
   return `${value.getMonth() + 1}/${value.getDate()}`;
 }
 
-function formatWeekday(value: Date) {
-  return new Intl.DateTimeFormat("zh-CN", { weekday: "short" }).format(value).replace("周", "");
-}
-
 function isSameCalendarDay(left: Date, right: Date) {
   return startOfTaskDay(left).getTime() === startOfTaskDay(right).getTime();
+}
+
+function createEmptyCalendarDaySummary(): CalendarDaySummary {
+  return { total: 0, done: 0, inProgress: 0, todo: 0, overdue: 0, statusDots: [] };
+}
+
+function formatCalendarDayAriaLabel(day: CalendarDay) {
+  const { summary } = day;
+  if (!summary.total) return `${day.dateParam}，无任务`;
+
+  const details = [
+    summary.done ? `已完成 ${summary.done} 项` : "",
+    summary.inProgress ? `进行中 ${summary.inProgress} 项` : "",
+    summary.todo ? `待开始 ${summary.todo} 项` : "",
+    summary.overdue ? `其中逾期 ${summary.overdue} 项` : "",
+  ].filter(Boolean);
+
+  return `${day.dateParam}，共 ${summary.total} 项任务，${details.join("，")}`;
 }
