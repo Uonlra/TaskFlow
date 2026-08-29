@@ -97,7 +97,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const isSummaryLoading = isGuest ? false : isLoading;
   const stats = isGuest ? buildDashboardStats(syncedTasks, { range }) : (summary?.stats ?? buildDashboardStats([], { range }));
   const hasAnyTasks = isGuest ? syncedTasks.length > 0 : (summary?.hasAnyTasks ?? false);
-  const isAccountEmpty = !isAuthLoading && !hasAnyTasks && !error;
+  const isAccountEmpty = !isAuthLoading && !isSummaryLoading && !hasAnyTasks && !error;
   const isRangeEmpty = !isSummaryLoading && !error && hasAnyTasks && stats.totalCount === 0;
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "今天";
 
