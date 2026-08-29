@@ -69,3 +69,7 @@ docs/intro
 blob-report/
 .playwright
 .playwright-cli
+
+# dependence
+/CLAUDE.md
+/AGENTS.md

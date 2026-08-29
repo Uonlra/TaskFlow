@@ -4,8 +4,8 @@ The calendar range endpoint sends Appwrite `queries[]` directly to the Tasks tab
 
 | Index key                   | Type     | Attributes    | Order | Used by                                        |
 | --------------------------- | -------- | ------------- | ----- | ---------------------------------------------- |
-| `task_due_date_key`         | Key      | `dueDate`     | ASC   | Calendar bounded ranges and all-range ordering |
-| `task_status_key`           | Key      | `status`      | ASC   | Task list status filters                       |
+| `task_due_date_key`         | Key      | `dueDate`     | ASC   | Calendar ranges, ordering, and risk counts     |
+| `task_status_key`           | Key      | `status`      | ASC   | Task filters and calendar risk counts          |
 | `task_priority_key`         | Key      | `priority`    | ASC   | Task list priority filters                     |
 | `task_created_at_key`       | Key      | `$createdAt`  | DESC  | Task list created-time sorting                 |
 | `task_updated_at_key`       | Key      | `$updatedAt`  | DESC  | Task list updated-time sorting                 |

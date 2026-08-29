@@ -319,6 +319,23 @@
   gap: 14px;
 }
 
+.calendar-status-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 14px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.calendar-status-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .calendar-weekday-row,
 .calendar-month-grid {
   display: grid;
@@ -710,6 +727,11 @@
 
   .calendar-weekday-row {
     gap: 4px;
+  }
+
+  .calendar-status-legend {
+    justify-content: flex-start;
+    gap: 7px 10px;
   }
 
   .calendar-month-grid {

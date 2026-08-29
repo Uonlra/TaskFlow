@@ -9,7 +9,6 @@ import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import type { Task, TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
 import {
   addTaskDays,
-  filterTasksByTaskDateRange,
   formatTaskDateParam,
   hasTaskDueDate,
   isTaskDueOnDate,
@@ -18,6 +17,11 @@ import {
   startOfTaskDay,
 } from "@/features/tasks/utils/task-date-filters";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
+import {
+  buildCalendarTaskSummaries,
+  type CalendarDaySummary,
+  type CalendarStatus,
+} from "@/features/calendar/utils/calendar-task-summary";
 import {
   buildCalendarHref,
   buildTasksHref,
@@ -36,18 +40,13 @@ type CalendarClientProps = {
 };
 
 type CalendarDay = {
-  date: Date;
   dateParam: string;
-  weekday: string;
   dayLabel: string;
   isToday: boolean;
   isSelected: boolean;
   isCurrentMonth: boolean;
-  taskCount: number;
-  statusDots: CalendarStatus[];
+  summary: CalendarDaySummary;
 };
-
-type CalendarStatus = "done" | "in_progress" | "todo" | "overdue";
 
 const rangeOptions: Array<{ value: DashboardRangeValue; label: string }> = [
   { value: DASHBOARD_RANGE_VALUES.today, label: "今天" },
@@ -80,6 +79,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   const searchParams = useSearchParams();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [hasAnyTasks, setHasAnyTasks] = useState(false);
+  const [attentionCounts, setAttentionCounts] = useState<CalendarAttention>({ overdueCount: 0, nearDueCount: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,20 +87,15 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   const range = parseCalendarRange(searchParams.get(CALENDAR_QUERY_KEYS.range) ?? initialRange);
   const selectedDate = useMemo(() => parseTaskDateParam(dateParam) ?? startOfTaskDay(new Date()), [dateParam]);
   const monthGridStart = useMemo(() => getCalendarGridStart(selectedDate), [selectedDate]);
-  const rangeFrom = range === DASHBOARD_RANGE_VALUES.all ? undefined : formatTaskDateParam(monthGridStart);
-  const rangeTo =
-    range === DASHBOARD_RANGE_VALUES.all ? undefined : formatTaskDateParam(addTaskDays(monthGridStart, 42));
+  const rangeFrom = formatTaskDateParam(monthGridStart);
+  const rangeTo = formatTaskDateParam(addTaskDays(monthGridStart, 42));
 
   useEffect(() => {
     if (!isConfigured || !user?.id || isAuthLoading) return;
 
     const params = new URLSearchParams();
-    if (range === DASHBOARD_RANGE_VALUES.all) {
-      params.set("range", DASHBOARD_RANGE_VALUES.all);
-    } else {
-      params.set("from", rangeFrom ?? dateParam);
-      params.set("to", rangeTo ?? formatTaskDateParam(addTaskDays(selectedDate, 1)));
-    }
+    params.set("from", rangeFrom);
+    params.set("to", rangeTo);
 
     let cancelled = false;
     setIsLoading(true);
@@ -110,6 +105,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
         const payload = (await response.json().catch(() => null)) as {
           tasks?: Task[];
           hasAnyTasks?: boolean;
+          attention?: CalendarAttention;
           message?: string;
         } | null;
         if (!response.ok || !payload?.tasks) {
@@ -118,12 +114,14 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
         if (!cancelled) {
           setTasks(payload.tasks);
           setHasAnyTasks(Boolean(payload.hasAnyTasks));
+          setAttentionCounts(payload.attention ?? { overdueCount: 0, nearDueCount: 0 });
         }
       })
       .catch(() => {
         if (!cancelled) {
           setTasks([]);
           setHasAnyTasks(false);
+          setAttentionCounts({ overdueCount: 0, nearDueCount: 0 });
           setError("日历任务暂时无法加载，请稍后重试。");
         }
       })
@@ -134,7 +132,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     return () => {
       cancelled = true;
     };
-  }, [dateParam, isAuthLoading, isConfigured, range, rangeFrom, rangeTo, selectedDate, user?.id]);
+  }, [isAuthLoading, isConfigured, rangeFrom, rangeTo, user?.id]);
 
   const workspaceState = getWorkspaceState({
     isAuthLoading,
@@ -144,20 +142,19 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   });
   const isSyncing = workspaceState === "syncing";
   const dueTasks = useMemo(() => tasks.filter(hasValidDueDate), [tasks]);
-  const scopedTasks = useMemo(() => filterTasksByRange(dueTasks, range, selectedDate), [dueTasks, range, selectedDate]);
   const selectedDayTasks = useMemo(
     () => sortCalendarTasks(dueTasks.filter((task) => isTaskDueOnDate(task, selectedDate))),
     [dueTasks, selectedDate],
   );
-  const monthDays = useMemo(() => buildMonthDays(selectedDate, dueTasks), [dueTasks, selectedDate]);
+  const taskSummaries = useMemo(() => buildCalendarTaskSummaries(dueTasks), [dueTasks]);
+  const monthDays = useMemo(() => buildMonthDays(selectedDate, taskSummaries), [selectedDate, taskSummaries]);
   const upcomingTasks = useMemo(
     () => buildUpcomingTasks(dueTasks, selectedDate, range),
     [dueTasks, range, selectedDate],
   );
-  const attention = useMemo(() => buildCalendarAttention(dueTasks), [dueTasks]);
+  const attention = attentionCounts.overdueCount || attentionCounts.nearDueCount ? attentionCounts : null;
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "本周";
   const isAccountEmpty = workspaceState === "account-empty";
-  const isRangeEmpty = isAccountEmpty || (workspaceState === "ready" && scopedTasks.length === 0);
 
   const updateCalendar = (input: { date?: string; range?: DashboardRangeValue }) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -203,27 +200,6 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     );
   }
 
-  if (isRangeEmpty) {
-    return (
-      <section className="calendar-shell calendar-shell--empty">
-        <CalendarToolbar
-          date={selectedDate}
-          dateParam={dateParam}
-          range={range}
-          rangeLabel={rangeLabel}
-          isSyncing={isSyncing}
-          isAccountEmpty={false}
-          onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
-          onRangeChange={(nextRange) => updateCalendar({ range: nextRange })}
-        />
-        <DataEmptyState
-          variant="table"
-          title={`${rangeLabel}暂无截止任务`}
-          description="切换日期或范围，查看其他时间的任务安排。"
-        />
-      </section>
-    );
-  }
   return (
     <section className="calendar-shell">
       <CalendarToolbar
@@ -403,6 +379,7 @@ function CalendarMonthGrid({
           查看任务
         </Link>
       </div>
+      <CalendarStatusLegend />
       <div className="calendar-weekday-row" aria-hidden="true">
         {weekdayLabels.map((label) => (
           <span key={label}>{label}</span>
@@ -422,21 +399,41 @@ function CalendarMonthGrid({
               .filter(Boolean)
               .join(" ")}
             aria-current={day.isSelected ? "date" : undefined}
-            aria-label={`${day.dateParam}，${day.taskCount} 项任务`}
+            aria-label={formatCalendarDayAriaLabel(day)}
           >
             <span className="calendar-month-day__number">{day.dayLabel}</span>
-            {day.statusDots.length ? (
+            {day.summary.statusDots.length ? (
               <span className="calendar-status-dots" aria-hidden="true">
-                {day.statusDots.map((status) => (
+                {day.summary.statusDots.map((status) => (
                   <span key={status} className={`calendar-status-dot calendar-status-dot--${status}`} />
                 ))}
               </span>
             ) : null}
-            <small className="calendar-month-day__count">{day.taskCount ? `${day.taskCount} 项` : ""}</small>
+            <small className="calendar-month-day__count">{day.summary.total ? `${day.summary.total} 项` : ""}</small>
           </Link>
         ))}
       </div>
     </section>
+  );
+}
+
+const calendarStatusLegend: Array<{ status: CalendarStatus; label: string }> = [
+  { status: "done", label: "已完成" },
+  { status: "in_progress", label: "进行中" },
+  { status: "todo", label: "待开始" },
+  { status: "overdue", label: "已逾期" },
+];
+
+function CalendarStatusLegend() {
+  return (
+    <div className="calendar-status-legend" aria-label="任务状态图例">
+      {calendarStatusLegend.map((item) => (
+        <span key={item.status}>
+          <span className={`calendar-status-dot calendar-status-dot--${item.status}`} aria-hidden="true" />
+          {item.label}
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -581,39 +578,22 @@ function buildCalendarTasksHref(dateParam: string, range: DashboardRangeValue, i
 
   return buildTasksHref({ ...input, date: dateParam });
 }
-function buildCalendarAttention(dueTasks: Task[]): CalendarAttention | null {
-  const activeTasks = dueTasks.filter((task) => task.status !== "done");
-  const overdueCount = activeTasks.filter((task) => getTaskDueMeta(task).isOverdue).length;
-  const nearDueCount = activeTasks.filter((task) => {
-    const dueMeta = getTaskDueMeta(task);
-    return dueMeta.isDueToday || dueMeta.isUpcoming;
-  }).length;
-
-  if (!overdueCount && !nearDueCount) return null;
-
-  return { overdueCount, nearDueCount };
-}
-
 const weekdayLabels = ["一", "二", "三", "四", "五", "六", "日"];
 
-function buildMonthDays(selectedDate: Date, dueTasks: Task[]): CalendarDay[] {
+function buildMonthDays(selectedDate: Date, summaries: Record<string, CalendarDaySummary>): CalendarDay[] {
   const start = getCalendarGridStart(selectedDate);
   const today = startOfTaskDay(new Date());
 
   return Array.from({ length: 42 }, (_, index) => {
     const date = addTaskDays(start, index);
-    const tasksForDay = dueTasks.filter((task) => isTaskDueOnDate(task, date));
-    const statusDots = getCalendarStatusDots(tasksForDay);
+    const dateParam = formatTaskDateParam(date);
     return {
-      date,
-      dateParam: formatTaskDateParam(date),
-      weekday: formatWeekday(date),
+      dateParam,
       dayLabel: String(date.getDate()),
       isToday: isSameCalendarDay(date, today),
       isSelected: isSameCalendarDay(date, selectedDate),
       isCurrentMonth: date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear(),
-      taskCount: tasksForDay.length,
-      statusDots,
+      summary: summaries[dateParam] ?? createEmptyCalendarDaySummary(),
     };
   });
 }
@@ -622,20 +602,6 @@ function getCalendarGridStart(date: Date) {
   const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
   const mondayOffset = monthStart.getDay() === 0 ? 6 : monthStart.getDay() - 1;
   return addTaskDays(monthStart, -mondayOffset);
-}
-
-function getCalendarStatusDots(tasks: Task[]): CalendarStatus[] {
-  const statuses = new Set<CalendarStatus>();
-
-  tasks.forEach((task) => {
-    const dueMeta = getTaskDueMeta(task);
-    if (dueMeta.isOverdue) statuses.add("overdue");
-    statuses.add(task.status);
-  });
-
-  return ["overdue", "in_progress", "todo", "done"]
-    .filter((status) => statuses.has(status as CalendarStatus))
-    .slice(0, 3) as CalendarStatus[];
 }
 
 function buildUpcomingTasks(dueTasks: Task[], selectedDate: Date, range: DashboardRangeValue) {
@@ -652,10 +618,6 @@ function buildUpcomingTasks(dueTasks: Task[], selectedDate: Date, range: Dashboa
       return dueDate && dueDate >= start && dueDate < end;
     }),
   ).slice(0, 6);
-}
-
-function filterTasksByRange(tasks: Task[], range: DashboardRangeValue, selectedDate: Date) {
-  return sortCalendarTasks(filterTasksByTaskDateRange(tasks, { date: selectedDate, range }));
 }
 
 function sortCalendarTasks(tasks: Task[]) {
@@ -743,10 +705,24 @@ function formatMonthDay(value: Date) {
   return `${value.getMonth() + 1}/${value.getDate()}`;
 }
 
-function formatWeekday(value: Date) {
-  return new Intl.DateTimeFormat("zh-CN", { weekday: "short" }).format(value).replace("周", "");
-}
-
 function isSameCalendarDay(left: Date, right: Date) {
   return startOfTaskDay(left).getTime() === startOfTaskDay(right).getTime();
+}
+
+function createEmptyCalendarDaySummary(): CalendarDaySummary {
+  return { total: 0, done: 0, inProgress: 0, todo: 0, overdue: 0, statusDots: [] };
+}
+
+function formatCalendarDayAriaLabel(day: CalendarDay) {
+  const { summary } = day;
+  if (!summary.total) return `${day.dateParam}，无任务`;
+
+  const details = [
+    summary.done ? `已完成 ${summary.done} 项` : "",
+    summary.inProgress ? `进行中 ${summary.inProgress} 项` : "",
+    summary.todo ? `待开始 ${summary.todo} 项` : "",
+    summary.overdue ? `其中逾期 ${summary.overdue} 项` : "",
+  ].filter(Boolean);
+
+  return `${day.dateParam}，共 ${summary.total} 项任务，${details.join("，")}`;
 }

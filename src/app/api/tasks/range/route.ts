@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       tasks: result.tasks,
       hasAnyTasks: result.hasAnyTasks,
+      attention: result.attention,
       from: from ?? null,
       to: to ?? null,
       range: range === "all" ? "all" : "bounded",
