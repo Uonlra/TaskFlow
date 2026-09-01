@@ -2092,7 +2092,7 @@ html[data-theme="dark"] .dashboard-workspace__metric-icon {
 @media (min-width: 1181px) {
   .dashboard-v2-shell:not(.dashboard-v2-shell--empty) {
     min-height: calc(100dvh - 72px);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
   }
 
   .dashboard-v2-grid {

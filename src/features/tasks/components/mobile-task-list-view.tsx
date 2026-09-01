@@ -10,6 +10,7 @@ import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { TASK_DUE_FILTERS } from "@/shared/lib/constants/query-params";
 import { ROUTES } from "@/shared/lib/constants/routes";
 import type { TaskCategoryCounts } from "@/features/tasks/utils/task-list-query";
+import { MobileTaskListSkeleton } from "@/features/tasks/components/task-page-skeleton";
 
 type MobileTaskListViewProps = {
   tasks: Task[];
@@ -72,6 +73,10 @@ export function MobileTaskListView({
   const highCount = tasks.filter((task) => task.status !== "done" && task.priority === "high").length;
   const selectedQuickFilter = getSelectedQuickFilter(filters);
 
+  if (isLoading && !totalCount && !tasks.length) {
+    return <MobileTaskListSkeleton />;
+  }
+
   const handleSearchChange = (value: string) => {
     onFiltersChange({ ...filters, query: value });
   };
@@ -91,7 +96,11 @@ export function MobileTaskListView({
   };
 
   return (
-    <section className="mobile-task-list" aria-label="移动端任务列表">
+    <section
+      className={isLoading ? "mobile-task-list mobile-task-list--refreshing" : "mobile-task-list"}
+      aria-label="移动端任务列表"
+      aria-busy={isLoading}
+    >
       <header className="mobile-page-header mobile-task-list__header">
         <div className="mobile-page-header__copy">
           <p>{isLoading ? "同步中" : `${totalCount} 项`}</p>
