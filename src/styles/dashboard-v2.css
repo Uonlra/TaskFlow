@@ -2114,6 +2114,7 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
 .dashboard-workspace__status-grid {
   gap: 0;
   overflow: hidden;
+  align-self: start;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface-strong);
@@ -2127,6 +2128,7 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
   column-gap: 16px;
   row-gap: 12px;
   align-items: center;
+  height: 124px;
   min-height: 124px;
   padding: 20px 24px 16px;
   border: 0;
@@ -2228,6 +2230,7 @@ html[data-theme="dark"] .dashboard-workspace__metric {
     grid-template-columns: 1fr;
     grid-template-rows: 40px minmax(0, 1fr) 4px;
     gap: 10px;
+    height: 142px;
     min-height: 142px;
     padding: 16px 12px 14px;
   }
