@@ -82,3 +82,113 @@
   margin-top: 8px;
   font-size: 24px;
 }
+
+.guest-offline-notice {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 10px 12px;
+  border: 1px solid var(--warning-border);
+  border-left: 3px solid var(--warning);
+  border-radius: 4px;
+  background: var(--warning-soft);
+}
+
+.guest-offline-notice__message {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.guest-offline-notice__icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  color: var(--warning);
+}
+
+.guest-offline-notice p,
+.guest-offline-notice strong,
+.guest-offline-notice p span {
+  margin: 0;
+}
+
+.guest-offline-notice p {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  color: var(--muted-strong);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.guest-offline-notice strong {
+  flex: 0 0 auto;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.guest-offline-notice p span {
+  color: var(--muted-strong);
+}
+
+.guest-offline-notice__action {
+  min-height: 34px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 4px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface-strong);
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.guest-offline-notice__action:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.guest-offline-notice__action:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .guest-offline-notice {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 11px 12px;
+  }
+
+  .guest-offline-notice__message {
+    align-items: flex-start;
+  }
+
+  .guest-offline-notice p {
+    display: grid;
+    gap: 1px;
+  }
+
+  .guest-offline-notice__action {
+    justify-self: start;
+    margin-left: 42px;
+  }
+}
