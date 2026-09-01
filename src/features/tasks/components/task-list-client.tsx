@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DesktopTaskWorkbench } from "@/features/tasks/components/desktop-task-workbench";
@@ -56,8 +56,14 @@ export function TaskListClient({
   const { showToast } = useToast();
   const [filters, setFilters] = useState<TaskFilters>(initialFiltersProp);
   const [pageData, setPageData] = useState<TaskPageInitialData | null>(initialData);
+  const pageDataRef = useRef<TaskPageInitialData | null>(initialData);
+  const pageDataKeyRef = useRef<string | null>(
+    initialData ? buildTaskPageParams(initialFiltersProp, initialData.page).toString() : null,
+  );
   const [pageLoading, setPageLoading] = useState(!initialData);
   const [pageError, setPageError] = useState<string | null>(null);
+  const pageRequestRef = useRef<{ id: number; controller: AbortController } | null>(null);
+  const pageRequestIdRef = useRef(0);
   const createTaskAsync = useTaskStore((state) => state.createTaskAsync);
   const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
@@ -65,42 +71,69 @@ export function TaskListClient({
   const localTasks = useTaskStore((state) => state.tasks);
 
   const page = parseTaskPageParam(searchParams.get("page"));
+  const requestKey = useMemo(() => buildTaskPageParams(filters, page).toString(), [filters, page]);
   const canUseInitialData = Boolean(initialData && (isAuthLoading || user?.id === initialData.userId));
   const hasConfirmedUserMismatch = Boolean(initialData && !isAuthLoading && user && user.id !== initialData.userId);
   const activeUserId = user?.id ?? (isAuthLoading ? initialData?.userId : undefined);
   const isGuest = !isAuthLoading && !user;
 
+  const cancelPageRequest = useCallback(() => {
+    pageRequestIdRef.current += 1;
+    pageRequestRef.current?.controller.abort();
+    pageRequestRef.current = null;
+  }, []);
+
   const loadPage = useCallback(async () => {
     if (!activeUserId || !isConfigured) return;
+
+    const requestId = pageRequestIdRef.current + 1;
+    pageRequestIdRef.current = requestId;
+    pageRequestRef.current?.controller.abort();
+    const controller = new AbortController();
+    pageRequestRef.current = { id: requestId, controller };
 
     setPageLoading(true);
     setPageError(null);
     try {
       const params = buildTaskPageParams(filters, page);
-      const response = await fetch(`/api/tasks?${params.toString()}`);
+      const response = await fetch(`/api/tasks?${params.toString()}`, {
+        cache: "no-store",
+        signal: controller.signal,
+      });
       const payload = (await response.json().catch(() => null)) as
         Omit<TaskPageInitialData, "userId"> | { message?: string } | null;
       if (!response.ok || !payload || !("tasks" in payload) || !("total" in payload)) {
         throw new Error((payload && "message" in payload ? payload.message : undefined) || "无法加载任务列表。");
       }
-      setPageData({ userId: activeUserId, ...payload });
+      if (pageRequestIdRef.current === requestId && !controller.signal.aborted) {
+        const nextPageData = { userId: activeUserId, ...payload };
+        pageDataRef.current = nextPageData;
+        pageDataKeyRef.current = params.toString();
+        setPageData(nextPageData);
+      }
     } catch (error) {
-      setPageError(getWorkspaceErrorMessage(error, "任务列表暂时无法加载，请稍后重试。"));
+      if (!isAbortError(error) && pageRequestIdRef.current === requestId) {
+        setPageError(getWorkspaceErrorMessage(error, "任务列表暂时无法加载，请稍后重试。"));
+      }
     } finally {
-      setPageLoading(false);
+      if (pageRequestIdRef.current === requestId) {
+        pageRequestRef.current = null;
+        setPageLoading(false);
+      }
     }
   }, [activeUserId, filters, isConfigured, page]);
 
+  useEffect(() => () => cancelPageRequest(), [cancelPageRequest]);
+
   useEffect(() => {
     if (isGuest) {
-      setPageData({ userId: "guest", ...getTaskPage(localTasks, filters, page) });
+      cancelPageRequest();
+      const nextPageData = { userId: "guest", ...getTaskPage(localTasks, filters, page) };
+      pageDataRef.current = nextPageData;
+      pageDataKeyRef.current = requestKey;
+      setPageData(nextPageData);
       setPageLoading(false);
       setPageError(null);
-      return;
-    }
-
-    if (hasConfirmedUserMismatch) {
-      setPageData(null);
       return;
     }
 
@@ -111,8 +144,33 @@ export function TaskListClient({
       areFiltersEqual(filters, initialFiltersProp);
 
     if (matchesInitialData) {
+      cancelPageRequest();
+      pageDataRef.current = initialData;
+      pageDataKeyRef.current = requestKey;
       setPageData(initialData);
       setPageLoading(false);
+      setPageError(null);
+      return;
+    }
+
+    const matchesCurrentPageData =
+      pageDataRef.current && pageDataRef.current.userId === activeUserId && pageDataKeyRef.current === requestKey;
+
+    if (matchesCurrentPageData) {
+      setPageLoading(false);
+      setPageError(null);
+      return;
+    }
+
+    if (hasConfirmedUserMismatch) {
+      cancelPageRequest();
+      pageDataRef.current = null;
+      pageDataKeyRef.current = null;
+      setPageData(null);
+      setPageError(null);
+      if (activeUserId && isConfigured) {
+        void loadPage();
+      }
       return;
     }
 
@@ -121,6 +179,7 @@ export function TaskListClient({
     }
   }, [
     activeUserId,
+    cancelPageRequest,
     filters,
     hasConfirmedUserMismatch,
     initialData,
@@ -131,13 +190,17 @@ export function TaskListClient({
     loadPage,
     localTasks,
     page,
+    requestKey,
   ]);
 
-  const visibleTasks = hasConfirmedUserMismatch ? [] : (pageData?.tasks ?? []);
-  const totalCount = hasConfirmedUserMismatch ? 0 : (pageData?.total ?? 0);
-  const categoryCounts = pageData?.categoryCounts ?? { near: 0, active: 0, done: 0, all: 0 };
-  const visibleIsLoading = hasConfirmedUserMismatch || pageLoading || (isAuthLoading && !canUseInitialData);
+  const visiblePageData = isGuest || pageData?.userId === activeUserId ? pageData : null;
+  const visibleTasks = visiblePageData?.tasks ?? [];
+  const totalCount = visiblePageData?.total ?? 0;
+  const categoryCounts = visiblePageData?.categoryCounts ?? { near: 0, active: 0, done: 0, all: 0 };
+  const visibleIsLoading =
+    pageLoading || (hasConfirmedUserMismatch && !visiblePageData) || (isAuthLoading && !canUseInitialData);
   const error = pageError;
+  const hasInitialLoadError = Boolean(error && !visiblePageData);
 
   useEffect(() => {
     const nextFilters = parseTaskFilters({
@@ -322,64 +385,81 @@ export function TaskListClient({
 
   return (
     <>
-      <div className="tasks-mobile-only">
-        <MobileTaskListView
-          tasks={filteredTasks}
-          totalCount={totalCount}
-          categoryCounts={categoryCounts}
-          page={page}
-          pageSize={pageData?.pageSize ?? DEFAULT_TASK_PAGE_SIZE}
-          hasNext={pageData?.hasNext ?? false}
-          filters={filters}
-          isLoading={visibleIsLoading}
-          onFiltersChange={handleFiltersChange}
-          onPageChange={handlePageChange}
-          onCreateTask={handleCreateTask}
-          onUpdateStatus={handleUpdateStatus}
-          onPreviewTask={(task) => router.push(`${pathname}/${task.id}`)}
-        />
-      </div>
-      <section className="tasks-toolbar tasks-desktop-only">
-        {activeFilterLabels.length ? (
-          <section className="task-url-filters card-surface" aria-label="当前筛选">
-            <div className="task-url-filters__chips">
-              {activeFilterLabels.map((label) => (
-                <span key={label} className="task-url-filters__chip">
-                  {label}
-                </span>
-              ))}
-            </div>
-            <button type="button" className="task-url-filters__clear" onClick={handleResetFilters}>
-              清除筛选
-            </button>
+      {error ? <TaskLoadError message={error} onRetry={() => void loadPage()} isInitial={hasInitialLoadError} /> : null}
+      {hasInitialLoadError ? null : (
+        <>
+          <div className="tasks-mobile-only">
+            <MobileTaskListView
+              tasks={filteredTasks}
+              totalCount={totalCount}
+              categoryCounts={categoryCounts}
+              page={page}
+              pageSize={visiblePageData?.pageSize ?? DEFAULT_TASK_PAGE_SIZE}
+              hasNext={visiblePageData?.hasNext ?? false}
+              filters={filters}
+              isLoading={visibleIsLoading}
+              onFiltersChange={handleFiltersChange}
+              onPageChange={handlePageChange}
+              onCreateTask={handleCreateTask}
+              onUpdateStatus={handleUpdateStatus}
+              onPreviewTask={(task) => router.push(`${pathname}/${task.id}`)}
+            />
+          </div>
+          <section className="tasks-toolbar tasks-desktop-only">
+            {activeFilterLabels.length ? (
+              <section className="task-url-filters card-surface" aria-label="当前筛选">
+                <div className="task-url-filters__chips">
+                  {activeFilterLabels.map((label) => (
+                    <span key={label} className="task-url-filters__chip">
+                      {label}
+                    </span>
+                  ))}
+                </div>
+                <button type="button" className="task-url-filters__clear" onClick={handleResetFilters}>
+                  清除筛选
+                </button>
+              </section>
+            ) : null}
+            <DesktopTaskWorkbench
+              tasks={filteredTasks}
+              totalCount={totalCount}
+              categoryCounts={categoryCounts}
+              page={page}
+              pageSize={visiblePageData?.pageSize ?? DEFAULT_TASK_PAGE_SIZE}
+              hasNext={visiblePageData?.hasNext ?? false}
+              filters={filters}
+              isLoading={visibleIsLoading}
+              onFiltersChange={handleFiltersChange}
+              onResetFilters={handleResetFilters}
+              onCreateTask={handleCreateTask}
+              onImportTasks={handleImportTasks}
+              onUpdateTask={handleUpdateTask}
+              onUpdateStatus={handleUpdateStatus}
+              onDeleteTask={handleDeleteTask}
+              onPreviewTask={(task) => router.push(`${pathname}/${task.id}`)}
+              onExportTasks={handleExportTasks}
+            />
           </section>
-        ) : null}
-        {error ? (
-          <section className="notice-card notice-card--error card-surface">
-            <p>{error}</p>
-          </section>
-        ) : null}
-        <DesktopTaskWorkbench
-          tasks={filteredTasks}
-          totalCount={totalCount}
-          categoryCounts={categoryCounts}
-          page={page}
-          pageSize={pageData?.pageSize ?? DEFAULT_TASK_PAGE_SIZE}
-          hasNext={pageData?.hasNext ?? false}
-          filters={filters}
-          isLoading={visibleIsLoading}
-          onFiltersChange={handleFiltersChange}
-          onResetFilters={handleResetFilters}
-          onCreateTask={handleCreateTask}
-          onImportTasks={handleImportTasks}
-          onUpdateTask={handleUpdateTask}
-          onUpdateStatus={handleUpdateStatus}
-          onDeleteTask={handleDeleteTask}
-          onPreviewTask={(task) => router.push(`${pathname}/${task.id}`)}
-          onExportTasks={handleExportTasks}
-        />
-      </section>
+        </>
+      )}
     </>
+  );
+}
+
+function TaskLoadError({ message, onRetry, isInitial }: { message: string; onRetry: () => void; isInitial: boolean }) {
+  return (
+    <section
+      className={`notice-card notice-card--error task-load-error card-surface${isInitial ? " task-load-error--initial" : ""}`}
+      role="alert"
+    >
+      <div>
+        <strong>任务加载失败</strong>
+        <p>{message}</p>
+      </div>
+      <button type="button" className="tesla-action tesla-action--secondary" onClick={onRetry}>
+        重新加载
+      </button>
+    </section>
   );
 }
 
@@ -393,6 +473,10 @@ function getPreferredTaskSort(): TaskFilters["sort"] {
   }
 
   return "due_asc";
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === "AbortError";
 }
 
 function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null | undefined>>): TaskFilters {

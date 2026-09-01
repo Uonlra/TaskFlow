@@ -1,17 +1,35 @@
-import { DashboardDistributionPanel } from "@/features/dashboard/components/dashboard-distribution-panel";
-import { DashboardFocusPanel } from "@/features/dashboard/components/dashboard-focus-panel";
+import dynamic from "next/dynamic";
+
 import type {
   DashboardPriorityFilters,
   DashboardRangeOption,
 } from "@/features/dashboard/components/dashboard-range-menu";
-import { DashboardRiskPanel } from "@/features/dashboard/components/dashboard-risk-panel";
-import { DashboardTrendPanel } from "@/features/dashboard/components/dashboard-trend-panel";
 import { DashboardWorkspace } from "@/features/dashboard/components/dashboard-workspace";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import type { DashboardAnalyticsRange, DashboardStats } from "@/features/tasks/utils/task-analytics";
 import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
+
+const DashboardTrendPanel = dynamic(
+  () => import("@/features/dashboard/components/dashboard-trend-panel").then((module) => module.DashboardTrendPanel),
+  { loading: () => <DashboardDeferredPanelSkeleton label="趋势分析加载中" /> },
+);
+const DashboardDistributionPanel = dynamic(
+  () =>
+    import("@/features/dashboard/components/dashboard-distribution-panel").then(
+      (module) => module.DashboardDistributionPanel,
+    ),
+  { loading: () => <DashboardDeferredPanelSkeleton label="分布分析加载中" /> },
+);
+const DashboardFocusPanel = dynamic(
+  () => import("@/features/dashboard/components/dashboard-focus-panel").then((module) => module.DashboardFocusPanel),
+  { loading: () => <DashboardDeferredPanelSkeleton label="重点任务加载中" /> },
+);
+const DashboardRiskPanel = dynamic(
+  () => import("@/features/dashboard/components/dashboard-risk-panel").then((module) => module.DashboardRiskPanel),
+  { loading: () => <DashboardDeferredPanelSkeleton label="风险分析加载中" /> },
+);
 
 type DashboardV2ShellProps = {
   stats: DashboardStats;
@@ -139,6 +157,18 @@ export function DashboardV2Shell({
           <DashboardRiskPanel risks={stats.overdueRisk} overdueCount={stats.overdueCount} isEmpty={isEmpty} />
         </aside>
       </div>
+    </section>
+  );
+}
+
+function DashboardDeferredPanelSkeleton({ label }: { label: string }) {
+  return (
+    <section className="dashboard-v2-panel dashboard-v2-panel--deferred" aria-label={label} aria-busy="true">
+      <div className="dashboard-v2-panel__head">
+        <span className="dashboard-skeleton dashboard-skeleton--heading" />
+        <span className="dashboard-skeleton dashboard-skeleton--link" />
+      </div>
+      <div className="dashboard-skeleton dashboard-skeleton--panel" />
     </section>
   );
 }

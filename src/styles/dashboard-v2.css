@@ -1872,6 +1872,111 @@
   }
 }
 
+/* Progressive loading: keep primary geometry stable while data and charts arrive. */
+.dashboard-workspace__task-list--skeleton {
+  gap: 0;
+}
+
+.dashboard-workspace__task-skeleton {
+  display: block;
+  height: 42px;
+  border-top: 1px solid var(--border-soft);
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-soft) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: dashboard-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.dashboard-workspace__progress-body[aria-busy="true"] .dashboard-workspace__ring {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 10px var(--surface-soft);
+  animation: dashboard-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.dashboard-workspace__progress-body[aria-busy="true"] .dashboard-workspace__ring strong,
+.dashboard-workspace__progress-body[aria-busy="true"] .dashboard-workspace__progress-main > * {
+  color: transparent;
+  border-radius: 4px;
+  background: var(--surface-soft);
+}
+
+.dashboard-workspace__progress-body[aria-busy="true"] .dashboard-workspace__progress-main > strong {
+  width: 128px;
+}
+
+.dashboard-workspace__status-grid[aria-busy="true"] .dashboard-workspace__metric-copy > * {
+  color: transparent;
+  border-radius: 4px;
+  background: var(--surface-soft);
+}
+
+.dashboard-workspace__status-grid[aria-busy="true"] .dashboard-workspace__metric-copy span {
+  width: 64px;
+}
+
+.dashboard-workspace__status-grid[aria-busy="true"] .dashboard-workspace__metric-copy strong {
+  width: 42px;
+}
+
+.dashboard-workspace__status-grid[aria-busy="true"] .dashboard-workspace__metric-copy small {
+  width: 76px;
+}
+
+.dashboard-v2-panel--deferred {
+  min-height: 220px;
+}
+
+.dashboard-skeleton {
+  display: block;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-soft) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: dashboard-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.dashboard-skeleton--heading {
+  width: 112px;
+  height: 20px;
+}
+
+.dashboard-skeleton--link {
+  width: 58px;
+  height: 16px;
+}
+
+.dashboard-skeleton--panel {
+  height: 154px;
+  margin-top: 18px;
+}
+
+@keyframes dashboard-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes dashboard-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-workspace__task-skeleton,
+  .dashboard-skeleton,
+  .dashboard-workspace__progress-body[aria-busy="true"] .dashboard-workspace__ring {
+    animation: none;
+  }
+}
+
 .dashboard-workspace__metric-icon::before,
 .dashboard-workspace__metric-icon::after {
   display: none !important;
@@ -1987,7 +2092,7 @@ html[data-theme="dark"] .dashboard-workspace__metric-icon {
 @media (min-width: 1181px) {
   .dashboard-v2-shell:not(.dashboard-v2-shell--empty) {
     min-height: calc(100dvh - 72px);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
   }
 
   .dashboard-v2-grid {
@@ -2114,6 +2219,7 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
 .dashboard-workspace__status-grid {
   gap: 0;
   overflow: hidden;
+  align-self: start;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface-strong);
@@ -2127,6 +2233,7 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
   column-gap: 16px;
   row-gap: 12px;
   align-items: center;
+  height: 124px;
   min-height: 124px;
   padding: 20px 24px 16px;
   border: 0;
@@ -2228,6 +2335,7 @@ html[data-theme="dark"] .dashboard-workspace__metric {
     grid-template-columns: 1fr;
     grid-template-rows: 40px minmax(0, 1fr) 4px;
     gap: 10px;
+    height: 142px;
     min-height: 142px;
     padding: 16px 12px 14px;
   }

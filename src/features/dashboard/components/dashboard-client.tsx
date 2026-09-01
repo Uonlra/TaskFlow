@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { MobileDashboardOverview } from "@/features/dashboard/components/mobile-dashboard-overview";
@@ -55,6 +55,8 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const summaryRequestRef = useRef<AbortController | null>(null);
+  const summaryRequestIdRef = useRef(0);
 
   useEffect(() => {
     const nextRange = parseDashboardRange(searchParams.get("range"));
@@ -64,6 +66,11 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const loadSummary = useCallback(async () => {
     if (!isConfigured || !user?.id) return;
 
+    summaryRequestRef.current?.abort();
+    const controller = new AbortController();
+    const requestId = summaryRequestIdRef.current + 1;
+    summaryRequestIdRef.current = requestId;
+    summaryRequestRef.current = controller;
     setIsLoading(true);
     setError(null);
 
@@ -73,7 +80,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       if (priorityFilters.priority !== "all") params.set("priority", priorityFilters.priority);
       if (priorityFilters.due) params.set("due", priorityFilters.due);
 
-      const response = await fetch(`/api/dashboard/summary?${params.toString()}`);
+      const response = await fetch(`/api/dashboard/summary?${params.toString()}`, { signal: controller.signal });
       const payload = (await response.json().catch(() => null)) as
         DashboardSummaryResponse | { message?: string } | null;
 
@@ -81,16 +88,26 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         throw new Error((payload && "message" in payload ? payload.message : undefined) || "无法加载总览数据。");
       }
 
-      setSummary(payload);
+      if (summaryRequestIdRef.current === requestId) {
+        setSummary(payload);
+      }
     } catch (loadError) {
-      setError(getWorkspaceErrorMessage(loadError, "总览数据暂时无法加载，请稍后重试。"));
+      if (!controller.signal.aborted && summaryRequestIdRef.current === requestId) {
+        setError(getWorkspaceErrorMessage(loadError, "总览数据暂时无法加载，请稍后重试。"));
+      }
     } finally {
-      setIsLoading(false);
+      if (summaryRequestIdRef.current === requestId) {
+        setIsLoading(false);
+      }
     }
   }, [isConfigured, priorityFilters, range, user?.id]);
 
   useEffect(() => {
     void loadSummary();
+
+    return () => {
+      summaryRequestRef.current?.abort();
+    };
   }, [loadSummary]);
 
   const isGuest = !isAuthLoading && !user;

@@ -320,6 +320,32 @@
   color: var(--danger);
 }
 
+.task-load-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.task-load-error strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.task-load-error .tesla-action {
+  flex: 0 0 auto;
+}
+
+.task-load-error--initial {
+  min-height: max(480px, calc(100vh - 120px));
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
 .panel-eyebrow {
   margin: 0;
   color: var(--primary);
@@ -1862,6 +1888,173 @@
   overflow: hidden;
 }
 
+.task-page-skeleton__block {
+  display: block;
+  min-width: 0;
+  min-height: 10px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--surface) 20%, var(--surface-muted) 48%, var(--surface) 76%);
+  background-size: 220% 100%;
+  animation: task-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.task-page-skeleton__subtitle {
+  width: 112px;
+  height: 11px;
+  margin-top: 8px;
+}
+
+.task-page-skeleton__search {
+  width: 100%;
+  height: 40px;
+}
+
+.task-page-skeleton__tabs,
+.task-page-skeleton__controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.task-page-skeleton__tab {
+  width: 68px;
+  height: 36px;
+}
+
+.task-page-skeleton__control {
+  width: 92px;
+  height: 36px;
+}
+
+.task-page-skeleton__control:last-child {
+  width: 88px;
+}
+
+.task-page-skeleton__head-cell {
+  width: min(78%, 76px);
+  height: 9px;
+}
+
+.task-page-skeleton__row {
+  cursor: default;
+}
+
+.task-page-skeleton__cell {
+  width: min(82%, 94px);
+  height: 12px;
+}
+
+.task-page-skeleton__cell--1 {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+.task-page-skeleton__cell--2 {
+  width: min(72%, 210px);
+  height: 14px;
+}
+
+.task-page-skeleton__cell--5 {
+  height: 24px;
+}
+
+.task-page-skeleton__cell--7 {
+  width: 26px;
+  height: 26px;
+}
+
+.task-page-skeleton__footer-action {
+  width: 176px;
+  height: 30px;
+}
+
+.task-page-skeleton__footer-meta {
+  width: 120px;
+  height: 12px;
+}
+
+.task-detail-panel--skeleton {
+  grid-template-rows: auto auto auto 1fr;
+}
+
+.task-page-skeleton__detail-tabs {
+  display: flex;
+  gap: 24px;
+  min-height: 45px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.task-page-skeleton__detail-tabs .task-page-skeleton__block {
+  width: 54px;
+  height: 12px;
+}
+
+.task-page-skeleton__detail-copy,
+.task-page-skeleton__detail-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.task-page-skeleton__detail-copy .task-page-skeleton__block {
+  width: 100%;
+  height: 11px;
+}
+
+.task-page-skeleton__detail-copy .task-page-skeleton__detail-title {
+  width: 78%;
+  height: 20px;
+}
+
+.task-page-skeleton__detail-copy .task-page-skeleton__detail-line-short {
+  width: 62%;
+}
+
+.task-page-skeleton__detail-fields {
+  gap: 0;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.task-page-skeleton__detail-fields > div {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  min-height: 44px;
+}
+
+.task-page-skeleton__detail-fields .task-page-skeleton__block:first-child {
+  width: 48px;
+}
+
+.task-page-skeleton__detail-fields .task-page-skeleton__block:last-child {
+  width: min(80%, 148px);
+}
+
+.task-page-skeleton__detail-action {
+  width: 100%;
+  height: 38px;
+  align-self: end;
+}
+
+.desktop-task-workbench--refreshing .desktop-task-table__body,
+.mobile-task-list--refreshing .mobile-task-list__items {
+  opacity: 0.58;
+  transition: opacity 160ms ease;
+}
+
+@keyframes task-skeleton-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -120% 0;
+  }
+}
+
 .desktop-task-workbench__main {
   min-width: 0;
   display: grid;
@@ -2839,11 +3032,6 @@
 .desktop-task-workbench--empty,
 .desktop-task-workbench--filtered-empty {
   grid-template-columns: minmax(0, 1fr);
-}
-
-.desktop-task-workbench--empty {
-  height: 360px;
-  min-height: 0;
 }
 
 .desktop-task-workbench--empty .desktop-task-workbench__main {

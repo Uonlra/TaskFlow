@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { AuthActionGateProvider } from "@/features/auth/components/auth-action-gate";
+import { GuestOfflineNotice } from "@/features/auth/components/guest-offline-notice";
 import { AppSidebar } from "@/shared/components/layout/app-sidebar";
 import { MobileBottomNavigation } from "@/shared/components/layout/mobile-bottom-navigation";
 
@@ -50,6 +51,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
         <AppSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
         <div className="dashboard-main">
           <main id="main-content" tabIndex={-1} className="dashboard-content">
+            <GuestOfflineNotice />
             {children}
           </main>
         </div>

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import dynamic from "next/dynamic";
 
 import { CustomSelect } from "@/shared/components/common/custom-select";
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import { DesktopTaskTable } from "@/features/tasks/components/desktop-task-table";
-import { TaskDetailPanel } from "@/features/tasks/components/task-detail-panel";
+import { DesktopTaskWorkbenchSkeleton, TaskDetailPanelSkeleton } from "@/features/tasks/components/task-page-skeleton";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
@@ -14,6 +15,11 @@ import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { createTaskExportPayload, parseTaskImportPayload } from "@/features/tasks/utils/task-transfer";
 import { useToast } from "@/shared/providers/toast-provider";
 import type { TaskCategoryCounts } from "@/features/tasks/utils/task-list-query";
+
+const TaskDetailPanel = dynamic(
+  () => import("@/features/tasks/components/task-detail-panel").then((module) => module.TaskDetailPanel),
+  { loading: () => <TaskDetailPanelSkeleton /> },
+);
 
 type DesktopTaskWorkbenchProps = {
   tasks: Task[];
@@ -76,6 +82,7 @@ export function DesktopTaskWorkbench({
   const taskListScrollTopRef = useRef(0);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [canLoadDetail, setCanLoadDetail] = useState(false);
   const selectedTask = useMemo(
     () => tasks.find((task) => task.id === selectedTaskId) ?? tasks[0] ?? null,
     [selectedTaskId, tasks],
@@ -102,6 +109,37 @@ export function DesktopTaskWorkbench({
       setSelectedTaskId(tasks[0].id);
     }
   }, [selectedTaskId, tasks]);
+
+  useEffect(() => {
+    const idleWindow = window as unknown as {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const desktopQuery = window.matchMedia?.("(min-width: 961px)");
+    let cancelScheduledLoad = () => {};
+
+    const scheduleDetailLoad = () => {
+      if (desktopQuery && !desktopQuery.matches) return;
+
+      cancelScheduledLoad();
+      if (idleWindow.requestIdleCallback) {
+        const idleId = idleWindow.requestIdleCallback(() => setCanLoadDetail(true), { timeout: 400 });
+        cancelScheduledLoad = () => idleWindow.cancelIdleCallback?.(idleId);
+        return;
+      }
+
+      const timeoutId = window.setTimeout(() => setCanLoadDetail(true), 0);
+      cancelScheduledLoad = () => window.clearTimeout(timeoutId);
+    };
+
+    scheduleDetailLoad();
+    desktopQuery?.addEventListener("change", scheduleDetailLoad);
+
+    return () => {
+      cancelScheduledLoad();
+      desktopQuery?.removeEventListener("change", scheduleDetailLoad);
+    };
+  }, []);
 
   const handleCategoryChange = (value: CategoryTab) => {
     const nextFilters: TaskFilters = {
@@ -188,19 +226,7 @@ export function DesktopTaskWorkbench({
   };
 
   if (isLoading && !resolvedTotalCount) {
-    return (
-      <section className="desktop-task-workbench desktop-task-workbench--empty" aria-label="任务同步状态">
-        <div className="desktop-task-workbench__main">
-          <header className="desktop-task-workbench__topbar">
-            <div>
-              <h1>任务</h1>
-              <p>正在同步账号数据</p>
-            </div>
-          </header>
-          <DataEmptyState title="正在同步任务" description="数据准备完成后会自动显示任务列表。" />
-        </div>
-      </section>
-    );
+    return <DesktopTaskWorkbenchSkeleton />;
   }
 
   if (!resolvedTotalCount) {
@@ -236,10 +262,11 @@ export function DesktopTaskWorkbench({
 
   return (
     <section
-      className={
-        tasks.length ? "desktop-task-workbench" : "desktop-task-workbench desktop-task-workbench--filtered-empty"
-      }
+      className={`${tasks.length ? "desktop-task-workbench" : "desktop-task-workbench desktop-task-workbench--filtered-empty"}${
+        isLoading ? " desktop-task-workbench--refreshing" : ""
+      }`}
       aria-label="桌面端任务工作台"
+      aria-busy={isLoading}
     >
       <div className="desktop-task-workbench__main">
         <header className="desktop-task-workbench__topbar">
@@ -353,12 +380,16 @@ export function DesktopTaskWorkbench({
       </div>
 
       {tasks.length ? (
-        <TaskDetailPanel
-          task={selectedTask}
-          onUpdateTask={onUpdateTask}
-          onUpdateStatus={onUpdateStatus}
-          onDeleteTask={onDeleteTask}
-        />
+        canLoadDetail ? (
+          <TaskDetailPanel
+            task={selectedTask}
+            onUpdateTask={onUpdateTask}
+            onUpdateStatus={onUpdateStatus}
+            onDeleteTask={onDeleteTask}
+          />
+        ) : (
+          <TaskDetailPanelSkeleton />
+        )
       ) : null}
     </section>
   );

@@ -9,6 +9,17 @@ import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import type { Task } from "@/features/tasks/types/task.types";
 import { ToastProvider } from "@/shared/providers/toast-provider";
 
+vi.mock("next/dynamic", () => ({
+  default: () =>
+    function MockTaskDetailPanel({ task }: { task: Task | null }) {
+      return task ? (
+        <aside>
+          <h2>{task.title}</h2>
+        </aside>
+      ) : null;
+    },
+}));
+
 const tasks: Task[] = [
   {
     id: "task-1",
@@ -65,7 +76,7 @@ describe("DesktopTaskWorkbench keyboard path", () => {
       </ToastProvider>,
     );
 
-    expect(screen.getByRole("heading", { name: "第一项任务" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "第一项任务" })).toBeInTheDocument();
 
     const rows = screen.getAllByRole("row");
     const secondRow = rows[2];
@@ -73,7 +84,49 @@ describe("DesktopTaskWorkbench keyboard path", () => {
     await user.keyboard("{Enter}");
 
     expect(secondRow).toHaveFocus();
-    expect(screen.getByRole("heading", { name: "第二项任务" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "第二项任务" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "第一项任务" })).not.toBeInTheDocument();
+  });
+
+  it("移动断点下保留详情占位，但不挂载详情模块", () => {
+    const originalMatchMedia = window.matchMedia;
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      value: vi.fn(() => ({
+        matches: false,
+        media: "(min-width: 961px)",
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+
+    try {
+      render(
+        <ToastProvider>
+          <DesktopTaskWorkbench
+            tasks={tasks}
+            totalTasks={tasks}
+            filters={filters}
+            isLoading={false}
+            onFiltersChange={vi.fn()}
+            onResetFilters={vi.fn()}
+            onCreateTask={vi.fn()}
+            onImportTasks={vi.fn(async () => 0)}
+            onUpdateTask={vi.fn()}
+            onUpdateStatus={vi.fn()}
+            onDeleteTask={vi.fn()}
+          />
+        </ToastProvider>,
+      );
+
+      expect(screen.getByLabelText("正在加载任务详情")).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "第一项任务" })).not.toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "matchMedia", { configurable: true, value: originalMatchMedia });
+    }
   });
 });

@@ -101,6 +101,68 @@
     line-height: 1.05;
   }
 
+  .task-page-skeleton__mobile-count {
+    width: 54px;
+    height: 11px;
+  }
+
+  .task-page-skeleton__mobile-add {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 8px;
+  }
+
+  .task-page-skeleton__mobile-search {
+    width: 100%;
+    height: 46px;
+    border-radius: 8px;
+  }
+
+  .task-page-skeleton__mobile-chip {
+    width: 100%;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .task-page-skeleton__mobile-stat {
+    width: 100%;
+    height: 66px;
+    border-radius: 8px;
+  }
+
+  .task-page-skeleton__mobile-item {
+    cursor: default;
+  }
+
+  .task-page-skeleton__mobile-check {
+    width: 24px;
+    height: 24px;
+    margin-top: 1px;
+    border-radius: 50%;
+  }
+
+  .task-page-skeleton__mobile-item > div {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    padding-top: 3px;
+  }
+
+  .task-page-skeleton__mobile-item > div .task-page-skeleton__block:first-child {
+    width: min(76%, 300px);
+    height: 14px;
+  }
+
+  .task-page-skeleton__mobile-item-meta {
+    width: min(48%, 180px);
+    height: 11px;
+  }
+
+  .task-load-error--initial {
+    min-height: max(420px, calc(100dvh - 140px));
+  }
+
   .mobile-add-task-button {
     width: 42px;
     height: 42px;
@@ -379,6 +441,13 @@
     background: #3e6ae1;
     color: #ffffff;
     font-size: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-page-skeleton__block {
+    animation: none;
+    background-position: 0 0;
   }
 }
 

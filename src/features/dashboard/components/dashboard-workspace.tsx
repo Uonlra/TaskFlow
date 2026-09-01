@@ -64,7 +64,13 @@ export function DashboardWorkspace({
             />
           </div>
 
-          {priorityTasks.length ? (
+          {isLoading && !priorityTasks.length ? (
+            <div className="dashboard-workspace__task-list dashboard-workspace__task-list--skeleton" aria-busy="true">
+              {Array.from({ length: 3 }, (_, index) => (
+                <span className="dashboard-workspace__task-skeleton" key={index} />
+              ))}
+            </div>
+          ) : priorityTasks.length ? (
             <div className="dashboard-workspace__task-list">
               {priorityTasks.map((task) => (
                 <PriorityTaskRow key={task.id} task={task} onPreviewTask={onPreviewTask} />
@@ -88,7 +94,7 @@ export function DashboardWorkspace({
           <div className="dashboard-workspace__head">
             <h2>今日进度</h2>
           </div>
-          <div className="dashboard-workspace__progress-body">
+          <div className="dashboard-workspace__progress-body" aria-busy={isLoading}>
             <div className="dashboard-workspace__progress-visual">
               <div
                 className="dashboard-workspace__ring"
@@ -97,7 +103,7 @@ export function DashboardWorkspace({
               >
                 <strong>{isLoading ? "--" : String(stats.completionRate) + "%"}</strong>
               </div>
-              <p>目标完成 {isLoading ? "--" : stats.totalCount} 个任务</p>
+              <p>{isLoading ? "正在加载任务" : `目标完成 ${stats.totalCount} 个任务`}</p>
             </div>
             <div className="dashboard-workspace__progress-main">
               <span>完成数</span>
@@ -118,7 +124,7 @@ export function DashboardWorkspace({
         </section>
       </section>
 
-      <section className="dashboard-workspace__status-grid" aria-label="任务状态概览">
+      <section className="dashboard-workspace__status-grid" aria-label="任务状态概览" aria-busy={isLoading}>
         <Metric
           label="待处理"
           value={isLoading ? "--" : stats.activeCount}

@@ -2,10 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { appwriteSessionCookieName, hasAppwriteAuthEnv } from "@/shared/lib/appwrite/env";
 
-const protectedPages = ["/dashboard", "/tasks", "/settings"];
+const protectedPages = ["/settings"];
 const protectedApiPrefixes = ["/api/tasks", "/api/profile"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   if (!hasAppwriteAuthEnv) {
     return NextResponse.next();
   }
