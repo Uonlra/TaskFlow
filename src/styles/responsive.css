@@ -64,6 +64,20 @@
   .settings-grid {
     grid-template-columns: 1fr;
   }
+
+  .page-toolbar__row {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .page-toolbar__context {
+    flex: 1 1 auto;
+  }
+
+  .page-toolbar__controls {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 960px) {
@@ -768,6 +782,29 @@
     border-radius: 4px;
     color: var(--muted-strong);
     background: var(--surface-strong);
+  }
+}
+
+@media (max-width: 760px) {
+  .page-toolbar {
+    gap: 10px;
+  }
+
+  .page-toolbar__row {
+    display: grid;
+    gap: 10px;
+  }
+
+  .page-toolbar__context,
+  .page-toolbar__controls,
+  .page-toolbar__secondary,
+  .page-toolbar__primary {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .page-toolbar__primary > * {
+    width: 100%;
   }
 }
 
