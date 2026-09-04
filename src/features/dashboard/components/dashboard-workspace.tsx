@@ -1,30 +1,12 @@
 import type { CSSProperties } from "react";
 import { CheckSquare, Clock3, Play } from "lucide-react";
 
-import {
-  DashboardRangeMenu,
-  type DashboardPriorityFilters,
-  type DashboardRangeOption,
-} from "@/features/dashboard/components/dashboard-range-menu";
-import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
-import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
-import type {
-  DashboardAnalyticsRange,
-  DashboardStats,
-  DashboardTaskPreview,
-} from "@/features/tasks/utils/task-analytics";
+import type { DashboardStats, DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
 
 type DashboardWorkspaceProps = {
   stats: DashboardStats;
   priorityTasks: DashboardTaskPreview[];
-  rangeLabel: string;
   isLoading?: boolean;
-  range: DashboardAnalyticsRange;
-  rangeOptions: DashboardRangeOption[];
-  onRangeChange: (range: DashboardAnalyticsRange) => void;
-  priorityFilters: DashboardPriorityFilters;
-  onPriorityFiltersChange: (filters: DashboardPriorityFilters) => void;
-  onCreateTask: (values: TaskFormValues) => Promise<void>;
   onStatusFilter: (filter: "active" | "in_progress" | "near") => void;
   onPreviewTask: (task: DashboardTaskPreview) => void;
 };
@@ -32,14 +14,7 @@ type DashboardWorkspaceProps = {
 export function DashboardWorkspace({
   stats,
   priorityTasks,
-  rangeLabel,
   isLoading = false,
-  range,
-  rangeOptions,
-  onRangeChange,
-  priorityFilters,
-  onPriorityFiltersChange,
-  onCreateTask,
   onPreviewTask,
   onStatusFilter,
 }: DashboardWorkspaceProps) {
@@ -51,17 +26,7 @@ export function DashboardWorkspace({
       <section className="dashboard-workspace" aria-label="今日工作区">
         <section className="dashboard-workspace__priority">
           <div className="dashboard-workspace__head dashboard-workspace__head--toolbar">
-            <div>
-              <h1>优先处理</h1>
-              <p>{rangeLabel}先完成最重要的几件事。</p>
-            </div>
-            <DashboardRangeMenu
-              range={range}
-              options={rangeOptions}
-              onChange={onRangeChange}
-              filters={priorityFilters}
-              onFiltersChange={onPriorityFiltersChange}
-            />
+            <h2>优先处理</h2>
           </div>
 
           {isLoading && !priorityTasks.length ? (
@@ -82,12 +47,6 @@ export function DashboardWorkspace({
               <p>当前范围内的任务会显示在这里。</p>
             </div>
           )}
-
-          <TaskFormDialog
-            onSubmitTask={onCreateTask}
-            triggerLabel="+ 添加今日任务"
-            triggerClassName="dashboard-workspace__add-task"
-          />
         </section>
 
         <section className="dashboard-workspace__progress" aria-label="今日进度">

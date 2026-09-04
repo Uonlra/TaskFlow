@@ -12,14 +12,7 @@ describe("DashboardWorkspace loading state", () => {
       <DashboardWorkspace
         stats={buildDashboardStats([])}
         priorityTasks={[]}
-        rangeLabel="今天"
         isLoading
-        range="today"
-        rangeOptions={[{ value: "today", label: "今天" }]}
-        onRangeChange={vi.fn()}
-        priorityFilters={{ status: "all", priority: "all", due: "" }}
-        onPriorityFiltersChange={vi.fn()}
-        onCreateTask={vi.fn(async () => undefined)}
         onStatusFilter={vi.fn()}
         onPreviewTask={vi.fn()}
       />,

@@ -122,7 +122,6 @@ export function DashboardRangeMenu({ range, options, onChange, filters, onFilter
   return (
     <div className="dashboard-range-menu" aria-label="总览任务范围工具栏">
       <div className="dashboard-range-menu__scope">
-        <span className="dashboard-range-menu__scope-label">任务范围</span>
         <CustomSelect ariaLabel="任务范围" value={range} options={options} onChange={onChange} />
       </div>
       <span className="dashboard-range-menu__divider" aria-hidden="true" />
