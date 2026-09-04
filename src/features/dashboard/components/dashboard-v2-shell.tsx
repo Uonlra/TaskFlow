@@ -4,12 +4,14 @@ import type {
   DashboardPriorityFilters,
   DashboardRangeOption,
 } from "@/features/dashboard/components/dashboard-range-menu";
+import { DashboardRangeMenu } from "@/features/dashboard/components/dashboard-range-menu";
 import { DashboardWorkspace } from "@/features/dashboard/components/dashboard-workspace";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import type { DashboardAnalyticsRange, DashboardStats } from "@/features/tasks/utils/task-analytics";
 import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
+import { PageToolbar } from "@/shared/components/layout/page-toolbar";
 
 const DashboardTrendPanel = dynamic(
   () => import("@/features/dashboard/components/dashboard-trend-panel").then((module) => module.DashboardTrendPanel),
@@ -70,14 +72,35 @@ export function DashboardV2Shell({
   onPreviewTask,
   onStatusFilter,
 }: DashboardV2ShellProps) {
+  const pageToolbar = (
+    <PageToolbar
+      accessibleTitle="总览"
+      className="dashboard-page-toolbar"
+      context={<span className="page-toolbar__status">{rangeLabel}</span>}
+      controls={
+        <DashboardRangeMenu
+          range={range}
+          options={rangeOptions}
+          onChange={onRangeChange}
+          filters={priorityFilters}
+          onFiltersChange={onPriorityFiltersChange}
+        />
+      }
+      primaryAction={
+        <TaskFormDialog
+          onSubmitTask={onCreateTask}
+          triggerLabel="新建任务"
+          triggerClassName="tesla-action tesla-action--primary page-toolbar__primary-action"
+        />
+      }
+    />
+  );
+
   if (isAccountEmpty) {
     return (
       <section className="dashboard-v2-shell dashboard-v2-shell--empty" aria-label="总览空状态">
-        <DataEmptyState
-          title="从第一条任务开始"
-          description="创建任务后，这里会汇总进度、截止和风险。"
-          action={<TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="创建任务" />}
-        />
+        {pageToolbar}
+        <DataEmptyState title="从第一条任务开始" description="创建任务后，这里会汇总进度、截止和风险。" />
       </section>
     );
   }
@@ -85,17 +108,11 @@ export function DashboardV2Shell({
   if (isEmpty) {
     return (
       <section className="dashboard-v2-shell dashboard-v2-shell--empty" aria-label="总览范围无数据">
+        {pageToolbar}
         <DashboardWorkspace
           stats={stats}
           priorityTasks={priorityTasks}
-          rangeLabel={rangeLabel}
           isLoading={isLoading}
-          range={range}
-          rangeOptions={rangeOptions}
-          onRangeChange={onRangeChange}
-          priorityFilters={priorityFilters}
-          onPriorityFiltersChange={onPriorityFiltersChange}
-          onCreateTask={onCreateTask}
           onPreviewTask={onPreviewTask}
           onStatusFilter={onStatusFilter}
         />
@@ -110,17 +127,11 @@ export function DashboardV2Shell({
 
   return (
     <section className="dashboard-v2-shell" aria-label="新版数据看板骨架">
+      {pageToolbar}
       <DashboardWorkspace
         stats={stats}
         priorityTasks={priorityTasks}
-        rangeLabel={rangeLabel}
         isLoading={isLoading}
-        range={range}
-        rangeOptions={rangeOptions}
-        onRangeChange={onRangeChange}
-        priorityFilters={priorityFilters}
-        onPriorityFiltersChange={onPriorityFiltersChange}
-        onCreateTask={onCreateTask}
         onPreviewTask={onPreviewTask}
         onStatusFilter={onStatusFilter}
       />

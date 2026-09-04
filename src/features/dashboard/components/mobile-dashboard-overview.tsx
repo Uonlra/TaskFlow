@@ -9,6 +9,7 @@ import type { Task } from "@/features/tasks/types/task.types";
 import type { DashboardStats, DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
 import { parseTaskDueDateValue } from "@/features/tasks/utils/task-date-filters";
 import { ROUTES } from "@/shared/lib/constants/routes";
+import { PageToolbar } from "@/shared/components/layout/page-toolbar";
 
 type MobileDashboardRange = "today" | "week" | "all";
 
@@ -60,37 +61,39 @@ export function MobileDashboardOverview({
 
   return (
     <section className="mobile-dashboard" aria-label="移动端任务总览">
-      <header className="mobile-page-header mobile-dashboard__header">
-        <div className="mobile-page-header__copy">
-          <p className="mobile-dashboard__date">{dateLabel}</p>
-          <h1>今日</h1>
-        </div>
-        <TaskFormDialog
-          onSubmitTask={onCreateTask}
-          triggerLabel="新增"
-          triggerAriaLabel="新增任务"
-          triggerIconOnly
-          triggerClassName="mobile-add-task-button tesla-action tesla-action--primary"
-        />
-      </header>
-
-      <div className="mobile-dashboard__range date-switcher" aria-label="切换统计范围">
-        {rangeOptions.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            aria-pressed={range === option.value}
-            className={
-              range === option.value
-                ? "mobile-dashboard__range-button date-switcher__button is-active"
-                : "mobile-dashboard__range-button date-switcher__button"
-            }
-            onClick={() => onRangeChange(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      <PageToolbar
+        accessibleTitle="总览"
+        className="mobile-dashboard__toolbar"
+        context={<span className="mobile-dashboard__date">{dateLabel}</span>}
+        controls={
+          <div className="mobile-dashboard__range date-switcher" aria-label="切换统计范围">
+            {rangeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={range === option.value}
+                className={
+                  range === option.value
+                    ? "mobile-dashboard__range-button date-switcher__button is-active"
+                    : "mobile-dashboard__range-button date-switcher__button"
+                }
+                onClick={() => onRangeChange(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        }
+        primaryAction={
+          <TaskFormDialog
+            onSubmitTask={onCreateTask}
+            triggerLabel="新增"
+            triggerAriaLabel="新增任务"
+            triggerIconOnly
+            triggerClassName="mobile-add-task-button tesla-action tesla-action--primary"
+          />
+        }
+      />
 
       <section className="mobile-dashboard__progress-card" aria-label={`${rangeLabel}任务进度`}>
         <div

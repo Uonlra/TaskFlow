@@ -1138,6 +1138,19 @@
 .dashboard-workspace__head--toolbar {
   align-items: center;
 }
+
+.dashboard-page-toolbar {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dashboard-page-toolbar .dashboard-range-menu {
+  justify-content: flex-end;
+}
+
+.dashboard-page-toolbar .page-toolbar__context {
+  flex: 0 0 auto;
+}
 .dashboard-workspace__add-task {
   padding: 0;
   border: 0;
@@ -1191,6 +1204,14 @@
   color: var(--danger);
 }
 @media (max-width: 760px) {
+  .dashboard-page-toolbar {
+    padding: 0;
+  }
+
+  .dashboard-page-toolbar .page-toolbar__row {
+    align-items: center;
+  }
+
   .dashboard-workspace__head--toolbar {
     align-items: stretch;
     flex-direction: column;
