@@ -37,9 +37,9 @@ TaskFlow 将任务记录、截止风险、进度统计和可恢复筛选汇集�
 | ------------------------------------------------------ | ------------------------------------------------------ |
 | ![TaskFlow 桌面端总览](docs/screenshots/dashboard.png) | ![TaskFlow 桌面端任务列表](docs/screenshots/tasks.png) |
 
-| 日历                                                  | 统计                                                 |
-| ----------------------------------------------------- | ---------------------------------------------------- |
-| ![TaskFlow 桌面端日历](docs/screenshots/calendar.png) | ![TaskFlow 统计](docs/screenshots/desktop-stats.png) |
+| 日历                                                  | 统计                                         |
+| ----------------------------------------------------- | -------------------------------------------- |
+| ![TaskFlow 桌面端日历](docs/screenshots/calendar.png) | ![TaskFlow 统计](docs/screenshots/stats.png) |
 
 ### 移动端
 

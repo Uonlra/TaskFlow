@@ -56,6 +56,32 @@ const filters: TaskFilters = {
 };
 
 describe("DesktopTaskWorkbench keyboard path", () => {
+  it("将任务上下文、搜索和筛选合并到共享顶部工具栏", async () => {
+    render(
+      <ToastProvider>
+        <DesktopTaskWorkbench
+          tasks={tasks}
+          totalTasks={tasks}
+          filters={filters}
+          isLoading={false}
+          onFiltersChange={vi.fn()}
+          onResetFilters={vi.fn()}
+          onCreateTask={vi.fn()}
+          onImportTasks={vi.fn(async () => 0)}
+          onUpdateTask={vi.fn()}
+          onUpdateStatus={vi.fn()}
+          onDeleteTask={vi.fn()}
+        />
+      </ToastProvider>,
+    );
+
+    const toolbar = screen.getByRole("banner", { name: "任务" });
+    expect(screen.getByRole("heading", { name: "任务", level: 1 })).toHaveClass("visually-hidden");
+    expect(screen.queryByText("共 2 项任务")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "搜索任务、标签" })).toBeInTheDocument();
+    expect(toolbar).toContainElement(screen.getByRole("button", { name: "新建任务" }));
+  });
+
   it("通过键盘激活任务行后同步更新详情面板", async () => {
     const user = userEvent.setup();
     render(

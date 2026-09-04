@@ -5,10 +5,7 @@ import "@/styles/calendar.css";
 import { CalendarClient } from "@/features/calendar/components/calendar-client";
 import type { Metadata } from "next";
 import { PageContainer } from "@/shared/components/layout/page-container";
-import { PageHeader } from "@/shared/components/layout/page-header";
 import { DASHBOARD_RANGE_VALUES, type DashboardRangeValue } from "@/shared/lib/constants/query-params";
-
-const showCalendarPageHeader = true;
 
 export const metadata: Metadata = { title: "日历" };
 
@@ -27,7 +24,6 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
   return (
     <PageContainer>
-      {showCalendarPageHeader ? <PageHeader eyebrow="日历" title="按日期查看任务" /> : null}
       <CalendarClient initialDate={initialDate} initialRange={initialRange} />
     </PageContainer>
   );

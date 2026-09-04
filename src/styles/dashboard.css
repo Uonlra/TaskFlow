@@ -1116,7 +1116,6 @@
     margin-top: 16px !important;
   }
 
-  .calendar-toolbar,
   .stats-toolbar {
     min-height: 42px;
     padding: 0 !important;
@@ -1124,18 +1123,8 @@
     background: transparent !important;
   }
 
-  .calendar-toolbar h2,
   .stats-toolbar h2 {
     display: none;
-  }
-
-  .calendar-toolbar__copy {
-    display: grid;
-    gap: 4px;
-  }
-
-  .calendar-toolbar__copy p {
-    margin-top: 0;
   }
 
   .stats-toolbar {

@@ -15,6 +15,7 @@ import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { createTaskExportPayload, parseTaskImportPayload } from "@/features/tasks/utils/task-transfer";
 import { useToast } from "@/shared/providers/toast-provider";
 import type { TaskCategoryCounts } from "@/features/tasks/utils/task-list-query";
+import { PageToolbar } from "@/shared/components/layout/page-toolbar";
 
 const TaskDetailPanel = dynamic(
   () => import("@/features/tasks/components/task-detail-panel").then((module) => module.TaskDetailPanel),
@@ -233,27 +234,28 @@ export function DesktopTaskWorkbench({
     return (
       <section className="desktop-task-workbench desktop-task-workbench--empty" aria-label="任务空状态">
         <div className="desktop-task-workbench__main">
-          <header className="desktop-task-workbench__topbar">
-            <div>
-              <h1>任务</h1>
-              <p>开始整理当前事项</p>
-            </div>
-            <div className="desktop-task-workbench__data-actions">
-              <input
-                ref={importInputRef}
-                className="desktop-task-import-input"
-                type="file"
-                accept="application/json,.json"
-                tabIndex={-1}
-                aria-hidden="true"
-                onChange={handleImportFile}
-              />
-              <button type="button" onClick={() => importInputRef.current?.click()} disabled={isImporting}>
-                {isImporting ? "正在导入" : "导入任务"}
-              </button>
-              <TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="新建任务" />
-            </div>
-          </header>
+          <PageToolbar
+            accessibleTitle="任务"
+            className="desktop-task-page-toolbar"
+            context={<span className="page-toolbar__status">暂无任务</span>}
+            controls={
+              <div className="desktop-task-workbench__data-actions">
+                <input
+                  ref={importInputRef}
+                  className="desktop-task-import-input"
+                  type="file"
+                  accept="application/json,.json"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  onChange={handleImportFile}
+                />
+                <button type="button" onClick={() => importInputRef.current?.click()} disabled={isImporting}>
+                  {isImporting ? "正在导入" : "导入任务"}
+                </button>
+              </div>
+            }
+            primaryAction={<TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="新建任务" />}
+          />
           <DataEmptyState title="还没有任务" description="新建第一条任务，开始整理当前事项。" />
         </div>
       </section>
@@ -269,60 +271,62 @@ export function DesktopTaskWorkbench({
       aria-busy={isLoading}
     >
       <div className="desktop-task-workbench__main">
-        <header className="desktop-task-workbench__topbar">
-          <div>
-            <h1>任务</h1>
-            <p>{isLoading ? "同步中" : `共 ${resolvedTotalCount} 项任务`}</p>
-          </div>
-          <label className="desktop-task-search">
-            <span aria-hidden="true" />
-            <input
-              value={filters.query}
-              onChange={(event) => handleSearchChange(event.target.value)}
-              placeholder="搜索任务、标签"
-              aria-label="搜索任务、标签"
-            />
-          </label>
-        </header>
-
-        <div className="desktop-task-toolbar" aria-label="任务筛选工具栏">
-          <div className="desktop-task-tabs" aria-label="任务分类">
-            {categoryTabs.map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                aria-pressed={category === tab.value}
-                className={category === tab.value ? "desktop-task-tabs__button is-active" : "desktop-task-tabs__button"}
-                onClick={() => handleCategoryChange(tab.value)}
-              >
-                <span>{tab.label}</span>
-                <strong>{counts[tab.value]}</strong>
-              </button>
-            ))}
-          </div>
-
-          <div className="desktop-task-toolbar__controls">
-            <CustomSelect
-              ariaLabel="任务状态筛选"
-              value={filters.status}
-              options={statusOptions}
-              onChange={(value) => onFiltersChange({ ...filters, status: value })}
-            />
-            <CustomSelect
-              ariaLabel="任务优先级筛选"
-              value={filters.priority}
-              options={priorityOptions}
-              onChange={(value) => onFiltersChange({ ...filters, priority: value })}
-            />
-            <CustomSelect
-              ariaLabel="任务排序"
-              value={filters.sort}
-              options={sortOptions}
-              onChange={(value) => onFiltersChange({ ...filters, sort: value })}
-            />
-            <TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="新建任务" />
-          </div>
-        </div>
+        <PageToolbar
+          accessibleTitle="任务"
+          className="desktop-task-page-toolbar"
+          context={
+            <div className="desktop-task-tabs" aria-label="任务分类">
+              {categoryTabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  aria-pressed={category === tab.value}
+                  className={
+                    category === tab.value ? "desktop-task-tabs__button is-active" : "desktop-task-tabs__button"
+                  }
+                  onClick={() => handleCategoryChange(tab.value)}
+                >
+                  <span>{tab.label}</span>
+                  <strong>{counts[tab.value]}</strong>
+                </button>
+              ))}
+            </div>
+          }
+          controls={
+            <>
+              <label className="desktop-task-search">
+                <span aria-hidden="true" />
+                <input
+                  value={filters.query}
+                  onChange={(event) => handleSearchChange(event.target.value)}
+                  placeholder="搜索任务、标签"
+                  aria-label="搜索任务、标签"
+                />
+              </label>
+              <div className="desktop-task-toolbar__controls">
+                <CustomSelect
+                  ariaLabel="任务状态筛选"
+                  value={filters.status}
+                  options={statusOptions}
+                  onChange={(value) => onFiltersChange({ ...filters, status: value })}
+                />
+                <CustomSelect
+                  ariaLabel="任务优先级筛选"
+                  value={filters.priority}
+                  options={priorityOptions}
+                  onChange={(value) => onFiltersChange({ ...filters, priority: value })}
+                />
+                <CustomSelect
+                  ariaLabel="任务排序"
+                  value={filters.sort}
+                  options={sortOptions}
+                  onChange={(value) => onFiltersChange({ ...filters, sort: value })}
+                />
+              </div>
+            </>
+          }
+          primaryAction={<TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="新建任务" />}
+        />
 
         {tasks.length ? (
           <DesktopTaskTable

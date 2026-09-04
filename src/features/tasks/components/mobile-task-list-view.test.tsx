@@ -57,6 +57,14 @@ function renderTaskList(
 }
 
 describe("MobileTaskListView", () => {
+  it("使用紧凑上下文和隐藏页面标题", () => {
+    renderTaskList();
+
+    expect(screen.getByRole("heading", { name: "任务", level: 1 })).toHaveClass("visually-hidden");
+    expect(screen.getByText("1 项")).toBeInTheDocument();
+    expect(screen.queryByText("同步中")).not.toBeInTheDocument();
+  });
+
   it("显示近期、未完成、已完成和全部四个快捷筛选", () => {
     renderTaskList();
 

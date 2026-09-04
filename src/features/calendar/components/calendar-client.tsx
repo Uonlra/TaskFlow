@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -37,6 +38,7 @@ import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceState } from "@/features/auth/utils/workspace-state";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
+import { PageToolbar } from "@/shared/components/layout/page-toolbar";
 
 type CalendarClientProps = {
   initialDate: string;
@@ -380,6 +382,16 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   if (isAccountEmpty) {
     return (
       <section className="calendar-shell calendar-shell--empty">
+        <CalendarToolbar
+          date={selectedDate}
+          dateParam={dateParam}
+          range={range}
+          rangeLabel={rangeLabel}
+          isSyncing={false}
+          isAccountEmpty
+          onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
+          onRangeChange={(nextRange) => updateCalendar({ range: nextRange })}
+        />
         <DataEmptyState
           title="日历等待第一条任务"
           description="为任务设置截止日期后，会在这里形成时间线。"
@@ -454,7 +466,7 @@ async function requestTaskMutation<T = unknown>(taskId: string, init: { method: 
   return payload;
 }
 
-function CalendarToolbar({
+export function CalendarToolbar({
   date,
   dateParam,
   range,
@@ -473,63 +485,72 @@ function CalendarToolbar({
   onDateChange: (date: Date) => void;
   onRangeChange: (range: DashboardRangeValue) => void;
 }) {
-  const statusLabel = isSyncing ? "同步中" : isAccountEmpty ? "暂无任务" : "已同步";
+  const statusLabel = isSyncing ? "同步中" : isAccountEmpty ? "暂无任务" : null;
 
   return (
-    <section className="calendar-toolbar card-surface">
-      <div className="calendar-toolbar__copy">
-        <span className="calendar-eyebrow">{statusLabel}</span>
-        <h2>日历</h2>
-        <p>
-          {formatReadableDate(date)} · {rangeLabel}
-        </p>
-      </div>
-      <div className="calendar-toolbar__controls">
-        <div className="calendar-range-tabs date-switcher" aria-label="日历范围">
-          {rangeOptions.map((option) => (
+    <PageToolbar
+      accessibleTitle="日历"
+      className="calendar-toolbar"
+      context={
+        <div className="calendar-toolbar__context">
+          {statusLabel ? (
+            <span className="page-toolbar__status" role="status">
+              {statusLabel}
+            </span>
+          ) : null}
+          <Link className="calendar-toolbar__date-context" href={buildCalendarHref({ date: dateParam, range })}>
+            <time dateTime={dateParam}>{dateParam}</time> · {rangeLabel}
+          </Link>
+        </div>
+      }
+      controls={
+        <div className="calendar-toolbar__controls">
+          <div className="calendar-range-tabs" role="group" aria-label="日历范围">
+            {rangeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={
+                  range === option.value ? "calendar-range-tabs__button is-active" : "calendar-range-tabs__button"
+                }
+                aria-pressed={range === option.value}
+                onClick={() => onRangeChange(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div className="calendar-date-nav" role="group" aria-label="日期切换">
             <button
-              key={option.value}
               type="button"
-              className={
-                range === option.value
-                  ? "calendar-range-tabs__button date-switcher__button is-active"
-                  : "calendar-range-tabs__button date-switcher__button"
-              }
-              onClick={() => onRangeChange(option.value)}
+              className="page-toolbar__icon-button"
+              onClick={() => onDateChange(shiftCalendarMonth(date, -1))}
+              aria-label="上个月"
+              title="上个月"
             >
-              {option.label}
+              <ChevronLeft aria-hidden="true" />
             </button>
-          ))}
+            <button
+              type="button"
+              className="page-toolbar__control"
+              aria-label="回到今天"
+              onClick={() => onDateChange(new Date())}
+            >
+              今天
+            </button>
+            <button
+              type="button"
+              className="page-toolbar__icon-button"
+              onClick={() => onDateChange(shiftCalendarMonth(date, 1))}
+              aria-label="下个月"
+              title="下个月"
+            >
+              <ChevronRight aria-hidden="true" />
+            </button>
+          </div>
         </div>
-        <div className="calendar-date-nav date-switcher" aria-label="日期切换">
-          <button
-            type="button"
-            className="date-switcher__button"
-            onClick={() => onDateChange(shiftCalendarMonth(date, -1))}
-            aria-label="上个月"
-          >
-            <span aria-hidden="true">‹</span>
-          </button>
-          <button type="button" className="date-switcher__button" onClick={() => onDateChange(new Date())}>
-            今天
-          </button>
-          <button
-            type="button"
-            className="date-switcher__button"
-            onClick={() => onDateChange(shiftCalendarMonth(date, 1))}
-            aria-label="下个月"
-          >
-            <span aria-hidden="true">›</span>
-          </button>
-        </div>
-        <Link
-          className="calendar-toolbar__date-link mobile-date-switcher__date"
-          href={buildCalendarHref({ date: dateParam, range })}
-        >
-          {dateParam}
-        </Link>
-      </div>
-    </section>
+      }
+    />
   );
 }
 
@@ -910,14 +931,6 @@ function parseCalendarDate(value: string | null | undefined) {
   }
 
   return value;
-}
-
-function formatReadableDate(value: Date) {
-  return new Intl.DateTimeFormat("zh-CN", {
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short",
-  }).format(value);
 }
 
 function formatCalendarMonth(value: Date) {

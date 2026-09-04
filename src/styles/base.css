@@ -342,6 +342,134 @@ textarea:focus {
   box-shadow: var(--shadow);
 }
 
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.page-toolbar {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  background: transparent;
+  color: var(--foreground);
+}
+
+.page-toolbar__row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-toolbar__context,
+.page-toolbar__controls,
+.page-toolbar__secondary,
+.page-toolbar__primary {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-toolbar__context {
+  flex: 0 1 auto;
+}
+
+.page-toolbar__controls {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.page-toolbar__secondary,
+.page-toolbar__primary {
+  flex: 0 0 auto;
+}
+
+.page-toolbar__control,
+.page-toolbar__icon-button,
+.page-toolbar__primary-action {
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--font-text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.page-toolbar__control {
+  padding: 0 12px;
+  background: var(--surface-strong);
+  color: var(--muted-strong);
+}
+
+.page-toolbar__icon-button {
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 36px;
+  padding: 0;
+  background: var(--surface-strong);
+  color: var(--muted-strong);
+}
+
+.page-toolbar__icon-button > svg {
+  width: 18px;
+  height: 18px;
+}
+
+.page-toolbar__primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.page-toolbar__control:hover,
+.page-toolbar__control:focus-visible,
+.page-toolbar__icon-button:hover,
+.page-toolbar__icon-button:focus-visible {
+  border-color: var(--border-strong);
+  color: var(--foreground);
+}
+
+.page-toolbar__primary-action:hover,
+.page-toolbar__primary-action:focus-visible {
+  border-color: var(--primary-strong);
+  background: var(--primary-strong);
+}
+
+.page-toolbar__control:focus-visible,
+.page-toolbar__icon-button:focus-visible,
+.page-toolbar__primary-action:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.page-toolbar__status {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
 .ui-sans {
   font-family: var(--font-text);
   letter-spacing: 0;
