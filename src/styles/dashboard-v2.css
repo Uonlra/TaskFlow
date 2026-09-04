@@ -1140,16 +1140,39 @@
 }
 
 .dashboard-page-toolbar {
-  padding: 14px 20px;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+
+.dashboard-page-toolbar .page-toolbar__row {
+  width: 100%;
 }
 
 .dashboard-page-toolbar .dashboard-range-menu {
   justify-content: flex-end;
+  gap: 4px;
+  padding: 2px;
+  border: 1px solid var(--border-soft);
+  border-radius: 7px;
+  background: var(--surface-strong);
 }
 
 .dashboard-page-toolbar .page-toolbar__context {
   flex: 0 0 auto;
+}
+
+@media (min-width: 961px) {
+  .dashboard-main:has(.dashboard-v2-shell) {
+    padding-top: 16px;
+  }
+
+  .dashboard-main:has(.dashboard-v2-shell) .dashboard-content {
+    margin-top: 0;
+  }
 }
 .dashboard-workspace__add-task {
   padding: 0;
