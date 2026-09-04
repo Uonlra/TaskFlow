@@ -11,6 +11,7 @@ import { TASK_DUE_FILTERS } from "@/shared/lib/constants/query-params";
 import { ROUTES } from "@/shared/lib/constants/routes";
 import type { TaskCategoryCounts } from "@/features/tasks/utils/task-list-query";
 import { MobileTaskListSkeleton } from "@/features/tasks/components/task-page-skeleton";
+import { PageToolbar } from "@/shared/components/layout/page-toolbar";
 
 type MobileTaskListViewProps = {
   tasks: Task[];
@@ -101,19 +102,20 @@ export function MobileTaskListView({
       aria-label="移动端任务列表"
       aria-busy={isLoading}
     >
-      <header className="mobile-page-header mobile-task-list__header">
-        <div className="mobile-page-header__copy">
-          <p>{isLoading ? "同步中" : `${totalCount} 项`}</p>
-          <h1>任务</h1>
-        </div>
-        <TaskFormDialog
-          onSubmitTask={onCreateTask}
-          triggerLabel="新增"
-          triggerAriaLabel="新增任务"
-          triggerIconOnly
-          triggerClassName="mobile-add-task-button tesla-action tesla-action--primary"
-        />
-      </header>
+      <PageToolbar
+        accessibleTitle="任务"
+        className="mobile-task-list__toolbar"
+        context={<span className="mobile-task-list__count">{isLoading ? "同步中" : `${totalCount} 项`}</span>}
+        primaryAction={
+          <TaskFormDialog
+            onSubmitTask={onCreateTask}
+            triggerLabel="新增"
+            triggerAriaLabel="新增任务"
+            triggerIconOnly
+            triggerClassName="mobile-add-task-button tesla-action tesla-action--primary"
+          />
+        }
+      />
 
       <label className="mobile-task-list__search">
         <span aria-hidden="true" />
