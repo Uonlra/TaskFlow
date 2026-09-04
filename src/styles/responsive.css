@@ -485,8 +485,7 @@
   }
 
   .page-stack > .page-header,
-  .mobile-settings__header,
-  .calendar-toolbar__copy {
+  .mobile-settings__header {
     display: none !important;
   }
 
@@ -691,7 +690,6 @@
     background: var(--surface-strong) !important;
   }
 
-  .calendar-toolbar,
   .stats-toolbar {
     min-height: 40px;
     padding: 0 !important;
@@ -699,7 +697,6 @@
     background: transparent !important;
   }
 
-  .calendar-toolbar__copy h2,
   .stats-toolbar > div:first-child {
     display: none;
   }
@@ -718,8 +715,6 @@
   }
 
   .date-switcher.stats-range-tabs,
-  .date-switcher.calendar-range-tabs,
-  .date-switcher.calendar-date-nav,
   .date-switcher.mobile-dashboard__range {
     width: 100%;
     min-height: 40px;
@@ -771,16 +766,6 @@
   .date-switcher.mobile-dashboard__range .date-switcher__button.is-active {
     border-color: var(--primary);
     background: var(--primary);
-  }
-
-  .calendar-toolbar__date-link.mobile-date-switcher__date {
-    width: 100%;
-    min-height: 40px;
-    justify-content: center;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    color: var(--muted-strong);
-    background: var(--surface-strong);
   }
 }
 
