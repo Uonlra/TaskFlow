@@ -270,64 +270,62 @@ export function DesktopTaskWorkbench({
       aria-label="桌面端任务工作台"
       aria-busy={isLoading}
     >
-      <div className="desktop-task-workbench__main">
-        <PageToolbar
-          accessibleTitle="任务"
-          className="desktop-task-page-toolbar"
-          context={
-            <div className="desktop-task-tabs" aria-label="任务分类">
-              {categoryTabs.map((tab) => (
-                <button
-                  key={tab.value}
-                  type="button"
-                  aria-pressed={category === tab.value}
-                  className={
-                    category === tab.value ? "desktop-task-tabs__button is-active" : "desktop-task-tabs__button"
-                  }
-                  onClick={() => handleCategoryChange(tab.value)}
-                >
-                  <span>{tab.label}</span>
-                  <strong>{counts[tab.value]}</strong>
-                </button>
-              ))}
+      <PageToolbar
+        accessibleTitle="任务"
+        className="desktop-task-page-toolbar"
+        context={
+          <div className="desktop-task-tabs" aria-label="任务分类">
+            {categoryTabs.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                aria-pressed={category === tab.value}
+                className={category === tab.value ? "desktop-task-tabs__button is-active" : "desktop-task-tabs__button"}
+                onClick={() => handleCategoryChange(tab.value)}
+              >
+                <span>{tab.label}</span>
+                <strong>{counts[tab.value]}</strong>
+              </button>
+            ))}
+          </div>
+        }
+        controls={
+          <>
+            <label className="desktop-task-search">
+              <span aria-hidden="true" />
+              <input
+                value={filters.query}
+                onChange={(event) => handleSearchChange(event.target.value)}
+                placeholder="搜索任务、标签"
+                aria-label="搜索任务、标签"
+              />
+            </label>
+            <div className="desktop-task-toolbar__controls">
+              <CustomSelect
+                ariaLabel="任务状态筛选"
+                value={filters.status}
+                options={statusOptions}
+                onChange={(value) => onFiltersChange({ ...filters, status: value })}
+              />
+              <CustomSelect
+                ariaLabel="任务优先级筛选"
+                value={filters.priority}
+                options={priorityOptions}
+                onChange={(value) => onFiltersChange({ ...filters, priority: value })}
+              />
+              <CustomSelect
+                ariaLabel="任务排序"
+                value={filters.sort}
+                options={sortOptions}
+                onChange={(value) => onFiltersChange({ ...filters, sort: value })}
+              />
             </div>
-          }
-          controls={
-            <>
-              <label className="desktop-task-search">
-                <span aria-hidden="true" />
-                <input
-                  value={filters.query}
-                  onChange={(event) => handleSearchChange(event.target.value)}
-                  placeholder="搜索任务、标签"
-                  aria-label="搜索任务、标签"
-                />
-              </label>
-              <div className="desktop-task-toolbar__controls">
-                <CustomSelect
-                  ariaLabel="任务状态筛选"
-                  value={filters.status}
-                  options={statusOptions}
-                  onChange={(value) => onFiltersChange({ ...filters, status: value })}
-                />
-                <CustomSelect
-                  ariaLabel="任务优先级筛选"
-                  value={filters.priority}
-                  options={priorityOptions}
-                  onChange={(value) => onFiltersChange({ ...filters, priority: value })}
-                />
-                <CustomSelect
-                  ariaLabel="任务排序"
-                  value={filters.sort}
-                  options={sortOptions}
-                  onChange={(value) => onFiltersChange({ ...filters, sort: value })}
-                />
-              </div>
-            </>
-          }
-          primaryAction={<TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="新建任务" />}
-        />
+          </>
+        }
+        primaryAction={<TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="新建任务" />}
+      />
 
+      <div className="desktop-task-workbench__main">
         {tasks.length ? (
           <DesktopTaskTable
             tasks={tasks}

@@ -697,12 +697,8 @@
     background: transparent !important;
   }
 
-  .stats-toolbar > div:first-child {
-    display: none;
-  }
-
-  .stats-toolbar {
-    justify-content: flex-end;
+  .stats-toolbar > .page-toolbar__row {
+    width: 100%;
   }
 
   .stats-insight {

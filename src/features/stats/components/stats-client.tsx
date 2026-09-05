@@ -5,6 +5,7 @@ import { useEffect, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
+import { PageToolbar } from "@/shared/components/layout/page-toolbar";
 
 import { EChartsClient } from "@/shared/components/charts/echarts-client";
 import {
@@ -78,6 +79,7 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   if (isAccountEmpty) {
     return (
       <section className="stats-shell stats-shell--empty">
+        <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
         <DataEmptyState
           title="还没有可统计的数据"
           description="创建任务并更新状态后，这里会生成趋势和分布。"
@@ -131,7 +133,7 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   );
 }
 
-function StatsToolbar({
+export function StatsToolbar({
   range,
   isSyncing,
   onRangeChange,
@@ -141,28 +143,30 @@ function StatsToolbar({
   onRangeChange: (range: DashboardRangeValue) => void;
 }) {
   return (
-    <section className="stats-toolbar card-surface">
-      <div>
-        <span className="stats-eyebrow">{isSyncing ? "同步中" : "统计范围"}</span>
-        <h2>任务数据详情</h2>
-      </div>
-      <div className="stats-range-tabs date-switcher" aria-label="统计范围">
-        {rangeOptions.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            className={
-              range === option.value
-                ? "stats-range-tabs__button date-switcher__button is-active"
-                : "stats-range-tabs__button date-switcher__button"
-            }
-            onClick={() => onRangeChange(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-    </section>
+    <PageToolbar
+      accessibleTitle="统计"
+      className="stats-toolbar"
+      context={isSyncing ? <span className="page-toolbar__status">同步中</span> : undefined}
+      controls={
+        <div className="stats-range-tabs date-switcher" aria-label="统计范围">
+          {rangeOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={
+                range === option.value
+                  ? "stats-range-tabs__button date-switcher__button is-active"
+                  : "stats-range-tabs__button date-switcher__button"
+              }
+              aria-pressed={range === option.value}
+              onClick={() => onRangeChange(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      }
+    />
   );
 }
 

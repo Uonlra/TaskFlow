@@ -161,13 +161,6 @@ export function MobileSettingsView({
 
   return (
     <section className="mobile-settings" aria-label="移动端设置">
-      <header className="mobile-page-header mobile-settings__header">
-        <div className="mobile-page-header__copy">
-          <p>{isAuthenticated ? "已登录" : "访客工作区"}</p>
-          <h1>设置</h1>
-        </div>
-      </header>
-
       <section className="mobile-settings__profile" aria-label="账号">
         <div className="mobile-settings__avatar">
           {avatarUrl ? (

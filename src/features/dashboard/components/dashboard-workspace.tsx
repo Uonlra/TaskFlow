@@ -7,6 +7,7 @@ type DashboardWorkspaceProps = {
   stats: DashboardStats;
   priorityTasks: DashboardTaskPreview[];
   isLoading?: boolean;
+  isRangeEmpty?: boolean;
   onStatusFilter: (filter: "active" | "in_progress" | "near") => void;
   onPreviewTask: (task: DashboardTaskPreview) => void;
 };
@@ -15,16 +16,27 @@ export function DashboardWorkspace({
   stats,
   priorityTasks,
   isLoading = false,
+  isRangeEmpty = false,
   onPreviewTask,
   onStatusFilter,
 }: DashboardWorkspaceProps) {
   const progress = stats.totalCount ? Math.round((stats.completedCount / stats.totalCount) * 360) : 0;
   const remainingCount = Math.max(stats.totalCount - stats.completedCount, 0);
+  const useCompactEmptyState = isRangeEmpty && !isLoading && !priorityTasks.length;
 
   return (
     <>
-      <section className="dashboard-workspace" aria-label="今日工作区">
-        <section className="dashboard-workspace__priority">
+      <section
+        className={useCompactEmptyState ? "dashboard-workspace dashboard-workspace--empty" : "dashboard-workspace"}
+        aria-label="今日工作区"
+      >
+        <section
+          className={
+            useCompactEmptyState
+              ? "dashboard-workspace__priority dashboard-workspace__priority--empty"
+              : "dashboard-workspace__priority"
+          }
+        >
           <div className="dashboard-workspace__head dashboard-workspace__head--toolbar">
             <h2>优先处理</h2>
           </div>
@@ -44,7 +56,6 @@ export function DashboardWorkspace({
           ) : (
             <div className="dashboard-workspace__empty">
               <strong>暂无待处理任务</strong>
-              <p>当前范围内的任务会显示在这里。</p>
             </div>
           )}
         </section>

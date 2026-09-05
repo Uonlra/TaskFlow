@@ -11,11 +11,16 @@
 
 .calendar-toolbar {
   min-width: 0;
-  min-height: 40px;
+  min-height: 52px;
   display: grid;
   gap: 12px;
-  padding: 0;
-  background: transparent;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+
+.calendar-toolbar .page-toolbar__row {
+  width: 100%;
 }
 
 .calendar-toolbar__context {
@@ -854,6 +859,13 @@
 }
 
 @media (max-width: 960px) {
+  .calendar-toolbar {
+    min-height: 40px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
   .calendar-shell .calendar-overview {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
