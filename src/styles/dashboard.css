@@ -1116,25 +1116,6 @@
     margin-top: 16px !important;
   }
 
-  .stats-toolbar {
-    min-height: 42px;
-    padding: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-  }
-
-  .stats-toolbar h2 {
-    display: none;
-  }
-
-  .stats-toolbar {
-    justify-content: flex-end;
-  }
-
-  .stats-toolbar > div:first-child {
-    display: none;
-  }
-
   .settings-desktop-only .card-surface {
     border-radius: 8px !important;
     background: #ffffff !important;
@@ -1143,6 +1124,16 @@
 
   .settings-grid {
     gap: 16px;
+  }
+}
+
+@media (min-width: 961px) {
+  .dashboard-main {
+    padding-top: 16px;
+  }
+
+  .dashboard-content {
+    margin-top: 0;
   }
 }
 

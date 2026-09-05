@@ -1,12 +1,9 @@
 import "@/styles/stats.css";
 
 import { PageContainer } from "@/shared/components/layout/page-container";
-import { PageHeader } from "@/shared/components/layout/page-header";
 import { StatsClient } from "@/features/stats/components/stats-client";
 import type { Metadata } from "next";
 import { DASHBOARD_RANGE_VALUES } from "@/shared/lib/constants/query-params";
-
-const showStatsPageHeader = true;
 
 export const metadata: Metadata = { title: "统计" };
 
@@ -22,7 +19,6 @@ export default async function StatsPage({ searchParams }: StatsPageProps) {
 
   return (
     <PageContainer>
-      {showStatsPageHeader ? <PageHeader eyebrow="统计" title="看清任务运行状态" /> : null}
       <StatsClient initialRange={initialRange} />
     </PageContainer>
   );

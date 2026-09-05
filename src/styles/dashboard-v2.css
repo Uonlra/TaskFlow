@@ -781,18 +781,12 @@
 .dashboard-workspace__empty {
   display: grid;
   place-items: start;
-  gap: 4px;
-  min-height: 178px;
-  padding: 34px 0;
+  min-height: 96px;
+  padding: 28px 0;
 }
 .dashboard-workspace__empty strong {
   color: var(--foreground);
   font-size: 14px;
-}
-.dashboard-workspace__empty p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
 }
 .dashboard-workspace__progress-body {
   display: grid;
@@ -1143,9 +1137,23 @@
   min-height: 52px;
   display: flex;
   align-items: center;
-  padding: 8px 16px;
+  padding: 6px 16px;
   border-bottom: 1px solid var(--border);
   background: var(--surface-soft);
+}
+
+@media (min-width: 961px) {
+  .dashboard-page-toolbar .dashboard-range-menu__scope .task-field,
+  .dashboard-page-toolbar .dashboard-range-menu__tool,
+  .dashboard-page-toolbar .dashboard-range-menu__more > summary {
+    min-height: 36px;
+  }
+
+  .dashboard-page-toolbar .dashboard-range-menu__tool,
+  .dashboard-page-toolbar .dashboard-range-menu__more > summary {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 .dashboard-page-toolbar .page-toolbar__row {
@@ -1155,7 +1163,7 @@
 .dashboard-page-toolbar .dashboard-range-menu {
   justify-content: flex-end;
   gap: 4px;
-  padding: 2px;
+  padding: 1px;
   border: 1px solid var(--border-soft);
   border-radius: 7px;
   background: var(--surface-strong);
@@ -1564,6 +1572,9 @@
 .dashboard-workspace__priority {
   min-height: 341px;
 }
+.dashboard-workspace__priority--empty {
+  min-height: 184px;
+}
 .dashboard-workspace__progress {
   align-self: start;
   min-height: 296px;
@@ -1647,6 +1658,40 @@
   font-size: 20px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+}
+@media (min-width: 761px) {
+  .dashboard-workspace--empty .dashboard-workspace__progress {
+    min-height: 184px;
+    padding: 18px 22px 0;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__progress-body {
+    grid-template-columns: 84px minmax(0, 1fr);
+    justify-content: start;
+    gap: 28px;
+    min-height: 92px;
+    margin-top: 8px;
+    padding-left: 0;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__ring {
+    width: 84px;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__ring::after {
+    inset: 7px;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__ring strong {
+    font-size: 18px;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__progress-visual {
+    gap: 0;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__progress-visual p,
+  .dashboard-workspace--empty .dashboard-workspace__progress-main > p {
+    display: none;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__progress-overdue {
+    margin-top: 0;
+    padding-top: 10px;
+  }
 }
 @media (max-width: 760px) {
   .dashboard-workspace__progress {

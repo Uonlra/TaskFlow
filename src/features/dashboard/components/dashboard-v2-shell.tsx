@@ -72,11 +72,22 @@ export function DashboardV2Shell({
   onPreviewTask,
   onStatusFilter,
 }: DashboardV2ShellProps) {
+  const today = new Date();
+  const dateLabel = new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric" }).format(today);
+  const dateTime = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
   const pageToolbar = (
     <PageToolbar
       accessibleTitle="总览"
       className="dashboard-page-toolbar"
-      context={<span className="page-toolbar__status">{rangeLabel}</span>}
+      context={
+        <time className="page-toolbar__status" dateTime={dateTime} suppressHydrationWarning>
+          {dateLabel}
+        </time>
+      }
       controls={
         <DashboardRangeMenu
           range={range}
@@ -113,13 +124,9 @@ export function DashboardV2Shell({
           stats={stats}
           priorityTasks={priorityTasks}
           isLoading={isLoading}
+          isRangeEmpty
           onPreviewTask={onPreviewTask}
           onStatusFilter={onStatusFilter}
-        />
-        <DataEmptyState
-          variant="table"
-          title={rangeLabel + "暂无任务"}
-          description="切换范围，或创建一条任务后再查看数据。"
         />
       </section>
     );

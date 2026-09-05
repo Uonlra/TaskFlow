@@ -20,30 +20,30 @@ export function DesktopTaskWorkbenchSkeleton() {
       aria-label="正在加载任务"
       aria-busy="true"
     >
-      <div className="desktop-task-workbench__main">
-        <PageToolbar
-          accessibleTitle="任务"
-          className="desktop-task-page-toolbar"
-          context={
-            <div className="task-page-skeleton__tabs">
-              {Array.from({ length: 4 }, (_, index) => (
-                <SkeletonBlock key={index} className="task-page-skeleton__tab" />
+      <PageToolbar
+        accessibleTitle="任务"
+        className="desktop-task-page-toolbar"
+        context={
+          <div className="task-page-skeleton__tabs">
+            {Array.from({ length: 4 }, (_, index) => (
+              <SkeletonBlock key={index} className="task-page-skeleton__tab" />
+            ))}
+          </div>
+        }
+        controls={
+          <>
+            <SkeletonBlock className="task-page-skeleton__search" />
+            <div className="task-page-skeleton__controls">
+              {Array.from({ length: 3 }, (_, index) => (
+                <SkeletonBlock key={index} className="task-page-skeleton__control" />
               ))}
             </div>
-          }
-          controls={
-            <>
-              <SkeletonBlock className="task-page-skeleton__search" />
-              <div className="task-page-skeleton__controls">
-                {Array.from({ length: 3 }, (_, index) => (
-                  <SkeletonBlock key={index} className="task-page-skeleton__control" />
-                ))}
-              </div>
-            </>
-          }
-          primaryAction={<SkeletonBlock className="task-page-skeleton__control task-page-skeleton__control--primary" />}
-        />
+          </>
+        }
+        primaryAction={<SkeletonBlock className="task-page-skeleton__control task-page-skeleton__control--primary" />}
+      />
 
+      <div className="desktop-task-workbench__main">
         <div className="desktop-task-table task-page-skeleton__table" aria-hidden="true">
           <div className="desktop-task-table__viewport">
             <div className="desktop-task-table__head">
