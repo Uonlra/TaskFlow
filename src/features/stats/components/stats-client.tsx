@@ -5,6 +5,7 @@ import { useEffect, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
+import { PageHeader } from "@/shared/components/layout/page-header";
 import { PageToolbar } from "@/shared/components/layout/page-toolbar";
 
 import { EChartsClient } from "@/shared/components/charts/echarts-client";
@@ -79,7 +80,7 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   if (isAccountEmpty) {
     return (
       <section className="stats-shell stats-shell--empty">
-        <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+        <StatsPageHeader range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
         <DataEmptyState
           title="还没有可统计的数据"
           description="创建任务并更新状态后，这里会生成趋势和分布。"
@@ -92,7 +93,7 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   if (isRangeEmpty) {
     return (
       <section className="stats-shell stats-shell--empty">
-        <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+        <StatsPageHeader range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
         <DataEmptyState
           variant="table"
           title={`${rangeOptions.find((item) => item.value === range)?.label ?? "当前范围"}暂无统计数据`}
@@ -103,7 +104,7 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   }
   return (
     <section className="stats-shell">
-      <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+      <StatsPageHeader range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
       <StatsOverview
         completionRate={stats.completionRate}
         completedCount={stats.completedCount}
@@ -124,12 +125,71 @@ export function StatsClient({ initialRange }: StatsClientProps) {
       />
       <div className="stats-layout-grid">
         <StatsTrendSection hasData={hasTrendData} isSyncing={isSyncing} option={buildTaskTrendOption(stats.trend)} />
-        <StatsStatusSection hasData={hasStatusData} isSyncing={isSyncing} items={stats.statusDistribution} />
-        <StatsPrioritySection hasData={hasPriorityData} isSyncing={isSyncing} items={stats.priorityDistribution} />
-        <StatsTagSection hasData={hasTagData} isSyncing={isSyncing} items={stats.tagTop} />
-        <StatsRiskSection hasData={hasRiskData} isSyncing={isSyncing} rows={stats.overdueRisk} />
+        <div className="stats-side-grid">
+          <StatsStatusSection hasData={hasStatusData} isSyncing={isSyncing} items={stats.statusDistribution} />
+          <StatsPrioritySection hasData={hasPriorityData} isSyncing={isSyncing} items={stats.priorityDistribution} />
+          <StatsTagSection hasData={hasTagData} isSyncing={isSyncing} items={stats.tagTop} />
+          <StatsRiskSection hasData={hasRiskData} isSyncing={isSyncing} rows={stats.overdueRisk} />
+        </div>
       </div>
     </section>
+  );
+}
+
+function StatsPageHeader({
+  range,
+  isSyncing,
+  onRangeChange,
+}: {
+  range: DashboardRangeValue;
+  isSyncing: boolean;
+  onRangeChange: (range: DashboardRangeValue) => void;
+}) {
+  return (
+    <PageHeader
+      className="stats-page-header"
+      eyebrow="统计"
+      title="看清任务运行状态"
+      description="通过趋势、分布和风险，回顾当前工作节奏。"
+      actions={
+        <div className="stats-page-header__actions">
+          {isSyncing ? (
+            <span className="page-toolbar__status" role="status">
+              同步中
+            </span>
+          ) : null}
+          <StatsRangeTabs range={range} onRangeChange={onRangeChange} />
+        </div>
+      }
+    />
+  );
+}
+
+function StatsRangeTabs({
+  range,
+  onRangeChange,
+}: {
+  range: DashboardRangeValue;
+  onRangeChange: (range: DashboardRangeValue) => void;
+}) {
+  return (
+    <div className="stats-range-tabs date-switcher" role="group" aria-label="统计范围">
+      {rangeOptions.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          className={
+            range === option.value
+              ? "stats-range-tabs__button date-switcher__button is-active"
+              : "stats-range-tabs__button date-switcher__button"
+          }
+          aria-pressed={range === option.value}
+          onClick={() => onRangeChange(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -147,25 +207,7 @@ export function StatsToolbar({
       accessibleTitle="统计"
       className="stats-toolbar"
       context={isSyncing ? <span className="page-toolbar__status">同步中</span> : undefined}
-      controls={
-        <div className="stats-range-tabs date-switcher" aria-label="统计范围">
-          {rangeOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={
-                range === option.value
-                  ? "stats-range-tabs__button date-switcher__button is-active"
-                  : "stats-range-tabs__button date-switcher__button"
-              }
-              aria-pressed={range === option.value}
-              onClick={() => onRangeChange(option.value)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      }
+      controls={<StatsRangeTabs range={range} onRangeChange={onRangeChange} />}
     />
   );
 }
@@ -268,7 +310,7 @@ function StatsTrendSection({
   option: ReturnType<typeof buildTaskTrendOption>;
 }) {
   return (
-    <section className="stats-panel stats-panel--wide card-surface">
+    <section className="stats-panel stats-panel--trend card-surface">
       <div className="stats-panel__head">
         <h2>任务完成趋势</h2>
         <span>完成 / 新增</span>
