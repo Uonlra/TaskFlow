@@ -3,40 +3,19 @@
   gap: 16px;
 }
 
-.stats-page-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 0 0 4px;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
+.stats-toolbar {
+  min-height: 52px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
 }
 
-.stats-page-header__actions {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.stats-toolbar .page-toolbar__row {
+  width: 100%;
 }
 
-.stats-page-header .page-header__copy h1 {
-  font-size: 30px;
-}
-
-.stats-page-header .page-header__copy p {
-  max-width: 620px;
-}
-
-.stats-page-header .page-toolbar__status {
-  min-height: 36px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface-strong);
+.stats-toolbar .page-toolbar__controls {
+  justify-content: flex-end;
 }
 
 .stats-range-tabs {
@@ -294,37 +273,6 @@
 }
 
 @media (max-width: 960px) {
-  .stats-shell .stats-page-header.page-header {
-    align-items: flex-start;
-    flex-direction: column !important;
-    gap: 14px;
-  }
-
-  .stats-page-header .page-header__actions {
-    width: 100% !important;
-  }
-
-  .stats-page-header__actions,
-  .stats-range-tabs {
-    width: 100%;
-  }
-
-  .stats-page-header__actions {
-    align-items: stretch;
-    flex-direction: column-reverse;
-  }
-
-  .stats-range-tabs {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .stats-range-tabs__button {
-    min-height: 36px;
-    padding-inline: 6px;
-    white-space: nowrap;
-  }
-
   .stats-overview {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -386,14 +334,6 @@
     gap: 14px;
   }
 
-  .stats-page-header .page-header__copy h1 {
-    font-size: 28px;
-  }
-
-  .stats-page-header .page-header__copy p {
-    font-size: 12px;
-  }
-
   .stats-overview article {
     min-height: 88px;
     padding: 12px;
@@ -439,17 +379,12 @@
   }
 }
 
-html[data-theme="dark"] .stats-page-header .page-toolbar__status,
 html[data-theme="dark"] .stats-range-tabs,
 html[data-theme="dark"] .stats-overview,
 html[data-theme="dark"] .stats-insight,
 html[data-theme="dark"] .stats-panel {
   border-color: var(--border);
   background: var(--surface-strong);
-}
-
-html[data-theme="dark"] .stats-page-header {
-  background: transparent;
 }
 
 html[data-theme="dark"] .stats-range-tabs__button:hover,
