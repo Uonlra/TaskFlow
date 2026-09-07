@@ -5,14 +5,11 @@ type PageHeaderProps = {
   title: string;
   description?: string;
   actions?: ReactNode;
-  className?: string;
 };
 
-export function PageHeader({ eyebrow, title, description, actions, className = "" }: PageHeaderProps) {
-  const headerClassName = ["card-surface", "page-header", className].filter(Boolean).join(" ");
-
+export function PageHeader({ eyebrow, title, description, actions }: PageHeaderProps) {
   return (
-    <header className={headerClassName}>
+    <header className="card-surface page-header">
       <div className="page-header__copy">
         {eyebrow ? <span className="page-header__eyebrow">{eyebrow}</span> : null}
         <h1>{title}</h1>

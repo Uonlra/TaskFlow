@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
+import { PageToolbarTemporalContext } from "@/shared/components/layout/page-toolbar-context";
 
 import { CalendarDayDrawer } from "@/features/calendar/components/calendar-day-drawer";
 import { TaskQuickViewDialog } from "@/features/tasks/components/task-quick-view-dialog";
@@ -493,14 +494,19 @@ export function CalendarToolbar({
       className="calendar-toolbar"
       context={
         <div className="calendar-toolbar__context">
-          {statusLabel ? (
-            <span className="page-toolbar__status" role="status">
-              {statusLabel}
-            </span>
-          ) : null}
-          <Link className="calendar-toolbar__date-context" href={buildCalendarHref({ date: dateParam, range })}>
-            <time dateTime={dateParam}>{dateParam}</time> · {rangeLabel}
-          </Link>
+          <PageToolbarTemporalContext
+            rangeLabel={rangeLabel}
+            statusLabel={statusLabel ?? undefined}
+            trailing={
+              <Link
+                className="calendar-toolbar__date-context"
+                href={buildCalendarHref({ date: dateParam, range })}
+                aria-label={`${dateParam} ${rangeLabel}`}
+              >
+                <time dateTime={dateParam}>{dateParam}</time>
+              </Link>
+            }
+          />
         </div>
       }
       controls={

@@ -29,7 +29,7 @@ describe("MobileDashboardOverview toolbar", () => {
     );
 
     expect(screen.getByRole("heading", { name: "总览", level: 1 })).toHaveClass("visually-hidden");
-    expect(screen.getByText(/\d+月\d+日/)).toBeInTheDocument();
+    expect(screen.getByText(/\d+月\d+日/, { selector: ".page-toolbar__clock-date--compact" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "今天" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "本周" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "全部" })).toBeInTheDocument();

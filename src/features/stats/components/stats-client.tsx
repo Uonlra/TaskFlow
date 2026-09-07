@@ -5,8 +5,8 @@ import { useEffect, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
-import { PageHeader } from "@/shared/components/layout/page-header";
 import { PageToolbar } from "@/shared/components/layout/page-toolbar";
+import { PageToolbarTemporalContext } from "@/shared/components/layout/page-toolbar-context";
 
 import { EChartsClient } from "@/shared/components/charts/echarts-client";
 import {
@@ -80,7 +80,7 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   if (isAccountEmpty) {
     return (
       <section className="stats-shell stats-shell--empty">
-        <StatsPageHeader range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+        <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
         <DataEmptyState
           title="还没有可统计的数据"
           description="创建任务并更新状态后，这里会生成趋势和分布。"
@@ -93,7 +93,7 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   if (isRangeEmpty) {
     return (
       <section className="stats-shell stats-shell--empty">
-        <StatsPageHeader range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+        <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
         <DataEmptyState
           variant="table"
           title={`${rangeOptions.find((item) => item.value === range)?.label ?? "当前范围"}暂无统计数据`}
@@ -104,64 +104,37 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   }
   return (
     <section className="stats-shell">
-      <StatsPageHeader range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+      <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
       <StatsOverview
         completionRate={stats.completionRate}
         completedCount={stats.completedCount}
         activeCount={stats.activeCount}
         totalCount={stats.totalCount}
-        accountTotalCount={tasks.length}
         overdueCount={stats.overdueCount}
         isLoading={isSyncing}
-        isRangeEmpty={isRangeEmpty}
       />
-      <StatsInsightPanel
-        range={range}
-        isAccountEmpty={isAccountEmpty}
-        isRangeEmpty={isRangeEmpty}
-        totalTaskCount={tasks.length}
-        completionRate={stats.completionRate}
-        overdueCount={stats.overdueCount}
-      />
-      <div className="stats-layout-grid">
-        <StatsTrendSection hasData={hasTrendData} isSyncing={isSyncing} option={buildTaskTrendOption(stats.trend)} />
-        <div className="stats-side-grid">
-          <StatsStatusSection hasData={hasStatusData} isSyncing={isSyncing} items={stats.statusDistribution} />
-          <StatsPrioritySection hasData={hasPriorityData} isSyncing={isSyncing} items={stats.priorityDistribution} />
-          <StatsTagSection hasData={hasTagData} isSyncing={isSyncing} items={stats.tagTop} />
-          <StatsRiskSection hasData={hasRiskData} isSyncing={isSyncing} rows={stats.overdueRisk} />
-        </div>
+      <div className="stats-primary-grid">
+        <StatsTrendSection
+          hasData={hasTrendData}
+          isSyncing={isSyncing}
+          insight={buildStatsInsight({
+            range,
+            totalCount: stats.totalCount,
+            completedCount: stats.completedCount,
+            activeCount: stats.activeCount,
+            completionRate: stats.completionRate,
+            overdueCount: stats.overdueCount,
+          })}
+          option={buildTaskTrendOption(stats.trend)}
+        />
+        <StatsRiskSection hasData={hasRiskData} isSyncing={isSyncing} rows={stats.overdueRisk} />
+      </div>
+      <div className="stats-distribution-grid">
+        <StatsStatusSection hasData={hasStatusData} isSyncing={isSyncing} items={stats.statusDistribution} />
+        <StatsPrioritySection hasData={hasPriorityData} isSyncing={isSyncing} items={stats.priorityDistribution} />
+        <StatsTagSection hasData={hasTagData} isSyncing={isSyncing} items={stats.tagTop} />
       </div>
     </section>
-  );
-}
-
-function StatsPageHeader({
-  range,
-  isSyncing,
-  onRangeChange,
-}: {
-  range: DashboardRangeValue;
-  isSyncing: boolean;
-  onRangeChange: (range: DashboardRangeValue) => void;
-}) {
-  return (
-    <PageHeader
-      className="stats-page-header"
-      eyebrow="统计"
-      title="看清任务运行状态"
-      description="通过趋势、分布和风险，回顾当前工作节奏。"
-      actions={
-        <div className="stats-page-header__actions">
-          {isSyncing ? (
-            <span className="page-toolbar__status" role="status">
-              同步中
-            </span>
-          ) : null}
-          <StatsRangeTabs range={range} onRangeChange={onRangeChange} />
-        </div>
-      }
-    />
   );
 }
 
@@ -206,7 +179,12 @@ export function StatsToolbar({
     <PageToolbar
       accessibleTitle="统计"
       className="stats-toolbar"
-      context={isSyncing ? <span className="page-toolbar__status">同步中</span> : undefined}
+      context={
+        <PageToolbarTemporalContext
+          rangeLabel={rangeOptions.find((item) => item.value === range)?.label ?? "本周"}
+          statusLabel={isSyncing ? "同步中" : undefined}
+        />
+      }
       controls={<StatsRangeTabs range={range} onRangeChange={onRangeChange} />}
     />
   );
@@ -217,47 +195,41 @@ function StatsOverview({
   completedCount,
   activeCount,
   totalCount,
-  accountTotalCount,
   overdueCount,
   isLoading,
-  isRangeEmpty,
 }: {
   completionRate: number;
   completedCount: number;
   activeCount: number;
   totalCount: number;
-  accountTotalCount: number;
   overdueCount: number;
   isLoading: boolean;
-  isRangeEmpty: boolean;
 }) {
   const riskHelper = isLoading ? "正在同步" : overdueCount > 0 ? "需要关注" : "暂无逾期";
 
   return (
     <section className="stats-overview card-surface">
-      <article>
+      <article className="stats-overview__item stats-overview__item--completion">
         <span>完成率</span>
         <strong>{isLoading ? "--" : `${completionRate}%`}</strong>
-        <small>{isRangeEmpty ? "当前范围" : "所选范围内"}</small>
+        <small>所选范围内</small>
+        <progress aria-label="任务完成率" max={100} value={isLoading ? 0 : completionRate} />
       </article>
-      <article>
+      <article className="stats-overview__item">
         <span>已完成</span>
         <strong>{isLoading ? "--" : `${completedCount}/${totalCount}`}</strong>
         <small>完成 / 总数</small>
       </article>
-      <article>
+      <article className="stats-overview__item">
         <span>待处理</span>
         <strong>{isLoading ? "--" : activeCount}</strong>
         <small>未完成任务</small>
       </article>
-      <article>
-        <span>全部任务</span>
-        <strong>{isLoading ? "--" : accountTotalCount}</strong>
-        <small>账号总量</small>
-      </article>
       <article
         className={
-          !isLoading && overdueCount > 0 ? "stats-overview__item--risk is-attention" : "stats-overview__item--risk"
+          !isLoading && overdueCount > 0
+            ? "stats-overview__item stats-overview__item--risk is-attention"
+            : "stats-overview__item stats-overview__item--risk"
         }
       >
         <span>逾期风险</span>
@@ -268,51 +240,60 @@ function StatsOverview({
   );
 }
 
-function StatsInsightPanel({
+export function buildStatsInsight({
   range,
-  isAccountEmpty,
-  isRangeEmpty,
-  totalTaskCount,
+  totalCount,
+  completedCount,
+  activeCount,
   completionRate,
   overdueCount,
 }: {
   range: DashboardRangeValue;
-  isAccountEmpty: boolean;
-  isRangeEmpty: boolean;
-  totalTaskCount: number;
+  totalCount: number;
+  completedCount: number;
+  activeCount: number;
   completionRate: number;
   overdueCount: number;
 }) {
-  const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "本周";
-  const insight = isAccountEmpty
-    ? "暂无统计"
-    : isRangeEmpty
-      ? `${rangeLabel}暂无数据，全部任务 ${totalTaskCount} 项。`
-      : overdueCount > 0
-        ? `有 ${overdueCount} 项风险，先处理临近和高优先级任务。`
-        : `完成率 ${completionRate}%，当前节奏稳定。`;
+  const rangeLabel = range === "today" ? "今天" : range === "week" ? "本周" : "全部任务";
 
-  return (
-    <section className="stats-insight card-surface">
-      <span className="stats-eyebrow">洞察</span>
-      <p>{insight}</p>
-    </section>
-  );
+  if (totalCount === 0) {
+    return `${rangeLabel}暂无任务数据。`;
+  }
+
+  if (overdueCount > 0) {
+    return `${rangeLabel}有 ${overdueCount} 项逾期，完成率 ${completionRate}%，建议优先处理风险任务。`;
+  }
+
+  if (completedCount === totalCount) {
+    return `${rangeLabel}的 ${totalCount} 项均已完成。`;
+  }
+
+  if (completionRate >= 75) {
+    return `${rangeLabel}已完成 ${completedCount}/${totalCount} 项，整体节奏稳定。`;
+  }
+
+  return `${rangeLabel}仍有 ${activeCount} 项待处理，当前完成率 ${completionRate}%。`;
 }
 
 function StatsTrendSection({
   hasData,
   isSyncing,
+  insight,
   option,
 }: {
   hasData: boolean;
   isSyncing: boolean;
+  insight: string;
   option: ReturnType<typeof buildTaskTrendOption>;
 }) {
   return (
     <section className="stats-panel stats-panel--trend card-surface">
       <div className="stats-panel__head">
-        <h2>任务完成趋势</h2>
+        <div>
+          <h2>任务完成趋势</h2>
+          <p className="stats-panel__insight">{insight}</p>
+        </div>
         <span>完成 / 新增</span>
       </div>
       {hasData ? (
@@ -429,22 +410,33 @@ function StatsRiskSection({
   isSyncing: boolean;
   rows: ReturnType<typeof buildDashboardStats>["overdueRisk"];
 }) {
+  const riskCount = rows.reduce((total, row) => total + row.count, 0);
+
   return (
-    <section className="stats-panel card-surface">
+    <section className="stats-panel stats-panel--risk card-surface">
       <div className="stats-panel__head">
-        <h2>逾期风险</h2>
-        <span>点击筛选</span>
+        <div>
+          <h2>风险诊断</h2>
+          <p className="stats-panel__insight">按截止日期与优先级评估</p>
+        </div>
+        <span>点击查看</span>
       </div>
       {hasData ? (
-        <div className="stats-risk-list">
-          {rows.map((row) => (
-            <a key={row.level} href={buildTasksHref({ risk: row.level })}>
-              <span style={{ background: row.color }} />
-              <strong>{row.label}</strong>
-              <small>{row.helper}</small>
-              <b>{row.count}</b>
-            </a>
-          ))}
+        <div className="stats-risk-body">
+          <div className="stats-risk-summary">
+            <strong>{riskCount}</strong>
+            <span>项任务处于风险窗口</span>
+          </div>
+          <div className="stats-risk-list">
+            {rows.map((row) => (
+              <a key={row.level} href={buildTasksHref({ risk: row.level })}>
+                <span style={{ background: row.color }} />
+                <strong>{row.label}</strong>
+                <small>{row.helper}</small>
+                <b>{row.count}</b>
+              </a>
+            ))}
+          </div>
         </div>
       ) : (
         <StatsEmptyState isSyncing={isSyncing} label="暂无逾期风险" description="当前范围没有逾期任务。" />

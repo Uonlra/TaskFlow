@@ -470,6 +470,46 @@ textarea:focus {
   white-space: nowrap;
 }
 
+.page-toolbar__temporal-context {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.page-toolbar__clock {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.page-toolbar__clock-date--compact {
+  display: none;
+}
+
+.page-toolbar__clock-time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.page-toolbar__range-context {
+  padding-left: 10px;
+  border-left: 1px solid var(--border);
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
 .ui-sans {
   font-family: var(--font-text);
   letter-spacing: 0;
