@@ -54,7 +54,6 @@
 }
 
 .stats-overview,
-.stats-insight,
 .stats-panel {
   border-radius: 8px;
   background: var(--surface-strong);
@@ -62,7 +61,7 @@
 
 .stats-overview {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: minmax(210px, 1.2fr) repeat(3, minmax(0, 1fr));
   gap: 0;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -84,10 +83,10 @@
   border-left: 1px solid var(--border);
 }
 
-.stats-eyebrow,
 .stats-overview span,
 .stats-overview small,
 .stats-panel__head span,
+.stats-panel__insight,
 .stats-empty-state p,
 .stats-risk-list small {
   color: var(--muted);
@@ -95,15 +94,37 @@
   line-height: 1.35;
 }
 
-.stats-eyebrow {
-  font-weight: 600;
-}
-
 .stats-overview strong {
   color: var(--foreground);
   font-size: 30px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+}
+
+.stats-overview progress {
+  width: 100%;
+  height: 4px;
+  margin-top: 5px;
+  overflow: hidden;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: var(--progress-track);
+}
+
+.stats-overview progress::-webkit-progress-bar {
+  border-radius: 999px;
+  background: var(--progress-track);
+}
+
+.stats-overview progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.stats-overview progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--primary);
 }
 
 .stats-overview__item--risk.is-attention {
@@ -114,41 +135,17 @@
   color: var(--danger);
 }
 
-.stats-insight {
-  position: relative;
+.stats-primary-grid {
   display: grid;
-  gap: 6px;
-  padding: 15px 20px 15px 24px;
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-
-.stats-insight::before {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: var(--primary);
-  content: "";
-}
-
-.stats-insight p {
-  margin: 0;
-  color: var(--foreground);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.stats-layout-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.72fr) minmax(360px, 1fr);
+  grid-template-columns: minmax(0, 1.75fr) minmax(300px, 0.75fr);
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
 }
 
-.stats-side-grid {
+.stats-distribution-grid {
   min-width: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -162,6 +159,10 @@
 
 .stats-panel--trend {
   min-height: 100%;
+}
+
+.stats-panel--risk {
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .stats-panel__head {
@@ -178,6 +179,18 @@
   font-weight: 600;
 }
 
+.stats-panel__head > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.stats-panel__insight {
+  max-width: 620px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .stats-echart {
   width: 100%;
   min-width: 0;
@@ -185,8 +198,39 @@
 }
 
 .stats-echart--large {
-  height: 340px;
+  height: 328px;
   border-top: 1px solid var(--border);
+}
+
+.stats-risk-body {
+  min-height: 328px;
+  display: grid;
+  grid-template-rows: minmax(112px, 1fr) auto;
+  gap: 12px;
+}
+
+.stats-risk-summary {
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  background: var(--surface-soft);
+}
+
+.stats-risk-summary strong {
+  color: var(--foreground);
+  font-size: 38px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.stats-risk-summary span {
+  color: var(--muted-strong);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .stats-empty-state {
@@ -267,12 +311,24 @@
 }
 
 @media (max-width: 1180px) {
-  .stats-layout-grid {
-    grid-template-columns: 1fr;
+  .stats-primary-grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
   }
 }
 
 @media (max-width: 960px) {
+  .stats-primary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-distribution-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats-distribution-grid > :last-child {
+    grid-column: 1 / -1;
+  }
+
   .stats-overview {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -302,30 +358,10 @@
     display: none;
   }
 
-  .stats-overview__item--risk {
-    grid-column: 1 / -1;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
-    align-items: center;
-  }
-
-  .stats-overview__item--risk span,
-  .stats-overview__item--risk small {
-    grid-column: 1;
-  }
-
-  .stats-overview__item--risk strong {
-    grid-column: 2;
-    grid-row: 1 / -1;
-  }
-
-  .stats-overview__item--risk small {
-    display: block;
-    font-size: 12px;
-  }
-
-  .stats-side-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .stats-risk-body {
+    min-height: 0;
+    grid-template-columns: minmax(190px, 0.72fr) minmax(0, 1fr);
+    grid-template-rows: 1fr;
   }
 }
 
@@ -343,21 +379,17 @@
     font-size: 24px;
   }
 
-  .stats-insight {
-    padding: 14px 16px 14px 20px;
-  }
-
-  .stats-insight p {
-    font-size: 13px;
-  }
-
-  .stats-layout-grid,
-  .stats-side-grid {
+  .stats-primary-grid,
+  .stats-distribution-grid {
     gap: 14px;
   }
 
-  .stats-side-grid {
+  .stats-distribution-grid {
     grid-template-columns: 1fr;
+  }
+
+  .stats-distribution-grid > :last-child {
+    grid-column: auto;
   }
 
   .stats-panel {
@@ -377,11 +409,19 @@
   .stats-echart {
     height: 196px;
   }
+
+  .stats-risk-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .stats-risk-summary {
+    min-height: 112px;
+  }
 }
 
 html[data-theme="dark"] .stats-range-tabs,
 html[data-theme="dark"] .stats-overview,
-html[data-theme="dark"] .stats-insight,
 html[data-theme="dark"] .stats-panel {
   border-color: var(--border);
   background: var(--surface-strong);
@@ -405,6 +445,11 @@ html[data-theme="dark"] .stats-overview article:nth-child(n + 3) {
 
 html[data-theme="dark"] .stats-overview__item--risk.is-attention {
   background: color-mix(in srgb, var(--danger) 12%, var(--surface-strong));
+}
+
+html[data-theme="dark"] .stats-risk-summary {
+  border-color: var(--border);
+  background: var(--surface);
 }
 
 html[data-theme="dark"] .stats-empty-state {

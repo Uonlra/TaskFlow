@@ -12,6 +12,7 @@ import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import type { DashboardAnalyticsRange, DashboardStats } from "@/features/tasks/utils/task-analytics";
 import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
 import { PageToolbar } from "@/shared/components/layout/page-toolbar";
+import { PageToolbarTemporalContext } from "@/shared/components/layout/page-toolbar-context";
 
 const DashboardTrendPanel = dynamic(
   () => import("@/features/dashboard/components/dashboard-trend-panel").then((module) => module.DashboardTrendPanel),
@@ -72,22 +73,11 @@ export function DashboardV2Shell({
   onPreviewTask,
   onStatusFilter,
 }: DashboardV2ShellProps) {
-  const today = new Date();
-  const dateLabel = new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric" }).format(today);
-  const dateTime = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
   const pageToolbar = (
     <PageToolbar
       accessibleTitle="总览"
       className="dashboard-page-toolbar"
-      context={
-        <time className="page-toolbar__status" dateTime={dateTime} suppressHydrationWarning>
-          {dateLabel}
-        </time>
-      }
+      context={<PageToolbarTemporalContext rangeLabel={rangeLabel} />}
       controls={
         <DashboardRangeMenu
           range={range}

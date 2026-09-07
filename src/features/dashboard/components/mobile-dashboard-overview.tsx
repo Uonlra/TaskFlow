@@ -10,6 +10,7 @@ import type { DashboardStats, DashboardTaskPreview } from "@/features/tasks/util
 import { parseTaskDueDateValue } from "@/features/tasks/utils/task-date-filters";
 import { ROUTES } from "@/shared/lib/constants/routes";
 import { PageToolbar } from "@/shared/components/layout/page-toolbar";
+import { PageToolbarTemporalContext } from "@/shared/components/layout/page-toolbar-context";
 
 type MobileDashboardRange = "today" | "week" | "all";
 
@@ -53,18 +54,12 @@ export function MobileDashboardOverview({
   const focusTasks = stats.focusTasks.slice(0, 4);
   const timelineTasks = stats.upcomingDeadlines.slice(0, 5);
   const projectEntries = stats.tagTop.slice(0, 4).map((item) => ({ tag: item.tag, count: item.count }));
-  const dateLabel = new Intl.DateTimeFormat("zh-CN", {
-    month: "long",
-    day: "numeric",
-    weekday: "short",
-  }).format(new Date());
-
   return (
     <section className="mobile-dashboard" aria-label="移动端任务总览">
       <PageToolbar
         accessibleTitle="总览"
         className="mobile-dashboard__toolbar"
-        context={<span className="mobile-dashboard__date">{dateLabel}</span>}
+        context={<PageToolbarTemporalContext rangeLabel={rangeLabel} />}
         controls={
           <div className="mobile-dashboard__range date-switcher" aria-label="切换统计范围">
             {rangeOptions.map((option) => (

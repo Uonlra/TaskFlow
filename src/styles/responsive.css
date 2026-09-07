@@ -786,6 +786,19 @@
   .page-toolbar__primary > * {
     width: 100%;
   }
+
+  .page-toolbar__clock-date--full,
+  .page-toolbar__range-context {
+    display: none;
+  }
+
+  .page-toolbar__clock-date--compact {
+    display: inline;
+  }
+
+  .page-toolbar__temporal-context {
+    gap: 8px;
+  }
 }
 
 @media (max-width: 360px) {
