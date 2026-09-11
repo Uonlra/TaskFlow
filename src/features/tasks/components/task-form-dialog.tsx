@@ -13,6 +13,7 @@ import { formatTagsInput, parseTagsInput } from "@/features/tasks/utils/task-tag
 type TaskFormDialogProps = {
   onSubmitTask: (values: TaskFormValues) => void | Promise<void>;
   initialValues?: TaskFormValues;
+  initiallyOpen?: boolean;
   createDefaults?: Partial<TaskFormValues>;
   triggerLabel?: string;
   triggerAriaLabel?: string;
@@ -37,6 +38,7 @@ const CREATE_DRAFT_STORAGE_KEY = "u-task-create-draft";
 export function TaskFormDialog({
   onSubmitTask,
   initialValues,
+  initiallyOpen = false,
   createDefaults,
   triggerLabel = "新建任务",
   triggerAriaLabel,
@@ -55,7 +57,7 @@ export function TaskFormDialog({
   const priorityErrorId = `${headingId}-priority-error`;
   const tagsErrorId = `${headingId}-tags-error`;
   const dueDateErrorId = `${headingId}-due-date-error`;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initiallyOpen);
   const [mounted, setMounted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showPlanning, setShowPlanning] = useState(Boolean(initialValues));
