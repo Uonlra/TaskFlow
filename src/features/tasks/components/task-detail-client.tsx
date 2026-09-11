@@ -26,7 +26,7 @@ import { useTaskStore } from "@/features/tasks/store/task-store";
 
 const statusFlow = ["todo", "in_progress", "done"] as const;
 
-export function TaskDetailClient({ id }: { id: string }) {
+export function TaskDetailClient({ id, initiallyEditing = false }: { id: string; initiallyEditing?: boolean }) {
   const router = useRouter();
   const { user, isConfigured } = useAuth();
   const { showToast } = useToast();
@@ -191,6 +191,7 @@ export function TaskDetailClient({ id }: { id: string }) {
                   切换状态
                 </button>
                 <TaskFormDialog
+                  initiallyOpen={initiallyEditing}
                   onSubmitTask={async (values) => {
                     try {
                       await updateTask(task.id, values, user?.id);

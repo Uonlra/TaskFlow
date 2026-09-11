@@ -48,6 +48,7 @@ export type DashboardTaskPreview = {
   id: string;
   title: string;
   description: string;
+  createdAt: string;
   status: TaskStatus;
   priority: TaskPriority;
   dueDate?: string;
@@ -351,6 +352,7 @@ function toDashboardTaskPreview(task: Task): DashboardTaskPreview {
     id: task.id,
     title: task.title,
     description: task.description,
+    createdAt: task.createdAt,
     status: task.status,
     priority: task.priority,
     dueDate: task.dueDate,

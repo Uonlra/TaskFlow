@@ -15,6 +15,28 @@ describe("TaskFormDialog", () => {
     });
   });
 
+  it("支持进入页面时直接打开编辑弹窗", () => {
+    render(
+      <TaskFormDialog
+        initiallyOpen
+        initialValues={{
+          title: "整理项目方案",
+          description: "补充方案细节",
+          status: "in_progress",
+          priority: "high",
+          tags: "设计",
+          dueDate: "2026-08-29",
+        }}
+        onSubmitTask={() => {}}
+        dialogTitle="调整这条任务"
+      />,
+    );
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "调整这条任务" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "任务名称" })).toHaveValue("整理项目方案");
+  });
+
   it("点击新建任务后显示表单弹窗", async () => {
     const user = userEvent.setup();
     render(<TaskFormDialog onSubmitTask={() => {}} />);

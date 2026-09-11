@@ -123,9 +123,15 @@ function buildChartThemeOption(isDark: boolean, option?: EChartsOption): ECharts
     textStyle: { color: muted },
     ...(option && "legend" in option ? { legend: { textStyle: { color: muted } } } : {}),
     tooltip: {
+      confine: true,
       backgroundColor: surface,
       borderColor: border,
+      borderWidth: 1,
       textStyle: { color: foreground },
+      axisPointer: {
+        lineStyle: { color: muted },
+        crossStyle: { color: muted },
+      },
     },
     xAxis: {
       axisLabel: { color: muted },

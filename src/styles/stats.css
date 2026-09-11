@@ -4,18 +4,263 @@
 }
 
 .stats-toolbar {
-  min-height: 52px;
-  padding: 6px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface-soft);
+  position: relative;
+  min-height: 82px;
+  padding: 14px 18px 13px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--primary) 9%, transparent), transparent 42%),
+    var(--surface-soft);
+  animation: stats-toolbar-enter 260ms ease-out both;
 }
 
 .stats-toolbar .page-toolbar__row {
   width: 100%;
+  align-items: stretch;
 }
 
 .stats-toolbar .page-toolbar__controls {
   justify-content: flex-end;
+}
+
+.stats-toolbar__context,
+.stats-toolbar__controls {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.stats-toolbar__identity {
+  min-width: 118px;
+  display: grid;
+  gap: 3px;
+}
+
+.stats-toolbar__eyebrow {
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+}
+
+.stats-toolbar__identity strong {
+  color: var(--foreground);
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.stats-toolbar__controls {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+
+.stats-toolbar__visuals {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 16px;
+  border-right: 1px solid var(--border);
+}
+
+.stats-toolbar__visuals.is-risk .stats-toolbar__ring-value,
+.stats-toolbar__visuals.is-risk .stats-toolbar__sparkline polyline {
+  stroke: var(--danger);
+}
+
+.stats-toolbar__visuals.is-risk .stats-toolbar__sparkline circle {
+  stroke: var(--danger);
+}
+
+.stats-toolbar__ring {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 42px;
+}
+
+.stats-toolbar__ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.stats-toolbar__ring circle {
+  fill: none;
+  stroke-width: 4;
+}
+
+.stats-toolbar__ring-track {
+  stroke: var(--progress-track);
+}
+
+.stats-toolbar__ring-value {
+  stroke: var(--primary);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 620ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stats-toolbar__ring b {
+  position: relative;
+  color: var(--foreground);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.stats-toolbar__sparkline {
+  width: 84px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.stats-toolbar__sparkline svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.stats-toolbar__sparkline polyline {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.8;
+  stroke-dasharray: 140;
+  stroke-dashoffset: 140;
+  animation: stats-toolbar-sparkline-in 700ms 100ms ease-out forwards;
+}
+
+.stats-toolbar__sparkline circle {
+  fill: var(--surface-soft);
+  stroke: var(--primary);
+  stroke-width: 1.5;
+  opacity: 0;
+  transition:
+    r 160ms ease,
+    opacity 160ms ease,
+    fill 160ms ease;
+}
+
+.stats-toolbar__sparkline:hover circle,
+.stats-toolbar__sparkline circle:focus-visible {
+  opacity: 1;
+}
+
+.stats-toolbar__sparkline circle:hover,
+.stats-toolbar__sparkline circle:focus-visible {
+  r: 3.5;
+  fill: var(--primary);
+  outline: none;
+}
+
+.stats-toolbar__signal {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stats-toolbar__signal-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 999px;
+  background: var(--success, #2f9d72);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--success, #2f9d72) 12%, transparent);
+}
+
+.stats-toolbar__signal-dot.is-pulsing {
+  animation: stats-toolbar-pulse 1.3s ease-in-out infinite;
+}
+
+.stats-toolbar__signal-dot.is-risk {
+  background: var(--danger);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+.stats-toolbar.is-risk .stats-toolbar__summary-text {
+  color: var(--danger);
+}
+
+.stats-toolbar.is-risk .stats-toolbar__progress span {
+  background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 54%, #f59e0b));
+}
+
+.stats-toolbar__summary-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: stats-toolbar-summary-in 220ms ease-out both;
+}
+
+.stats-toolbar__progress {
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--progress-track);
+}
+
+.stats-toolbar__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 58%, #8ab4ff));
+  transform-origin: left center;
+  transition: width 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes stats-toolbar-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stats-toolbar-summary-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stats-toolbar-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes stats-toolbar-sparkline-in {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 .stats-range-tabs {
@@ -370,6 +615,55 @@
     gap: 14px;
   }
 
+  .stats-toolbar {
+    min-height: 0;
+    padding: 13px 14px 11px;
+  }
+
+  .stats-toolbar .page-toolbar__row {
+    display: grid;
+    gap: 12px;
+  }
+
+  .stats-toolbar__context,
+  .stats-toolbar__controls {
+    width: 100%;
+  }
+
+  .stats-toolbar__context {
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .stats-toolbar__controls {
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .stats-toolbar__identity strong {
+    font-size: 16px;
+  }
+
+  .stats-toolbar__signal {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .stats-toolbar__visuals {
+    padding-right: 10px;
+    gap: 7px;
+  }
+
+  .stats-toolbar__sparkline {
+    width: 58px;
+  }
+
+  .stats-toolbar__summary-text {
+    max-width: 150px;
+  }
+
   .stats-overview article {
     min-height: 88px;
     padding: 12px;
@@ -417,6 +711,26 @@
 
   .stats-risk-summary {
     min-height: 112px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stats-toolbar,
+  .stats-toolbar__summary-text,
+  .stats-toolbar__signal-dot.is-pulsing {
+    animation: none;
+  }
+
+  .stats-toolbar__progress span {
+    transition: none;
+  }
+
+  .stats-toolbar__ring-value,
+  .stats-toolbar__sparkline polyline,
+  .stats-toolbar__sparkline circle {
+    animation: none;
+    transition: none;
+    stroke-dashoffset: 0;
   }
 }
 
