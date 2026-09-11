@@ -80,7 +80,14 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   if (isAccountEmpty) {
     return (
       <section className="stats-shell stats-shell--empty">
-        <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+        <StatsToolbar
+          range={range}
+          onRangeChange={handleRangeChange}
+          isSyncing={isSyncing}
+          totalCount={stats.totalCount}
+          completionRate={stats.completionRate}
+          overdueCount={stats.overdueCount}
+        />
         <DataEmptyState
           title="还没有可统计的数据"
           description="创建任务并更新状态后，这里会生成趋势和分布。"
@@ -93,7 +100,14 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   if (isRangeEmpty) {
     return (
       <section className="stats-shell stats-shell--empty">
-        <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+        <StatsToolbar
+          range={range}
+          onRangeChange={handleRangeChange}
+          isSyncing={isSyncing}
+          totalCount={stats.totalCount}
+          completionRate={stats.completionRate}
+          overdueCount={stats.overdueCount}
+        />
         <DataEmptyState
           variant="table"
           title={`${rangeOptions.find((item) => item.value === range)?.label ?? "当前范围"}暂无统计数据`}
@@ -104,7 +118,14 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   }
   return (
     <section className="stats-shell">
-      <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+      <StatsToolbar
+        range={range}
+        onRangeChange={handleRangeChange}
+        isSyncing={isSyncing}
+        totalCount={stats.totalCount}
+        completionRate={stats.completionRate}
+        overdueCount={stats.overdueCount}
+      />
       <StatsOverview
         completionRate={stats.completionRate}
         completedCount={stats.completedCount}
@@ -170,24 +191,85 @@ export function StatsToolbar({
   range,
   isSyncing,
   onRangeChange,
+  totalCount = 0,
+  completionRate = 0,
+  overdueCount = 0,
 }: {
   range: DashboardRangeValue;
   isSyncing: boolean;
   onRangeChange: (range: DashboardRangeValue) => void;
+  totalCount?: number;
+  completionRate?: number;
+  overdueCount?: number;
 }) {
+  const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "本周";
+  const summary = buildStatsToolbarSummary({ totalCount, completionRate, overdueCount, isSyncing });
+  const progressValue = isSyncing ? 0 : Math.max(0, Math.min(100, completionRate));
+
   return (
-    <PageToolbar
-      accessibleTitle="统计"
-      className="stats-toolbar"
-      context={
-        <PageToolbarTemporalContext
-          rangeLabel={rangeOptions.find((item) => item.value === range)?.label ?? "本周"}
-          statusLabel={isSyncing ? "同步中" : undefined}
-        />
-      }
-      controls={<StatsRangeTabs range={range} onRangeChange={onRangeChange} />}
-    />
+    <>
+      <PageToolbar
+        accessibleTitle="统计"
+        className="stats-toolbar"
+        context={
+          <div className="stats-toolbar__context">
+            <div className="stats-toolbar__identity">
+              <span className="stats-toolbar__eyebrow">WORKSPACE PULSE</span>
+              <strong>统计概览</strong>
+            </div>
+            <PageToolbarTemporalContext rangeLabel={rangeLabel} statusLabel={isSyncing ? "同步中" : undefined} />
+          </div>
+        }
+        controls={
+          <div className="stats-toolbar__controls">
+            <div className="stats-toolbar__signal" aria-live="polite">
+              <span className={isSyncing ? "stats-toolbar__signal-dot is-pulsing" : "stats-toolbar__signal-dot"} />
+              <span key={`${range}-${summary}`} className="stats-toolbar__summary-text">
+                {summary}
+              </span>
+            </div>
+            <StatsRangeTabs range={range} onRangeChange={onRangeChange} />
+          </div>
+        }
+      />
+      <div
+        className="stats-toolbar__progress"
+        role="progressbar"
+        aria-label="当前范围完成率"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progressValue}
+      >
+        <span style={{ width: `${progressValue}%` }} />
+      </div>
+    </>
   );
+}
+
+function buildStatsToolbarSummary({
+  totalCount,
+  completionRate,
+  overdueCount,
+  isSyncing,
+}: {
+  totalCount: number;
+  completionRate: number;
+  overdueCount: number;
+  isSyncing: boolean;
+}) {
+  if (isSyncing) {
+    return "正在同步最新数据";
+  }
+
+  if (totalCount === 0) {
+    return "等待任务数据";
+  }
+
+  if (overdueCount > 0) {
+    return `${overdueCount} 项逾期需关注`;
+  }
+
+  return `完成率 ${completionRate}% · ${totalCount} 项任务`;
 }
 
 function StatsOverview({
