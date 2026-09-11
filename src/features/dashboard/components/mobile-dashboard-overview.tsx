@@ -54,12 +54,30 @@ export function MobileDashboardOverview({
   const focusTasks = stats.focusTasks.slice(0, 4);
   const timelineTasks = stats.upcomingDeadlines.slice(0, 5);
   const projectEntries = stats.tagTop.slice(0, 4).map((item) => ({ tag: item.tag, count: item.count }));
+  const hasRisk = !isLoading && stats.overdueCount > 0;
+  const pulseSummary = isLoading
+    ? "同步中"
+    : hasRisk
+      ? `${stats.overdueCount} 项逾期`
+      : stats.activeCount
+        ? `待处理 ${stats.activeCount} 项`
+        : "任务已完成";
+
   return (
     <section className="mobile-dashboard" aria-label="移动端任务总览">
       <PageToolbar
         accessibleTitle="总览"
         className="mobile-dashboard__toolbar"
-        context={<PageToolbarTemporalContext rangeLabel={rangeLabel} />}
+        context={
+          <div className="mobile-dashboard__toolbar-context">
+            <div>
+              <span>FOCUS MODE</span>
+              <strong>工作总览</strong>
+            </div>
+            <PageToolbarTemporalContext rangeLabel={rangeLabel} />
+            <small className={hasRisk ? "is-risk" : ""}>{pulseSummary}</small>
+          </div>
+        }
         controls={
           <div className="mobile-dashboard__range date-switcher" aria-label="切换统计范围">
             {rangeOptions.map((option) => (
