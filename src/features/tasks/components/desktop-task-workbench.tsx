@@ -150,11 +150,13 @@ export function DesktopTaskWorkbench({
       risk: "",
       date: "",
       range: "",
-      sort: value === "done" ? "updated_desc" : "due_asc",
+      sort: value === "done" ? "updated_desc" : "created_asc",
     };
 
     if (value === "near") {
+      nextFilters.status = "active";
       nextFilters.due = "near";
+      nextFilters.sort = "due_asc";
     }
 
     if (value === "active") {
@@ -401,13 +403,13 @@ function hasWorkbenchFilters(filters: TaskFilters) {
   return (
     filters.query.trim() !== "" ||
     filters.tag.trim() !== "" ||
-    filters.status !== "all" ||
+    filters.status !== "active" ||
     filters.priority !== "all" ||
     filters.due !== "" ||
     filters.risk !== "" ||
     filters.date !== "" ||
     filters.range !== "" ||
-    filters.sort !== "due_asc"
+    filters.sort !== "created_asc"
   );
 }
 
@@ -475,12 +477,12 @@ function getActiveCategory(filters: TaskFilters): CategoryTab {
     return "done";
   }
 
-  if (filters.status === "active") {
-    return "active";
-  }
-
   if (filters.due === "near" || filters.due === "today" || filters.due === "upcoming") {
     return "near";
+  }
+
+  if (filters.status === "active") {
+    return "active";
   }
 
   return "all";
@@ -555,8 +557,9 @@ const priorityOptions = [
 ];
 
 const sortOptions = [
+  { value: "created_asc" as const, label: "创建顺序", description: "最早创建在前" },
   { value: "due_asc" as const, label: "截止时间", description: "快到期在前" },
   { value: "priority_desc" as const, label: "优先级", description: "重要任务在前" },
   { value: "updated_desc" as const, label: "最近更新", description: "最近更新在前" },
-  { value: "created_desc" as const, label: "创建时间", description: "新建任务在前" },
+  { value: "created_desc" as const, label: "最新创建", description: "新建任务在前" },
 ];

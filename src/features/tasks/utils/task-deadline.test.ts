@@ -75,6 +75,18 @@ describe("getTaskDueMeta", () => {
 });
 
 describe("sortTasks", () => {
+  it("sorts by creation time ascending with a stable id tie-breaker", () => {
+    const tasks = [
+      makeTask({ id: "task-c", createdAt: "2026-08-03T10:00:00.000Z" }),
+      makeTask({ id: "task-b", createdAt: "2026-08-01T10:00:00.000Z" }),
+      makeTask({ id: "task-a", createdAt: "2026-08-01T10:00:00.000Z" }),
+    ];
+
+    const sorted = sortTasks(tasks, "created_asc").map((task) => task.id);
+
+    expect(sorted).toEqual(["task-a", "task-b", "task-c"]);
+  });
+
   it("sorts by due date ascending, putting overdue tasks first", () => {
     const tasks = [
       makeTask({ id: "done", status: "done" }),

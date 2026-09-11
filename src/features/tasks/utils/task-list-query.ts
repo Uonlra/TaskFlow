@@ -18,6 +18,17 @@ import { getTaskDueMeta, sortTasks } from "@/features/tasks/utils/task-deadline"
 
 export const DEFAULT_TASK_PAGE_SIZE = 50;
 export const MAX_TASK_PAGE_SIZE = 100;
+export const DEFAULT_TASK_FILTERS: TaskFilters = {
+  query: "",
+  tag: "",
+  status: "active",
+  priority: "all",
+  due: "",
+  risk: "",
+  date: "",
+  range: "",
+  sort: "created_asc",
+};
 
 export type TaskCategoryCounts = {
   near: number;
@@ -101,12 +112,18 @@ export function buildTaskCategoryCounts(tasks: Task[]): TaskCategoryCounts {
 }
 
 export function parseTaskFiltersFromParams(params: URLSearchParams): TaskFilters {
-  const status = parseEnum(params.get("status"), [...TASK_STATUSES, "active", "all"] as const) ?? "all";
+  const status = parseEnum(params.get("status"), [...TASK_STATUSES, "active", "all"] as const) ?? "active";
   const priority = parseEnum(params.get("priority"), [...TASK_PRIORITIES, "all"] as const) ?? "all";
   const due = parseEnum(params.get("due"), Object.values(TASK_DUE_FILTERS) as TaskDueValue[]) ?? "";
   const risk = parseEnum(params.get("risk"), Object.values(TASK_RISK_FILTERS) as TaskRiskValue[]) ?? "";
   const sort =
-    parseEnum(params.get("sort"), ["created_desc", "updated_desc", "priority_desc", "due_asc"] as const) ?? "due_asc";
+    parseEnum(params.get("sort"), [
+      "created_asc",
+      "created_desc",
+      "updated_desc",
+      "priority_desc",
+      "due_asc",
+    ] as const) ?? "created_asc";
   const range = parseEnum(params.get("range"), Object.values(DASHBOARD_RANGE_VALUES) as DashboardRangeValue[]) ?? "";
   const parsedDate = parseTaskDateParam(params.get("date") ?? undefined);
 

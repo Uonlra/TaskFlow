@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getTaskPage } from "@/features/tasks/utils/task-list-query";
+import { getTaskPage, parseTaskFiltersFromParams } from "@/features/tasks/utils/task-list-query";
 import type { Task } from "@/features/tasks/types/task.types";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 
@@ -27,6 +27,20 @@ const task = (id: string, title: string, status: Task["status"] = "todo"): Task 
 });
 
 describe("task-list-query", () => {
+  it("空查询默认只显示未完成任务，并按创建时间从早到晚排序", () => {
+    const parsedFilters = parseTaskFiltersFromParams(new URLSearchParams());
+    const result = getTaskPage([task("3", "新任务"), task("1", "旧任务"), task("2", "已完成", "done")], parsedFilters);
+
+    expect(parsedFilters).toMatchObject({ status: "active", sort: "created_asc" });
+    expect(result.tasks.map((item) => item.id)).toEqual(["1", "3"]);
+  });
+
+  it("保留显式的全部状态和排序条件", () => {
+    const parsedFilters = parseTaskFiltersFromParams(new URLSearchParams({ status: "all", sort: "created_desc" }));
+
+    expect(parsedFilters).toMatchObject({ status: "all", sort: "created_desc" });
+  });
+
   it("在服务端筛选后按页返回任务和元数据", () => {
     const result = getTaskPage(
       [task("1", "Alpha"), task("2", "Beta", "done"), task("3", "Gamma")],

@@ -2,7 +2,7 @@ import type { Task, TaskPriority } from "@/features/tasks/types/task.types";
 import { parseTaskDueDate } from "@/features/tasks/utils/task-date-filters";
 import { TASK_DUE_FILTERS, type TaskDueFilter } from "@/shared/lib/constants/query-params";
 
-export type TaskSort = "created_desc" | "updated_desc" | "due_asc" | "priority_desc";
+export type TaskSort = "created_asc" | "created_desc" | "updated_desc" | "due_asc" | "priority_desc";
 
 export type TaskDueTone = "danger" | "warning" | "success" | "muted";
 
@@ -129,6 +129,11 @@ export function sortTasks(tasks: Task[], sort: TaskSort) {
   const nextTasks = [...tasks];
 
   nextTasks.sort((left, right) => {
+    if (sort === "created_asc") {
+      const createdDiff = compareDateAsc(left.createdAt, right.createdAt);
+      return createdDiff || left.id.localeCompare(right.id);
+    }
+
     if (sort === "created_desc") {
       return compareDateDesc(left.createdAt, right.createdAt);
     }
@@ -161,6 +166,10 @@ export function sortTasks(tasks: Task[], sort: TaskSort) {
 
 function compareDateDesc(left: string, right: string) {
   return new Date(right).getTime() - new Date(left).getTime();
+}
+
+function compareDateAsc(left: string, right: string) {
+  return new Date(left).getTime() - new Date(right).getTime();
 }
 
 function startOfDay(value: Date) {

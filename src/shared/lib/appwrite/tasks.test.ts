@@ -95,6 +95,26 @@ describe("Appwrite task response schema", () => {
 });
 
 describe("buildTaskPageQueries", () => {
+  it("在分页前按创建时间与任务 ID 稳定升序", () => {
+    const queries = buildTaskPageQueries({
+      query: "",
+      tag: "",
+      status: "active",
+      priority: "all",
+      due: "",
+      risk: "",
+      date: "",
+      range: "",
+      sort: "created_asc",
+    });
+
+    expect(queries).toEqual([
+      '{"method":"notEqual","attribute":"status","values":["done"]}',
+      '{"method":"orderAsc","attribute":"$createdAt"}',
+      '{"method":"orderAsc","attribute":"$id"}',
+    ]);
+  });
+
   it("将可下沉的状态、优先级、日期范围和排序映射为 Appwrite queries", () => {
     const queries = buildTaskPageQueries({
       query: "",

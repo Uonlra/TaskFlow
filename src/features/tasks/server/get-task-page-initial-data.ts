@@ -4,23 +4,11 @@ import type { TaskPageInitialData } from "@/features/tasks/types/task.types";
 import { getCurrentAccount } from "@/shared/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
 import { canUseAppwriteTaskPage, listTasks, listTasksPage } from "@/shared/lib/appwrite/tasks";
-import { getTaskPage, parseTaskPageParam } from "@/features/tasks/utils/task-list-query";
+import { DEFAULT_TASK_FILTERS, getTaskPage, parseTaskPageParam } from "@/features/tasks/utils/task-list-query";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 
-const defaultFilters: TaskFilters = {
-  query: "",
-  tag: "",
-  status: "all",
-  priority: "all",
-  due: "",
-  risk: "",
-  date: "",
-  range: "",
-  sort: "due_asc",
-};
-
 export async function getTaskPageInitialData(
-  filters: TaskFilters = defaultFilters,
+  filters: TaskFilters = DEFAULT_TASK_FILTERS,
   pageValue?: string,
 ): Promise<TaskPageInitialData | null> {
   const sessionSecret = await getAppwriteSessionSecret();

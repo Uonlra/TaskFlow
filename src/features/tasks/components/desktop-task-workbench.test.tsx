@@ -82,6 +82,43 @@ describe("DesktopTaskWorkbench keyboard path", () => {
     expect(toolbar).toContainElement(screen.getByRole("button", { name: "新建任务" }));
   });
 
+  it("切换分类时应用各分类对应的状态和排序", async () => {
+    const user = userEvent.setup();
+    const onFiltersChange = vi.fn();
+    render(
+      <ToastProvider>
+        <DesktopTaskWorkbench
+          tasks={tasks}
+          totalTasks={tasks}
+          filters={filters}
+          isLoading={false}
+          onFiltersChange={onFiltersChange}
+          onResetFilters={vi.fn()}
+          onCreateTask={vi.fn()}
+          onImportTasks={vi.fn(async () => 0)}
+          onUpdateTask={vi.fn()}
+          onUpdateStatus={vi.fn()}
+          onDeleteTask={vi.fn()}
+        />
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: /未完成/ }));
+    expect(onFiltersChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "active", due: "", sort: "created_asc" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: /近期/ }));
+    expect(onFiltersChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "active", due: "near", sort: "due_asc" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: /全部/ }));
+    expect(onFiltersChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "all", due: "", sort: "created_asc" }),
+    );
+  });
+
   it("通过键盘激活任务行后同步更新详情面板", async () => {
     const user = userEvent.setup();
     render(

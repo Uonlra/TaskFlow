@@ -76,13 +76,13 @@ vi.mock("@/features/tasks/components/desktop-task-workbench", () => ({
 const filters: TaskFilters = {
   query: "",
   tag: "",
-  status: "all",
+  status: "active",
   priority: "all",
   due: "",
   risk: "",
   date: "",
   range: "",
-  sort: "due_asc",
+  sort: "created_asc",
 };
 
 const initialData = buildPageData(task("initial", "初始任务"));

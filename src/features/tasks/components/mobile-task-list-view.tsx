@@ -37,9 +37,9 @@ type QuickFilter = {
 
 const quickFilters: QuickFilter[] = [
   { key: "near", label: "近期", filters: { status: "active", due: TASK_DUE_FILTERS.near, sort: "due_asc" } },
-  { key: "active", label: "未完成", filters: { status: "active", due: "", sort: "due_asc" } },
+  { key: "active", label: "未完成", filters: { status: "active", due: "", sort: "created_asc" } },
   { key: "done", label: "已完成", filters: { status: "done", due: "", sort: "updated_desc" } },
-  { key: "all", label: "全部", filters: { status: "all", due: "", sort: "due_asc" } },
+  { key: "all", label: "全部", filters: { status: "all", due: "", sort: "created_asc" } },
 ];
 
 const priorityLabel: Record<Task["priority"], string> = {
