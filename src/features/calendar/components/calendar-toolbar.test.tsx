@@ -37,4 +37,28 @@ describe("CalendarToolbar", () => {
     expect(onDateChange).toHaveBeenCalledWith(expect.any(Date));
     expect(onDateChange.mock.calls[0][0].getMonth()).toBe(7);
   });
+
+  it("展示选中日期负载并联动逾期风险", () => {
+    render(
+      <CalendarToolbar
+        date={new Date(2026, 8, 4)}
+        dateParam="2026-09-04"
+        range="week"
+        rangeLabel="本周"
+        isSyncing={false}
+        isAccountEmpty={false}
+        selectedTaskCount={5}
+        selectedDoneCount={2}
+        upcomingCount={3}
+        overdueCount={1}
+        nearDueCount={2}
+        onDateChange={vi.fn()}
+        onRangeChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("2/5 项完成 · 3 项即将到期")).toBeInTheDocument();
+    expect(screen.getByText("1 项逾期")).toBeInTheDocument();
+    expect(document.querySelector(".calendar-toolbar.is-risk")).toBeInTheDocument();
+  });
 });
