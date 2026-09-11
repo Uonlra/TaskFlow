@@ -59,6 +59,111 @@
   justify-content: flex-end;
 }
 
+.stats-toolbar__visuals {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 16px;
+  border-right: 1px solid var(--border);
+}
+
+.stats-toolbar__visuals.is-risk .stats-toolbar__ring-value,
+.stats-toolbar__visuals.is-risk .stats-toolbar__sparkline polyline {
+  stroke: var(--danger);
+}
+
+.stats-toolbar__visuals.is-risk .stats-toolbar__sparkline circle {
+  stroke: var(--danger);
+}
+
+.stats-toolbar__ring {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 42px;
+}
+
+.stats-toolbar__ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.stats-toolbar__ring circle {
+  fill: none;
+  stroke-width: 4;
+}
+
+.stats-toolbar__ring-track {
+  stroke: var(--progress-track);
+}
+
+.stats-toolbar__ring-value {
+  stroke: var(--primary);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 620ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stats-toolbar__ring b {
+  position: relative;
+  color: var(--foreground);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.stats-toolbar__sparkline {
+  width: 84px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.stats-toolbar__sparkline svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.stats-toolbar__sparkline polyline {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.8;
+  stroke-dasharray: 140;
+  stroke-dashoffset: 140;
+  animation: stats-toolbar-sparkline-in 700ms 100ms ease-out forwards;
+}
+
+.stats-toolbar__sparkline circle {
+  fill: var(--surface-soft);
+  stroke: var(--primary);
+  stroke-width: 1.5;
+  opacity: 0;
+  transition:
+    r 160ms ease,
+    opacity 160ms ease,
+    fill 160ms ease;
+}
+
+.stats-toolbar__sparkline:hover circle,
+.stats-toolbar__sparkline circle:focus-visible {
+  opacity: 1;
+}
+
+.stats-toolbar__sparkline circle:hover,
+.stats-toolbar__sparkline circle:focus-visible {
+  r: 3.5;
+  fill: var(--primary);
+  outline: none;
+}
+
 .stats-toolbar__signal {
   min-width: 0;
   display: inline-flex;
@@ -81,6 +186,19 @@
 
 .stats-toolbar__signal-dot.is-pulsing {
   animation: stats-toolbar-pulse 1.3s ease-in-out infinite;
+}
+
+.stats-toolbar__signal-dot.is-risk {
+  background: var(--danger);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+.stats-toolbar.is-risk .stats-toolbar__summary-text {
+  color: var(--danger);
+}
+
+.stats-toolbar.is-risk .stats-toolbar__progress span {
+  background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 54%, #f59e0b));
 }
 
 .stats-toolbar__summary-text {
@@ -136,6 +254,12 @@
   50% {
     opacity: 1;
     transform: scale(1.15);
+  }
+}
+
+@keyframes stats-toolbar-sparkline-in {
+  to {
+    stroke-dashoffset: 0;
   }
 }
 
@@ -527,6 +651,15 @@
     flex: 1 1 auto;
   }
 
+  .stats-toolbar__visuals {
+    padding-right: 10px;
+    gap: 7px;
+  }
+
+  .stats-toolbar__sparkline {
+    width: 58px;
+  }
+
   .stats-toolbar__summary-text {
     max-width: 150px;
   }
@@ -590,6 +723,14 @@
 
   .stats-toolbar__progress span {
     transition: none;
+  }
+
+  .stats-toolbar__ring-value,
+  .stats-toolbar__sparkline polyline,
+  .stats-toolbar__sparkline circle {
+    animation: none;
+    transition: none;
+    stroke-dashoffset: 0;
   }
 }
 
