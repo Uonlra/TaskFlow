@@ -22,6 +22,26 @@ describe("StatsToolbar", () => {
     await user.click(screen.getByRole("button", { name: "全部" }));
     expect(onRangeChange).toHaveBeenCalledWith("all");
   });
+
+  it("联动展示完成率可视化与风险状态", () => {
+    render(
+      <StatsToolbar
+        range="week"
+        isSyncing={false}
+        onRangeChange={vi.fn()}
+        totalCount={10}
+        completionRate={65}
+        overdueCount={2}
+        trend={[{ label: "周一", date: "2026-09-07", completed: 2, created: 3 }]}
+      />,
+    );
+
+    expect(screen.getByText("2 项逾期需关注")).toBeInTheDocument();
+    expect(document.querySelector(".stats-toolbar.is-risk")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "当前范围完成率" })).toHaveAttribute("aria-valuenow", "65");
+    expect(screen.getByRole("img", { name: "近期任务趋势，悬停数据点查看详情" })).toBeInTheDocument();
+    expect(screen.getByLabelText("周一：完成 2，新增 3")).toBeInTheDocument();
+  });
 });
 
 describe("buildStatsInsight", () => {

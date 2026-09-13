@@ -72,6 +72,40 @@ describe("DashboardRangeMenu", () => {
     });
     expect(screen.getByRole("dialog", { name: "筛选优先处理任务" })).toBeInTheDocument();
   });
+
+  it("displays the active filter count in the readable filter entry", () => {
+    renderMenu({
+      filters: {
+        ...initialFilters,
+        status: "in_progress",
+        due: "near",
+      },
+    });
+
+    const filterButton = screen.getByRole("button", { name: "筛选优先处理任务（已启用）" });
+
+    expect(filterButton).toHaveTextContent("筛选");
+    expect(filterButton).toHaveTextContent("2");
+    expect(filterButton).toHaveClass("is-active");
+  });
+
+  it("groups low-frequency dashboard links in the more menu", async () => {
+    const user = userEvent.setup();
+
+    renderMenu();
+    const moreTrigger = document.querySelector<HTMLElement>(".dashboard-range-menu__more > summary");
+    expect(moreTrigger).toBeInTheDocument();
+    await user.click(moreTrigger!);
+
+    const menu = screen.getByRole("menu", { name: "更多总览操作" });
+    expect(within(menu).getByRole("menuitem", { name: "查看任务列表" })).toHaveAttribute("href", "/tasks");
+    expect(within(menu).getByRole("menuitem", { name: "查看统计分析" })).toHaveAttribute("href", "/stats");
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    await waitFor(() => {
+      expect(document.querySelector(".dashboard-range-menu__more")).not.toHaveAttribute("open");
+    });
+  });
 });
 
 function renderMenu({

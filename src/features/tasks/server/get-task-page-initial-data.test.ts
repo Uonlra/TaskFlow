@@ -55,7 +55,11 @@ describe("getTaskPageInitialData", () => {
       ...page,
     });
     expect(mocks.getCurrentAccount).toHaveBeenCalledWith("session-secret");
-    expect(mocks.listTasksPage).toHaveBeenCalledWith("session-secret", expect.any(Object), 1);
+    expect(mocks.listTasksPage).toHaveBeenCalledWith(
+      "session-secret",
+      expect.objectContaining({ status: "active", sort: "created_asc" }),
+      1,
+    );
   });
 
   it("预取失败时返回 null 以启用客户端同步兜底", async () => {

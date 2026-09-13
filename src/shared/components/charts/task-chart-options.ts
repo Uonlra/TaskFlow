@@ -1,4 +1,4 @@
-import type { EChartsOption } from "echarts";
+import type { EChartsOption, TooltipComponentFormatterCallbackParams, TooltipComponentOption } from "echarts";
 
 import type {
   DashboardDistributionItem,
@@ -21,6 +21,11 @@ export function buildTaskTrendOption(trend: DashboardTrendPoint[], options: { sp
     tooltip: {
       trigger: "axis",
       ...tooltipBase,
+      axisPointer: {
+        type: "line",
+        lineStyle: { color: "#94a3b8", type: "dashed" },
+      },
+      formatter: formatAxisTooltip,
     },
     legend: {
       top: 0,
@@ -97,6 +102,7 @@ export function buildTaskStatusOption(items: Array<DashboardDistributionItem<Tas
     tooltip: {
       trigger: "item",
       ...tooltipBase,
+      formatter: formatItemTooltip,
     },
     series: [
       {
@@ -126,6 +132,7 @@ export function buildTaskPriorityOption(items: Array<DashboardDistributionItem<T
     tooltip: {
       trigger: "item",
       ...tooltipBase,
+      formatter: formatItemTooltip,
     },
     grid: {
       top: 10,
@@ -190,6 +197,7 @@ export function buildTaskTagTopOption(items: DashboardTagTopItem[]): EChartsOpti
     tooltip: {
       trigger: "item",
       ...tooltipBase,
+      formatter: formatItemTooltip,
     },
     grid: {
       top: 8,
@@ -243,12 +251,56 @@ export function buildTaskTagTopOption(items: DashboardTagTopItem[]): EChartsOpti
   };
 }
 
-const tooltipBase = {
-  backgroundColor: "rgba(255,255,255,0.96)",
-  borderColor: "rgba(226,232,240,0.9)",
+const tooltipBase: Pick<TooltipComponentOption, "confine" | "padding" | "borderWidth"> = {
+  confine: true,
+  padding: [8, 10],
   borderWidth: 1,
-  textStyle: {
-    color: "#111827",
-    fontSize: 12,
-  },
-} as const;
+};
+
+type ChartTooltipParams = TooltipComponentFormatterCallbackParams;
+
+function formatAxisTooltip(params: ChartTooltipParams) {
+  const items = Array.isArray(params) ? params : [params];
+  const title = escapeTooltipText(items[0]?.name ?? "");
+  const rows = items
+    .map(
+      (item) => `${item.marker ?? ""}${escapeTooltipText(item.seriesName ?? "数据")} ${formatTooltipValue(item.value)}`,
+    )
+    .join("<br />");
+
+  return `${title}<br />${rows}`;
+}
+
+function formatItemTooltip(params: ChartTooltipParams) {
+  const item = Array.isArray(params) ? params[0] : params;
+
+  if (!item) {
+    return "";
+  }
+
+  const percentage = typeof item.percent === "number" ? ` (${item.percent}%)` : "";
+
+  return `${item.marker ?? ""}${escapeTooltipText(item.name)} ${formatTooltipValue(item.value)}${percentage}`;
+}
+
+function formatTooltipValue(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.map((part) => escapeTooltipText(String(part))).join(" / ");
+  }
+
+  return escapeTooltipText(String(value ?? 0));
+}
+
+function escapeTooltipText(value: string) {
+  return value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+
+    return entities[character];
+  });
+}

@@ -219,7 +219,9 @@ export function buildTaskPageQueries(filters: TaskFilters) {
 
   appendDateFilters(queries, filters);
 
-  if (filters.sort === "created_desc") {
+  if (filters.sort === "created_asc") {
+    queries.push(queryOrderAsc("$createdAt"), queryOrderAsc("$id"));
+  } else if (filters.sort === "created_desc") {
     queries.push(queryOrderDesc("$createdAt"));
   } else if (filters.sort === "updated_desc") {
     queries.push(queryOrderDesc("$updatedAt"));

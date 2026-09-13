@@ -74,26 +74,16 @@ export function DashboardV2Shell({
   onStatusFilter,
 }: DashboardV2ShellProps) {
   const pageToolbar = (
-    <PageToolbar
-      accessibleTitle="总览"
-      className="dashboard-page-toolbar"
-      context={<PageToolbarTemporalContext rangeLabel={rangeLabel} />}
-      controls={
-        <DashboardRangeMenu
-          range={range}
-          options={rangeOptions}
-          onChange={onRangeChange}
-          filters={priorityFilters}
-          onFiltersChange={onPriorityFiltersChange}
-        />
-      }
-      primaryAction={
-        <TaskFormDialog
-          onSubmitTask={onCreateTask}
-          triggerLabel="新建任务"
-          triggerClassName="tesla-action tesla-action--primary page-toolbar__primary-action"
-        />
-      }
+    <DashboardToolbar
+      stats={stats}
+      range={range}
+      rangeLabel={rangeLabel}
+      isLoading={isLoading}
+      rangeOptions={rangeOptions}
+      onRangeChange={onRangeChange}
+      priorityFilters={priorityFilters}
+      onPriorityFiltersChange={onPriorityFiltersChange}
+      onCreateTask={onCreateTask}
     />
   );
 
@@ -166,6 +156,79 @@ export function DashboardV2Shell({
         </aside>
       </div>
     </section>
+  );
+}
+
+export function DashboardToolbar({
+  stats,
+  range,
+  rangeLabel,
+  isLoading,
+  rangeOptions,
+  onRangeChange,
+  priorityFilters,
+  onPriorityFiltersChange,
+  onCreateTask,
+}: Pick<
+  DashboardV2ShellProps,
+  | "stats"
+  | "range"
+  | "rangeLabel"
+  | "isLoading"
+  | "rangeOptions"
+  | "onRangeChange"
+  | "priorityFilters"
+  | "onPriorityFiltersChange"
+  | "onCreateTask"
+>) {
+  const hasRisk = !isLoading && stats.overdueCount > 0;
+  const summary = isLoading
+    ? "正在同步任务状态"
+    : hasRisk
+      ? `${stats.overdueCount} 项逾期需要处理`
+      : stats.activeCount
+        ? `待处理 ${stats.activeCount} 项 · 进行中 ${stats.inProgressCount} 项`
+        : "当前范围任务已完成";
+
+  return (
+    <PageToolbar
+      accessibleTitle="总览"
+      className={hasRisk ? "dashboard-page-toolbar is-risk" : "dashboard-page-toolbar"}
+      context={
+        <div className="dashboard-toolbar__context">
+          <div className="dashboard-toolbar__identity">
+            <span className="dashboard-toolbar__eyebrow">FOCUS MODE</span>
+            <strong>工作总览</strong>
+          </div>
+          <PageToolbarTemporalContext rangeLabel={rangeLabel} />
+        </div>
+      }
+      controls={
+        <div className="dashboard-toolbar__controls">
+          <div className="dashboard-toolbar__signal" aria-live="polite">
+            <span className={hasRisk ? "dashboard-toolbar__signal-dot is-risk" : "dashboard-toolbar__signal-dot"} />
+            <span className="dashboard-toolbar__signal-summary">{summary}</span>
+            <span className="dashboard-toolbar__meter" aria-label={`当前范围完成率 ${stats.completionRate}%`}>
+              <span style={{ width: `${isLoading ? 0 : stats.completionRate}%` }} />
+            </span>
+          </div>
+          <DashboardRangeMenu
+            range={range}
+            options={rangeOptions}
+            onChange={onRangeChange}
+            filters={priorityFilters}
+            onFiltersChange={onPriorityFiltersChange}
+          />
+        </div>
+      }
+      primaryAction={
+        <TaskFormDialog
+          onSubmitTask={onCreateTask}
+          triggerLabel="新建任务"
+          triggerClassName="tesla-action tesla-action--primary page-toolbar__primary-action"
+        />
+      }
+    />
   );
 }
 

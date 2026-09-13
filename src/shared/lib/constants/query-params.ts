@@ -54,7 +54,7 @@ export type BuildTasksHrefInput = {
   tag?: string;
   status?: TaskStatus | "active" | "all";
   priority?: TaskPriority | "all";
-  sort?: "created_desc" | "updated_desc" | "due_asc" | "priority_desc";
+  sort?: "created_asc" | "created_desc" | "updated_desc" | "due_asc" | "priority_desc";
   due?: TaskDueFilter;
   risk?: TaskRiskFilter;
   date?: string;
@@ -73,7 +73,15 @@ export type BuildCalendarHrefInput = {
 };
 
 export function buildTasksHref(input: BuildTasksHrefInput = {}) {
-  return buildHref(ROUTES.tasks, input, { keepAllKeys: [TASK_QUERY_KEYS.range] });
+  return buildHref(
+    ROUTES.tasks,
+    {
+      ...input,
+      status: input.status === "active" ? undefined : input.status,
+      sort: input.sort === "created_asc" ? undefined : input.sort,
+    },
+    { keepAllKeys: [TASK_QUERY_KEYS.range, TASK_QUERY_KEYS.status] },
+  );
 }
 
 export function buildStatsHref(input: BuildStatsHrefInput = {}) {

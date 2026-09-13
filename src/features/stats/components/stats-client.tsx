@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
@@ -16,7 +16,11 @@ import {
   buildTaskTrendOption,
 } from "@/shared/components/charts/task-chart-options";
 import { buildDashboardStats } from "@/features/tasks/utils/task-analytics";
-import type { DashboardAnalyticsRange, DashboardDistributionItem } from "@/features/tasks/utils/task-analytics";
+import type {
+  DashboardAnalyticsRange,
+  DashboardDistributionItem,
+  DashboardTrendPoint,
+} from "@/features/tasks/utils/task-analytics";
 import type { TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
 import {
   buildTasksHref,
@@ -80,7 +84,15 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   if (isAccountEmpty) {
     return (
       <section className="stats-shell stats-shell--empty">
-        <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+        <StatsToolbar
+          range={range}
+          onRangeChange={handleRangeChange}
+          isSyncing={isSyncing}
+          totalCount={stats.totalCount}
+          completionRate={stats.completionRate}
+          overdueCount={stats.overdueCount}
+          trend={stats.trend}
+        />
         <DataEmptyState
           title="还没有可统计的数据"
           description="创建任务并更新状态后，这里会生成趋势和分布。"
@@ -93,7 +105,15 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   if (isRangeEmpty) {
     return (
       <section className="stats-shell stats-shell--empty">
-        <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+        <StatsToolbar
+          range={range}
+          onRangeChange={handleRangeChange}
+          isSyncing={isSyncing}
+          totalCount={stats.totalCount}
+          completionRate={stats.completionRate}
+          overdueCount={stats.overdueCount}
+          trend={stats.trend}
+        />
         <DataEmptyState
           variant="table"
           title={`${rangeOptions.find((item) => item.value === range)?.label ?? "当前范围"}暂无统计数据`}
@@ -104,7 +124,15 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   }
   return (
     <section className="stats-shell">
-      <StatsToolbar range={range} onRangeChange={handleRangeChange} isSyncing={isSyncing} />
+      <StatsToolbar
+        range={range}
+        onRangeChange={handleRangeChange}
+        isSyncing={isSyncing}
+        totalCount={stats.totalCount}
+        completionRate={stats.completionRate}
+        overdueCount={stats.overdueCount}
+        trend={stats.trend}
+      />
       <StatsOverview
         completionRate={stats.completionRate}
         completedCount={stats.completedCount}
@@ -170,24 +198,213 @@ export function StatsToolbar({
   range,
   isSyncing,
   onRangeChange,
+  totalCount = 0,
+  completionRate = 0,
+  overdueCount = 0,
+  trend = [],
 }: {
   range: DashboardRangeValue;
   isSyncing: boolean;
   onRangeChange: (range: DashboardRangeValue) => void;
+  totalCount?: number;
+  completionRate?: number;
+  overdueCount?: number;
+  trend?: DashboardTrendPoint[];
 }) {
+  const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "本周";
+  const summary = buildStatsToolbarSummary({ totalCount, completionRate, overdueCount, isSyncing });
+  const progressValue = isSyncing ? 0 : Math.max(0, Math.min(100, completionRate));
+  const animatedProgressValue = useAnimatedNumber(progressValue);
+  const hasRisk = !isSyncing && overdueCount > 0;
+
   return (
-    <PageToolbar
-      accessibleTitle="统计"
-      className="stats-toolbar"
-      context={
-        <PageToolbarTemporalContext
-          rangeLabel={rangeOptions.find((item) => item.value === range)?.label ?? "本周"}
-          statusLabel={isSyncing ? "同步中" : undefined}
-        />
-      }
-      controls={<StatsRangeTabs range={range} onRangeChange={onRangeChange} />}
-    />
+    <>
+      <PageToolbar
+        accessibleTitle="统计"
+        className={hasRisk ? "stats-toolbar is-risk" : "stats-toolbar"}
+        context={
+          <div className="stats-toolbar__context">
+            <div className="stats-toolbar__identity">
+              <span className="stats-toolbar__eyebrow">WORKSPACE PULSE</span>
+              <strong>统计概览</strong>
+            </div>
+            <PageToolbarTemporalContext rangeLabel={rangeLabel} statusLabel={isSyncing ? "同步中" : undefined} />
+          </div>
+        }
+        controls={
+          <div className="stats-toolbar__controls">
+            <StatsToolbarVisuals completionRate={animatedProgressValue} trend={trend} isRisk={hasRisk} />
+            <div className="stats-toolbar__signal" aria-live="polite">
+              <span
+                className={
+                  isSyncing
+                    ? "stats-toolbar__signal-dot is-pulsing"
+                    : hasRisk
+                      ? "stats-toolbar__signal-dot is-risk"
+                      : "stats-toolbar__signal-dot"
+                }
+              />
+              <span key={`${range}-${summary}`} className="stats-toolbar__summary-text">
+                {summary}
+              </span>
+            </div>
+            <StatsRangeTabs range={range} onRangeChange={onRangeChange} />
+          </div>
+        }
+      />
+      <div
+        className="stats-toolbar__progress"
+        role="progressbar"
+        aria-label="当前范围完成率"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={progressValue}
+      >
+        <span style={{ width: `${animatedProgressValue}%` }} />
+      </div>
+    </>
   );
+}
+
+function useAnimatedNumber(target: number, duration = 520) {
+  const [value, setValue] = useState(target);
+  const valueRef = useRef(target);
+
+  useEffect(() => {
+    const from = valueRef.current;
+
+    if (from === target) {
+      return;
+    }
+
+    const start = performance.now();
+    let frame = 0;
+
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - (1 - progress) ** 3;
+      const nextValue = Math.round(from + (target - from) * eased);
+
+      valueRef.current = nextValue;
+      setValue(nextValue);
+
+      if (progress < 1) {
+        frame = window.requestAnimationFrame(tick);
+      }
+    };
+
+    frame = window.requestAnimationFrame(tick);
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [duration, target]);
+
+  return value;
+}
+
+function StatsToolbarVisuals({
+  completionRate,
+  trend,
+  isRisk,
+}: {
+  completionRate: number;
+  trend: DashboardTrendPoint[];
+  isRisk: boolean;
+}) {
+  const radius = 16;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference * (1 - completionRate / 100);
+  const sparkline = buildSparklineData(trend);
+
+  return (
+    <div className={isRisk ? "stats-toolbar__visuals is-risk" : "stats-toolbar__visuals"}>
+      <span className="stats-toolbar__ring" aria-hidden="true">
+        <svg viewBox="0 0 40 40" focusable="false">
+          <circle className="stats-toolbar__ring-track" cx="20" cy="20" r={radius} />
+          <circle
+            className="stats-toolbar__ring-value"
+            cx="20"
+            cy="20"
+            r={radius}
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+          />
+        </svg>
+        <b>{completionRate}</b>
+      </span>
+      <span className="stats-toolbar__sparkline" role="img" aria-label="近期任务趋势，悬停数据点查看详情">
+        <svg viewBox="0 0 96 28" preserveAspectRatio="none" focusable="false">
+          <polyline points={sparkline.polyline} />
+          {sparkline.points.map((point) => (
+            <circle
+              key={`${point.x}-${point.label}`}
+              cx={point.x}
+              cy={point.y}
+              r="2.25"
+              tabIndex={0}
+              aria-label={`${point.label}：完成 ${point.completed}，新增 ${point.created}`}
+            >
+              <title>
+                {point.label}：完成 {point.completed} · 新增 {point.created}
+              </title>
+            </circle>
+          ))}
+        </svg>
+      </span>
+    </div>
+  );
+}
+
+function buildSparklineData(trend: DashboardTrendPoint[]) {
+  const values = trend.flatMap((point) => [point.completed, point.created]);
+
+  if (values.length === 0 || values.every((value) => value === 0)) {
+    return { polyline: "0,24 16,24 32,24 48,24 64,24 80,24 96,24", points: [] };
+  }
+
+  const max = Math.max(1, ...values);
+  const points = trend.map((point, index) => {
+    const x = trend.length === 1 ? 48 : (index / (trend.length - 1)) * 96;
+    const value = point.completed + point.created;
+    const y = 24 - (value / (max * 2)) * 18;
+    return {
+      x: Number(x.toFixed(1)),
+      y: Number(Math.max(4, y).toFixed(1)),
+      label: point.label,
+      completed: point.completed,
+      created: point.created,
+    };
+  });
+
+  return {
+    polyline: points.map((point) => `${point.x},${point.y}`).join(" "),
+    points,
+  };
+}
+
+function buildStatsToolbarSummary({
+  totalCount,
+  completionRate,
+  overdueCount,
+  isSyncing,
+}: {
+  totalCount: number;
+  completionRate: number;
+  overdueCount: number;
+  isSyncing: boolean;
+}) {
+  if (isSyncing) {
+    return "正在同步最新数据";
+  }
+
+  if (totalCount === 0) {
+    return "等待任务数据";
+  }
+
+  if (overdueCount > 0) {
+    return `${overdueCount} 项逾期需关注`;
+  }
+
+  return `完成率 ${completionRate}% · ${totalCount} 项任务`;
 }
 
 function StatsOverview({

@@ -86,7 +86,7 @@ describe("MobileTaskListView", () => {
 
     await user.click(screen.getByRole("button", { name: "未完成" }));
     expect(onFiltersChange).toHaveBeenLastCalledWith(
-      expect.objectContaining({ status: "active", due: "", sort: "due_asc", date: "", range: "" }),
+      expect.objectContaining({ status: "active", due: "", sort: "created_asc", date: "", range: "" }),
     );
 
     await user.click(screen.getByRole("button", { name: "已完成" }));
@@ -96,7 +96,7 @@ describe("MobileTaskListView", () => {
 
     await user.click(screen.getByRole("button", { name: "全部" }));
     expect(onFiltersChange).toHaveBeenLastCalledWith(
-      expect.objectContaining({ status: "all", due: "", sort: "due_asc", query: "", tag: "", priority: "all" }),
+      expect.objectContaining({ status: "all", due: "", sort: "created_asc", query: "", tag: "", priority: "all" }),
     );
   });
 

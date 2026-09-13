@@ -372,6 +372,11 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
           rangeLabel={rangeLabel}
           isSyncing={false}
           isAccountEmpty={false}
+          selectedTaskCount={selectedDaySummary.total}
+          selectedDoneCount={selectedDaySummary.done}
+          upcomingCount={upcomingTasks.length}
+          overdueCount={attentionCounts.overdueCount}
+          nearDueCount={attentionCounts.nearDueCount}
           onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
           onRangeChange={(nextRange) => updateCalendar({ range: nextRange })}
         />
@@ -390,6 +395,11 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
           rangeLabel={rangeLabel}
           isSyncing={false}
           isAccountEmpty
+          selectedTaskCount={selectedDaySummary.total}
+          selectedDoneCount={selectedDaySummary.done}
+          upcomingCount={upcomingTasks.length}
+          overdueCount={attentionCounts.overdueCount}
+          nearDueCount={attentionCounts.nearDueCount}
           onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
           onRangeChange={(nextRange) => updateCalendar({ range: nextRange })}
         />
@@ -411,6 +421,11 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
         rangeLabel={rangeLabel}
         isSyncing={isSyncing}
         isAccountEmpty={isAccountEmpty}
+        selectedTaskCount={selectedDaySummary.total}
+        selectedDoneCount={selectedDaySummary.done}
+        upcomingCount={upcomingTasks.length}
+        overdueCount={attentionCounts.overdueCount}
+        nearDueCount={attentionCounts.nearDueCount}
         onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
         onRangeChange={(nextRange) => updateCalendar({ range: nextRange })}
       />
@@ -474,6 +489,11 @@ export function CalendarToolbar({
   rangeLabel,
   isSyncing,
   isAccountEmpty,
+  selectedTaskCount = 0,
+  selectedDoneCount = 0,
+  upcomingCount = 0,
+  overdueCount = 0,
+  nearDueCount = 0,
   onDateChange,
   onRangeChange,
 }: {
@@ -483,17 +503,36 @@ export function CalendarToolbar({
   rangeLabel: string;
   isSyncing: boolean;
   isAccountEmpty: boolean;
+  selectedTaskCount?: number;
+  selectedDoneCount?: number;
+  upcomingCount?: number;
+  overdueCount?: number;
+  nearDueCount?: number;
   onDateChange: (date: Date) => void;
   onRangeChange: (range: DashboardRangeValue) => void;
 }) {
   const statusLabel = isSyncing ? "同步中" : isAccountEmpty ? "暂无任务" : null;
+  const selectedProgress = selectedTaskCount ? Math.round((selectedDoneCount / selectedTaskCount) * 100) : 0;
+  const hasRisk = !isSyncing && overdueCount > 0;
+  const hasNearDue = !hasRisk && !isSyncing && nearDueCount > 0;
+  const loadSummary = isSyncing
+    ? "正在同步日程"
+    : selectedTaskCount
+      ? `${selectedDoneCount}/${selectedTaskCount} 项完成 · ${upcomingCount} 项即将到期`
+      : "当前日期暂无安排";
 
   return (
     <PageToolbar
       accessibleTitle="日历"
-      className="calendar-toolbar"
+      className={
+        hasRisk ? "calendar-toolbar is-risk" : hasNearDue ? "calendar-toolbar is-near-due" : "calendar-toolbar"
+      }
       context={
         <div className="calendar-toolbar__context">
+          <div className="calendar-toolbar__identity">
+            <span className="calendar-toolbar__eyebrow">CALENDAR FLOW</span>
+            <strong>日程安排</strong>
+          </div>
           <PageToolbarTemporalContext
             rangeLabel={rangeLabel}
             statusLabel={statusLabel ?? undefined}
@@ -511,6 +550,14 @@ export function CalendarToolbar({
       }
       controls={
         <div className="calendar-toolbar__controls">
+          <div className="calendar-toolbar__load" aria-live="polite">
+            <span className="calendar-toolbar__load-meter" aria-hidden="true">
+              <span style={{ width: `${selectedProgress}%` }} />
+            </span>
+            <span className="calendar-toolbar__load-summary">{loadSummary}</span>
+            {hasRisk ? <b className="calendar-toolbar__risk-label">{overdueCount} 项逾期</b> : null}
+            {!hasRisk && hasNearDue ? <b className="calendar-toolbar__near-label">{nearDueCount} 项临近</b> : null}
+          </div>
           <div className="calendar-range-tabs" role="group" aria-label="日历范围">
             {rangeOptions.map((option) => (
               <button

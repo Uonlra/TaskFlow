@@ -7,9 +7,11 @@ type TaskDetailPageProps = {
   params: Promise<{
     id: string;
   }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
+export default async function TaskDetailPage({ params, searchParams }: TaskDetailPageProps) {
   const { id } = await params;
-  return <TaskDetailClient id={id} />;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  return <TaskDetailClient id={id} initiallyEditing={resolvedSearchParams?.edit === "true"} />;
 }

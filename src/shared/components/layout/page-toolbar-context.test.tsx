@@ -18,7 +18,9 @@ describe("PageToolbarTemporalContext", () => {
 
     expect(screen.getByLabelText(/当前时间/)).toBeInTheDocument();
     expect(screen.getByText(/2026年9月6日/)).toBeInTheDocument();
-    expect(screen.getByText("14:32")).toBeInTheDocument();
+    const time = document.querySelector(".page-toolbar__clock-time");
+    expect(time).toHaveAttribute("dateTime", "2026-09-06T06:32:00.000Z");
+    expect(time).toHaveTextContent(/^\d{2}:\d{2}$/);
     expect(screen.getByText("本周")).toBeInTheDocument();
     expect(screen.getByText("同步中")).toHaveAttribute("role", "status");
   });

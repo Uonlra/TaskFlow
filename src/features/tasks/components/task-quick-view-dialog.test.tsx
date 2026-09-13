@@ -37,6 +37,7 @@ describe("TaskQuickViewDialog", () => {
     expect(screen.getByText("进行中")).toBeVisible();
     expect(screen.getByText("高优先级")).toBeVisible();
     expect(screen.getByText("#设计")).toBeVisible();
+    expect(screen.getByText("2026/08/24")).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "关闭任务查看" }));
     expect(onClose).toHaveBeenCalledOnce();

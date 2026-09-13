@@ -203,7 +203,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         onClose={() => setPreviewTask(null)}
         onEdit={(task) => {
           setPreviewTask(null);
-          router.push(`${ROUTES.tasks}/${task.id}`);
+          router.push(`${ROUTES.tasks}/${task.id}?edit=true`);
         }}
         onToggleComplete={handlePreviewStatus}
         onDelete={handlePreviewDelete}
@@ -229,6 +229,6 @@ function toTaskPreview(task: DashboardTaskPreview): Task {
     priority: task.priority,
     tags: task.tags,
     dueDate: task.dueDate,
-    createdAt: "",
+    createdAt: task.createdAt,
   };
 }

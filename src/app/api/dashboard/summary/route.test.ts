@@ -65,7 +65,9 @@ describe("/api/dashboard/summary", () => {
     expect(response.status).toBe(200);
     expect(payload.hasAnyTasks).toBe(true);
     expect(payload.stats.totalCount).toBe(1);
-    expect(payload.stats.focusTasks).toEqual([expect.objectContaining({ id: "high-1" })]);
+    expect(payload.stats.focusTasks).toEqual([
+      expect.objectContaining({ id: "high-1", createdAt: "2026-08-23T08:00:00.000Z" }),
+    ]);
     expect(mocks.listTasksForDashboard).toHaveBeenCalledWith("session-secret", "all", expect.any(NextRequest));
   });
 });

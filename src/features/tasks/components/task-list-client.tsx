@@ -24,21 +24,12 @@ import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
-import { DEFAULT_TASK_PAGE_SIZE, getTaskPage, parseTaskPageParam } from "@/features/tasks/utils/task-list-query";
-
-const SETTINGS_STORAGE_KEY = "u-task-settings";
-
-const initialFilters: TaskFilters = {
-  query: "",
-  tag: "",
-  status: "all",
-  priority: "all",
-  due: "",
-  risk: "",
-  date: "",
-  range: "",
-  sort: "due_asc",
-};
+import {
+  DEFAULT_TASK_FILTERS,
+  DEFAULT_TASK_PAGE_SIZE,
+  getTaskPage,
+  parseTaskPageParam,
+} from "@/features/tasks/utils/task-list-query";
 
 type TaskListClientProps = {
   initialFilters?: TaskFilters;
@@ -46,7 +37,7 @@ type TaskListClientProps = {
 };
 
 export function TaskListClient({
-  initialFilters: initialFiltersProp = initialFilters,
+  initialFilters: initialFiltersProp = DEFAULT_TASK_FILTERS,
   initialData = null,
 }: TaskListClientProps) {
   const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
@@ -215,10 +206,6 @@ export function TaskListClient({
       sort: searchParams.get("sort"),
     });
 
-    if (!searchParams.get("sort")) {
-      nextFilters.sort = getPreferredTaskSort();
-    }
-
     setFilters((current) => (areFiltersEqual(current, nextFilters) ? current : nextFilters));
   }, [searchParams]);
 
@@ -319,13 +306,13 @@ export function TaskListClient({
 
     syncParam(params, TASK_QUERY_KEYS.query, nextFilters.query, "");
     syncParam(params, TASK_QUERY_KEYS.tag, nextFilters.tag, "");
-    syncParam(params, TASK_QUERY_KEYS.status, nextFilters.status, "all");
+    syncParam(params, TASK_QUERY_KEYS.status, nextFilters.status, DEFAULT_TASK_FILTERS.status);
     syncParam(params, TASK_QUERY_KEYS.priority, nextFilters.priority, "all");
     syncParam(params, TASK_QUERY_KEYS.due, nextFilters.due, "");
     syncParam(params, TASK_QUERY_KEYS.risk, nextFilters.risk, "");
     syncParam(params, TASK_QUERY_KEYS.date, nextFilters.date, "");
     syncParam(params, TASK_QUERY_KEYS.range, nextFilters.range, "");
-    syncParam(params, TASK_QUERY_KEYS.sort, nextFilters.sort, "due_asc");
+    syncParam(params, TASK_QUERY_KEYS.sort, nextFilters.sort, DEFAULT_TASK_FILTERS.sort);
     params.delete(TASK_QUERY_KEYS.page);
 
     const query = params.toString();
@@ -333,7 +320,7 @@ export function TaskListClient({
   };
 
   const handleResetFilters = () => {
-    handleFiltersChange(initialFilters);
+    handleFiltersChange(DEFAULT_TASK_FILTERS);
   };
 
   const handlePageChange = (nextPage: number) => {
@@ -463,27 +450,19 @@ function TaskLoadError({ message, onRetry, isInitial }: { message: string; onRet
   );
 }
 
-function getPreferredTaskSort(): TaskFilters["sort"] {
-  try {
-    const saved = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
-    const taskSort = saved ? (JSON.parse(saved) as { taskSort?: string }).taskSort : undefined;
-    if (taskSort === "优先级优先") return "priority_desc";
-  } catch {
-    // The default ordering is retained when local preferences cannot be read.
-  }
-
-  return "due_asc";
-}
-
 function isAbortError(error: unknown) {
   return error instanceof Error && error.name === "AbortError";
 }
 
 function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null | undefined>>): TaskFilters {
   const status =
-    input.status === "todo" || input.status === "in_progress" || input.status === "done" || input.status === "active"
+    input.status === "todo" ||
+    input.status === "in_progress" ||
+    input.status === "done" ||
+    input.status === "active" ||
+    input.status === "all"
       ? input.status
-      : "all";
+      : DEFAULT_TASK_FILTERS.status;
   const priority =
     input.priority === "low" || input.priority === "medium" || input.priority === "high" ? input.priority : "all";
   const due =
@@ -501,12 +480,13 @@ function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null
       ? input.risk
       : "";
   const sort =
+    input.sort === "created_asc" ||
     input.sort === "created_desc" ||
     input.sort === "updated_desc" ||
     input.sort === "priority_desc" ||
     input.sort === "due_asc"
       ? input.sort
-      : "due_asc";
+      : DEFAULT_TASK_FILTERS.sort;
   const parsedDate = parseTaskDateParam(input.date);
   const date = parsedDate ? formatTaskDateParam(parsedDate) : "";
   const parsedRange = parseTaskRange(input.range);
@@ -539,13 +519,13 @@ function buildTaskPageParams(filters: TaskFilters, page: number) {
   const entries: Array<[string, string, string]> = [
     [TASK_QUERY_KEYS.query, filters.query, ""],
     [TASK_QUERY_KEYS.tag, filters.tag, ""],
-    [TASK_QUERY_KEYS.status, filters.status, "all"],
+    [TASK_QUERY_KEYS.status, filters.status, DEFAULT_TASK_FILTERS.status],
     [TASK_QUERY_KEYS.priority, filters.priority, "all"],
     [TASK_QUERY_KEYS.due, filters.due, ""],
     [TASK_QUERY_KEYS.risk, filters.risk, ""],
     [TASK_QUERY_KEYS.date, filters.date, ""],
     [TASK_QUERY_KEYS.range, filters.range, ""],
-    [TASK_QUERY_KEYS.sort, filters.sort, "due_asc"],
+    [TASK_QUERY_KEYS.sort, filters.sort, DEFAULT_TASK_FILTERS.sort],
   ];
 
   entries.forEach(([key, value, fallback]) => {
@@ -602,7 +582,7 @@ function buildActiveFilterLabels(filters: TaskFilters) {
     labels.push(`标签：${filters.tag.trim()}`);
   }
 
-  if (filters.status !== "all") {
+  if (filters.status !== DEFAULT_TASK_FILTERS.status) {
     labels.push(statusFilterLabels[filters.status]);
   }
 
@@ -632,7 +612,7 @@ function buildActiveFilterLabels(filters: TaskFilters) {
     labels.push("全部日期");
   }
 
-  if (filters.sort !== "due_asc") {
+  if (filters.sort !== DEFAULT_TASK_FILTERS.sort) {
     labels.push(sortFilterLabels[filters.sort]);
   }
 
@@ -640,6 +620,7 @@ function buildActiveFilterLabels(filters: TaskFilters) {
 }
 
 const statusFilterLabels = {
+  all: "全部状态",
   active: "未完成",
   todo: "待开始",
   in_progress: "进行中",
@@ -667,6 +648,7 @@ const riskFilterLabels = {
 } as const;
 
 const sortFilterLabels = {
+  created_asc: "创建顺序",
   created_desc: "最新创建",
   updated_desc: "最近更新",
   priority_desc: "优先级排序",
