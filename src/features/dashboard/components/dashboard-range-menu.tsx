@@ -9,6 +9,7 @@ import { CustomSelect, type CustomSelectOption } from "@/shared/components/commo
 import type { TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
 import type { DashboardAnalyticsRange } from "@/features/tasks/utils/task-analytics";
 import type { TaskDueFilter } from "@/shared/lib/constants/query-params";
+import { ROUTES } from "@/shared/lib/constants/routes";
 
 export type DashboardRangeOption = { value: DashboardAnalyticsRange; label: string };
 
@@ -29,9 +30,11 @@ export type DashboardPriorityFilters = {
 export function DashboardRangeMenu({ range, options, onChange, filters, onFiltersChange }: DashboardRangeMenuProps) {
   const filterButtonRef = useRef<HTMLButtonElement | null>(null);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
+  const moreMenuRef = useRef<HTMLDetailsElement | null>(null);
   const filterMenuId = useId();
   const [isMounted, setIsMounted] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [filterMenuStyle, setFilterMenuStyle] = useState<CSSProperties | null>(null);
   const hasActiveFilters = filters.status !== "all" || filters.priority !== "all" || filters.due !== "";
   const activeFilterCount =
@@ -76,6 +79,35 @@ export function DashboardRangeMenu({ range, options, onChange, filters, onFilter
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isFilterOpen]);
+
+  useEffect(() => {
+    if (!isMoreOpen) return;
+
+    const closeMoreMenu = (event: MouseEvent) => {
+      const menu = moreMenuRef.current;
+
+      if (menu && !menu.contains(event.target as Node)) {
+        menu.open = false;
+        setIsMoreOpen(false);
+      }
+    };
+    const closeMoreMenuOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        moreMenuRef.current?.removeAttribute("open");
+        setIsMoreOpen(false);
+        moreMenuRef.current?.querySelector<HTMLElement>("summary")?.focus();
+      }
+    };
+
+    window.addEventListener("mousedown", closeMoreMenu);
+    window.addEventListener("keydown", closeMoreMenuOnEscape);
+
+    return () => {
+      window.removeEventListener("mousedown", closeMoreMenu);
+      window.removeEventListener("keydown", closeMoreMenuOnEscape);
+    };
+  }, [isMoreOpen]);
 
   useEffect(() => {
     if (!isFilterOpen || !filterButtonRef.current) {
@@ -136,7 +168,8 @@ export function DashboardRangeMenu({ range, options, onChange, filters, onFilter
           title={hasActiveFilters ? "筛选优先处理任务（已启用）" : "筛选优先处理任务"}
           onClick={() => setIsFilterOpen((current) => !current)}
         >
-          <span aria-hidden="true" />
+          <span className="dashboard-range-menu__filter-icon" aria-hidden="true" />
+          <span className="dashboard-range-menu__filter-label">筛选</span>
           {hasActiveFilters ? <b aria-hidden="true">{activeFilterCount}</b> : null}
         </button>
         {isFilterOpen && isMounted && filterMenuStyle
@@ -194,12 +227,21 @@ export function DashboardRangeMenu({ range, options, onChange, filters, onFilter
             )
           : null}
       </div>
-      <details className="dashboard-range-menu__more">
+      <details
+        ref={moreMenuRef}
+        className="dashboard-range-menu__more"
+        onToggle={(event) => setIsMoreOpen(event.currentTarget.open)}
+      >
         <summary aria-label="更多总览操作" title="更多操作">
           <span aria-hidden="true" />
         </summary>
-        <div className="dashboard-range-menu__more-menu">
-          <Link href="/tasks">查看任务列表</Link>
+        <div className="dashboard-range-menu__more-menu" role="menu" aria-label="更多总览操作">
+          <Link href={ROUTES.tasks} role="menuitem">
+            查看任务列表
+          </Link>
+          <Link href={ROUTES.stats} role="menuitem">
+            查看统计分析
+          </Link>
         </div>
       </details>
     </div>
