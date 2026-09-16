@@ -1,3 +1,4 @@
+import "@/styles/task-detail.css";
 import "@/styles/tasks.css";
 import "@/styles/responsive-tasks.css";
 

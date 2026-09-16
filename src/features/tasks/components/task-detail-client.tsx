@@ -85,7 +85,7 @@ export function TaskDetailClient({ id, initiallyEditing = false }: { id: string;
   if (isConfigured && (isDetailLoading || isLoading) && !task) {
     return (
       <PageContainer>
-        <section className="task-detail-state task-detail-state--loading">
+        <section className="task-detail-state">
           <p>正在从 Appwrite 读取任务详情...</p>
         </section>
       </PageContainer>

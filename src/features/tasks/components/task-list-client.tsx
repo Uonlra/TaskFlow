@@ -8,18 +8,8 @@ import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { MobileTaskListView } from "@/features/tasks/components/mobile-task-list-view";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task, TaskPageInitialData } from "@/features/tasks/types/task.types";
-import {
-  formatTaskDateParam,
-  hasActiveTaskDateRangeFilter,
-  parseTaskDateParam,
-} from "@/features/tasks/utils/task-date-filters";
-import {
-  DASHBOARD_RANGE_VALUES,
-  TASK_DUE_FILTERS,
-  TASK_QUERY_KEYS,
-  TASK_RISK_FILTERS,
-  type DashboardRangeValue,
-} from "@/shared/lib/constants/query-params";
+import { hasActiveTaskDateRangeFilter, parseTaskDateParam } from "@/features/tasks/utils/task-date-filters";
+import { DASHBOARD_RANGE_VALUES, TASK_QUERY_KEYS, type DashboardRangeValue } from "@/shared/lib/constants/query-params";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
 import { useToast } from "@/shared/providers/toast-provider";
@@ -28,6 +18,7 @@ import {
   DEFAULT_TASK_FILTERS,
   DEFAULT_TASK_PAGE_SIZE,
   getTaskPage,
+  parseTaskFiltersFromParams,
   parseTaskPageParam,
 } from "@/features/tasks/utils/task-list-query";
 
@@ -190,26 +181,13 @@ export function TaskListClient({
   const categoryCounts = visiblePageData?.categoryCounts ?? { near: 0, active: 0, done: 0, all: 0 };
   const visibleIsLoading =
     pageLoading || (hasConfirmedUserMismatch && !visiblePageData) || (isAuthLoading && !canUseInitialData);
-  const error = pageError;
-  const hasInitialLoadError = Boolean(error && !visiblePageData);
+  const hasInitialLoadError = Boolean(pageError && !visiblePageData);
 
   useEffect(() => {
-    const nextFilters = parseTaskFilters({
-      query: searchParams.get("query"),
-      tag: searchParams.get("tag"),
-      status: searchParams.get("status"),
-      priority: searchParams.get("priority"),
-      due: searchParams.get("due"),
-      risk: searchParams.get("risk"),
-      date: searchParams.get("date"),
-      range: searchParams.get("range"),
-      sort: searchParams.get("sort"),
-    });
+    const nextFilters = parseTaskFiltersFromParams(searchParams);
 
     setFilters((current) => (areFiltersEqual(current, nextFilters) ? current : nextFilters));
   }, [searchParams]);
-
-  const filteredTasks = visibleTasks;
 
   const activeFilterLabels = useMemo(() => buildActiveFilterLabels(filters), [filters]);
 
@@ -372,12 +350,14 @@ export function TaskListClient({
 
   return (
     <>
-      {error ? <TaskLoadError message={error} onRetry={() => void loadPage()} isInitial={hasInitialLoadError} /> : null}
+      {pageError ? (
+        <TaskLoadError message={pageError} onRetry={() => void loadPage()} isInitial={hasInitialLoadError} />
+      ) : null}
       {hasInitialLoadError ? null : (
         <>
           <div className="tasks-mobile-only">
             <MobileTaskListView
-              tasks={filteredTasks}
+              tasks={visibleTasks}
               totalCount={totalCount}
               categoryCounts={categoryCounts}
               page={page}
@@ -408,7 +388,7 @@ export function TaskListClient({
               </section>
             ) : null}
             <DesktopTaskWorkbench
-              tasks={filteredTasks}
+              tasks={visibleTasks}
               totalCount={totalCount}
               categoryCounts={categoryCounts}
               page={page}
@@ -452,57 +432,6 @@ function TaskLoadError({ message, onRetry, isInitial }: { message: string; onRet
 
 function isAbortError(error: unknown) {
   return error instanceof Error && error.name === "AbortError";
-}
-
-function parseTaskFilters(input: Partial<Record<keyof TaskFilters, string | null | undefined>>): TaskFilters {
-  const status =
-    input.status === "todo" ||
-    input.status === "in_progress" ||
-    input.status === "done" ||
-    input.status === "active" ||
-    input.status === "all"
-      ? input.status
-      : DEFAULT_TASK_FILTERS.status;
-  const priority =
-    input.priority === "low" || input.priority === "medium" || input.priority === "high" ? input.priority : "all";
-  const due =
-    input.due === TASK_DUE_FILTERS.near ||
-    input.due === TASK_DUE_FILTERS.today ||
-    input.due === TASK_DUE_FILTERS.upcoming ||
-    input.due === TASK_DUE_FILTERS.overdue
-      ? input.due
-      : "";
-  const risk =
-    input.risk === TASK_RISK_FILTERS.overdue ||
-    input.risk === TASK_RISK_FILTERS.high ||
-    input.risk === TASK_RISK_FILTERS.medium ||
-    input.risk === TASK_RISK_FILTERS.low
-      ? input.risk
-      : "";
-  const sort =
-    input.sort === "created_asc" ||
-    input.sort === "created_desc" ||
-    input.sort === "updated_desc" ||
-    input.sort === "priority_desc" ||
-    input.sort === "due_asc"
-      ? input.sort
-      : DEFAULT_TASK_FILTERS.sort;
-  const parsedDate = parseTaskDateParam(input.date);
-  const date = parsedDate ? formatTaskDateParam(parsedDate) : "";
-  const parsedRange = parseTaskRange(input.range);
-  const range = parsedRange;
-
-  return {
-    query: input.query ?? "",
-    tag: input.tag ?? "",
-    status,
-    priority,
-    due,
-    risk,
-    date,
-    range,
-    sort,
-  };
 }
 
 function syncParam(params: URLSearchParams, key: string, value: string, fallbackValue: string) {
@@ -552,18 +481,6 @@ function areFiltersEqual(left: TaskFilters, right: TaskFilters) {
 
 function hasActiveDateRangeFilter(date: string, range: DashboardRangeValue | "") {
   return hasActiveTaskDateRangeFilter({ date: parseTaskDateParam(date), range });
-}
-
-function parseTaskRange(value: string | null | undefined): DashboardRangeValue | "" {
-  if (
-    value === DASHBOARD_RANGE_VALUES.today ||
-    value === DASHBOARD_RANGE_VALUES.week ||
-    value === DASHBOARD_RANGE_VALUES.all
-  ) {
-    return value;
-  }
-
-  return "";
 }
 
 function formatShortDate(value: string) {

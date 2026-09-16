@@ -15,11 +15,7 @@ export function TaskPageSkeleton() {
 
 export function DesktopTaskWorkbenchSkeleton() {
   return (
-    <section
-      className="desktop-task-workbench task-page-skeleton task-page-skeleton--desktop"
-      aria-label="正在加载任务"
-      aria-busy="true"
-    >
+    <section className="desktop-task-workbench" aria-label="正在加载任务" aria-busy="true">
       <PageToolbar
         accessibleTitle="任务"
         className="desktop-task-page-toolbar"
@@ -40,11 +36,11 @@ export function DesktopTaskWorkbenchSkeleton() {
             </div>
           </>
         }
-        primaryAction={<SkeletonBlock className="task-page-skeleton__control task-page-skeleton__control--primary" />}
+        primaryAction={<SkeletonBlock className="task-page-skeleton__control" />}
       />
 
       <div className="desktop-task-workbench__main">
-        <div className="desktop-task-table task-page-skeleton__table" aria-hidden="true">
+        <div className="desktop-task-table" aria-hidden="true">
           <div className="desktop-task-table__viewport">
             <div className="desktop-task-table__head">
               {Array.from({ length: 7 }, (_, index) => (
@@ -104,11 +100,7 @@ export function TaskDetailPanelSkeleton() {
 
 export function MobileTaskListSkeleton() {
   return (
-    <section
-      className="mobile-task-list task-page-skeleton task-page-skeleton--mobile"
-      aria-label="正在加载任务"
-      aria-busy="true"
-    >
+    <section className="mobile-task-list" aria-label="正在加载任务" aria-busy="true">
       <PageToolbar
         accessibleTitle="任务"
         className="mobile-task-list__toolbar"

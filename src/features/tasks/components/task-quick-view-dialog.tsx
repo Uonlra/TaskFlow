@@ -109,7 +109,7 @@ export function TaskQuickViewDialog({
 
   return createPortal(
     <div
-      className="dialog-overlay task-quick-view-overlay"
+      className="dialog-overlay"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !isUpdatingStatus) onClose();
       }}
