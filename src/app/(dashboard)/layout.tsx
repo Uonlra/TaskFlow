@@ -1,5 +1,5 @@
 import "@/styles/auth-action-gate.css";
-import "@/styles/dashboard.css";
+import "@/styles/dashboard-shell.css";
 import "@/styles/data-empty-state.css";
 import "@/styles/workspace-state.css";
 

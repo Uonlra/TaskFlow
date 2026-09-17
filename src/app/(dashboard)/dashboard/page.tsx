@@ -1,6 +1,9 @@
 import "@/styles/tasks.css";
 import "@/styles/responsive-tasks.css";
-import "@/styles/dashboard-v2.css";
+import "@/styles/dashboard-overview.css";
+import "@/styles/dashboard-overview-workspace.css";
+import "@/styles/dashboard-overview-insights.css";
+import "@/styles/dashboard-overview-refinements.css";
 import "@/styles/responsive-dashboard.css";
 
 import { DashboardClient } from "@/features/dashboard/components/dashboard-client";
