@@ -195,12 +195,3 @@ function getChartParamName(params: unknown) {
 
   return typeof name === "string" ? name : "";
 }
-
-function DashboardV2EmptyBlock({ label }: { label: string }) {
-  return (
-    <div className="dashboard-v2-empty-block">
-      <span />
-      <p>{label}</p>
-    </div>
-  );
-}

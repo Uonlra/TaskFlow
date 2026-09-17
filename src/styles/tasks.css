@@ -99,11 +99,7 @@
 }
 
 .task-dialog__label {
-  color: var(--muted);
   font-family: var(--font-text);
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.43;
 }
 
 @media (prefers-reduced-motion: reduce) {
