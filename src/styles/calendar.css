@@ -674,7 +674,6 @@
 }
 
 @media (max-width: 1180px) {
-
   .calendar-layout-grid {
     grid-template-columns: 1fr;
   }
@@ -887,7 +886,6 @@
 }
 
 @media (max-width: 560px) {
-
   .calendar-shell .calendar-panel__head--inline {
     gap: 10px;
   }
