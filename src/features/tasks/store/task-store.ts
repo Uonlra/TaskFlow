@@ -4,6 +4,7 @@ import { create } from "zustand";
 
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
+import { parseTagsInput } from "@/features/tasks/utils/task-tags";
 import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
 
 export const GUEST_TASKS_STORAGE_KEY = "u-task-guest-tasks";
@@ -142,7 +143,7 @@ function createGuestTask(input: TaskFormValues): Task {
     description: input.description,
     status: input.status,
     priority: input.priority,
-    tags: parseTags(input.tags),
+    tags: parseTagsInput(input.tags),
     dueDate: input.dueDate || undefined,
     createdAt: now,
     updatedAt: now,
@@ -158,7 +159,7 @@ function updateGuestTask(task: Task, input: TaskFormValues): Task {
     description: input.description,
     status: input.status,
     priority: input.priority,
-    tags: parseTags(input.tags),
+    tags: parseTagsInput(input.tags),
     dueDate: input.dueDate || undefined,
     updatedAt,
     completedAt: input.status === "done" ? (task.completedAt ?? updatedAt) : undefined,
@@ -184,17 +185,6 @@ function taskToFormValues(task: Task): TaskFormValues {
     tags: task.tags.join(", "),
     dueDate: task.dueDate ?? "",
   };
-}
-
-function parseTags(value?: string) {
-  return Array.from(
-    new Set(
-      (value ?? "")
-        .split(/[，,]/)
-        .map((item) => item.trim())
-        .filter(Boolean),
-    ),
-  );
 }
 
 function readGuestTasks(): Task[] {

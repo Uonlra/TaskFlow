@@ -14,7 +14,7 @@ import {
   parseTaskDueDateValue,
   startOfTaskDay,
 } from "@/features/tasks/utils/task-date-filters";
-import { getTaskDueMeta, sortTasks } from "@/features/tasks/utils/task-deadline";
+import { getTaskDueMeta, matchesTaskDueFilter, sortTasks } from "@/features/tasks/utils/task-deadline";
 
 export const DEFAULT_TASK_PAGE_SIZE = 50;
 export const MAX_TASK_PAGE_SIZE = 100;
@@ -111,7 +111,7 @@ export function buildTaskCategoryCounts(tasks: Task[]): TaskCategoryCounts {
   );
 }
 
-export function parseTaskFiltersFromParams(params: URLSearchParams): TaskFilters {
+export function parseTaskFiltersFromParams(params: Pick<URLSearchParams, "get">): TaskFilters {
   const status = parseEnum(params.get("status"), [...TASK_STATUSES, "active", "all"] as const) ?? "active";
   const priority = parseEnum(params.get("priority"), [...TASK_PRIORITIES, "all"] as const) ?? "all";
   const due = parseEnum(params.get("due"), Object.values(TASK_DUE_FILTERS) as TaskDueValue[]) ?? "";
@@ -153,14 +153,6 @@ function matchesRiskFilter(task: Task, risk: string) {
   if (risk === TASK_RISK_FILTERS.medium)
     return task.priority === "medium" || (offset !== null && offset >= 0 && offset <= 1);
   return task.priority === "low" || (offset !== null && offset >= 0 && offset <= 3);
-}
-
-function matchesTaskDueFilter(task: Task, due: string) {
-  const meta = getTaskDueMeta(task);
-  if (due === TASK_DUE_FILTERS.today) return meta.isDueToday;
-  if (due === TASK_DUE_FILTERS.upcoming) return meta.isUpcoming;
-  if (due === TASK_DUE_FILTERS.overdue) return meta.isOverdue;
-  return meta.isDueToday || meta.isUpcoming;
 }
 
 function matchesDateRangeFilter(task: Task, date: string, range: DashboardRangeValue | "") {

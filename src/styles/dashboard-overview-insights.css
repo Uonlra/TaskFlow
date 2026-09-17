@@ -1,0 +1,757 @@
+/* Step 16: Range-aware today pace view */
+.dashboard-v2-today-pace .dashboard-v2-panel__head {
+  align-items: flex-start;
+}
+.dashboard-v2-today-pace .dashboard-v2-panel__head h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dashboard-v2-today-pace__refreshing {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+.dashboard-v2-today-pace__refreshing::before {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+  content: "";
+  animation: dashboard-today-pace-refresh 1.2s ease-in-out infinite;
+}
+.dashboard-v2-today-pace__body {
+  min-width: 0;
+}
+.dashboard-v2-today-pace__state {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 8px;
+  min-height: 184px;
+  padding: 28px 34px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.dashboard-v2-today-pace__state strong {
+  color: var(--foreground);
+  font-size: 15px;
+  font-weight: 600;
+}
+.dashboard-v2-today-pace__state span {
+  max-width: 42ch;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.dashboard-v2-today-pace__state--error strong {
+  color: var(--danger);
+}
+.dashboard-v2-today-pace__state button {
+  min-height: 34px;
+  margin-top: 4px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--border));
+  border-radius: 6px;
+  background: var(--surface-strong);
+  color: var(--danger);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+.dashboard-v2-today-pace__state button:hover {
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface-strong));
+}
+.dashboard-v2-today-pace__skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(100px, 1fr));
+  gap: 10px;
+  width: min(100%, 360px);
+}
+.dashboard-v2-today-pace__skeleton {
+  display: block;
+  border-radius: 5px;
+  background: linear-gradient(90deg, var(--surface) 25%, var(--border-soft) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: dashboard-today-pace-skeleton 1.4s ease-in-out infinite;
+}
+.dashboard-v2-today-pace__skeleton--summary {
+  width: min(100%, 300px);
+  height: 18px;
+  margin-bottom: 8px;
+}
+.dashboard-v2-today-pace__skeleton--signal {
+  height: 58px;
+}
+.dashboard-v2-today-pace .dashboard-v2-panel__head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.dashboard-v2-today-pace__body {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.62fr) minmax(0, 1fr);
+  min-height: 184px;
+  border-top: 1px solid var(--border);
+}
+.dashboard-v2-today-pace__summary {
+  position: relative;
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  padding: 24px 32px;
+  background: var(--surface);
+}
+.dashboard-v2-today-pace__summary::before {
+  position: absolute;
+  top: 50%;
+  height: 64px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: color-mix(in srgb, var(--primary) 70%, var(--surface-strong));
+  content: "";
+  transform: translateY(-50%);
+}
+.dashboard-v2-today-pace__summary strong {
+  max-width: 22ch;
+  color: var(--foreground);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.dashboard-v2-today-pace__summary span {
+  color: var(--muted-strong);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.dashboard-v2-today-pace__primary-list {
+  margin: 0;
+}
+.dashboard-v2-today-pace__primary {
+  display: grid;
+  gap: 2px;
+}
+.dashboard-v2-today-pace__primary dt {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.dashboard-v2-today-pace__primary dd {
+  margin: 0;
+  font-size: 42px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  line-height: 1;
+}
+.dashboard-v2-today-pace__primary a,
+.dashboard-v2-today-pace__primary-action {
+  color: inherit;
+  text-decoration: none;
+}
+.dashboard-v2-today-pace__primary-action {
+  width: fit-content;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 500;
+}
+.dashboard-v2-today-pace__primary-action:hover {
+  color: var(--primary);
+}
+.dashboard-v2-today-pace__primary--done dd {
+  color: var(--success);
+}
+.dashboard-v2-today-pace__primary--progress dd {
+  color: var(--primary);
+}
+.dashboard-v2-today-pace__primary--due dd {
+  color: var(--warning);
+}
+.dashboard-v2-today-pace__primary--risk dd {
+  color: var(--danger);
+}
+.dashboard-v2-today-pace__signals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+.dashboard-v2-today-pace__signal {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 8px;
+  min-width: 0;
+  padding: 24px 26px;
+  border-left: 1px solid var(--border);
+}
+.dashboard-v2-today-pace__signal dt {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.dashboard-v2-today-pace__signal a {
+  color: inherit;
+  text-decoration: none;
+}
+.dashboard-v2-today-pace__signal a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.dashboard-v2-today-pace__signal dd {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.dashboard-v2-today-pace__signal--done dd {
+  color: var(--success);
+}
+.dashboard-v2-today-pace__signal--progress dd {
+  color: var(--primary);
+}
+.dashboard-v2-today-pace__signal--due dd {
+  color: var(--warning);
+}
+.dashboard-v2-today-pace__signal--risk dd {
+  color: var(--danger);
+}
+@media (max-width: 760px) {
+  .dashboard-v2-today-pace {
+    display: block;
+  }
+  .dashboard-v2-today-pace__body {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .dashboard-v2-today-pace__summary {
+    min-height: 148px;
+    padding: 22px;
+  }
+  .dashboard-v2-today-pace__primary dd {
+    font-size: 34px;
+  }
+  .dashboard-v2-today-pace__state {
+    min-height: 184px;
+    padding: 22px;
+  }
+  .dashboard-v2-today-pace__signals {
+    border-top: 1px solid var(--border);
+  }
+  .dashboard-v2-today-pace__signal {
+    min-height: 96px;
+    padding: 18px 12px;
+  }
+  .dashboard-v2-today-pace__signal:first-child {
+    border-left: 0;
+  }
+}
+
+@keyframes dashboard-today-pace-skeleton {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@keyframes dashboard-today-pace-refresh {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Step 17: Self-sized daily progress with a single target cue */
+@property --dashboard-progress {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes dashboard-progress-reveal {
+  from {
+    --dashboard-progress: 0deg;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes dashboard-progress-label-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.dashboard-workspace {
+  align-items: start;
+}
+.dashboard-workspace__priority {
+  min-height: 341px;
+}
+.dashboard-workspace__priority--empty {
+  min-height: 184px;
+}
+.dashboard-workspace__progress {
+  align-self: start;
+  min-height: 296px;
+  padding: 28px 24px 30px;
+}
+.dashboard-workspace__progress .dashboard-workspace__head {
+  align-items: center;
+}
+.dashboard-workspace__progress-body {
+  grid-template-columns: 122px minmax(172px, max-content);
+  justify-content: center;
+  gap: 72px;
+  min-height: 184px;
+  margin-top: 28px;
+  padding-left: 28px;
+}
+.dashboard-workspace__progress-visual {
+  align-self: start;
+  gap: 12px;
+}
+.dashboard-workspace__progress-visual p {
+  color: var(--muted);
+  font-weight: 500;
+}
+.dashboard-workspace__ring {
+  width: 122px;
+  background: conic-gradient(
+    var(--primary) 0 var(--dashboard-progress),
+    var(--surface) var(--dashboard-progress) 360deg
+  );
+  transition: --dashboard-progress 720ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: dashboard-progress-reveal 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.dashboard-workspace__ring::after {
+  inset: 9px;
+}
+.dashboard-workspace__ring strong {
+  font-size: 22px;
+  animation: dashboard-progress-label-reveal 360ms 140ms both;
+}
+.dashboard-workspace__progress-main {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 8px;
+  min-width: 0;
+}
+.dashboard-workspace__progress-main > span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.dashboard-workspace__progress-main > strong {
+  color: var(--foreground);
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.dashboard-workspace__progress-main > p {
+  margin: 0;
+  color: var(--muted-strong);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.dashboard-workspace__progress-overdue {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.dashboard-workspace__progress-overdue span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.dashboard-workspace__progress-overdue strong {
+  color: var(--danger);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+@media (min-width: 761px) {
+  .dashboard-workspace--empty .dashboard-workspace__progress {
+    min-height: 184px;
+    padding: 18px 22px 0;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__progress-body {
+    grid-template-columns: 84px minmax(0, 1fr);
+    justify-content: start;
+    gap: 28px;
+    min-height: 92px;
+    margin-top: 8px;
+    padding-left: 0;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__ring {
+    width: 84px;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__ring::after {
+    inset: 7px;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__ring strong {
+    font-size: 18px;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__progress-visual {
+    gap: 0;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__progress-visual p,
+  .dashboard-workspace--empty .dashboard-workspace__progress-main > p {
+    display: none;
+  }
+  .dashboard-workspace--empty .dashboard-workspace__progress-overdue {
+    margin-top: 0;
+    padding-top: 10px;
+  }
+}
+@media (max-width: 760px) {
+  .dashboard-workspace__progress {
+    min-height: 256px;
+    padding: 22px 18px 24px;
+  }
+  .dashboard-workspace__progress-body {
+    grid-template-columns: 104px minmax(0, 1fr);
+    justify-content: start;
+    gap: 24px;
+    min-height: 160px;
+    margin-top: 24px;
+    padding-left: 0;
+  }
+  .dashboard-workspace__ring {
+    width: 104px;
+  }
+  .dashboard-workspace__progress-main > strong {
+    font-size: 26px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-workspace__ring,
+  .dashboard-workspace__ring strong {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Step 18: In-place priority filtering and compact status signals */
+.dashboard-range-menu__filter {
+  position: relative;
+}
+.dashboard-range-menu__filter-menu {
+  display: grid;
+  gap: 12px;
+  overflow-y: auto;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-strong);
+  box-shadow: var(--shadow);
+}
+.dashboard-range-menu__filter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+.dashboard-range-menu__filter-head > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.dashboard-range-menu__filter-head button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+.dashboard-range-menu__filter-head button:hover {
+  color: var(--primary-strong);
+}
+.dashboard-range-menu__filter-head button:active {
+  transform: translateY(1px);
+}
+.dashboard-range-menu__filter-head button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.dashboard-range-menu__filter-menu label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+.dashboard-range-menu__filter-menu .custom-select {
+  width: 100%;
+}
+.dashboard-range-menu__filter-menu .task-field {
+  min-height: 34px;
+  padding: 0 10px;
+  border-color: var(--border);
+  background: var(--surface);
+  font-size: 12px;
+}
+.dashboard-workspace__metric-icon {
+  position: relative;
+}
+.dashboard-workspace__metric-icon--todo {
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+}
+.dashboard-workspace__metric-icon--todo::after {
+  position: absolute;
+  content: "";
+}
+.dashboard-workspace__metric-icon--progress {
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+.dashboard-workspace__metric-icon--progress::after {
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 1.5px;
+  height: 4px;
+  border-radius: 2px;
+  background: currentColor;
+  box-shadow: 2px 4px 0 -0.25px currentColor;
+  content: "";
+  transform-origin: bottom;
+}
+.dashboard-workspace__metric-icon--deadline {
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+}
+.dashboard-workspace__metric-icon--deadline::before,
+.dashboard-workspace__metric-icon--deadline::after {
+  position: absolute;
+  top: -2px;
+  width: 1.5px;
+  height: 4px;
+  border-radius: 2px;
+  background: currentColor;
+  content: "";
+}
+.dashboard-workspace__metric-icon--deadline::before {
+  left: 3px;
+}
+.dashboard-workspace__metric-icon--deadline::after {
+  right: 3px;
+}
+@media (max-width: 760px) {
+  .dashboard-range-menu__filter-menu {
+    padding: 12px;
+  }
+}
+
+/* Step 19: Soft metric glyphs */
+.dashboard-workspace__metric {
+  gap: 12px;
+}
+.dashboard-workspace__metric-copy {
+  display: grid;
+  min-width: 0;
+}
+.dashboard-workspace__metric-copy span,
+.dashboard-workspace__metric-copy small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashboard-workspace__metric-copy strong {
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-workspace__metric-icon {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: var(--surface);
+  color: var(--muted-strong);
+}
+.dashboard-workspace__metric-icon--todo::before {
+  width: 11px;
+  height: 14px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  background: linear-gradient(135deg, transparent 0 63%, currentColor 64% 69%, transparent 70%);
+  content: "";
+}
+.dashboard-workspace__metric-icon--todo::after {
+  top: 22px;
+  left: 16px;
+  width: 6px;
+  height: 2px;
+  border: 0;
+  border-bottom: 1.5px solid currentColor;
+  border-left: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+}
+.dashboard-workspace__metric-icon--progress {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+.dashboard-workspace__metric-icon--progress::before {
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 10px solid currentColor;
+  content: "";
+}
+.dashboard-workspace__metric-icon--progress::after {
+  display: none;
+}
+.dashboard-workspace__metric-icon--deadline::before {
+  position: static;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  background:
+    linear-gradient(currentColor, currentColor) 50% 3px / 1.5px 4px no-repeat,
+    linear-gradient(currentColor, currentColor) calc(50% + 2px) 50% / 4px 1.5px no-repeat;
+  content: "";
+}
+.dashboard-workspace__metric-icon--deadline::after {
+  display: none;
+}
+.dashboard-workspace__metric--warning .dashboard-workspace__metric-copy strong {
+  color: var(--warning);
+}
+
+/* Progressive loading: keep primary geometry stable while data and charts arrive. */
+.dashboard-workspace__task-list--skeleton {
+  gap: 0;
+}
+
+.dashboard-workspace__task-skeleton {
+  display: block;
+  height: 42px;
+  border-top: 1px solid var(--border-soft);
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-soft) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: dashboard-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.dashboard-workspace__progress-body[aria-busy="true"] .dashboard-workspace__ring {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 10px var(--surface-soft);
+  animation: dashboard-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.dashboard-workspace__progress-body[aria-busy="true"] .dashboard-workspace__ring strong,
+.dashboard-workspace__progress-body[aria-busy="true"] .dashboard-workspace__progress-main > * {
+  color: transparent;
+  border-radius: 4px;
+  background: var(--surface-soft);
+}
+
+.dashboard-workspace__progress-body[aria-busy="true"] .dashboard-workspace__progress-main > strong {
+  width: 128px;
+}
+
+.dashboard-workspace__status-grid[aria-busy="true"] .dashboard-workspace__metric-copy > * {
+  color: transparent;
+  border-radius: 4px;
+  background: var(--surface-soft);
+}
+
+.dashboard-workspace__status-grid[aria-busy="true"] .dashboard-workspace__metric-copy span {
+  width: 64px;
+}
+
+.dashboard-workspace__status-grid[aria-busy="true"] .dashboard-workspace__metric-copy strong {
+  width: 42px;
+}
+
+.dashboard-workspace__status-grid[aria-busy="true"] .dashboard-workspace__metric-copy small {
+  width: 76px;
+}
+
+.dashboard-v2-panel--deferred {
+  min-height: 220px;
+}
+
+.dashboard-skeleton {
+  display: block;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-soft) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: dashboard-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.dashboard-skeleton--heading {
+  width: 112px;
+  height: 20px;
+}
+
+.dashboard-skeleton--link {
+  width: 58px;
+  height: 16px;
+}
+
+.dashboard-skeleton--panel {
+  height: 154px;
+  margin-top: 18px;
+}
+
+@keyframes dashboard-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes dashboard-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-workspace__task-skeleton,
+  .dashboard-skeleton,
+  .dashboard-workspace__progress-body[aria-busy="true"] .dashboard-workspace__ring {
+    animation: none;
+  }
+}
+
+.dashboard-workspace__metric-icon::before,
+.dashboard-workspace__metric-icon::after {
+  display: none !important;
+  content: none !important;
+}

@@ -22,7 +22,6 @@ body:has(.auth-page) {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: var(--auth-subtle);
 }
 .auth-entry-loader {
   position: fixed;
@@ -119,7 +118,6 @@ html:has(.auth-entry-loader) [data-auth-entry-target] {
 .auth-brand-panel {
   min-width: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
   gap: 36px;
   padding: 40px;
   background: var(--auth-surface);
@@ -204,7 +202,6 @@ html:has(.auth-entry-loader) [data-auth-entry-target] {
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  overflow: hidden;
   border: 1px solid var(--auth-border);
   border-radius: var(--auth-radius);
   background: var(--auth-subtle);
@@ -213,138 +210,6 @@ html:has(.auth-entry-loader) [data-auth-entry-target] {
   min-width: 0;
   display: grid;
   gap: 10px;
-}
-.auth-preview-nav {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 12px;
-  border-right: 1px solid var(--auth-border);
-  background: var(--auth-surface);
-  font-family: var(--font-text);
-}
-.auth-preview-nav__label {
-  margin: 0 8px 14px;
-  color: var(--auth-muted);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.4;
-}
-.auth-preview-nav ul {
-  display: grid;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.auth-preview-nav__item {
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 8px;
-  border: 1px solid transparent;
-  border-radius: var(--auth-radius);
-  color: var(--auth-muted-strong);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.35;
-}
-.auth-preview-nav__item--active {
-  border-color: var(--auth-border);
-  color: var(--auth-accent);
-  background: var(--auth-subtle);
-}
-.auth-preview-nav__mark {
-  position: relative;
-  width: 18px;
-  height: 18px;
-  flex: 0 0 auto;
-  color: currentColor;
-}
-.auth-preview-nav__mark::before,
-.auth-preview-nav__mark::after {
-  content: "";
-  position: absolute;
-  border-color: currentColor;
-}
-.auth-preview-nav__mark--overview::before {
-  inset: 3px;
-  border: 1.5px solid currentColor;
-  border-radius: 50%;
-}
-.auth-preview-nav__mark--overview::after {
-  top: 8px;
-  left: 8px;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.auth-preview-nav__mark--tasks::before {
-  inset: 2px 3px;
-  border: 1.5px solid currentColor;
-  border-radius: 2px;
-}
-.auth-preview-nav__mark--tasks::after {
-  top: 6px;
-  left: 6px;
-  width: 7px;
-  height: 1.5px;
-  background: currentColor;
-  box-shadow: 0 4px 0 currentColor;
-}
-.auth-preview-nav__mark--calendar::before {
-  inset: 3px 2px;
-  border: 1.5px solid currentColor;
-  border-radius: 2px;
-}
-.auth-preview-nav__mark--calendar::after {
-  top: 7px;
-  left: 3px;
-  width: 12px;
-  border-top: 1.5px solid currentColor;
-}
-.auth-preview-nav__mark--stats::before {
-  bottom: 3px;
-  left: 3px;
-  width: 3px;
-  height: 6px;
-  background: currentColor;
-  box-shadow:
-    5px -3px 0 currentColor,
-    10px -7px 0 currentColor;
-}
-.auth-preview-nav__profile {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: auto;
-  padding: 12px 8px 0;
-  border-top: 1px solid var(--auth-border);
-  color: var(--auth-muted);
-}
-.auth-preview-nav__profile > span {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 auto;
-  border: 1px solid var(--auth-border);
-  border-radius: 50%;
-  background: var(--auth-subtle);
-}
-.auth-preview-nav__profile strong,
-.auth-preview-nav__profile small {
-  display: block;
-  overflow-wrap: anywhere;
-  font-size: 11px;
-  line-height: 1.35;
-}
-.auth-preview-nav__profile strong {
-  color: var(--auth-muted-strong);
-  font-weight: 600;
-}
-.auth-preview-nav__profile small {
-  margin-top: 2px;
 }
 .auth-preview-main {
   min-width: 0;
@@ -385,43 +250,8 @@ html:has(.auth-entry-loader) [data-auth-entry-target] {
   font-size: 11px;
   line-height: 1.4;
 }
-.auth-preview-focus {
-  margin-top: 22px;
-  padding: 20px;
-  border-radius: var(--auth-radius);
-  color: var(--auth-accent-ink);
-  background: var(--auth-accent);
-}
-.auth-preview-focus p,
-.auth-preview-focus h2,
-.auth-preview-focus span {
-  margin: 0;
-}
-.auth-preview-focus p {
-  opacity: 0.84;
-  font-size: 12px;
-  line-height: 1.4;
-}
-.auth-preview-focus h2 {
-  max-width: 310px;
-  margin-top: 8px;
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 1.32;
-}
-.auth-preview-focus span {
-  display: block;
-  max-width: 340px;
-  margin-top: 10px;
-  opacity: 0.88;
-  font-size: 12px;
-  line-height: 1.6;
-}
 .auth-preview-status-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-top: 16px;
 }
@@ -576,42 +406,6 @@ html:has(.auth-entry-loader) [data-auth-entry-target] {
   color: var(--auth-muted);
   font-size: 11px;
   line-height: 1.35;
-}
-.auth-preview-activity {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--auth-border);
-}
-.auth-preview-activity__heading,
-.auth-preview-activity__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.auth-preview-activity__heading {
-  color: var(--auth-muted);
-  font-size: 12px;
-  line-height: 1.4;
-}
-.auth-preview-activity__heading span {
-  color: var(--auth-muted-strong);
-  font-weight: 600;
-}
-.auth-preview-activity__row {
-  justify-content: flex-start;
-  min-width: 0;
-  margin-top: 12px;
-  color: var(--auth-muted);
-  font-size: 12px;
-  line-height: 1.45;
-}
-.auth-preview-activity__row i {
-  width: 7px;
-  height: 7px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: var(--auth-border-strong);
 }
 .auth-form-panel {
   min-width: 0;
@@ -913,15 +707,6 @@ html:has(.auth-entry-loader) [data-auth-entry-target] {
 .auth-brand-panel {
   grid-template-rows: auto auto;
 }
-.auth-preview-focus {
-  position: static;
-  min-height: 0;
-  overflow: visible;
-  box-shadow: none;
-}
-.auth-preview-focus::after {
-  display: none;
-}
 .auth-product-surface {
   overflow: hidden;
 }
@@ -939,9 +724,6 @@ html:has(.auth-entry-loader) [data-auth-entry-target] {
 .auth-preview-connection--ready {
   color: var(--success) !important;
   border-color: var(--success) !important;
-}
-.auth-product-surface--ready .auth-preview-focus {
-  background: var(--auth-accent-strong);
 }
 
 .auth-preview-status-grid {

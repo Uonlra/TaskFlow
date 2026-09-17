@@ -11,10 +11,9 @@ import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
-import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { createTaskExportPayload, parseTaskImportPayload } from "@/features/tasks/utils/task-transfer";
 import { useToast } from "@/shared/providers/toast-provider";
-import type { TaskCategoryCounts } from "@/features/tasks/utils/task-list-query";
+import { buildTaskCategoryCounts, type TaskCategoryCounts } from "@/features/tasks/utils/task-list-query";
 import { PageToolbar } from "@/shared/components/layout/page-toolbar";
 
 const TaskDetailPanel = dynamic(
@@ -90,7 +89,7 @@ export function DesktopTaskWorkbench({
   );
   const category = getActiveCategory(filters);
   const resolvedTotalCount = totalCount ?? totalTasks.length;
-  const computedCounts = useMemo(() => buildCategoryCounts(totalTasks), [totalTasks]);
+  const computedCounts = useMemo(() => buildTaskCategoryCounts(totalTasks), [totalTasks]);
   const counts = categoryCounts ?? computedCounts;
   const hasActiveFilters = hasWorkbenchFilters(filters);
   const emptyState = getEmptyStateCopy({
@@ -486,29 +485,6 @@ function getActiveCategory(filters: TaskFilters): CategoryTab {
   }
 
   return "all";
-}
-
-function buildCategoryCounts(tasks: Task[]) {
-  return tasks.reduce(
-    (counts, task) => {
-      const dueMeta = getTaskDueMeta(task);
-
-      counts.all += 1;
-
-      if (task.status === "done") {
-        counts.done += 1;
-      } else {
-        counts.active += 1;
-      }
-
-      if (task.status !== "done" && (dueMeta.isDueToday || dueMeta.isUpcoming)) {
-        counts.near += 1;
-      }
-
-      return counts;
-    },
-    { near: 0, active: 0, all: 0, done: 0 },
-  );
 }
 
 function TaskPagination({

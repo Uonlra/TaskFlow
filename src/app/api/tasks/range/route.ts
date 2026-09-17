@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { parseTaskDateParam } from "@/features/tasks/utils/task-date-filters";
 import { handleApiError } from "@/shared/lib/api/error";
 import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
@@ -37,14 +38,5 @@ export async function GET(request: NextRequest) {
 }
 
 function normalizeDate(value: string | null) {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-  const date = new Date(`${value}T00:00:00`);
-  return Number.isNaN(date.getTime()) || formatDate(date) !== value ? null : value;
-}
-
-function formatDate(value: Date) {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const date = String(value.getDate()).padStart(2, "0");
-  return `${year}-${month}-${date}`;
+  return parseTaskDateParam(value) ? value : null;
 }

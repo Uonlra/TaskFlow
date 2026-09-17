@@ -35,11 +35,6 @@
     padding: 24px;
   }
 
-  .auth-preview-nav {
-    flex: 0 0 auto;
-    white-space: nowrap;
-  }
-
   .auth-form-panel {
     order: 1;
     padding: 34px 24px;
@@ -91,20 +86,6 @@
     padding: 18px;
   }
 
-  .auth-preview-focus {
-    min-height: 118px;
-    padding: 18px;
-  }
-
-  .auth-preview-focus strong {
-    margin-top: 6px;
-    font-size: 2rem;
-  }
-
-  .auth-form-options {
-    align-items: flex-start;
-  }
-
   .auth-form-panel {
     order: 1;
     width: 100%;
@@ -130,11 +111,6 @@
 
   .auth-form {
     gap: 15px;
-  }
-
-  .auth-form-options {
-    flex-wrap: wrap;
-    gap: 10px;
   }
 
   .auth-input-field {

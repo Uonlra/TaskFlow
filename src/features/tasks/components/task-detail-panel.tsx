@@ -5,7 +5,12 @@ import { useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
-import { TaskDetailPropertyList, TaskDetailTags } from "@/features/tasks/components/task-detail-sections";
+import {
+  buildTaskActivity,
+  formatDateTime,
+  TaskDetailPropertyList,
+  TaskDetailTags,
+} from "@/features/tasks/components/task-detail-sections";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import { formatTagsInput } from "@/features/tasks/utils/task-tags";
@@ -18,13 +23,6 @@ type TaskDetailPanelProps = {
 };
 
 type TaskDetailTab = "details" | "activity";
-
-type TaskActivityItem = {
-  id: "created" | "updated" | "completed";
-  label: string;
-  description: string;
-  occurredAt: string;
-};
 
 export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTask }: TaskDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<TaskDetailTab>("details");
@@ -187,55 +185,4 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
       </footer>
     </aside>
   );
-}
-
-function buildTaskActivity(task: Task): TaskActivityItem[] {
-  const items: TaskActivityItem[] = [
-    {
-      id: "created",
-      label: "创建任务",
-      description: "任务在此时间创建。",
-      occurredAt: task.createdAt,
-    },
-  ];
-
-  if (task.updatedAt && !isSameTimestamp(task.updatedAt, task.createdAt)) {
-    items.push({
-      id: "updated",
-      label: "最近更新",
-      description: "任务记录在此时间最后更新。",
-      occurredAt: task.updatedAt,
-    });
-  }
-
-  if (task.completedAt) {
-    items.push({
-      id: "completed",
-      label: "完成任务",
-      description: "任务在此时间完成。",
-      occurredAt: task.completedAt,
-    });
-  }
-
-  return items.sort((left, right) => toTimestamp(right.occurredAt) - toTimestamp(left.occurredAt));
-}
-
-function isSameTimestamp(left: string, right: string) {
-  return toTimestamp(left) === toTimestamp(right);
-}
-
-function toTimestamp(value: string) {
-  const timestamp = new Date(value).getTime();
-
-  return Number.isNaN(timestamp) ? 0 : timestamp;
-}
-
-function formatDateTime(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }

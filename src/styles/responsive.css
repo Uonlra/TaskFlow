@@ -37,27 +37,7 @@
     display: none;
   }
 
-  .dashboard-analytics-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .dashboard-focus-grid {
-    grid-template-columns: 1fr;
-  }
-
   .dashboard-hero {
-    grid-template-columns: 1fr;
-  }
-
-  .task-signal-panel {
-    grid-template-columns: 1fr;
-  }
-
-  .task-signal-panel__visual {
-    grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1fr);
-  }
-
-  .tasks-highlight-grid {
     grid-template-columns: 1fr;
   }
 
@@ -104,10 +84,6 @@
     max-width: 100%;
   }
 
-  .dashboard-analytics-grid {
-    grid-template-columns: 1fr;
-  }
-
   .calendar-layout-grid,
   .stats-layout-grid {
     grid-template-columns: 1fr;
@@ -115,22 +91,6 @@
 
   .calendar-overview {
     grid-template-columns: 1fr;
-  }
-
-  .task-filter-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .task-signal-panel__visual {
-    grid-template-columns: 1fr;
-  }
-
-  .task-status-lights {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .task-progress-ring {
-    min-height: 240px;
   }
 
   .page-header {
@@ -253,92 +213,6 @@
   .dashboard-sidebar-link {
     flex: 0 0 176px;
     min-height: 58px;
-  }
-
-  .dashboard-range-panel {
-    width: 100%;
-  }
-
-  .dashboard-range-panel button {
-    flex: 1 1 calc(33.333% - 8px);
-    min-width: 84px;
-  }
-
-  .task-signal-panel {
-    gap: 16px;
-    padding: 18px;
-  }
-
-  .task-signal-panel__title {
-    min-height: auto;
-    font-size: 28px;
-    line-height: 1.14;
-  }
-
-  .task-signal-panel--tasks .task-signal-panel__title {
-    font-size: 26px;
-  }
-
-  .task-signal-panel__description {
-    margin-top: 10px;
-    line-height: 1.55;
-  }
-
-  .task-signal-panel__focus {
-    padding: 14px;
-  }
-
-  .task-signal-panel__visual {
-    gap: 12px;
-  }
-
-  .task-progress-ring {
-    min-height: auto;
-    padding: 16px;
-  }
-
-  .task-progress-ring__chart {
-    width: min(138px, 100%);
-  }
-
-  .task-progress-ring__value-text {
-    font-size: 30px;
-  }
-
-  .task-status-lights {
-    grid-template-columns: 1fr;
-  }
-
-  .task-status-light__copy {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .task-status-light {
-    gap: 10px;
-    padding: 12px;
-  }
-
-  .task-status-light__helper {
-    font-size: 12px;
-  }
-
-  .task-card__header,
-  .task-card__actions {
-    align-items: stretch;
-  }
-
-  .task-card__header {
-    flex-direction: column;
-  }
-
-  .task-status-segment {
-    width: 100%;
-  }
-
-  .task-status-segment__button {
-    flex: 1 1 0;
-    min-width: 0;
-    padding-inline: 8px;
   }
 }
 
