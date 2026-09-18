@@ -21,17 +21,12 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   return (
     <aside className="dashboard-sidebar" aria-label="主导航">
       <div className="dashboard-sidebar-head">
-        <div className="dashboard-sidebar-title-row">
-          <div className="dashboard-sidebar-title-copy">
-            <div className="dashboard-brand-lockup">
-              <BrandMark className="dashboard-brand-mark" />
-              <span className="dashboard-brand-copy">
-                <span className="dashboard-brand">U&apos;s Task</span>
-                <span className="dashboard-brand-tagline">Personal workspace</span>
-              </span>
-            </div>
-          </div>
-          <AppTopbar variant="mobile" />
+        <div className="dashboard-brand-lockup">
+          <BrandMark className="dashboard-brand-mark" />
+          <span className="dashboard-brand-copy">
+            <span className="dashboard-brand">U&apos;s Task</span>
+            <span className="dashboard-brand-tagline">Personal workspace</span>
+          </span>
         </div>
       </div>
 
@@ -103,7 +98,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
               />
             )}
           </button>
-          <AppTopbar variant="sidebar" />
+          <AppTopbar />
         </div>
       </div>
     </aside>

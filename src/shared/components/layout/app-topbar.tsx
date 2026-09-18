@@ -5,11 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/features/auth/providers/auth-provider";
 
-type AppTopbarProps = {
-  variant?: "desktop" | "mobile" | "sidebar";
-};
-
-export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
+export function AppTopbar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, profile, isAuthenticated, signOut } = useAuth();
@@ -30,93 +26,43 @@ export function AppTopbar({ variant = "desktop" }: AppTopbarProps) {
   );
 
   useEffect(() => {
-    if ((variant !== "mobile" && variant !== "sidebar") || !menuOpen) return;
+    if (!menuOpen) return;
     const handlePointerDown = (event: PointerEvent) => {
       if (!mobileMenuRef.current?.contains(event.target as Node)) setMenuOpen(false);
     };
     window.addEventListener("pointerdown", handlePointerDown);
     return () => window.removeEventListener("pointerdown", handlePointerDown);
-  }, [menuOpen, variant]);
-
-  if (variant === "sidebar") {
-    return (
-      <div className="dashboard-sidebar-account" ref={mobileMenuRef}>
-        <button
-          type="button"
-          className="dashboard-sidebar-account__trigger"
-          aria-label="打开账号菜单"
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((current) => !current)}
-        >
-          <span className="dashboard-avatar">{avatarContent}</span>
-          <span className="dashboard-sidebar-account__copy">
-            <strong title={displayName}>{displayName}</strong>
-            <small>{isAuthenticated ? "账号已连接" : "访客工作区"}</small>
-          </span>
-        </button>
-        {menuOpen ? (
-          <div className="dashboard-avatar-menu__panel dashboard-sidebar-account__panel" role="menu">
-            <p className="dashboard-avatar-menu__name">{displayName}</p>
-            {isAuthenticated ? (
-              <button type="button" role="menuitem" onClick={handleSignOut}>
-                退出登录
-              </button>
-            ) : (
-              <a href={loginHref} role="menuitem" data-auth-gate-bypass>
-                登录
-              </a>
-            )}
-          </div>
-        ) : null}
-      </div>
-    );
-  }
+  }, [menuOpen]);
 
   return (
-    <header className={variant === "mobile" ? "dashboard-topbar dashboard-topbar--mobile" : "dashboard-topbar"}>
-      <div className="dashboard-topbar__meta">
-        <p className="dashboard-topbar__status">{isAuthenticated ? "账号已连接" : "访客工作区"}</p>
-        <p className="dashboard-topbar__description">
-          {isAuthenticated ? "账号和任务将安全同步。" : "任务仅保存在此标签页，登录后可同步。"}
-        </p>
-      </div>
-      <div className="dashboard-topbar__actions">
-        {variant === "mobile" && isAuthenticated ? (
-          <div className="dashboard-avatar-menu" ref={mobileMenuRef}>
-            <button
-              type="button"
-              className="dashboard-avatar dashboard-avatar-button"
-              aria-label="打开账号菜单"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((current) => !current)}
-            >
-              {avatarContent}
+    <div className="dashboard-sidebar-account" ref={mobileMenuRef}>
+      <button
+        type="button"
+        className="dashboard-sidebar-account__trigger"
+        aria-label="打开账号菜单"
+        aria-expanded={menuOpen}
+        onClick={() => setMenuOpen((current) => !current)}
+      >
+        <span className="dashboard-avatar">{avatarContent}</span>
+        <span className="dashboard-sidebar-account__copy">
+          <strong title={displayName}>{displayName}</strong>
+          <small>{isAuthenticated ? "账号已连接" : "访客工作区"}</small>
+        </span>
+      </button>
+      {menuOpen ? (
+        <div className="dashboard-avatar-menu__panel dashboard-sidebar-account__panel" role="menu">
+          <p className="dashboard-avatar-menu__name">{displayName}</p>
+          {isAuthenticated ? (
+            <button type="button" role="menuitem" onClick={handleSignOut}>
+              退出登录
             </button>
-            {menuOpen ? (
-              <div className="dashboard-avatar-menu__panel" role="menu">
-                <p className="dashboard-avatar-menu__name">{displayName}</p>
-                <button type="button" role="menuitem" onClick={handleSignOut}>
-                  退出登录
-                </button>
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <div className="dashboard-avatar">{avatarContent}</div>
-        )}
-        <div className="dashboard-topbar__profile" title={displayName}>
-          {displayName}
+          ) : (
+            <a href={loginHref} role="menuitem" data-auth-gate-bypass>
+              登录
+            </a>
+          )}
         </div>
-        {isAuthenticated ? (
-          <button type="button" onClick={handleSignOut} className="dashboard-signout-button">
-            退出登录
-          </button>
-        ) : (
-          <a href={loginHref} className="dashboard-signout-button" data-auth-gate-bypass>
-            登录并同步
-          </a>
-        )}
-      </div>
-    </header>
+      ) : null}
+    </div>
   );
 }
