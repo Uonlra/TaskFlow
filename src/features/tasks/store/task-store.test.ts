@@ -6,6 +6,19 @@ import type { Task } from "@/features/tasks/types/task.types";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { GUEST_TASKS_STORAGE_KEY, useTaskStore } from "@/features/tasks/store/task-store";
 
+const repositoryMocks = vi.hoisted(() => ({
+  list: vi.fn(),
+  get: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  updateStatus: vi.fn(),
+  delete: vi.fn(),
+}));
+
+vi.mock("@/features/tasks/repositories/remote-task-repository", () => ({
+  remoteTaskRepository: repositoryMocks,
+}));
+
 vi.mock("@/shared/lib/appwrite/env", () => ({
   hasAppwritePublicEnv: true,
 }));
@@ -31,15 +44,6 @@ const formValues: TaskFormValues = {
   dueDate: "",
 };
 
-function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-}
-
 afterEach(() => {
   window.sessionStorage.removeItem(GUEST_TASKS_STORAGE_KEY);
   useTaskStore.setState({
@@ -49,7 +53,7 @@ afterEach(() => {
     lastLoadedUserId: null,
   });
 
-  vi.restoreAllMocks();
+  vi.clearAllMocks();
 });
 
 describe("task store", () => {
@@ -87,16 +91,12 @@ describe("task store", () => {
   });
 
   it("syncTasks 获取任务后写入 store，并规范化 tags", async () => {
-    vi.spyOn(global, "fetch").mockResolvedValue(
-      jsonResponse({
-        tasks: [
-          makeTask({
-            id: "remote-task",
-            tags: null as unknown as string[],
-          }),
-        ],
+    repositoryMocks.list.mockResolvedValue([
+      makeTask({
+        id: "remote-task",
+        tags: null as unknown as string[],
       }),
-    );
+    ]);
 
     await useTaskStore.getState().syncTasks("user-1");
 
@@ -119,18 +119,12 @@ describe("task store", () => {
       tags: ["测试", "学习"],
     });
 
-    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(jsonResponse({ task: createdTask }, 201));
+    repositoryMocks.create.mockResolvedValue(createdTask);
 
     const taskId = await useTaskStore.getState().createTaskAsync(formValues, "user-1");
 
     expect(taskId).toBe("created-task");
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/tasks",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify(formValues),
-      }),
-    );
+    expect(repositoryMocks.create).toHaveBeenCalledWith(formValues);
     expect(useTaskStore.getState().tasks[0]).toEqual(createdTask);
   });
 
@@ -139,16 +133,11 @@ describe("task store", () => {
       tasks: [makeTask({ id: "task-to-delete" }), makeTask({ id: "task-to-keep" })],
     });
 
-    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(jsonResponse({ ok: true }));
+    repositoryMocks.delete.mockResolvedValue(undefined);
 
     await useTaskStore.getState().deleteTask("task-to-delete", "user-1");
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/tasks/task-to-delete",
-      expect.objectContaining({
-        method: "DELETE",
-      }),
-    );
+    expect(repositoryMocks.delete).toHaveBeenCalledWith("task-to-delete");
 
     expect(useTaskStore.getState().tasks).toEqual([
       expect.objectContaining({
@@ -168,23 +157,17 @@ describe("task store", () => {
       tasks: [makeTask({ id: "task-to-update" })],
     });
 
-    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(jsonResponse({ task: updatedTask }));
+    repositoryMocks.updateStatus.mockResolvedValue(updatedTask);
 
     await useTaskStore.getState().updateTaskStatus("task-to-update", "done", "user-1");
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/tasks/task-to-update",
-      expect.objectContaining({
-        method: "PATCH",
-        body: JSON.stringify({ status: "done" }),
-      }),
-    );
+    expect(repositoryMocks.updateStatus).toHaveBeenCalledWith("task-to-update", "done");
 
     expect(useTaskStore.getState().tasks[0]).toEqual(updatedTask);
   });
 
   it("syncTasks 请求失败时保存错误并结束加载状态", async () => {
-    vi.spyOn(global, "fetch").mockRejectedValue(new Error("网络暂时不可用"));
+    repositoryMocks.list.mockRejectedValue(new Error("网络暂时不可用"));
 
     await useTaskStore.getState().syncTasks("user-1");
 
@@ -195,14 +178,7 @@ describe("task store", () => {
   });
 
   it("API 返回错误响应时抛出服务端错误信息", async () => {
-    vi.spyOn(global, "fetch").mockResolvedValue(
-      jsonResponse(
-        {
-          message: "任务保存失败。",
-        },
-        500,
-      ),
-    );
+    repositoryMocks.create.mockRejectedValue(new Error("任务保存失败。"));
 
     await expect(useTaskStore.getState().createTaskAsync(formValues, "user-1")).rejects.toThrow("任务保存失败。");
 
@@ -221,17 +197,11 @@ describe("task store", () => {
       tasks: [makeTask({ id: "task-to-update" })],
     });
 
-    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(jsonResponse({ task: updatedTask }));
+    repositoryMocks.update.mockResolvedValue(updatedTask);
 
     await useTaskStore.getState().updateTask("task-to-update", formValues, "user-1");
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/tasks/task-to-update",
-      expect.objectContaining({
-        method: "PATCH",
-        body: JSON.stringify(formValues),
-      }),
-    );
+    expect(repositoryMocks.update).toHaveBeenCalledWith("task-to-update", formValues);
     expect(useTaskStore.getState().tasks).toEqual([updatedTask]);
   });
 
@@ -240,18 +210,14 @@ describe("task store", () => {
       tasks: [makeTask()],
       lastLoadedUserId: "old-user",
     });
-    const fetchMock = vi.spyOn(global, "fetch");
-
     await useTaskStore.getState().syncTasks();
 
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(repositoryMocks.list).not.toHaveBeenCalled();
     expect(useTaskStore.getState().tasks).toEqual([]);
     expect(useTaskStore.getState().lastLoadedUserId).toBeNull();
   });
 
   it("未登录创建任务时写入当前标签页且不请求 API", async () => {
-    const fetchMock = vi.spyOn(global, "fetch");
-
     const taskId = await useTaskStore.getState().createTaskAsync(formValues);
 
     expect(taskId).toBe(useTaskStore.getState().tasks[0]?.id);
@@ -259,6 +225,6 @@ describe("task store", () => {
       expect.objectContaining({ title: "新任务", tags: ["测试", "学习"] }),
     );
     expect(window.sessionStorage.getItem(GUEST_TASKS_STORAGE_KEY)).toContain("新任务");
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(repositoryMocks.create).not.toHaveBeenCalled();
   });
 });
