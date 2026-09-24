@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 
+import { remoteTaskRepository } from "@/features/tasks/repositories/remote-task-repository";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import { parseTagsInput } from "@/features/tasks/utils/task-tags";
@@ -57,8 +58,8 @@ export const useTaskStore = create<TaskStore>()((set) => ({
     set({ isLoading: true, error: null, tasks: [] });
     try {
       await mergeGuestTasks();
-      const payload = await apiRequest<{ tasks: Task[] }>("/api/tasks");
-      set({ tasks: (payload.tasks ?? []).map(normalizeTask), isLoading: false, error: null, lastLoadedUserId: userId });
+      const tasks = await remoteTaskRepository.list();
+      set({ tasks: tasks.map(normalizeTask), isLoading: false, error: null, lastLoadedUserId: userId });
     } catch (error) {
       set({ isLoading: false, error: error instanceof Error ? error.message : "无法同步任务列表。" });
     }
@@ -74,8 +75,7 @@ export const useTaskStore = create<TaskStore>()((set) => ({
       return task.id;
     }
 
-    const payload = await apiRequest<{ task: Task }>("/api/tasks", { method: "POST", body: input });
-    const createdTask = normalizeTask(payload.task);
+    const createdTask = normalizeTask(await remoteTaskRepository.create(input));
     set((state) => ({ tasks: [createdTask, ...state.tasks], error: null }));
     return createdTask.id;
   },
@@ -89,9 +89,9 @@ export const useTaskStore = create<TaskStore>()((set) => ({
       return;
     }
 
-    const payload = await apiRequest<{ task: Task }>(`/api/tasks/${id}`, { method: "PATCH", body: input });
+    const updatedTask = normalizeTask(await remoteTaskRepository.update(id, input));
     set((state) => ({
-      tasks: state.tasks.map((task) => (task.id === id ? normalizeTask(payload.task) : task)),
+      tasks: state.tasks.map((task) => (task.id === id ? updatedTask : task)),
       error: null,
     }));
   },
@@ -105,9 +105,9 @@ export const useTaskStore = create<TaskStore>()((set) => ({
       return;
     }
 
-    const payload = await apiRequest<{ task: Task }>(`/api/tasks/${id}`, { method: "PATCH", body: { status } });
+    const updatedTask = normalizeTask(await remoteTaskRepository.updateStatus(id, status));
     set((state) => ({
-      tasks: state.tasks.map((task) => (task.id === id ? normalizeTask(payload.task) : task)),
+      tasks: state.tasks.map((task) => (task.id === id ? updatedTask : task)),
       error: null,
     }));
   },
@@ -121,7 +121,7 @@ export const useTaskStore = create<TaskStore>()((set) => ({
       return;
     }
 
-    await apiRequest(`/api/tasks/${id}`, { method: "DELETE" });
+    await remoteTaskRepository.delete(id);
     set((state) => ({ tasks: state.tasks.filter((task) => task.id !== id), error: null }));
   },
 }));
@@ -130,7 +130,7 @@ async function mergeGuestTasks() {
   const guestTasks = readGuestTasks();
 
   for (const task of guestTasks) {
-    await apiRequest("/api/tasks", { method: "POST", body: taskToFormValues(task) });
+    await remoteTaskRepository.create(taskToFormValues(task));
     writeGuestTasks(readGuestTasks().filter((candidate) => candidate.id !== task.id));
   }
 }
@@ -213,23 +213,4 @@ function writeGuestTasks(tasks: Task[]) {
 
 function normalizeTask(task: Task): Task {
   return { ...task, tags: task.tags ?? [] };
-}
-
-async function apiRequest<T = unknown>(
-  input: RequestInfo | URL,
-  init?: { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown },
-) {
-  const response = await fetch(input, {
-    method: init?.method ?? "GET",
-    headers: init?.body === undefined ? undefined : { "Content-Type": "application/json" },
-    body: init?.body === undefined ? undefined : JSON.stringify(init.body),
-  });
-
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(payload?.message || "请求失败，请稍后再试。");
-  }
-
-  if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
 }
