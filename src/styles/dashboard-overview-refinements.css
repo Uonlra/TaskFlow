@@ -280,6 +280,229 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
   background: var(--page-background);
 }
 
+.dashboard-empty-orbit {
+  position: relative;
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, #3e6ae1 28%);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(62, 106, 225, 0.13), transparent 34%),
+    linear-gradient(145deg, rgba(247, 249, 253, 0.96), rgba(232, 238, 249, 0.84));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 20px 52px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-empty-orbit__space {
+  position: absolute;
+  inset: 32px 28px 48px;
+  transform-style: preserve-3d;
+  cursor: grab;
+  transition: transform 180ms ease-out;
+  touch-action: none;
+}
+
+.dashboard-empty-orbit__space.is-dragging {
+  cursor: grabbing;
+  transition: none;
+}
+
+.dashboard-empty-orbit__grid {
+  position: absolute;
+  inset: 12% 6% 4%;
+  transform: rotateX(68deg) translateZ(-80px);
+  transform-origin: center bottom;
+  background-image:
+    linear-gradient(rgba(62, 106, 225, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(62, 106, 225, 0.12) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(to top, black, transparent 78%);
+  opacity: 0.72;
+}
+
+.dashboard-empty-orbit__core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 176px;
+  height: 176px;
+  border: 1px solid rgba(62, 106, 225, 0.28);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) translateZ(20px) rotateX(64deg);
+  box-shadow:
+    0 0 0 22px rgba(62, 106, 225, 0.035),
+    0 0 50px rgba(62, 106, 225, 0.18);
+}
+
+.dashboard-empty-orbit__core span {
+  position: absolute;
+  inset: 38px;
+  border: 1px solid rgba(16, 185, 129, 0.58);
+  border-radius: 50%;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.24);
+}
+
+.dashboard-empty-orbit__node {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 180px;
+  padding: 8px 11px;
+  overflow: hidden;
+  border: 1px solid rgba(62, 106, 225, 0.24);
+  border-radius: 999px;
+  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.11);
+  font: 600 12px/1.2 var(--font-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: dashboard-empty-orbit-float 5s ease-in-out infinite;
+  transform: translateZ(56px);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.dashboard-empty-orbit__node:hover {
+  border-color: var(--primary);
+  background: #fff;
+  transform: translateZ(78px) scale(1.04);
+}
+
+.dashboard-empty-orbit__node--ghost {
+  border-style: dashed;
+  color: color-mix(in srgb, var(--muted) 82%, transparent);
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.dashboard-empty-orbit__node--0 {
+  top: 13%;
+  left: 10%;
+}
+.dashboard-empty-orbit__node--1 {
+  top: 22%;
+  right: 12%;
+}
+.dashboard-empty-orbit__node--2 {
+  top: 55%;
+  left: 5%;
+}
+.dashboard-empty-orbit__node--3 {
+  top: 65%;
+  right: 7%;
+}
+.dashboard-empty-orbit__node--4 {
+  top: 34%;
+  left: 38%;
+}
+
+.dashboard-empty-orbit__node-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
+}
+
+.dashboard-empty-orbit__center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  transform: translate(-50%, -50%) translateZ(100px);
+  text-align: center;
+}
+
+.dashboard-empty-orbit__center-kicker {
+  color: var(--muted);
+  font: 700 10px/1 var(--font-text);
+  letter-spacing: 0.14em;
+}
+
+.dashboard-empty-orbit__center strong {
+  color: var(--foreground);
+  font: 600 18px/1.2 var(--font-text);
+  white-space: nowrap;
+}
+
+.dashboard-empty-orbit__create {
+  min-height: 34px;
+  padding: 7px 13px;
+  border: 1px solid rgba(62, 106, 225, 0.4);
+  border-radius: 999px;
+  color: #fff;
+  background: #3e6ae1;
+  font: 600 12px/1 var(--font-text);
+}
+
+.dashboard-empty-orbit__hint {
+  position: absolute;
+  right: 0;
+  bottom: 16px;
+  left: 0;
+  margin: 0;
+  color: var(--muted);
+  font: 12px/1.4 var(--font-text);
+  text-align: center;
+}
+
+@keyframes dashboard-empty-orbit-float {
+  0%,
+  100% {
+    margin-top: 0;
+  }
+  50% {
+    margin-top: -9px;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-empty-orbit {
+    min-height: 420px;
+  }
+
+  .dashboard-empty-orbit__space {
+    inset: 20px 12px 42px;
+  }
+
+  .dashboard-empty-orbit__node {
+    max-width: 132px;
+    padding: 7px 9px;
+    font-size: 11px;
+  }
+
+  .dashboard-empty-orbit__core {
+    width: 140px;
+    height: 140px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-empty-orbit__node {
+    animation: none;
+  }
+}
+
+html[data-theme="dark"] .dashboard-empty-orbit {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(62, 106, 225, 0.2), transparent 34%),
+    linear-gradient(145deg, rgba(20, 27, 42, 0.96), rgba(16, 23, 36, 0.94));
+}
+
+html[data-theme="dark"] .dashboard-empty-orbit__node {
+  color: #e5e7eb;
+  background: rgba(31, 41, 55, 0.84);
+}
+
 /* Step 24: Soften the primary card while keeping a clear action cue. */
 @media (min-width: 761px) {
   .dashboard-workspace__priority {

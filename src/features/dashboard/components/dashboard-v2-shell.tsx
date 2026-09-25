@@ -6,9 +6,9 @@ import type {
 } from "@/features/dashboard/components/dashboard-range-menu";
 import { DashboardRangeMenu } from "@/features/dashboard/components/dashboard-range-menu";
 import { DashboardWorkspace } from "@/features/dashboard/components/dashboard-workspace";
+import { DashboardEmptyOrbit } from "@/features/dashboard/components/dashboard-empty-orbit";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
-import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import type { DashboardAnalyticsRange, DashboardStats } from "@/features/tasks/utils/task-analytics";
 import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
 import { PageToolbar } from "@/shared/components/layout/page-toolbar";
@@ -37,6 +37,7 @@ const DashboardRiskPanel = dynamic(
 type DashboardV2ShellProps = {
   stats: DashboardStats;
   priorityTasks: DashboardStats["focusTasks"];
+  orbitTasks?: DashboardStats["focusTasks"];
   range: DashboardAnalyticsRange;
   rangeLabel: string;
   isLoading?: boolean;
@@ -57,6 +58,7 @@ type DashboardV2ShellProps = {
 export function DashboardV2Shell({
   stats,
   priorityTasks,
+  orbitTasks = priorityTasks,
   range,
   rangeLabel,
   isLoading = false,
@@ -91,7 +93,7 @@ export function DashboardV2Shell({
     return (
       <section className="dashboard-v2-shell dashboard-v2-shell--empty" aria-label="总览空状态">
         {pageToolbar}
-        <DataEmptyState title="从第一条任务开始" description="创建任务后，这里会汇总进度、截止和风险。" />
+        <DashboardEmptyOrbit tasks={orbitTasks} onPreviewTask={onPreviewTask} onCreateTask={onCreateTask} />
       </section>
     );
   }
@@ -108,6 +110,7 @@ export function DashboardV2Shell({
           onPreviewTask={onPreviewTask}
           onStatusFilter={onStatusFilter}
         />
+        <DashboardEmptyOrbit tasks={orbitTasks} onPreviewTask={onPreviewTask} onCreateTask={onCreateTask} />
       </section>
     );
   }
