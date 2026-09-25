@@ -280,6 +280,328 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
   background: var(--page-background);
 }
 
+.dashboard-empty-orbit {
+  position: relative;
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, #3e6ae1 28%);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(62, 106, 225, 0.13), transparent 34%),
+    linear-gradient(145deg, rgba(247, 249, 253, 0.96), rgba(232, 238, 249, 0.84));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 20px 52px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-empty-orbit__space {
+  position: absolute;
+  inset: 32px 28px 48px;
+  transform-style: preserve-3d;
+  cursor: grab;
+  transition: transform 180ms ease-out;
+  touch-action: none;
+}
+
+.dashboard-empty-orbit__space.is-dragging {
+  cursor: grabbing;
+  transition: none;
+}
+
+.dashboard-empty-orbit__space.is-static {
+  transition: none;
+}
+
+.dashboard-empty-orbit__space.is-static .dashboard-empty-orbit__node {
+  animation: none;
+}
+
+.dashboard-empty-orbit__space.is-static .dashboard-empty-orbit__core,
+.dashboard-empty-orbit__space.is-static .dashboard-empty-orbit__core span {
+  animation: none;
+}
+
+.dashboard-empty-orbit__grid {
+  position: absolute;
+  inset: 12% 6% 4%;
+  transform: rotateX(68deg) translateZ(-80px);
+  transform-origin: center bottom;
+  background-image:
+    linear-gradient(rgba(62, 106, 225, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(62, 106, 225, 0.12) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(to top, black, transparent 78%);
+  opacity: 0.72;
+}
+
+.dashboard-empty-orbit__core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 176px;
+  height: 176px;
+  border: 1px solid rgba(62, 106, 225, 0.28);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) translateZ(20px) rotateX(64deg);
+  box-shadow:
+    0 0 0 22px rgba(62, 106, 225, 0.035),
+    0 0 50px rgba(62, 106, 225, 0.18);
+  animation: dashboard-empty-orbit-core 24s linear infinite;
+}
+
+.dashboard-empty-orbit__core span {
+  position: absolute;
+  inset: 38px;
+  border: 1px solid rgba(16, 185, 129, 0.58);
+  border-radius: 50%;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.24);
+  animation: dashboard-empty-orbit-core-inner 12s linear infinite reverse;
+}
+
+.dashboard-empty-orbit__node {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 180px;
+  padding: 8px 11px;
+  overflow: hidden;
+  border: 1px solid rgba(62, 106, 225, 0.24);
+  border-radius: 999px;
+  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.11);
+  font: 600 12px/1.2 var(--font-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: dashboard-empty-orbit-drift var(--orbit-duration, 5.4s) ease-in-out infinite;
+  transform: translateZ(56px);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.dashboard-empty-orbit__node:hover {
+  border-color: var(--primary);
+  background: #fff;
+  transform: translateZ(78px) scale(1.04);
+}
+
+.dashboard-empty-orbit__node[data-tooltip]::after {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  z-index: 3;
+  width: max-content;
+  max-width: 240px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--foreground);
+  background: var(--surface, #fff);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+  content: attr(data-tooltip);
+  font: 500 11px/1.35 var(--font-text);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.dashboard-empty-orbit__node[data-tooltip]:hover::after,
+.dashboard-empty-orbit__node[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.dashboard-empty-orbit__node--ghost {
+  border-style: dashed;
+  color: color-mix(in srgb, var(--muted) 82%, transparent);
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.dashboard-empty-orbit__node--position-0 {
+  top: 13%;
+  left: 17%;
+}
+.dashboard-empty-orbit__node--position-1 {
+  top: 22%;
+  right: 16%;
+}
+.dashboard-empty-orbit__node--position-2 {
+  top: 55%;
+  left: 10%;
+}
+.dashboard-empty-orbit__node--position-3 {
+  top: 65%;
+  right: 11%;
+}
+.dashboard-empty-orbit__node--position-4 {
+  top: 34%;
+  left: 38%;
+}
+.dashboard-empty-orbit__node--position-5 {
+  top: 76%;
+  left: 22%;
+}
+.dashboard-empty-orbit__node--position-6 {
+  top: 38%;
+  right: 25%;
+}
+.dashboard-empty-orbit__node--position-7 {
+  top: 8%;
+  left: 44%;
+}
+
+.dashboard-empty-orbit__node-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
+}
+
+.dashboard-empty-orbit__node--high {
+  border-color: rgba(239, 68, 68, 0.42);
+}
+
+.dashboard-empty-orbit__node--high .dashboard-empty-orbit__node-dot {
+  background: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.13);
+}
+
+.dashboard-empty-orbit__node--medium {
+  border-color: rgba(245, 158, 11, 0.46);
+}
+
+.dashboard-empty-orbit__node--medium .dashboard-empty-orbit__node-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.14);
+}
+
+.dashboard-empty-orbit__node--low .dashboard-empty-orbit__node-dot {
+  background: #3e6ae1;
+  box-shadow: 0 0 0 4px rgba(62, 106, 225, 0.13);
+}
+
+.dashboard-empty-orbit__node--in_progress {
+  box-shadow:
+    0 0 0 2px rgba(62, 106, 225, 0.12),
+    0 10px 26px rgba(15, 23, 42, 0.11);
+}
+
+.dashboard-empty-orbit__node--in_progress .dashboard-empty-orbit__node-dot {
+  background: #3e6ae1;
+  box-shadow: 0 0 0 4px rgba(62, 106, 225, 0.15);
+}
+
+.dashboard-empty-orbit__center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  transform: translate(-50%, -50%) translateZ(100px);
+  text-align: center;
+}
+
+.dashboard-empty-orbit__center-kicker {
+  color: var(--muted);
+  font: 700 10px/1 var(--font-text);
+  letter-spacing: 0.14em;
+}
+
+.dashboard-empty-orbit__center strong {
+  color: var(--foreground);
+  font: 600 18px/1.2 var(--font-text);
+  white-space: nowrap;
+}
+
+.dashboard-empty-orbit__create {
+  min-height: 34px;
+  padding: 7px 13px;
+  border: 1px solid rgba(62, 106, 225, 0.4);
+  border-radius: 999px;
+  color: #fff;
+  background: #3e6ae1;
+  font: 600 12px/1 var(--font-text);
+}
+
+.dashboard-empty-orbit__hint {
+  position: absolute;
+  right: 0;
+  bottom: 16px;
+  left: 0;
+  margin: 0;
+  color: var(--muted);
+  font: 12px/1.4 var(--font-text);
+  text-align: center;
+}
+
+@keyframes dashboard-empty-orbit-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 56px) rotate(0deg);
+  }
+  25% {
+    transform: translate3d(calc(var(--orbit-drift, 8px) * 0.55), calc(var(--orbit-drift, 8px) * -0.8), 70px)
+      rotate(1deg);
+  }
+  50% {
+    transform: translate3d(var(--orbit-drift, 8px), 0, 62px) rotate(-1deg);
+  }
+  75% {
+    transform: translate3d(calc(var(--orbit-drift, 8px) * -0.5), calc(var(--orbit-drift, 8px) * 0.65), 48px)
+      rotate(0.6deg);
+  }
+}
+
+@keyframes dashboard-empty-orbit-core {
+  from {
+    transform: translate(-50%, -50%) translateZ(20px) rotateX(64deg) rotateZ(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) translateZ(20px) rotateX(64deg) rotateZ(360deg);
+  }
+}
+
+@keyframes dashboard-empty-orbit-core-inner {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-empty-orbit__node {
+    animation: none;
+  }
+}
+
+html[data-theme="dark"] .dashboard-empty-orbit {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(62, 106, 225, 0.2), transparent 34%),
+    linear-gradient(145deg, rgba(20, 27, 42, 0.96), rgba(16, 23, 36, 0.94));
+}
+
+html[data-theme="dark"] .dashboard-empty-orbit__node {
+  color: #e5e7eb;
+  background: rgba(31, 41, 55, 0.84);
+}
+
+html[data-theme="dark"] .dashboard-empty-orbit__node[data-tooltip]::after {
+  background: #1f2937;
+}
+
 /* Step 24: Soften the primary card while keeping a clear action cue. */
 @media (min-width: 761px) {
   .dashboard-workspace__priority {

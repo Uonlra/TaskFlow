@@ -14,6 +14,7 @@ import { useTaskStore } from "@/features/tasks/store/task-store";
 import { TaskQuickViewDialog } from "@/features/tasks/components/task-quick-view-dialog";
 import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
 import type { Task } from "@/features/tasks/types/task.types";
+import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { ROUTES } from "@/shared/lib/constants/routes";
 import { buildTasksHref } from "@/shared/lib/constants/query-params";
 
@@ -119,6 +120,9 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const isAccountEmpty = !isAuthLoading && !isSummaryLoading && !hasAnyTasks && !error;
   const isRangeEmpty = !isSummaryLoading && !error && hasAnyTasks && stats.totalCount === 0;
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "今天";
+  const orbitTasks = syncedTasks.some((task) => task.status !== "done")
+    ? syncedTasks.filter((task) => task.status !== "done").map(toDashboardTaskPreview)
+    : stats.focusTasks;
 
   const handleRangeChange = (nextRange: DashboardRange) => {
     setRange(nextRange);
@@ -170,6 +174,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         <DashboardV2Shell
           stats={stats}
           priorityTasks={stats.focusTasks}
+          orbitTasks={orbitTasks}
           range={range}
           rangeLabel={rangeLabel}
           isLoading={isSummaryLoading}
@@ -230,5 +235,19 @@ function toTaskPreview(task: DashboardTaskPreview): Task {
     tags: task.tags,
     dueDate: task.dueDate,
     createdAt: task.createdAt,
+  };
+}
+
+function toDashboardTaskPreview(task: Task): DashboardTaskPreview {
+  return {
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    createdAt: task.createdAt,
+    status: task.status,
+    priority: task.priority,
+    dueDate: task.dueDate,
+    dueLabel: getTaskDueMeta(task).label,
+    tags: task.tags,
   };
 }
