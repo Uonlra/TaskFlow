@@ -71,12 +71,15 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
         {(hasTasks ? visibleTasks : fallbackNodes.map((title, index) => ({ id: `fallback-${index}`, title }))).map(
           (node, index) => {
             const task = hasTasks ? (node as DashboardTaskPreview) : undefined;
+            const taskTone = task
+              ? ` dashboard-empty-orbit__node--${task.priority} dashboard-empty-orbit__node--${task.status}`
+              : "";
 
             return task ? (
               <button
                 key={task.id}
                 type="button"
-                className={`dashboard-empty-orbit__node dashboard-empty-orbit__node--${index % 5}`}
+                className={`dashboard-empty-orbit__node dashboard-empty-orbit__node--position-${index % 8}${taskTone}`}
                 onClick={() => onPreviewTask(task)}
                 style={{ animationDelay: `${index * -0.8}s` }}
               >
@@ -86,7 +89,7 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
             ) : (
               <span
                 key={node.id}
-                className={`dashboard-empty-orbit__node dashboard-empty-orbit__node--ghost dashboard-empty-orbit__node--${index % 5}`}
+                className={`dashboard-empty-orbit__node dashboard-empty-orbit__node--ghost dashboard-empty-orbit__node--position-${index % 8}`}
                 style={{ animationDelay: `${index * -0.8}s` }}
               >
                 <span className="dashboard-empty-orbit__node-dot" aria-hidden="true" />

@@ -381,25 +381,37 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
   pointer-events: none;
 }
 
-.dashboard-empty-orbit__node--0 {
+.dashboard-empty-orbit__node--position-0 {
   top: 13%;
   left: 10%;
 }
-.dashboard-empty-orbit__node--1 {
+.dashboard-empty-orbit__node--position-1 {
   top: 22%;
   right: 12%;
 }
-.dashboard-empty-orbit__node--2 {
+.dashboard-empty-orbit__node--position-2 {
   top: 55%;
   left: 5%;
 }
-.dashboard-empty-orbit__node--3 {
+.dashboard-empty-orbit__node--position-3 {
   top: 65%;
   right: 7%;
 }
-.dashboard-empty-orbit__node--4 {
+.dashboard-empty-orbit__node--position-4 {
   top: 34%;
   left: 38%;
+}
+.dashboard-empty-orbit__node--position-5 {
+  top: 76%;
+  left: 22%;
+}
+.dashboard-empty-orbit__node--position-6 {
+  top: 38%;
+  right: 25%;
+}
+.dashboard-empty-orbit__node--position-7 {
+  top: 8%;
+  left: 48%;
 }
 
 .dashboard-empty-orbit__node-dot {
@@ -409,6 +421,40 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
   border-radius: 50%;
   background: #10b981;
   box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
+}
+
+.dashboard-empty-orbit__node--high {
+  border-color: rgba(239, 68, 68, 0.42);
+}
+
+.dashboard-empty-orbit__node--high .dashboard-empty-orbit__node-dot {
+  background: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.13);
+}
+
+.dashboard-empty-orbit__node--medium {
+  border-color: rgba(245, 158, 11, 0.46);
+}
+
+.dashboard-empty-orbit__node--medium .dashboard-empty-orbit__node-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.14);
+}
+
+.dashboard-empty-orbit__node--low .dashboard-empty-orbit__node-dot {
+  background: #3e6ae1;
+  box-shadow: 0 0 0 4px rgba(62, 106, 225, 0.13);
+}
+
+.dashboard-empty-orbit__node--in_progress {
+  box-shadow:
+    0 0 0 2px rgba(62, 106, 225, 0.12),
+    0 10px 26px rgba(15, 23, 42, 0.11);
+}
+
+.dashboard-empty-orbit__node--in_progress .dashboard-empty-orbit__node-dot {
+  background: #3e6ae1;
+  box-shadow: 0 0 0 4px rgba(62, 106, 225, 0.15);
 }
 
 .dashboard-empty-orbit__center {

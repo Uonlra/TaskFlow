@@ -36,6 +36,10 @@ describe("DashboardEmptyOrbit", () => {
     render(<DashboardEmptyOrbit {...defaultProps} tasks={[task]} />);
 
     expect(screen.getByRole("button", { name: "整理项目方案" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "整理项目方案" })).toHaveClass(
+      "dashboard-empty-orbit__node--high",
+      "dashboard-empty-orbit__node--todo",
+    );
     expect(screen.getByRole("button", { name: "创建任务" })).toBeInTheDocument();
     expect(screen.queryByText("空白空间")).not.toBeInTheDocument();
   });
