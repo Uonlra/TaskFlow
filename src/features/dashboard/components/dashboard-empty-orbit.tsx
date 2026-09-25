@@ -113,7 +113,11 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
                 onClick={() => onPreviewTask(task)}
                 aria-label={task.title}
                 data-tooltip={`${getTaskStatusLabel(task.status)} · ${getTaskPriorityLabel(task.priority)} · ${task.dueLabel}`}
-                style={{ animationDelay: `${index * -0.8}s` }}
+                style={{
+                  animationDelay: `${index * -0.72}s`,
+                  ["--orbit-duration" as string]: `${4.8 + (index % 4) * 0.65}s`,
+                  ["--orbit-drift" as string]: `${6 + (index % 3) * 2}px`,
+                }}
               >
                 <span className="dashboard-empty-orbit__node-dot" aria-hidden="true" />
                 <span>{task.title}</span>
@@ -122,7 +126,11 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
               <span
                 key={node.id}
                 className={`dashboard-empty-orbit__node dashboard-empty-orbit__node--ghost dashboard-empty-orbit__node--position-${index % 8}`}
-                style={{ animationDelay: `${index * -0.8}s` }}
+                style={{
+                  animationDelay: `${index * -0.72}s`,
+                  ["--orbit-duration" as string]: `${5.4 + (index % 4) * 0.7}s`,
+                  ["--orbit-drift" as string]: `${7 + (index % 3) * 2}px`,
+                }}
               >
                 <span className="dashboard-empty-orbit__node-dot" aria-hidden="true" />
                 <span>{node.title}</span>
