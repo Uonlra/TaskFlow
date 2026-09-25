@@ -308,6 +308,14 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
   transition: none;
 }
 
+.dashboard-empty-orbit__space.is-static {
+  transition: none;
+}
+
+.dashboard-empty-orbit__space.is-static .dashboard-empty-orbit__node {
+  animation: none;
+}
+
 .dashboard-empty-orbit__grid {
   position: absolute;
   inset: 12% 6% 4%;
@@ -373,6 +381,35 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
   transform: translateZ(78px) scale(1.04);
 }
 
+.dashboard-empty-orbit__node[data-tooltip]::after {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  z-index: 3;
+  width: max-content;
+  max-width: 240px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--foreground);
+  background: var(--surface, #fff);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+  content: attr(data-tooltip);
+  font: 500 11px/1.35 var(--font-text);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.dashboard-empty-orbit__node[data-tooltip]:hover::after,
+.dashboard-empty-orbit__node[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 .dashboard-empty-orbit__node--ghost {
   border-style: dashed;
   color: color-mix(in srgb, var(--muted) 82%, transparent);
@@ -383,19 +420,19 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
 
 .dashboard-empty-orbit__node--position-0 {
   top: 13%;
-  left: 10%;
+  left: 17%;
 }
 .dashboard-empty-orbit__node--position-1 {
   top: 22%;
-  right: 12%;
+  right: 16%;
 }
 .dashboard-empty-orbit__node--position-2 {
   top: 55%;
-  left: 5%;
+  left: 10%;
 }
 .dashboard-empty-orbit__node--position-3 {
   top: 65%;
-  right: 7%;
+  right: 11%;
 }
 .dashboard-empty-orbit__node--position-4 {
   top: 34%;
@@ -411,7 +448,7 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
 }
 .dashboard-empty-orbit__node--position-7 {
   top: 8%;
-  left: 48%;
+  left: 44%;
 }
 
 .dashboard-empty-orbit__node-dot {
@@ -511,27 +548,6 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
   }
 }
 
-@media (max-width: 720px) {
-  .dashboard-empty-orbit {
-    min-height: 420px;
-  }
-
-  .dashboard-empty-orbit__space {
-    inset: 20px 12px 42px;
-  }
-
-  .dashboard-empty-orbit__node {
-    max-width: 132px;
-    padding: 7px 9px;
-    font-size: 11px;
-  }
-
-  .dashboard-empty-orbit__core {
-    width: 140px;
-    height: 140px;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .dashboard-empty-orbit__node {
     animation: none;
@@ -547,6 +563,10 @@ html[data-theme="dark"] .dashboard-empty-orbit {
 html[data-theme="dark"] .dashboard-empty-orbit__node {
   color: #e5e7eb;
   background: rgba(31, 41, 55, 0.84);
+}
+
+html[data-theme="dark"] .dashboard-empty-orbit__node[data-tooltip]::after {
+  background: #1f2937;
 }
 
 /* Step 24: Soften the primary card while keeping a clear action cue. */

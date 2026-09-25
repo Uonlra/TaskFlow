@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type WheelEvent as ReactWheelEvent,
+} from "react";
 
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
@@ -17,10 +24,24 @@ const fallbackNodes = ["START", "FOCUS", "FLOW", "NEXT", "BUILD", "PACE"];
 export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: DashboardEmptyOrbitProps) {
   const spaceRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: -8, y: 12 });
+  const [scale, setScale] = useState(1);
+  const [isStaticMode, setIsStaticMode] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef({ x: 0, y: 0, rotationX: 0, rotationY: 0 });
   const visibleTasks = useMemo(() => tasks.filter((task) => task.status !== "done").slice(0, 8), [tasks]);
   const hasTasks = visibleTasks.length > 0;
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateStaticMode = () => setIsStaticMode(mediaQuery.matches);
+
+    updateStaticMode();
+    mediaQuery.addEventListener("change", updateStaticMode);
+
+    return () => mediaQuery.removeEventListener("change", updateStaticMode);
+  }, []);
 
   useEffect(() => {
     const element = spaceRef.current;
@@ -56,13 +77,22 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
+  const handleWheel = (event: ReactWheelEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setScale((current) => Math.max(0.82, Math.min(1.24, current - event.deltaY * 0.001)));
+  };
+
   return (
     <section className="dashboard-empty-orbit" aria-label="任务数据空间">
       <div
         ref={spaceRef}
-        className={`dashboard-empty-orbit__space${isDragging ? " is-dragging" : ""}`}
+        className={`dashboard-empty-orbit__space${isDragging ? " is-dragging" : ""}${isStaticMode ? " is-static" : ""}`}
+        data-render-mode={isStaticMode ? "static" : "interactive"}
         onPointerDown={handlePointerDown}
-        style={{ transform: `perspective(900px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)` }}
+        onWheel={handleWheel}
+        style={{
+          transform: `perspective(900px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg) scale(${scale})`,
+        }}
       >
         <div className="dashboard-empty-orbit__grid" aria-hidden="true" />
         <div className="dashboard-empty-orbit__core" aria-hidden="true">
@@ -81,6 +111,8 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
                 type="button"
                 className={`dashboard-empty-orbit__node dashboard-empty-orbit__node--position-${index % 8}${taskTone}`}
                 onClick={() => onPreviewTask(task)}
+                aria-label={task.title}
+                data-tooltip={`${getTaskStatusLabel(task.status)} · ${getTaskPriorityLabel(task.priority)} · ${task.dueLabel}`}
                 style={{ animationDelay: `${index * -0.8}s` }}
               >
                 <span className="dashboard-empty-orbit__node-dot" aria-hidden="true" />
@@ -111,4 +143,12 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
       <p className="dashboard-empty-orbit__hint">拖动探索任务空间</p>
     </section>
   );
+}
+
+function getTaskStatusLabel(status: DashboardTaskPreview["status"]) {
+  return status === "in_progress" ? "进行中" : status === "done" ? "已完成" : "待开始";
+}
+
+function getTaskPriorityLabel(priority: DashboardTaskPreview["priority"]) {
+  return priority === "high" ? "高优先级" : priority === "medium" ? "中优先级" : "低优先级";
 }
