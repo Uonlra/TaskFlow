@@ -221,7 +221,7 @@ textarea:focus {
 }
 
 .task-textarea {
-  min-height: 44px;
+  min-height: 76px;
   overflow-y: hidden;
   resize: none;
   line-height: 1.72;
