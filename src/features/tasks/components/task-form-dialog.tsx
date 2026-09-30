@@ -458,7 +458,7 @@ export function TaskFormDialog({
                           descriptionTextareaRef.current = node;
                         }}
                         placeholder="任务的目标、实现过程或者方法，都可以写下补充说明。"
-                        rows={1}
+                        rows={3}
                         aria-label="备注"
                         aria-invalid={Boolean(errors.description)}
                         aria-describedby={errors.description ? descriptionErrorId : undefined}

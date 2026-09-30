@@ -385,7 +385,13 @@ html[data-theme="dark"] .dashboard-main:has(.dashboard-v2-shell) {
 .dashboard-empty-orbit__node:hover {
   border-color: var(--primary);
   background: #fff;
-  transform: translateZ(78px) scale(1.04);
+  animation-play-state: paused;
+  transform: translate3d(0, 0, 78px) scale(1.04);
+}
+
+.dashboard-empty-orbit__node:focus-visible {
+  animation-play-state: paused;
+  transform: translate3d(0, 0, 78px) scale(1.04);
 }
 
 .dashboard-empty-orbit__node[data-tooltip]::after {

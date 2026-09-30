@@ -15,7 +15,6 @@ import { TaskQuickViewDialog } from "@/features/tasks/components/task-quick-view
 import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
-import { ROUTES } from "@/shared/lib/constants/routes";
 import { buildTasksHref } from "@/shared/lib/constants/query-params";
 
 type DashboardRange = "today" | "week" | "all";
@@ -49,6 +48,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const [range, setRange] = useState<DashboardRange>(initialRange);
   const [priorityFilters, setPriorityFilters] = useState<DashboardPriorityFilters>(initialPriorityFilters);
   const createTaskAsync = useTaskStore((state) => state.createTaskAsync);
+  const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
   const syncedTasks = useTaskStore((state) => state.tasks);
@@ -157,6 +157,14 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     setPreviewTask(null);
   };
 
+  const handlePreviewUpdate = async (task: Task, values: TaskFormValues) => {
+    await updateTask(task.id, values, user?.id);
+    await loadSummary();
+
+    const updatedTask = useTaskStore.getState().tasks.find((item) => item.id === task.id);
+    setPreviewTask(updatedTask ?? null);
+  };
+
   const handlePreviewDelete = async (task: Task) => {
     await deleteTask(task.id, user?.id);
     await loadSummary();
@@ -206,10 +214,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
       <TaskQuickViewDialog
         task={previewTask}
         onClose={() => setPreviewTask(null)}
-        onEdit={(task) => {
-          setPreviewTask(null);
-          router.push(`${ROUTES.tasks}/${task.id}?edit=true`);
-        }}
+        onUpdateTask={handlePreviewUpdate}
         onToggleComplete={handlePreviewStatus}
         onDelete={handlePreviewDelete}
       />

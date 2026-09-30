@@ -111,4 +111,13 @@ describe("DashboardEmptyOrbit", () => {
 
     expect(document.querySelector(".dashboard-empty-orbit__space")).toHaveAttribute("data-render-mode", "static");
   });
+
+  it("为任务节点保留悬停暂停动画的样式钩子", () => {
+    render(<DashboardEmptyOrbit {...defaultProps} tasks={[task]} />);
+
+    const node = screen.getByRole("button", { name: "整理项目方案" });
+
+    expect(node).toHaveClass("dashboard-empty-orbit__node");
+    expect(node).toHaveAttribute("data-tooltip");
+  });
 });
