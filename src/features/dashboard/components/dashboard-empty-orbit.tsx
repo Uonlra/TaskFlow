@@ -19,7 +19,14 @@ type DashboardEmptyOrbitProps = {
   onCreateTask: (values: TaskFormValues) => Promise<void>;
 };
 
-const fallbackNodes = ["START", "FOCUS", "FLOW", "NEXT", "BUILD", "PACE"];
+const exampleNodes = [
+  { title: "整理方案", tone: "high" },
+  { title: "准备会议", tone: "medium" },
+  { title: "推进开发", tone: "in_progress" },
+  { title: "复盘进度", tone: "low" },
+  { title: "记录灵感", tone: "medium" },
+  { title: "规划下一步", tone: "in_progress" },
+];
 
 export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: DashboardEmptyOrbitProps) {
   const spaceRef = useRef<HTMLDivElement>(null);
@@ -96,51 +103,55 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
       >
         <div className="dashboard-empty-orbit__grid" aria-hidden="true" />
         <div className="dashboard-empty-orbit__core" aria-hidden="true">
-          <span />
+          <div className="dashboard-empty-orbit__planet">
+            <span className="dashboard-empty-orbit__planet-grid" />
+            <span className="dashboard-empty-orbit__planet-highlight" />
+          </div>
+          <span className="dashboard-empty-orbit__core-ring dashboard-empty-orbit__core-ring--one" />
+          <span className="dashboard-empty-orbit__core-ring dashboard-empty-orbit__core-ring--two" />
         </div>
-        {(hasTasks ? visibleTasks : fallbackNodes.map((title, index) => ({ id: `fallback-${index}`, title }))).map(
-          (node, index) => {
-            const task = hasTasks ? (node as DashboardTaskPreview) : undefined;
-            const taskTone = task
-              ? ` dashboard-empty-orbit__node--${task.priority} dashboard-empty-orbit__node--${task.status}`
-              : "";
+        {(hasTasks ? visibleTasks : exampleNodes).map((node, index) => {
+          const task = hasTasks ? (node as DashboardTaskPreview) : undefined;
+          const taskTone = task
+            ? ` dashboard-empty-orbit__node--${task.priority} dashboard-empty-orbit__node--${task.status}`
+            : ` dashboard-empty-orbit__node--example dashboard-empty-orbit__node--${(node as (typeof exampleNodes)[number]).tone}`;
 
-            return task ? (
-              <button
-                key={task.id}
-                type="button"
-                className={`dashboard-empty-orbit__node dashboard-empty-orbit__node--position-${index % 8}${taskTone}`}
-                onClick={() => onPreviewTask(task)}
-                aria-label={task.title}
-                data-tooltip={`${getTaskStatusLabel(task.status)} · ${getTaskPriorityLabel(task.priority)} · ${task.dueLabel}`}
-                style={{
-                  animationDelay: `${index * -0.72}s`,
-                  ["--orbit-duration" as string]: `${4.8 + (index % 4) * 0.65}s`,
-                  ["--orbit-drift" as string]: `${6 + (index % 3) * 2}px`,
-                }}
-              >
-                <span className="dashboard-empty-orbit__node-dot" aria-hidden="true" />
-                <span>{task.title}</span>
-              </button>
-            ) : (
-              <span
-                key={node.id}
-                className={`dashboard-empty-orbit__node dashboard-empty-orbit__node--ghost dashboard-empty-orbit__node--position-${index % 8}`}
-                style={{
-                  animationDelay: `${index * -0.72}s`,
-                  ["--orbit-duration" as string]: `${5.4 + (index % 4) * 0.7}s`,
-                  ["--orbit-drift" as string]: `${7 + (index % 3) * 2}px`,
-                }}
-              >
-                <span className="dashboard-empty-orbit__node-dot" aria-hidden="true" />
-                <span>{node.title}</span>
-              </span>
-            );
-          },
-        )}
+          return task ? (
+            <button
+              key={task.id}
+              type="button"
+              className={`dashboard-empty-orbit__node dashboard-empty-orbit__node--position-${index % 8}${taskTone}`}
+              onClick={() => onPreviewTask(task)}
+              aria-label={task.title}
+              data-tooltip={`${getTaskStatusLabel(task.status)} · ${getTaskPriorityLabel(task.priority)} · ${task.dueLabel}`}
+              style={{
+                animationDelay: `${index * -0.72}s`,
+                ["--orbit-duration" as string]: `${4.8 + (index % 4) * 0.65}s`,
+                ["--orbit-drift" as string]: `${6 + (index % 3) * 2}px`,
+              }}
+            >
+              <span className="dashboard-empty-orbit__node-dot" aria-hidden="true" />
+              <span>{task.title}</span>
+            </button>
+          ) : (
+            <span
+              key={`example-${node.title}`}
+              className={`dashboard-empty-orbit__node${taskTone} dashboard-empty-orbit__node--position-${index % 8}`}
+              aria-hidden="true"
+              style={{
+                animationDelay: `${index * -0.72}s`,
+                ["--orbit-duration" as string]: `${5.4 + (index % 4) * 0.7}s`,
+                ["--orbit-drift" as string]: `${7 + (index % 3) * 2}px`,
+              }}
+            >
+              <span className="dashboard-empty-orbit__node-dot" aria-hidden="true" />
+              <span>{node.title}</span>
+            </span>
+          );
+        })}
         <div className="dashboard-empty-orbit__center">
-          <span className="dashboard-empty-orbit__center-kicker">TASK SPACE</span>
-          <strong>{hasTasks ? "未完成任务" : "空白空间"}</strong>
+          <span className="dashboard-empty-orbit__center-kicker">TASK PLANET</span>
+          <strong>{hasTasks ? "未完成任务" : "任务星球"}</strong>
           <TaskFormDialog
             onSubmitTask={onCreateTask}
             triggerLabel="创建任务"
