@@ -1,0 +1,100 @@
+name: Feature Request / 功能建议
+description: Suggest a new feature or improvement / 提出新功能或改进建议
+title: "[Feat] "
+labels: ["enhancement"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement.
+        感谢你提出改进建议。
+
+        Please submit only one feature request per issue. If you have multiple unrelated ideas, open separate issues.
+        请每次仅提交一个建议。如果有多个不相关的建议，请分别提交 issue。
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist / 提交前确认
+      options:
+        - label: I have searched existing issues and found no duplicate or similar request. / 我已搜索现有 issue，未找到重复或类似建议。
+          required: true
+        - label: This issue describes only one feature request or improvement. / 本 issue 仅描述一个功能建议或改进点。
+          required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category / 类型
+      description: What kind of improvement is this? / 这属于哪类改进？
+      options:
+        - UI/UX
+        - Task management / 任务管理
+        - Dashboard, calendar, or statistics / 总览、日历或统计
+        - Authentication or data sync / 登录认证或数据同步
+        - Performance or accessibility / 性能或无障碍
+        - Documentation / 文档
+        - Other / 其他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform / 平台
+      description: Select the platform related to this request. / 请选择建议涉及的平台。
+      multiple: true
+      options:
+        - Web browser / 浏览器
+        - Mobile browser / 移动端浏览器
+        - Platform-agnostic / 平台无关
+        - Other / 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case / 问题或使用场景
+      description: What problem does this feature solve? / 这个功能想解决什么问题？
+      placeholder: Describe the current limitation or user need. / 描述当前限制或用户需求。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution / 建议方案
+      description: Describe the behavior or feature you want. / 描述你希望实现的功能或行为。
+      placeholder: I would like TaskFlow to ... / 我希望 TaskFlow 可以……
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered / 其他方案
+      description: Describe alternative solutions or workarounds you considered. / 描述你考虑过的替代方案或临时解决办法。
+      placeholder: Alternative approaches or workarounds. / 其他实现方式或临时解决办法。
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Screenshots, mockups, or examples / 截图、原型或示例
+      description: Attach visual references or examples if helpful. / 如有帮助，请附上视觉参考或示例。
+      placeholder: Drag and drop or paste files here. / 可将文件拖拽或粘贴到这里。
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution / 参与意愿
+      options:
+        - label: I am willing to help implement this feature. / 我愿意协助实现此功能。
+        - label: I am willing to help test this feature. / 我愿意协助测试此功能。
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context / 其他信息
+      description: Add any other context that may help evaluate the request. / 补充任何有助于评估该建议的信息。
