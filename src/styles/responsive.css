@@ -1,45 +1,6 @@
 @media (max-width: 1180px) {
-  .dashboard-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-sidebar {
-    position: static;
-    height: auto;
-    display: grid;
-    grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.2fr);
-    gap: 18px;
-    align-items: center;
-    padding: 18px;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .dashboard-sidebar-head {
-    padding: 0;
-  }
-
-  .dashboard-sidebar-nav {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    margin: 0;
-  }
-
   .settings-grid {
     grid-template-columns: 1fr;
-  }
-
-  .page-toolbar__row {
-    align-items: stretch;
-    flex-wrap: wrap;
-  }
-
-  .page-toolbar__context {
-    flex: 1 1 auto;
-  }
-
-  .page-toolbar__controls {
-    flex: 1 1 100%;
-    justify-content: flex-start;
   }
 }
 

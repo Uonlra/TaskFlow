@@ -356,6 +356,7 @@ textarea:focus {
 }
 
 .page-toolbar {
+  container: page-toolbar / inline-size;
   min-width: 0;
   display: grid;
   gap: 12px;
@@ -368,6 +369,7 @@ textarea:focus {
   min-width: 0;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -508,6 +510,66 @@ textarea:focus {
   font-weight: 600;
   line-height: 1.35;
   white-space: nowrap;
+}
+
+/* Adapt to the space left by the sidebar, including a collapsed sidebar or browser zoom. */
+@media (min-width: 961px) {
+  @container page-toolbar (max-width: 64rem) {
+    header.page-toolbar .page-toolbar__row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header.page-toolbar .page-toolbar__context {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    header.page-toolbar .page-toolbar__row:not(:has(> .page-toolbar__primary)) > .page-toolbar__context {
+      grid-column: 1 / -1;
+    }
+
+    header.page-toolbar .page-toolbar__primary {
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: end;
+    }
+
+    header.page-toolbar .page-toolbar__controls,
+    header.page-toolbar .page-toolbar__secondary {
+      grid-column: 1 / -1;
+      width: 100%;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    header.page-toolbar .dashboard-toolbar__context,
+    header.page-toolbar .calendar-toolbar__context,
+    header.page-toolbar .stats-toolbar__context {
+      flex-wrap: wrap;
+      gap: 10px 18px;
+    }
+
+    header.page-toolbar .dashboard-toolbar__controls,
+    header.page-toolbar .calendar-toolbar__controls,
+    header.page-toolbar .stats-toolbar__controls {
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    header.page-toolbar .dashboard-toolbar__signal {
+      flex: 1 1 12rem;
+      white-space: normal;
+    }
+
+    header.page-toolbar .desktop-task-toolbar__controls {
+      flex-wrap: wrap;
+    }
+  }
 }
 
 .ui-sans {
