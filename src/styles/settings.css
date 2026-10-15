@@ -1,3 +1,30 @@
+/* Settings page breakpoints. */
+
+@media (max-width: 1180px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  .mobile-settings__header {
+    display: none !important;
+  }
+
+  .mobile-settings__header {
+    padding: 2px 0 0;
+  }
+
+  .mobile-settings {
+    width: 100%;
+    max-width: 760px;
+    margin-inline: auto;
+  }
+
+  .mobile-settings {
+    padding-bottom: 0;
+  }
+}
 /* Hallmark · macrostructure: Settings Workbench · tone: utilitarian · anchor hue: cool-blue */
 .settings-desktop {
   display: grid;

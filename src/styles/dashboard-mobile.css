@@ -1,3 +1,41 @@
+/* Mobile dashboard page bounds and range control. */
+
+@media (max-width: 960px) {
+  .mobile-dashboard__header {
+    padding: 2px 0 0;
+  }
+
+  .mobile-dashboard {
+    width: 100%;
+    max-width: 760px;
+    margin-inline: auto;
+  }
+
+  .mobile-dashboard {
+    padding-bottom: 0;
+  }
+
+  .date-switcher.mobile-dashboard__range {
+    width: 100%;
+    min-height: 40px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .date-switcher.mobile-dashboard__range .date-switcher__button.is-active {
+    border-color: var(--primary);
+    background: var(--primary);
+  }
+}
+
+/* Dashboard mobile view: toolbar, metrics, task cards, and theme states. */
+
 .dashboard-mobile-only {
   display: none;
 }

@@ -1,5 +1,4 @@
-import "@/styles/tasks.css";
-import "@/styles/responsive-tasks.css";
+import "@/styles/task-components.css";
 import "@/styles/calendar.css";
 
 import { CalendarClient } from "@/features/calendar/components/calendar-client";

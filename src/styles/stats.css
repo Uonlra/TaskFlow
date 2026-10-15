@@ -1,3 +1,51 @@
+/* Statistics layout and mobile toolbar. */
+
+@media (max-width: 960px) {
+  .stats-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  .stats-shell {
+    width: 100%;
+    max-width: 760px;
+    margin-inline: auto;
+  }
+
+  .stats-toolbar {
+    min-height: 40px;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  .stats-toolbar > .page-toolbar__row {
+    width: 100%;
+  }
+
+  .stats-insight {
+    display: none;
+  }
+
+  .stats-shell .data-empty-state p {
+    display: none;
+  }
+
+  .date-switcher.stats-range-tabs {
+    width: 100%;
+    min-height: 40px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+}
+
 .stats-shell {
   display: grid;
   gap: 16px;

@@ -1,10 +1,7 @@
-import "@/styles/tasks.css";
-import "@/styles/responsive-tasks.css";
+import "@/styles/task-components.css";
 import "@/styles/dashboard-overview.css";
-import "@/styles/dashboard-overview-workspace.css";
-import "@/styles/dashboard-overview-insights.css";
-import "@/styles/dashboard-overview-refinements.css";
-import "@/styles/responsive-dashboard.css";
+import "@/styles/dashboard-empty.css";
+import "@/styles/dashboard-mobile.css";
 
 import { DashboardClient } from "@/features/dashboard/components/dashboard-client";
 import { PageContainer } from "@/shared/components/layout/page-container";
