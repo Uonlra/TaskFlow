@@ -5,14 +5,22 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TaskListClient } from "@/features/tasks/components/task-list-client";
+import { remoteTaskRepository } from "@/features/tasks/repositories/remote-task-repository";
+import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import type { Task, TaskPageInitialData } from "@/features/tasks/types/task.types";
+import { parseTaskImportPayload, PartialTaskImportError } from "@/features/tasks/utils/task-transfer";
 
 const mocks = vi.hoisted(() => ({
   router: { push: vi.fn(), replace: vi.fn() },
   searchParams: new URLSearchParams(),
   auth: {
-    user: { id: "user-1", email: "user@example.com", name: "User", emailVerified: true },
+    user: { id: "user-1", email: "user@example.com", name: "User", emailVerified: true } as {
+      id: string;
+      email: string;
+      name: string;
+      emailVerified: boolean;
+    } | null,
     isConfigured: true,
     isLoading: false,
   },
@@ -23,6 +31,7 @@ const mocks = vi.hoisted(() => ({
     updateTaskStatus: vi.fn(async () => undefined),
     deleteTask: vi.fn(async () => undefined),
   },
+  importResult: null as unknown,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -55,6 +64,8 @@ vi.mock("@/features/tasks/components/desktop-task-workbench", () => ({
     onFiltersChange,
     page,
     onPageChange,
+    onImportTasks,
+    onExportTasks,
   }: {
     tasks: Task[];
     filters: TaskFilters;
@@ -62,6 +73,8 @@ vi.mock("@/features/tasks/components/desktop-task-workbench", () => ({
     onFiltersChange: (filters: TaskFilters) => void;
     page: number;
     onPageChange: (page: number) => void;
+    onImportTasks: (tasks: TaskFormValues[]) => Promise<number>;
+    onExportTasks: () => Promise<void>;
   }) => (
     <section aria-label="测试任务工作台" aria-busy={isLoading}>
       <span>当前页 {page}</span>
@@ -76,6 +89,28 @@ vi.mock("@/features/tasks/components/desktop-task-workbench", () => ({
       </button>
       <button type="button" onClick={() => onPageChange(page + 1)}>
         下一页
+      </button>
+      <button type="button" onClick={() => void onExportTasks()}>
+        模拟导出
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          void onImportTasks([
+            { title: "已导入", description: "", status: "todo", priority: "medium", tags: "", dueDate: "" },
+            { title: "失败项", description: "", status: "todo", priority: "medium", tags: "", dueDate: "" },
+            { title: "尚未处理", description: "", status: "todo", priority: "medium", tags: "", dueDate: "" },
+          ]).then(
+            (count) => {
+              mocks.importResult = count;
+            },
+            (error) => {
+              mocks.importResult = error;
+            },
+          )
+        }
+      >
+        模拟导入
       </button>
     </section>
   ),
@@ -97,12 +132,17 @@ const initialData = buildPageData(task("initial", "初始任务"));
 
 describe("TaskListClient loading flow", () => {
   beforeEach(() => {
-    mocks.searchParams.forEach((_, key) => mocks.searchParams.delete(key));
+    for (const key of [...mocks.searchParams.keys()]) mocks.searchParams.delete(key);
     vi.clearAllMocks();
+    mocks.auth.user = { id: "user-1", email: "user@example.com", name: "User", emailVerified: true };
+    mocks.store.tasks = [];
+    mocks.store.createTaskAsync.mockReset().mockResolvedValue("task-created");
+    mocks.importResult = null;
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it("复用匹配的服务端初始数据，不发起重复请求", async () => {
@@ -193,6 +233,66 @@ describe("TaskListClient loading flow", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(new URL(fetchMock.mock.calls[0][0], "http://localhost").searchParams.get("query")).toBe("导航");
   });
+
+  it.each(["guest", "account"] as const)("%s 导出的 JSON 可以直接重新导入", async (mode) => {
+    const exported = task("exported", "可重新导入的任务");
+    exported.tags = ["工作", "备份"];
+    if (mode === "guest") {
+      mocks.auth.user = null;
+      mocks.store.tasks = [exported];
+    }
+    const remoteExport = vi.spyOn(remoteTaskRepository, "exportAll").mockResolvedValue([exported]);
+    let downloaded: Blob | null = null;
+    vi.spyOn(URL, "createObjectURL").mockImplementation((blob) => {
+      downloaded = blob as Blob;
+      return "blob:task-export";
+    });
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    const user = userEvent.setup();
+    render(<TaskListClient initialFilters={filters} initialData={mode === "guest" ? null : initialData} />);
+    await user.click(screen.getByRole("button", { name: "模拟导出" }));
+    expect(downloaded).not.toBeNull();
+    const fileText = await readBlob(downloaded!);
+    expect(parseTaskImportPayload(JSON.parse(fileText))).toEqual([
+      {
+        title: exported.title,
+        description: exported.description,
+        status: exported.status,
+        priority: exported.priority,
+        tags: "工作, 备份",
+        dueDate: "",
+      },
+    ]);
+    expect(remoteExport).toHaveBeenCalledTimes(mode === "account" ? 1 : 0);
+  });
+
+  it("批量导入中途失败时刷新已导入数据，并说明失败位置", async () => {
+    mocks.store.createTaskAsync.mockResolvedValueOnce("created").mockRejectedValueOnce(new Error("写入失败"));
+    const fetchMock = vi.fn().mockResolvedValue(responseFor(buildPagePayload(task("created", "已导入"))));
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    render(<TaskListClient initialFilters={filters} initialData={initialData} />);
+    await user.click(screen.getByRole("button", { name: "模拟导入" }));
+    await waitFor(() => expect(mocks.importResult).toBeInstanceOf(PartialTaskImportError));
+    expect((mocks.importResult as Error).message).toContain("已导入 1/3 项；第 2 项“失败项”失败：写入失败");
+    expect(await screen.findByText("已导入")).toBeInTheDocument();
+    expect(mocks.store.createTaskAsync).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("首项导入失败时不报告部分成功，也不发起多余的刷新", async () => {
+    mocks.store.createTaskAsync.mockRejectedValueOnce(new Error("写入失败"));
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    render(<TaskListClient initialFilters={filters} initialData={initialData} />);
+    await user.click(screen.getByRole("button", { name: "模拟导入" }));
+    await waitFor(() => expect(mocks.importResult).toBeInstanceOf(Error));
+    expect(mocks.importResult).not.toBeInstanceOf(PartialTaskImportError);
+    expect((mocks.importResult as Error).message).toBe("写入失败");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });
 
 function task(id: string, title: string): Task {
@@ -232,4 +332,13 @@ function deferred<T>() {
     resolve = nextResolve;
   });
   return { promise, resolve };
+}
+
+function readBlob(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(blob);
+  });
 }

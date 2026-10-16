@@ -11,7 +11,11 @@ import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
-import { createTaskExportPayload, parseTaskImportPayload } from "@/features/tasks/utils/task-transfer";
+import {
+  createTaskExportPayload,
+  parseTaskImportPayload,
+  PartialTaskImportError,
+} from "@/features/tasks/utils/task-transfer";
 import { useToast } from "@/shared/providers/toast-provider";
 import { buildTaskCategoryCounts, type TaskCategoryCounts } from "@/features/tasks/utils/task-list-query";
 import { PageToolbar } from "@/shared/components/layout/page-toolbar";
@@ -218,7 +222,7 @@ export function DesktopTaskWorkbench({
       });
     } catch (error) {
       showToast({
-        title: "导入失败",
+        title: error instanceof PartialTaskImportError ? "部分导入" : "导入失败",
         description: error instanceof Error ? error.message : "无法读取任务文件，请稍后再试。",
         tone: "error",
       });

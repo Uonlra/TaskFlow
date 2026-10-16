@@ -33,7 +33,19 @@ describe("task transfer", () => {
       ],
     });
     expect(payload.tasks[0]).not.toHaveProperty("id");
-    expect(parseTaskImportPayload(payload)).toEqual(payload.tasks);
+    expect(parseTaskImportPayload(JSON.parse(JSON.stringify(payload)))).toEqual(payload.tasks);
+  });
+
+  it("仍能导入旧版列表页生成的任务备份", () => {
+    const legacy = JSON.parse(
+      JSON.stringify({
+        source: "U's Task",
+        version: 1,
+        exportedAt: "2026-08-17T10:00:00.000Z",
+        tasks,
+      }),
+    );
+    expect(parseTaskImportPayload(legacy)).toEqual(createTaskExportPayload(tasks).tasks);
   });
 
   it("拒绝非 TaskFlow 文件和不完整任务", () => {
@@ -44,6 +56,22 @@ describe("task transfer", () => {
         version: 1,
         exportedAt: "2026-08-17T08:00:00.000Z",
         tasks: [{ title: "" }],
+      }),
+    ).toThrow("任务字段");
+    expect(() =>
+      parseTaskImportPayload({
+        source: "U's Task",
+        version: 1,
+        exportedAt: "2026-08-17T10:00:00.000Z",
+        tasks: [null],
+      }),
+    ).toThrow("任务字段");
+    expect(() =>
+      parseTaskImportPayload({
+        source: "U's Task",
+        version: 1,
+        exportedAt: "2026-08-17T10:00:00.000Z",
+        tasks: [{ ...tasks[0], tags: [23] }],
       }),
     ).toThrow("任务字段");
   });

@@ -14,6 +14,7 @@ import { useTaskPage } from "@/features/tasks/hooks/use-task-page";
 import { remoteTaskRepository } from "@/features/tasks/repositories/remote-task-repository";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
+import { createTaskExportPayload, PartialTaskImportError } from "@/features/tasks/utils/task-transfer";
 import {
   DEFAULT_TASK_FILTERS,
   DEFAULT_TASK_PAGE_SIZE,
@@ -91,13 +92,23 @@ export function TaskListClient({
   };
 
   const handleImportTasks = async (importedTasks: TaskFormValues[]) => {
+    let importedCount = 0;
     for (const task of importedTasks) {
-      await createTaskAsync(task, activeUserId);
+      try {
+        await createTaskAsync(task, activeUserId);
+        importedCount += 1;
+      } catch (error) {
+        if (importedCount > 0) {
+          await loadPage();
+          throw new PartialTaskImportError(importedCount, importedTasks.length, task.title, error);
+        }
+        throw error;
+      }
     }
 
-    await loadPage();
+    if (importedCount > 0) await loadPage();
 
-    return importedTasks.length;
+    return importedCount;
   };
 
   const handleUpdateTask = async (id: string, values: TaskFormValues) => {
@@ -196,16 +207,9 @@ export function TaskListClient({
         tasksToExport = await remoteTaskRepository.exportAll();
       }
 
-      const file = new Blob(
-        [
-          JSON.stringify(
-            { version: 1, source: "U's Task", exportedAt: new Date().toISOString(), tasks: tasksToExport },
-            null,
-            2,
-          ),
-        ],
-        { type: "application/json" },
-      );
+      const file = new Blob([JSON.stringify(createTaskExportPayload(tasksToExport), null, 2)], {
+        type: "application/json",
+      });
       const url = URL.createObjectURL(file);
       const link = document.createElement("a");
       link.href = url;
