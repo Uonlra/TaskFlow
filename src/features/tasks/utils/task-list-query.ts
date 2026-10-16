@@ -3,6 +3,7 @@ import type { Task } from "@/features/tasks/types/task.types";
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/features/tasks/types/task-values";
 import {
   DASHBOARD_RANGE_VALUES,
+  TASK_QUERY_KEYS,
   TASK_DUE_FILTERS,
   TASK_RISK_FILTERS,
   type DashboardRangeValue,
@@ -174,3 +175,25 @@ function parseEnum<const T extends readonly string[]>(value: string | null, valu
 
 type TaskDueValue = (typeof TASK_DUE_FILTERS)[keyof typeof TASK_DUE_FILTERS] | "";
 type TaskRiskValue = (typeof TASK_RISK_FILTERS)[keyof typeof TASK_RISK_FILTERS] | "";
+
+export function buildTaskPageParams(filters: TaskFilters, page: number) {
+  const params = new URLSearchParams();
+  const entries: Array<[string, string, string]> = [
+    [TASK_QUERY_KEYS.query, filters.query, ""],
+    [TASK_QUERY_KEYS.tag, filters.tag, ""],
+    [TASK_QUERY_KEYS.status, filters.status, DEFAULT_TASK_FILTERS.status],
+    [TASK_QUERY_KEYS.priority, filters.priority, "all"],
+    [TASK_QUERY_KEYS.due, filters.due, ""],
+    [TASK_QUERY_KEYS.risk, filters.risk, ""],
+    [TASK_QUERY_KEYS.date, filters.date, ""],
+    [TASK_QUERY_KEYS.range, filters.range, ""],
+    [TASK_QUERY_KEYS.sort, filters.sort, DEFAULT_TASK_FILTERS.sort],
+  ];
+
+  entries.forEach(([key, value, fallback]) => {
+    if (value && value !== fallback) params.set(key, value);
+  });
+  params.set(TASK_QUERY_KEYS.page, String(page));
+  params.set("limit", String(DEFAULT_TASK_PAGE_SIZE));
+  return params;
+}

@@ -515,58 +515,58 @@ textarea:focus {
 /* Adapt to the space left by the sidebar, including a collapsed sidebar or browser zoom. */
 @media (min-width: 961px) {
   @container page-toolbar (max-width: 64rem) {
-    header.page-toolbar .page-toolbar__row {
+    .page-toolbar .page-toolbar__row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
       gap: 12px;
     }
 
-    header.page-toolbar .page-toolbar__context {
+    .page-toolbar .page-toolbar__context {
       grid-column: 1;
       grid-row: 1;
     }
 
-    header.page-toolbar .page-toolbar__row:not(:has(> .page-toolbar__primary)) > .page-toolbar__context {
+    .page-toolbar .page-toolbar__row:not(:has(> .page-toolbar__primary)) > .page-toolbar__context {
       grid-column: 1 / -1;
     }
 
-    header.page-toolbar .page-toolbar__primary {
+    .page-toolbar .page-toolbar__primary {
       grid-column: 2;
       grid-row: 1;
       justify-self: end;
     }
 
-    header.page-toolbar .page-toolbar__controls,
-    header.page-toolbar .page-toolbar__secondary {
+    .page-toolbar .page-toolbar__controls,
+    .page-toolbar .page-toolbar__secondary {
       grid-column: 1 / -1;
       width: 100%;
       justify-content: space-between;
       flex-wrap: wrap;
     }
 
-    header.page-toolbar .dashboard-toolbar__context,
-    header.page-toolbar .calendar-toolbar__context,
-    header.page-toolbar .stats-toolbar__context {
+    .page-toolbar .dashboard-toolbar__context,
+    .page-toolbar .calendar-toolbar__context,
+    .page-toolbar .stats-toolbar__context {
       flex-wrap: wrap;
       gap: 10px 18px;
     }
 
-    header.page-toolbar .dashboard-toolbar__controls,
-    header.page-toolbar .calendar-toolbar__controls,
-    header.page-toolbar .stats-toolbar__controls {
+    .page-toolbar .dashboard-toolbar__controls,
+    .page-toolbar .calendar-toolbar__controls,
+    .page-toolbar .stats-toolbar__controls {
       width: 100%;
       flex-wrap: wrap;
       justify-content: space-between;
       gap: 12px;
     }
 
-    header.page-toolbar .dashboard-toolbar__signal {
+    .page-toolbar .dashboard-toolbar__signal {
       flex: 1 1 12rem;
       white-space: normal;
     }
 
-    header.page-toolbar .desktop-task-toolbar__controls {
+    .page-toolbar .desktop-task-toolbar__controls {
       flex-wrap: wrap;
     }
   }
@@ -587,4 +587,54 @@ textarea:focus {
   font-family: var(--font-text);
   letter-spacing: 0;
   text-transform: none;
+}
+
+/* Shared typography and page toolbar breakpoints. */
+
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 960px) {
+  html {
+    overflow-x: clip;
+  }
+}
+
+@media (max-width: 760px) {
+  .page-toolbar {
+    gap: 10px;
+  }
+
+  .page-toolbar__row {
+    display: grid;
+    gap: 10px;
+  }
+
+  .page-toolbar__context,
+  .page-toolbar__controls,
+  .page-toolbar__secondary,
+  .page-toolbar__primary {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .page-toolbar__primary > * {
+    width: 100%;
+  }
+
+  .page-toolbar__clock-date--full,
+  .page-toolbar__range-context {
+    display: none;
+  }
+
+  .page-toolbar__clock-date--compact {
+    display: inline;
+  }
+
+  .page-toolbar__temporal-context {
+    gap: 8px;
+  }
 }

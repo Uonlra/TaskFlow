@@ -6,9 +6,10 @@ import Link from "next/link";
 import { createPortal } from "react-dom";
 
 import { CustomSelect, type CustomSelectOption } from "@/shared/components/common/custom-select";
+import type { DashboardPriorityFilters } from "@/features/dashboard/types/dashboard-query";
 import type { TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
-import type { DashboardAnalyticsRange } from "@/features/tasks/utils/task-analytics";
 import type { TaskDueFilter } from "@/shared/lib/constants/query-params";
+import type { DashboardAnalyticsRange } from "@/features/tasks/utils/task-analytics";
 import { ROUTES } from "@/shared/lib/constants/routes";
 
 export type DashboardRangeOption = { value: DashboardAnalyticsRange; label: string };
@@ -21,11 +22,7 @@ type DashboardRangeMenuProps = {
   onFiltersChange: (filters: DashboardPriorityFilters) => void;
 };
 
-export type DashboardPriorityFilters = {
-  status: TaskStatus | "all";
-  priority: TaskPriority | "all";
-  due: TaskDueFilter | "";
-};
+export type { DashboardPriorityFilters } from "@/features/dashboard/types/dashboard-query";
 
 export function DashboardRangeMenu({ range, options, onChange, filters, onFiltersChange }: DashboardRangeMenuProps) {
   const filterButtonRef = useRef<HTMLButtonElement | null>(null);

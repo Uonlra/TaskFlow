@@ -1,6 +1,6 @@
 import "@/styles/task-detail.css";
+import "@/styles/task-components.css";
 import "@/styles/tasks.css";
-import "@/styles/responsive-tasks.css";
 
 import type { ReactNode } from "react";
 

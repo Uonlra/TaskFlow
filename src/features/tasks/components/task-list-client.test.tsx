@@ -53,13 +53,18 @@ vi.mock("@/features/tasks/components/desktop-task-workbench", () => ({
     filters,
     isLoading,
     onFiltersChange,
+    page,
+    onPageChange,
   }: {
     tasks: Task[];
     filters: TaskFilters;
     isLoading: boolean;
     onFiltersChange: (filters: TaskFilters) => void;
+    page: number;
+    onPageChange: (page: number) => void;
   }) => (
     <section aria-label="测试任务工作台" aria-busy={isLoading}>
+      <span>当前页 {page}</span>
       {tasks.map((task) => (
         <span key={task.id}>{task.title}</span>
       ))}
@@ -68,6 +73,9 @@ vi.mock("@/features/tasks/components/desktop-task-workbench", () => ({
       </button>
       <button type="button" onClick={() => onFiltersChange({ ...filters, query: "second" })}>
         第二组筛选
+      </button>
+      <button type="button" onClick={() => onPageChange(page + 1)}>
+        下一页
       </button>
     </section>
   ),
@@ -154,6 +162,36 @@ describe("TaskListClient loading flow", () => {
 
     expect(await screen.findByText("重试后的任务")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("桌面分页接入查询入口，切换筛选会直接请求第一页", async () => {
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+      const page = Number(new URL(url, "http://localhost").searchParams.get("page"));
+      return responseFor({ ...buildPagePayload(task("page", "分页结果")), page });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    render(<TaskListClient initialFilters={filters} initialData={initialData} />);
+    await user.click(screen.getByRole("button", { name: "下一页" }));
+    expect(await screen.findByText("当前页 2")).toBeInTheDocument();
+    expect(fetchMock.mock.calls[0][0]).toContain("page=2");
+    await user.click(screen.getByRole("button", { name: "第一组筛选" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock.mock.calls[1][0]).toContain("query=first&page=1");
+    expect(screen.getByText("当前页 1")).toBeInTheDocument();
+  });
+
+  it("浏览器 URL 导航同步筛选和页码", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(responseFor({ ...buildPagePayload(task("nav", "导航结果")), page: 2 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { rerender } = render(<TaskListClient initialFilters={filters} initialData={initialData} />);
+    mocks.searchParams.set("query", "导航");
+    mocks.searchParams.set("page", "2");
+    rerender(<TaskListClient initialFilters={filters} initialData={initialData} />);
+    expect(await screen.findByText("导航结果")).toBeInTheDocument();
+    expect(screen.getByText("当前页 2")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(new URL(fetchMock.mock.calls[0][0], "http://localhost").searchParams.get("query")).toBe("导航");
   });
 });
 

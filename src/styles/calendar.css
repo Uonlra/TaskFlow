@@ -1,3 +1,27 @@
+/* Calendar layout breakpoints. */
+
+@media (max-width: 960px) {
+  .calendar-layout-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-overview {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  .calendar-shell {
+    width: 100%;
+    max-width: 760px;
+    margin-inline: auto;
+  }
+
+  .calendar-shell .data-empty-state p {
+    display: none;
+  }
+}
+
 .calendar-shell {
   display: grid;
   gap: 18px;
