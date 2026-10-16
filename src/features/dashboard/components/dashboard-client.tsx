@@ -1,15 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { MobileDashboardOverview } from "@/features/dashboard/components/mobile-dashboard-overview";
 import { DashboardV2Shell } from "@/features/dashboard/components/dashboard-v2-shell";
-import type { DashboardPriorityFilters } from "@/features/dashboard/components/dashboard-range-menu";
+import type { DashboardPriorityFilters } from "@/features/dashboard/types/dashboard-query";
+import { useDashboardSummary } from "@/features/dashboard/hooks/use-dashboard-summary";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
-import { buildDashboardStats, type DashboardStats } from "@/features/tasks/utils/task-analytics";
 import { useAuth } from "@/features/auth/providers/auth-provider";
-import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 import { TaskQuickViewDialog } from "@/features/tasks/components/task-quick-view-dialog";
 import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
@@ -35,88 +34,31 @@ type DashboardClientProps = {
   initialRange?: DashboardRange;
 };
 
-type DashboardSummaryResponse = {
-  stats: DashboardStats;
-  hasAnyTasks: boolean;
-};
-
 export function DashboardClient({ initialRange = "today" }: DashboardClientProps) {
-  const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [range, setRange] = useState<DashboardRange>(initialRange);
+  const range = parseDashboardRange(searchParams.get("range") ?? initialRange);
   const [priorityFilters, setPriorityFilters] = useState<DashboardPriorityFilters>(initialPriorityFilters);
   const createTaskAsync = useTaskStore((state) => state.createTaskAsync);
   const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
-  const syncedTasks = useTaskStore((state) => state.tasks);
-  const [previewTask, setPreviewTask] = useState<Task | null>(null);
-  const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const summaryRequestRef = useRef<AbortController | null>(null);
-  const summaryRequestIdRef = useRef(0);
-
-  useEffect(() => {
-    const nextRange = parseDashboardRange(searchParams.get("range"));
-    setRange((current) => (current === nextRange ? current : nextRange));
-  }, [searchParams]);
-
-  const loadSummary = useCallback(async () => {
-    if (!isConfigured || !user?.id) return;
-
-    summaryRequestRef.current?.abort();
-    const controller = new AbortController();
-    const requestId = summaryRequestIdRef.current + 1;
-    summaryRequestIdRef.current = requestId;
-    summaryRequestRef.current = controller;
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const params = new URLSearchParams({ range });
-      if (priorityFilters.status !== "all") params.set("status", priorityFilters.status);
-      if (priorityFilters.priority !== "all") params.set("priority", priorityFilters.priority);
-      if (priorityFilters.due) params.set("due", priorityFilters.due);
-
-      const response = await fetch(`/api/dashboard/summary?${params.toString()}`, { signal: controller.signal });
-      const payload = (await response.json().catch(() => null)) as
-        DashboardSummaryResponse | { message?: string } | null;
-
-      if (!response.ok || !payload || !("stats" in payload)) {
-        throw new Error((payload && "message" in payload ? payload.message : undefined) || "无法加载总览数据。");
-      }
-
-      if (summaryRequestIdRef.current === requestId) {
-        setSummary(payload);
-      }
-    } catch (loadError) {
-      if (!controller.signal.aborted && summaryRequestIdRef.current === requestId) {
-        setError(getWorkspaceErrorMessage(loadError, "总览数据暂时无法加载，请稍后重试。"));
-      }
-    } finally {
-      if (summaryRequestIdRef.current === requestId) {
-        setIsLoading(false);
-      }
-    }
-  }, [isConfigured, priorityFilters, range, user?.id]);
-
-  useEffect(() => {
-    void loadSummary();
-
-    return () => {
-      summaryRequestRef.current?.abort();
-    };
-  }, [loadSummary]);
-
-  const isGuest = !isAuthLoading && !user;
-  const isSummaryLoading = isGuest ? false : isLoading;
-  const stats = isGuest
-    ? buildDashboardStats(syncedTasks, { range })
-    : (summary?.stats ?? buildDashboardStats([], { range }));
-  const hasAnyTasks = isGuest ? syncedTasks.length > 0 : (summary?.hasAnyTasks ?? false);
+  const storeTasks = useTaskStore((state) => state.tasks);
+  const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
+  const syncedTasks = !isAuthLoading && (!user || lastLoadedUserId === user.id) ? storeTasks : [];
+  const [preview, setPreview] = useState<{ userId?: string; task: Task } | null>(null);
+  const previewTask = preview?.userId === user?.id && !isAuthLoading ? (preview?.task ?? null) : null;
+  const setPreviewTask = (task: Task | null) => setPreview(task ? { userId: user?.id, task } : null);
+  const {
+    stats,
+    hasAnyTasks,
+    hasPreviousData,
+    isLoading: isSummaryLoading,
+    error,
+    reload: loadSummary,
+  } = useDashboardSummary({ range, ...priorityFilters });
   const isAccountEmpty = !isAuthLoading && !isSummaryLoading && !hasAnyTasks && !error;
   const isRangeEmpty = !isSummaryLoading && !error && hasAnyTasks && stats.totalCount === 0;
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "今天";
@@ -125,8 +67,6 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     : stats.focusTasks;
 
   const handleRangeChange = (nextRange: DashboardRange) => {
-    setRange(nextRange);
-
     const params = new URLSearchParams(searchParams.toString());
     params.set("range", nextRange);
 
@@ -189,7 +129,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           isEmpty={isRangeEmpty}
           error={error}
           onRetry={() => void loadSummary()}
-          hasPreviousData={Boolean(summary)}
+          hasPreviousData={hasPreviousData}
           isAccountEmpty={isAccountEmpty}
           rangeOptions={rangeOptions}
           onRangeChange={handleRangeChange}

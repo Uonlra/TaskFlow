@@ -1,23 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DesktopTaskWorkbench } from "@/features/tasks/components/desktop-task-workbench";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { MobileTaskListView } from "@/features/tasks/components/mobile-task-list-view";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
-import type { Task, TaskPageInitialData } from "@/features/tasks/types/task.types";
+import type { TaskPageInitialData } from "@/features/tasks/types/task.types";
 import { hasActiveTaskDateRangeFilter, parseTaskDateParam } from "@/features/tasks/utils/task-date-filters";
 import { DASHBOARD_RANGE_VALUES, TASK_QUERY_KEYS, type DashboardRangeValue } from "@/shared/lib/constants/query-params";
-import { useAuth } from "@/features/auth/providers/auth-provider";
-import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
+import { useTaskPage } from "@/features/tasks/hooks/use-task-page";
+import { remoteTaskRepository } from "@/features/tasks/repositories/remote-task-repository";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 import {
   DEFAULT_TASK_FILTERS,
   DEFAULT_TASK_PAGE_SIZE,
-  getTaskPage,
   parseTaskFiltersFromParams,
   parseTaskPageParam,
 } from "@/features/tasks/utils/task-list-query";
@@ -31,163 +30,43 @@ export function TaskListClient({
   initialFilters: initialFiltersProp = DEFAULT_TASK_FILTERS,
   initialData = null,
 }: TaskListClientProps) {
-  const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { showToast } = useToast();
-  const [filters, setFilters] = useState<TaskFilters>(initialFiltersProp);
-  const [pageData, setPageData] = useState<TaskPageInitialData | null>(initialData);
-  const pageDataRef = useRef<TaskPageInitialData | null>(initialData);
-  const pageDataKeyRef = useRef<string | null>(
-    initialData ? buildTaskPageParams(initialFiltersProp, initialData.page).toString() : null,
-  );
-  const [pageLoading, setPageLoading] = useState(!initialData);
-  const [pageError, setPageError] = useState<string | null>(null);
-  const pageRequestRef = useRef<{ id: number; controller: AbortController } | null>(null);
-  const pageRequestIdRef = useRef(0);
+  const urlQuery = searchParams.toString();
+  const [queryState, setQueryState] = useState(() => ({
+    urlQuery,
+    filters: initialFiltersProp,
+    page: parseTaskPageParam(searchParams.get("page")),
+  }));
+  // Reconcile navigation before committing a render or starting a request for stale parameters.
+  if (queryState.urlQuery !== urlQuery) {
+    setQueryState({
+      urlQuery,
+      filters: parseTaskFiltersFromParams(searchParams),
+      page: parseTaskPageParam(searchParams.get("page")),
+    });
+  }
+  const { filters, page } = queryState;
   const createTaskAsync = useTaskStore((state) => state.createTaskAsync);
   const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
   const localTasks = useTaskStore((state) => state.tasks);
 
-  const page = parseTaskPageParam(searchParams.get("page"));
-  const requestKey = useMemo(() => buildTaskPageParams(filters, page).toString(), [filters, page]);
-  const canUseInitialData = Boolean(initialData && (isAuthLoading || user?.id === initialData.userId));
-  const hasConfirmedUserMismatch = Boolean(initialData && !isAuthLoading && user && user.id !== initialData.userId);
-  const activeUserId = user?.id ?? (isAuthLoading ? initialData?.userId : undefined);
-  const isGuest = !isAuthLoading && !user;
-
-  const cancelPageRequest = useCallback(() => {
-    pageRequestIdRef.current += 1;
-    pageRequestRef.current?.controller.abort();
-    pageRequestRef.current = null;
-  }, []);
-
-  const loadPage = useCallback(async () => {
-    if (!activeUserId || !isConfigured) return;
-
-    const requestId = pageRequestIdRef.current + 1;
-    pageRequestIdRef.current = requestId;
-    pageRequestRef.current?.controller.abort();
-    const controller = new AbortController();
-    pageRequestRef.current = { id: requestId, controller };
-
-    setPageLoading(true);
-    setPageError(null);
-    try {
-      const params = buildTaskPageParams(filters, page);
-      const response = await fetch(`/api/tasks?${params.toString()}`, {
-        cache: "no-store",
-        signal: controller.signal,
-      });
-      const payload = (await response.json().catch(() => null)) as
-        Omit<TaskPageInitialData, "userId"> | { message?: string } | null;
-      if (!response.ok || !payload || !("tasks" in payload) || !("total" in payload)) {
-        throw new Error((payload && "message" in payload ? payload.message : undefined) || "无法加载任务列表。");
-      }
-      if (pageRequestIdRef.current === requestId && !controller.signal.aborted) {
-        const nextPageData = { userId: activeUserId, ...payload };
-        pageDataRef.current = nextPageData;
-        pageDataKeyRef.current = params.toString();
-        setPageData(nextPageData);
-      }
-    } catch (error) {
-      if (!isAbortError(error) && pageRequestIdRef.current === requestId) {
-        setPageError(getWorkspaceErrorMessage(error, "任务列表暂时无法加载，请稍后重试。"));
-      }
-    } finally {
-      if (pageRequestIdRef.current === requestId) {
-        pageRequestRef.current = null;
-        setPageLoading(false);
-      }
-    }
-  }, [activeUserId, filters, isConfigured, page]);
-
-  useEffect(() => () => cancelPageRequest(), [cancelPageRequest]);
-
-  useEffect(() => {
-    if (isGuest) {
-      cancelPageRequest();
-      const nextPageData = { userId: "guest", ...getTaskPage(localTasks, filters, page) };
-      pageDataRef.current = nextPageData;
-      pageDataKeyRef.current = requestKey;
-      setPageData(nextPageData);
-      setPageLoading(false);
-      setPageError(null);
-      return;
-    }
-
-    const matchesInitialData =
-      initialData &&
-      activeUserId === initialData.userId &&
-      page === initialData.page &&
-      areFiltersEqual(filters, initialFiltersProp);
-
-    if (matchesInitialData) {
-      cancelPageRequest();
-      pageDataRef.current = initialData;
-      pageDataKeyRef.current = requestKey;
-      setPageData(initialData);
-      setPageLoading(false);
-      setPageError(null);
-      return;
-    }
-
-    const matchesCurrentPageData =
-      pageDataRef.current && pageDataRef.current.userId === activeUserId && pageDataKeyRef.current === requestKey;
-
-    if (matchesCurrentPageData) {
-      setPageLoading(false);
-      setPageError(null);
-      return;
-    }
-
-    if (hasConfirmedUserMismatch) {
-      cancelPageRequest();
-      pageDataRef.current = null;
-      pageDataKeyRef.current = null;
-      setPageData(null);
-      setPageError(null);
-      if (activeUserId && isConfigured) {
-        void loadPage();
-      }
-      return;
-    }
-
-    if (activeUserId && isConfigured && !isAuthLoading) {
-      void loadPage();
-    }
-  }, [
-    activeUserId,
-    cancelPageRequest,
-    filters,
-    hasConfirmedUserMismatch,
-    initialData,
-    initialFiltersProp,
-    isAuthLoading,
+  const {
+    pageData: visiblePageData,
+    isLoading: visibleIsLoading,
+    error: pageError,
+    userId: activeUserId,
     isGuest,
-    isConfigured,
-    loadPage,
-    localTasks,
-    page,
-    requestKey,
-  ]);
-
-  const visiblePageData = isGuest || pageData?.userId === activeUserId ? pageData : null;
+    reload: loadPage,
+  } = useTaskPage({ filters, page, initialFilters: initialFiltersProp, initialData });
   const visibleTasks = visiblePageData?.tasks ?? [];
   const totalCount = visiblePageData?.total ?? 0;
   const categoryCounts = visiblePageData?.categoryCounts ?? { near: 0, active: 0, done: 0, all: 0 };
-  const visibleIsLoading =
-    pageLoading || (hasConfirmedUserMismatch && !visiblePageData) || (isAuthLoading && !canUseInitialData);
   const hasInitialLoadError = Boolean(pageError && !visiblePageData);
-
-  useEffect(() => {
-    const nextFilters = parseTaskFiltersFromParams(searchParams);
-
-    setFilters((current) => (areFiltersEqual(current, nextFilters) ? current : nextFilters));
-  }, [searchParams]);
 
   const activeFilterLabels = useMemo(() => buildActiveFilterLabels(filters), [filters]);
 
@@ -278,7 +157,7 @@ export function TaskListClient({
   };
 
   const handleFiltersChange = (nextFilters: TaskFilters) => {
-    setFilters(nextFilters);
+    setQueryState({ urlQuery, filters: nextFilters, page: 1 });
 
     const params = new URLSearchParams(searchParams.toString());
 
@@ -302,6 +181,7 @@ export function TaskListClient({
   };
 
   const handlePageChange = (nextPage: number) => {
+    setQueryState((current) => ({ ...current, page: nextPage }));
     const params = new URLSearchParams(searchParams.toString());
     if (nextPage <= 1) params.delete(TASK_QUERY_KEYS.page);
     else params.set(TASK_QUERY_KEYS.page, String(nextPage));
@@ -313,12 +193,7 @@ export function TaskListClient({
     try {
       let tasksToExport = localTasks;
       if (!isGuest) {
-        const response = await fetch("/api/tasks?export=1");
-        const payload = (await response.json().catch(() => null)) as { tasks?: Task[]; message?: string } | null;
-        if (!response.ok || !payload?.tasks) {
-          throw new Error(payload?.message || "导出任务失败。");
-        }
-        tasksToExport = payload.tasks;
+        tasksToExport = await remoteTaskRepository.exportAll();
       }
 
       const file = new Blob(
@@ -360,7 +235,7 @@ export function TaskListClient({
               tasks={visibleTasks}
               totalCount={totalCount}
               categoryCounts={categoryCounts}
-              page={page}
+              page={visiblePageData?.page ?? page}
               pageSize={visiblePageData?.pageSize ?? DEFAULT_TASK_PAGE_SIZE}
               hasNext={visiblePageData?.hasNext ?? false}
               filters={filters}
@@ -391,13 +266,14 @@ export function TaskListClient({
               tasks={visibleTasks}
               totalCount={totalCount}
               categoryCounts={categoryCounts}
-              page={page}
+              page={visiblePageData?.page ?? page}
               pageSize={visiblePageData?.pageSize ?? DEFAULT_TASK_PAGE_SIZE}
               hasNext={visiblePageData?.hasNext ?? false}
               filters={filters}
               isLoading={visibleIsLoading}
               onFiltersChange={handleFiltersChange}
               onResetFilters={handleResetFilters}
+              onPageChange={handlePageChange}
               onCreateTask={handleCreateTask}
               onImportTasks={handleImportTasks}
               onUpdateTask={handleUpdateTask}
@@ -430,10 +306,6 @@ function TaskLoadError({ message, onRetry, isInitial }: { message: string; onRet
   );
 }
 
-function isAbortError(error: unknown) {
-  return error instanceof Error && error.name === "AbortError";
-}
-
 function syncParam(params: URLSearchParams, key: string, value: string, fallbackValue: string) {
   if (!value || value === fallbackValue) {
     params.delete(key);
@@ -441,42 +313,6 @@ function syncParam(params: URLSearchParams, key: string, value: string, fallback
   }
 
   params.set(key, value);
-}
-
-function buildTaskPageParams(filters: TaskFilters, page: number) {
-  const params = new URLSearchParams();
-  const entries: Array<[string, string, string]> = [
-    [TASK_QUERY_KEYS.query, filters.query, ""],
-    [TASK_QUERY_KEYS.tag, filters.tag, ""],
-    [TASK_QUERY_KEYS.status, filters.status, DEFAULT_TASK_FILTERS.status],
-    [TASK_QUERY_KEYS.priority, filters.priority, "all"],
-    [TASK_QUERY_KEYS.due, filters.due, ""],
-    [TASK_QUERY_KEYS.risk, filters.risk, ""],
-    [TASK_QUERY_KEYS.date, filters.date, ""],
-    [TASK_QUERY_KEYS.range, filters.range, ""],
-    [TASK_QUERY_KEYS.sort, filters.sort, DEFAULT_TASK_FILTERS.sort],
-  ];
-
-  entries.forEach(([key, value, fallback]) => {
-    if (value && value !== fallback) params.set(key, value);
-  });
-  params.set(TASK_QUERY_KEYS.page, String(page));
-  params.set("limit", String(DEFAULT_TASK_PAGE_SIZE));
-  return params;
-}
-
-function areFiltersEqual(left: TaskFilters, right: TaskFilters) {
-  return (
-    left.query === right.query &&
-    left.tag === right.tag &&
-    left.status === right.status &&
-    left.priority === right.priority &&
-    left.due === right.due &&
-    left.risk === right.risk &&
-    left.date === right.date &&
-    left.range === right.range &&
-    left.sort === right.sort
-  );
 }
 
 function hasActiveDateRangeFilter(date: string, range: DashboardRangeValue | "") {
