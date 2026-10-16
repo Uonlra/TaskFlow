@@ -185,6 +185,7 @@ pnpm build
 请保持提交内容一次一类，并为行为变更补充相应测试。
 
 ## 贡献提交
+
 相关提交风格遵循：[约定式提交](https://www.conventionalcommits.org/zh-hans/v1.0.0/)
 
 ## 许可证
