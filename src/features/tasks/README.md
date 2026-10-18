@@ -11,3 +11,7 @@ The shared `useKeyedQuery` keeps one result keyed by account and request paramet
 After a mutation, refresh the current page. A refresh resolves to `false` on failure or when its original query is no longer active; a failed mutation still throws. This lets the UI report a saved operation separately from a query failure and offer a retry without repeating the save.
 
 Display the response's page number: deleting the last item on a page can cause pagination to clamp to the previous page. Both desktop and mobile pagination use the same navigation handler.
+
+## Task transfer
+
+`utils/task-transfer.ts` defines the portable JSON format for both guest and account exports. The importer also accepts the earlier `source: "U's Task"` backup shape and validates its task fields before creating anything. Imports append tasks sequentially. If a later save fails, the list refreshes once and reports how many tasks were saved, which item failed, and that retrying the whole file would duplicate completed items.

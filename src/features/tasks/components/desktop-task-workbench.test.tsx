@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { DesktopTaskWorkbench } from "@/features/tasks/components/desktop-task-workbench";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import type { Task } from "@/features/tasks/types/task.types";
+import { createTaskExportPayload, PartialTaskImportError } from "@/features/tasks/utils/task-transfer";
 import { ToastProvider } from "@/shared/providers/toast-provider";
 
 vi.mock("next/dynamic", () => ({
@@ -56,6 +57,38 @@ const filters: TaskFilters = {
 };
 
 describe("DesktopTaskWorkbench keyboard path", () => {
+  it("批量导入部分成功时显示已完成数量和失败位置", async () => {
+    const user = userEvent.setup();
+    const onImportTasks = vi
+      .fn()
+      .mockRejectedValue(new PartialTaskImportError(1, 2, "第二项任务", new Error("写入失败")));
+    render(
+      <ToastProvider>
+        <DesktopTaskWorkbench
+          tasks={tasks}
+          totalTasks={tasks}
+          filters={filters}
+          isLoading={false}
+          onFiltersChange={vi.fn()}
+          onResetFilters={vi.fn()}
+          onCreateTask={vi.fn()}
+          onImportTasks={onImportTasks}
+          onUpdateTask={vi.fn()}
+          onUpdateStatus={vi.fn()}
+          onDeleteTask={vi.fn()}
+        />
+      </ToastProvider>,
+    );
+
+    const fileContent = JSON.stringify(createTaskExportPayload(tasks));
+    const file = new File([fileContent], "tasks.json", { type: "application/json" });
+    Object.defineProperty(file, "text", { value: async () => fileContent });
+    await user.upload(document.querySelector(".desktop-task-import-input") as HTMLInputElement, file);
+    expect(await screen.findByText("部分导入")).toBeInTheDocument();
+    expect(screen.getByText(/已导入 1\/2 项；第 2 项“第二项任务”失败/)).toBeInTheDocument();
+    expect(onImportTasks).toHaveBeenCalledWith(createTaskExportPayload(tasks).tasks);
+  });
+
   it("将任务上下文、搜索和筛选合并到共享顶部工具栏", async () => {
     render(
       <ToastProvider>

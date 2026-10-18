@@ -124,6 +124,7 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
               onClick={() => onPreviewTask(task)}
               aria-label={task.title}
               data-tooltip={`${getTaskStatusLabel(task.status)} · ${getTaskPriorityLabel(task.priority)} · ${task.dueLabel}`}
+              data-orbit-index={index}
               style={{
                 animationDelay: `${index * -0.72}s`,
                 ["--orbit-duration" as string]: `${4.8 + (index % 4) * 0.65}s`,
@@ -138,6 +139,7 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
               key={`example-${node.title}`}
               className={`dashboard-empty-orbit__node${taskTone} dashboard-empty-orbit__node--position-${index % 8}`}
               aria-hidden="true"
+              data-orbit-index={index}
               style={{
                 animationDelay: `${index * -0.72}s`,
                 ["--orbit-duration" as string]: `${5.4 + (index % 4) * 0.7}s`,
