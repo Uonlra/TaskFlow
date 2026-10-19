@@ -122,4 +122,39 @@ describe("DashboardEmptyOrbit", () => {
     expect(node).toHaveClass("dashboard-empty-orbit__node");
     expect(node).toHaveAttribute("data-tooltip");
   });
+
+  it("根据截止风险为任务节点增加视觉状态", () => {
+    render(
+      <DashboardEmptyOrbit
+        {...defaultProps}
+        tasks={[
+          task,
+          { ...task, id: "near-task", title: "准备发布", dueLabel: "今天到期" },
+          { ...task, id: "future-task", title: "规划迭代", dueLabel: "3 天后到期" },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "整理项目方案" })).toHaveClass("dashboard-empty-orbit__node--due-none");
+    expect(screen.getByRole("button", { name: "准备发布" })).toHaveClass("dashboard-empty-orbit__node--due-near");
+    expect(screen.getByRole("button", { name: "规划迭代" })).toHaveClass("dashboard-empty-orbit__node--due-near");
+  });
+
+  it("支持选中任务节点并通过 Escape 清除选中状态", async () => {
+    const user = userEvent.setup();
+    render(<DashboardEmptyOrbit {...defaultProps} tasks={[{ ...task, dueLabel: "已逾期 2 天" }]} />);
+
+    const node = screen.getByRole("button", { name: "整理项目方案" });
+    await user.click(node);
+
+    expect(node).toHaveClass("is-selected", "dashboard-empty-orbit__node--due-overdue");
+    expect(node).toHaveAttribute("aria-pressed", "true");
+    expect(document.querySelector(".dashboard-empty-orbit__space")).toHaveClass("is-selection-active");
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(node).not.toHaveClass("is-selected");
+    expect(node).toHaveAttribute("aria-pressed", "false");
+    expect(document.querySelector(".dashboard-empty-orbit__space")).not.toHaveClass("is-selection-active");
+  });
 });

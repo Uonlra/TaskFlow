@@ -83,6 +83,11 @@
   animation: none;
 }
 
+.dashboard-empty-orbit__space.is-selection-active .dashboard-empty-orbit__node:not(.is-selected) {
+  opacity: calc(var(--node-opacity, 1) * 0.42);
+  filter: saturate(0.72);
+}
+
 .dashboard-empty-orbit__grid {
   position: absolute;
   inset: 18% 10% 0;
@@ -228,6 +233,19 @@
   transform: translate3d(0, 0, 92px) scale(1.045);
 }
 
+.dashboard-empty-orbit__node.is-selected {
+  z-index: 5;
+  animation-play-state: paused;
+  border-color: #22d3ee;
+  box-shadow:
+    0 18px 34px rgba(15, 23, 42, 0.2),
+    0 0 0 4px rgba(34, 211, 238, 0.2),
+    0 0 28px rgba(34, 211, 238, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  opacity: 1;
+  transform: translate3d(0, 0, 102px) scale(1.07);
+}
+
 .dashboard-empty-orbit__node[data-tooltip]::after {
   position: absolute;
   bottom: calc(100% + 9px);
@@ -364,11 +382,37 @@
   box-shadow:
     0 0 0 2px rgba(56, 189, 248, 0.14),
     0 10px 26px rgba(15, 23, 42, 0.11);
+  animation:
+    dashboard-empty-orbit-drift var(--orbit-duration, 5.4s) ease-in-out infinite,
+    dashboard-empty-orbit-pulse 4.8s ease-in-out infinite;
 }
 
 .dashboard-empty-orbit__node--in_progress .dashboard-empty-orbit__node-dot {
   background: #3e6ae1;
   box-shadow: 0 0 0 4px rgba(62, 106, 225, 0.15);
+}
+
+.dashboard-empty-orbit__node--due-overdue {
+  --node-accent: #f97316;
+  border-color: rgba(249, 115, 22, 0.76);
+  box-shadow:
+    0 0 0 2px rgba(249, 115, 22, 0.14),
+    0 12px 28px rgba(194, 65, 12, 0.16);
+}
+
+.dashboard-empty-orbit__node--due-overdue .dashboard-empty-orbit__node-dot {
+  background: #f97316;
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.18);
+}
+
+.dashboard-empty-orbit__node--due-near {
+  --node-accent: #22d3ee;
+  border-color: rgba(34, 211, 238, 0.68);
+}
+
+.dashboard-empty-orbit__node--due-near .dashboard-empty-orbit__node-dot {
+  background: #22d3ee;
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.16);
 }
 
 .dashboard-empty-orbit__center {
@@ -449,6 +493,20 @@
         calc(var(--orbit-depth, 56px) - 8px)
       )
       rotate(0.6deg);
+  }
+}
+
+@keyframes dashboard-empty-orbit-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(56, 189, 248, 0.12),
+      0 10px 26px rgba(15, 23, 42, 0.11);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(56, 189, 248, 0.2),
+      0 12px 30px rgba(15, 23, 42, 0.14);
   }
 }
 
