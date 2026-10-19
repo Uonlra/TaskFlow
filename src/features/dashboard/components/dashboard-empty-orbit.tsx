@@ -34,9 +34,23 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
   const [scale, setScale] = useState(1);
   const [isStaticMode, setIsStaticMode] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const dragRef = useRef({ x: 0, y: 0, rotationX: 0, rotationY: 0 });
   const visibleTasks = useMemo(() => tasks.filter((task) => task.status !== "done").slice(0, 8), [tasks]);
   const hasTasks = visibleTasks.length > 0;
+  const activeSelectedTaskId =
+    selectedTaskId && visibleTasks.some((task) => task.id === selectedTaskId) ? selectedTaskId : null;
+
+  useEffect(() => {
+    if (!selectedTaskId) return;
+
+    const clearSelection = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedTaskId(null);
+    };
+
+    window.addEventListener("keydown", clearSelection);
+    return () => window.removeEventListener("keydown", clearSelection);
+  }, [selectedTaskId]);
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
@@ -93,7 +107,7 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
     <section className="dashboard-empty-orbit" aria-label="任务数据空间">
       <div
         ref={spaceRef}
-        className={`dashboard-empty-orbit__space${isDragging ? " is-dragging" : ""}${isStaticMode ? " is-static" : ""}`}
+        className={`dashboard-empty-orbit__space${isDragging ? " is-dragging" : ""}${isStaticMode ? " is-static" : ""}${activeSelectedTaskId ? " is-selection-active" : ""}`}
         data-render-mode={isStaticMode ? "static" : "interactive"}
         onPointerDown={handlePointerDown}
         onWheel={handleWheel}
@@ -112,8 +126,10 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
         </div>
         {(hasTasks ? visibleTasks : exampleNodes).map((node, index) => {
           const task = hasTasks ? (node as DashboardTaskPreview) : undefined;
+          const dueTone = task ? getTaskDueTone(task.dueLabel) : "none";
+          const isSelected = task?.id === activeSelectedTaskId;
           const taskTone = task
-            ? ` dashboard-empty-orbit__node--${task.priority} dashboard-empty-orbit__node--${task.status}`
+            ? ` dashboard-empty-orbit__node--${task.priority} dashboard-empty-orbit__node--${task.status} dashboard-empty-orbit__node--due-${dueTone}${isSelected ? " is-selected" : ""}`
             : ` dashboard-empty-orbit__node--example dashboard-empty-orbit__node--${(node as (typeof exampleNodes)[number]).tone}`;
 
           return task ? (
@@ -121,8 +137,12 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
               key={task.id}
               type="button"
               className={`dashboard-empty-orbit__node dashboard-empty-orbit__node--position-${index % 8}${taskTone}`}
-              onClick={() => onPreviewTask(task)}
+              onClick={() => {
+                setSelectedTaskId(task.id);
+                onPreviewTask(task);
+              }}
               aria-label={task.title}
+              aria-pressed={isSelected}
               data-tooltip={`${getTaskStatusLabel(task.status)} · ${getTaskPriorityLabel(task.priority)} · ${task.dueLabel}`}
               data-orbit-index={index}
               style={{
@@ -172,4 +192,10 @@ function getTaskStatusLabel(status: DashboardTaskPreview["status"]) {
 
 function getTaskPriorityLabel(priority: DashboardTaskPreview["priority"]) {
   return priority === "high" ? "高优先级" : priority === "medium" ? "中优先级" : "低优先级";
+}
+
+function getTaskDueTone(dueLabel: string) {
+  if (dueLabel.includes("已逾期")) return "overdue";
+  if (dueLabel.includes("今天到期") || dueLabel.includes("天后到期")) return "near";
+  return "none";
 }
