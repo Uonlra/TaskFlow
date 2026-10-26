@@ -1,9 +1,10 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 import { AuthProvider } from "@/features/auth/providers/auth-provider";
 import { LenisProvider } from "@/shared/providers/lenis-provider";
+import { PwaProvider } from "@/shared/providers/pwa-provider";
 import { ToastProvider } from "@/shared/providers/toast-provider";
 
 export const metadata: Metadata = {
@@ -15,6 +16,16 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.svg",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "TaskFlow",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#05070a",
+  colorScheme: "dark light",
 };
 
 type RootLayoutProps = {
@@ -25,11 +36,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="zh-CN">
       <body>
-        <AuthProvider>
-          <ToastProvider>
-            <LenisProvider>{children}</LenisProvider>
-          </ToastProvider>
-        </AuthProvider>
+        <PwaProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <LenisProvider>{children}</LenisProvider>
+            </ToastProvider>
+          </AuthProvider>
+        </PwaProvider>
       </body>
     </html>
   );

@@ -29,7 +29,6 @@ TaskFlow 将任务记录、截止风险、进度统计和可恢复筛选汇集�
 
 - 浏览器只与 Next.js API Routes 通信，Appwrite API Key 保留在服务端。会话通过 `httpOnly` Cookie 保存，任务表的行级权限限制为当前用户自身数据，从架构上缩小客户端暴露面。
 
-
 ## 功能一览
 
 - 邮箱注册、登录、退出和会话保持
@@ -47,6 +46,8 @@ TaskFlow 将任务记录、截止风险、进度统计和可恢复筛选汇集�
 flowchart LR
   UI["Next.js / React 界面"] --> Store["Zustand 任务状态"]
   UI --> API["Next.js API Routes"]
+  UI --> SW["Service Worker + Manifest(PWA)"]
+  UI --> Platform["platform/runtime 平台适配层"]
   API --> Session["httpOnly 会话 Cookie"]
   API --> Appwrite["Appwrite 认证与任务数据"]
   Appwrite --> Permissions["当前用户行级权限"]
@@ -130,8 +131,13 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 src/
   app/                  # App Router 页面与 API Routes
   features/             # auth、tasks、dashboard、calendar、settings、stats 等业务域
+  platform/             # Web / PWA / Capacitor / Tauri 运行时适配
   shared/               # 跨业务组件、hooks、providers 与工具函数
   styles/               # 全局及页面样式
+
+apps/
+  mobile/               # Capacitor 原生工程预留目录
+  desktop/              # Tauri 原生工程预留目录
 
 test/                   # 单元、组件与端到端测试
 docs/screenshots/       # README 界面截图
