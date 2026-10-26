@@ -29,27 +29,6 @@ TaskFlow 将任务记录、截止风险、进度统计和可恢复筛选汇集�
 
 - 浏览器只与 Next.js API Routes 通信，Appwrite API Key 保留在服务端。会话通过 `httpOnly` Cookie 保存，任务表的行级权限限制为当前用户自身数据，从架构上缩小客户端暴露面。
 
-## 界面预览
-
-### 桌面端
-
-| 总览                                                   | 任务工作台                                             |
-| ------------------------------------------------------ | ------------------------------------------------------ |
-| ![TaskFlow 桌面端总览](docs/screenshots/dashboard.png) | ![TaskFlow 桌面端任务列表](docs/screenshots/tasks.png) |
-
-| 日历                                                  | 统计                                         |
-| ----------------------------------------------------- | -------------------------------------------- |
-| ![TaskFlow 桌面端日历](docs/screenshots/calendar.png) | ![TaskFlow 统计](docs/screenshots/stats.png) |
-
-### 移动端
-
-| 总览                                                     | 任务工作台                                             |
-| -------------------------------------------------------- | ------------------------------------------------------ |
-| ![TaskFlow 总览](docs/screenshots/mobile-dashboard.png)_ | ![TaskFlow 任务页](docs/screenshots/mobile-review.png) |
-
-| 日历                                                    | 统计                                                |
-| ------------------------------------------------------- | --------------------------------------------------- |
-| ![TaskFlow 日历](docs/screenshots/mobile-calendar.png)_ | ![TaskFlow 统计](docs/screenshots/mobile-stats.png) |
 
 ## 功能一览
 
