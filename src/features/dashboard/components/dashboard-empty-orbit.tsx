@@ -172,8 +172,7 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
           );
         })}
         <div className="dashboard-empty-orbit__center">
-          <span className="dashboard-empty-orbit__center-kicker">TASK PLANET</span>
-          <strong>{hasTasks ? "未完成任务" : "任务星球"}</strong>
+          <strong>{hasTasks ? "未完成" : "开始任务"}</strong>
           <TaskFormDialog
             onSubmitTask={onCreateTask}
             triggerLabel="创建任务"
