@@ -75,11 +75,11 @@ describe("DashboardEmptyOrbit", () => {
     expect(onPreviewTask).toHaveBeenCalledWith(task);
   });
 
-  it("没有未完成任务时显示任务星球和示例节点", () => {
+  it("没有未完成任务时显示开始任务和示例节点", () => {
     render(<DashboardEmptyOrbit {...defaultProps} tasks={[{ ...task, status: "done" }]} />);
 
     expect(screen.queryByRole("button", { name: "整理项目方案" })).not.toBeInTheDocument();
-    expect(screen.getByText("任务星球")).toBeInTheDocument();
+    expect(screen.getByText("开始任务")).toBeInTheDocument();
     expect(screen.getByText("整理方案")).toBeInTheDocument();
     expect(screen.getByText("准备会议")).toBeInTheDocument();
   });
