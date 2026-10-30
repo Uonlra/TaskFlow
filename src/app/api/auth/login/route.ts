@@ -23,10 +23,14 @@ export async function POST(request: NextRequest) {
       request,
     });
     const response = NextResponse.json(result.envelope);
-    attachAppwriteSessionCookie(response, {
-      secret: result.secret,
-      expire: result.expire,
-    });
+    attachAppwriteSessionCookie(
+      response,
+      {
+        secret: result.secret,
+        expire: result.expire,
+      },
+      request,
+    );
     return response;
   } catch (error) {
     return NextResponse.json(

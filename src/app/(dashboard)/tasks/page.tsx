@@ -17,7 +17,6 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
     if (typeof value === "string") params.set(key, value);
   });
   const initialFilters = parseTaskFiltersFromParams(params);
-
   const initialData = await getTaskPageInitialData(
     initialFilters,
     typeof resolvedSearchParams?.page === "string" ? resolvedSearchParams.page : undefined,

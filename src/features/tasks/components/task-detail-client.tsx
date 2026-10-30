@@ -21,6 +21,7 @@ import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import { formatTagsInput } from "@/features/tasks/utils/task-tags";
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import { getTaskRepository } from "@/features/tasks/repositories/task-repository-selector";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 
@@ -57,16 +58,11 @@ export function TaskDetailClient({ id, initiallyEditing = false }: { id: string;
 
     let cancelled = false;
 
-    void fetch(`/api/tasks/${encodeURIComponent(id)}`, { cache: "no-store" })
-      .then(async (response) => {
-        const payload = (await response.json().catch(() => null)) as { task?: Task } | null;
-        if (!response.ok || !payload?.task) {
-          throw new Error("无法加载任务详情。");
-        }
-
-        if (!cancelled) {
-          setFetchedTask(payload.task);
-        }
+    void getTaskRepository(user.id)
+      .get(id)
+      .then((loadedTask) => {
+        if (!loadedTask) throw new Error("无法加载任务详情。");
+        if (!cancelled) setFetchedTask(loadedTask);
       })
       .catch(() => {
         // The global task sync remains the fallback for an already loaded task.

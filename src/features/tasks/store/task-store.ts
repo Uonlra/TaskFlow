@@ -3,10 +3,14 @@
 import { create } from "zustand";
 
 import { remoteTaskRepository } from "@/features/tasks/repositories/remote-task-repository";
+import { DesktopTaskRepository } from "@/features/tasks/repositories/desktop-task-repository";
+import { getTaskRepository } from "@/features/tasks/repositories/task-repository-selector";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
+import { flushDesktopSyncQueue } from "@/features/tasks/sync/desktop-sync";
 import { parseTagsInput } from "@/features/tasks/utils/task-tags";
 import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
+import { isDesktopRuntime } from "@/shared/lib/desktop/bridge";
 
 export const GUEST_TASKS_STORAGE_KEY = "u-task-guest-tasks";
 
@@ -55,10 +59,44 @@ export const useTaskStore = create<TaskStore>()((set) => ({
       return;
     }
 
-    set({ isLoading: true, error: null, tasks: [] });
+    set((state) => ({
+      isLoading: state.lastLoadedUserId !== userId,
+      error: null,
+      tasks: state.lastLoadedUserId === userId ? state.tasks : [],
+    }));
+    const repository = getTaskRepository(userId);
+
+    if (isDesktopRuntime()) {
+      try {
+        // Refresh the local cache when online. A failed request is expected
+        // when starting the desktop app offline, so the encrypted cache wins.
+        await mergeGuestTasks();
+      } catch {
+        // Guest task migration and queue replay are independent network operations.
+      }
+
+      try {
+        await flushDesktopSyncQueue(userId);
+        const remoteTasks = await remoteTaskRepository.list();
+        if (repository instanceof DesktopTaskRepository) {
+          await repository.importRemoteTasks(remoteTasks);
+        }
+      } catch {
+        // Continue with the last local snapshot below.
+      }
+
+      try {
+        const tasks = await repository.list();
+        set({ tasks: tasks.map(normalizeTask), isLoading: false, error: null, lastLoadedUserId: userId });
+      } catch (error) {
+        set({ isLoading: false, error: error instanceof Error ? error.message : "无法加载本地任务列表。" });
+      }
+      return;
+    }
+
     try {
       await mergeGuestTasks();
-      const tasks = await remoteTaskRepository.list();
+      const tasks = await repository.list();
       set({ tasks: tasks.map(normalizeTask), isLoading: false, error: null, lastLoadedUserId: userId });
     } catch (error) {
       set({ isLoading: false, error: error instanceof Error ? error.message : "无法同步任务列表。" });
@@ -75,7 +113,7 @@ export const useTaskStore = create<TaskStore>()((set) => ({
       return task.id;
     }
 
-    const createdTask = normalizeTask(await remoteTaskRepository.create(input));
+    const createdTask = normalizeTask(await getTaskRepository(userId).create(input));
     set((state) => ({ tasks: [createdTask, ...state.tasks], error: null }));
     return createdTask.id;
   },
@@ -89,7 +127,7 @@ export const useTaskStore = create<TaskStore>()((set) => ({
       return;
     }
 
-    const updatedTask = normalizeTask(await remoteTaskRepository.update(id, input));
+    const updatedTask = normalizeTask(await getTaskRepository(userId).update(id, input));
     set((state) => ({
       tasks: state.tasks.map((task) => (task.id === id ? updatedTask : task)),
       error: null,
@@ -105,7 +143,7 @@ export const useTaskStore = create<TaskStore>()((set) => ({
       return;
     }
 
-    const updatedTask = normalizeTask(await remoteTaskRepository.updateStatus(id, status));
+    const updatedTask = normalizeTask(await getTaskRepository(userId).updateStatus(id, status));
     set((state) => ({
       tasks: state.tasks.map((task) => (task.id === id ? updatedTask : task)),
       error: null,
@@ -121,7 +159,7 @@ export const useTaskStore = create<TaskStore>()((set) => ({
       return;
     }
 
-    await remoteTaskRepository.delete(id);
+    await getTaskRepository(userId).delete(id);
     set((state) => ({ tasks: state.tasks.filter((task) => task.id !== id), error: null }));
   },
 }));

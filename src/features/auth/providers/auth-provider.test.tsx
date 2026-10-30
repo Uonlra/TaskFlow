@@ -191,7 +191,7 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("action-authenticated")).toHaveTextContent("false");
     });
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/auth/logout", { method: "POST" });
+    expect(fetchMock).toHaveBeenCalledWith("/api/auth/logout", { method: "POST", credentials: "include" });
     expect(screen.getByTestId("action-email")).toHaveTextContent("guest");
     expect(mocks.clearTasks).toHaveBeenCalledTimes(1);
   });
@@ -219,7 +219,7 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("action-name")).toHaveTextContent("刷新用户");
     });
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/profile", { cache: "no-store" });
+    expect(fetchMock).toHaveBeenCalledWith("/api/profile", { cache: "no-store", credentials: "include" });
     expect(screen.getByTestId("action-email")).toHaveTextContent("demo@example.com");
   });
 

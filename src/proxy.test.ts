@@ -8,6 +8,8 @@ vi.mock("@/shared/lib/appwrite/env", () => ({
   hasAppwriteAuthEnv: true,
 }));
 
+vi.stubEnv("DESKTOP_ALLOWED_ORIGINS", "http://tauri.localhost");
+
 describe("proxy workspace access", () => {
   it.each(["/dashboard", "/tasks", "/tasks/task-1", "/calendar", "/stats"])("允许访客访问 %s", (pathname) => {
     const response = proxy(new NextRequest(`http://localhost${pathname}`));
@@ -39,5 +41,17 @@ describe("proxy workspace access", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("处理桌面端 API 预检请求", () => {
+    const response = proxy(
+      new NextRequest("http://localhost/api/auth/me", {
+        method: "OPTIONS",
+        headers: { origin: "http://tauri.localhost" },
+      }),
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe("http://tauri.localhost");
   });
 });

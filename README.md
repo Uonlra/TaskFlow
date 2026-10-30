@@ -29,7 +29,6 @@ TaskFlow 将任务记录、截止风险、进度统计和可恢复筛选汇集�
 
 - 浏览器只与 Next.js API Routes 通信，Appwrite API Key 保留在服务端。会话通过 `httpOnly` Cookie 保存，任务表的行级权限限制为当前用户自身数据，从架构上缩小客户端暴露面。
 
-
 ## 功能一览
 
 - 邮箱注册、登录、退出和会话保持
@@ -46,7 +45,9 @@ TaskFlow 将任务记录、截止风险、进度统计和可恢复筛选汇集�
 ```mermaid
 flowchart LR
   UI["Next.js / React 界面"] --> Store["Zustand 任务状态"]
-  UI --> API["Next.js API Routes"]
+  UI --> Runtime["浏览器 / Electron 内置页面"]
+  Runtime --> API["Next.js API Routes"]
+  Runtime -. "桌面端离线" .-> SQLite["SQLCipher SQLite"]
   API --> Session["httpOnly 会话 Cookie"]
   API --> Appwrite["Appwrite 认证与任务数据"]
   Appwrite --> Permissions["当前用户行级权限"]
@@ -106,23 +107,39 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 ## 常用命令
 
-| 命令                 | 用途                     |
-| -------------------- | ------------------------ |
-| `pnpm dev`           | 启动开发服务器           |
-| `pnpm build`         | 生成生产构建             |
-| `pnpm start`         | 启动生产服务器           |
-| `pnpm lint`          | 执行代码检查             |
-| `pnpm format:check`  | 检查格式                 |
-| `pnpm typecheck`     | 执行 TypeScript 类型检查 |
-| `pnpm test`          | 运行单元与组件测试       |
-| `pnpm test:coverage` | 生成测试覆盖率           |
-| `pnpm test:e2e:mock` | 运行 Mock 端到端测试     |
+| 命令                     | 用途                                      |
+| ------------------------ | ----------------------------------------- |
+| `pnpm dev`               | 启动开发服务器                            |
+| `pnpm build`             | 生成生产构建                              |
+| `pnpm start`             | 启动生产服务器                            |
+| `pnpm lint`              | 执行代码检查                              |
+| `pnpm format:check`      | 检查格式                                  |
+| `pnpm typecheck`         | 执行 TypeScript 类型检查                  |
+| `pnpm test`              | 运行单元与组件测试                        |
+| `pnpm test:coverage`     | 生成测试覆盖率                            |
+| `pnpm test:e2e:mock`     | 运行 Mock 端到端测试                      |
+| `pnpm electron:dev`      | 启动 Next.js 并在 Electron 桌面窗口中打开 |
+| `pnpm desktop:web-build` | 构建 Electron 内置的静态页面资源          |
+| `pnpm desktop:pack`      | 生成 Windows x64 未安装目录               |
+| `pnpm desktop:dist`      | 生成 Windows x64 NSIS 安装包              |
+
+### Electron 桌面端
+
+开发时运行 `pnpm electron:dev`，它会同时启动 Next.js 开发服务器和 Electron 窗口。发布包先运行 `pnpm desktop:web-build`，再运行打包命令；发布包内置静态页面资源，可以在无网络时启动总览、任务、详情、日历、统计和设置页面。
+
+打包版本默认使用 `app://taskflow/` 加载本地页面资源，任务和认证接口仍通过 `https://www.uta4k.top/` 的 Next.js API Routes 访问。设置 `TASKFLOW_WEB_URL` 或 `ELECTRON_START_URL` 可以临时覆盖启动地址。桌面包不会把包含服务端密钥的 Next.js 服务端代码打进客户端。
+
+Windows x64 安装包由 electron-builder 生成，发布配置指向 GitHub Releases。自动更新接入会在远程 API 和本地离线存储稳定后进入第二批桌面端工作。
+
+离线数据层已采用 SQLCipher SQLite。数据库文件保存在 Electron 的 `userData` 目录，随机数据库密钥由 Windows DPAPI 通过 Electron `safeStorage` 保护。首次在线登录后，远端任务会导入本地缓存；之后任务创建、编辑、完成和删除通过受信任来源校验的 preload IPC 写入本地数据库，并记录同步队列。联网后，桌面端通过 `POST /api/tasks/sync` 批量回放队列，同一任务仅发送最新快照；服务端按客户端逻辑编辑时间判断桌面回放冲突，并将冲突时的远端版本回传给本地缓存。回放会在登录初始化、恢复联网和定时同步时触发，失败操作保留并记录重试次数。托盘、快捷键和通知属于后续批次。
+
+部署同步 API 前，在 Appwrite 任务表中新增可选 `datetime` 字段 `syncClientUpdatedAt`，或运行 `pnpm appwrite:ensure-task-sync-column`（需要具有数据库结构写入权限的 `APPWRITE_API_KEY`）。确认字段状态为 `available` 后再部署代码；此字段用于区分桌面端离线编辑时间与 Appwrite 处理请求的时间。已有任务无需回填，缺少该字段时按 Appwrite 的 `$updatedAt` 比较。
 
 ## 质量保障
 
 项目的 GitHub Actions 会在推送和拉取请求中自动执行 lint、格式检查、单元与组件测试、类型检查、生产构建及 Mock E2E 测试。
 
-最近一次本地验证：`pnpm test` 通过 18 个测试文件、92 项测试；`pnpm typecheck` 与 `pnpm build` 均通过。
+桌面端补充验证包括：桌面静态页面导出、Electron 主进程脚本语法检查、SQLCipher 本地导入与离线创建 smoke test，以及 `pnpm typecheck`。
 
 ## 项目结构
 

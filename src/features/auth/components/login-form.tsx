@@ -13,6 +13,7 @@ import { useAuthAccountLookup } from "@/features/auth/hooks/use-auth-account-loo
 import type { AuthEnvelope } from "@/features/auth/providers/auth-provider";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { loginSchema, type LoginFormValues } from "@/features/auth/schemas/login-schema";
+import { apiFetch } from "@/shared/lib/api/client";
 import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
@@ -84,7 +85,7 @@ export function LoginForm() {
       return;
     }
 
-    const response = await fetch("/api/auth/login", {
+    const response = await apiFetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),

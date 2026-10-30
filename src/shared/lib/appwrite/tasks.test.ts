@@ -19,6 +19,7 @@ import {
   buildTaskSearchText,
   listTasksByDueRange,
   listTasksForDashboard,
+  updateTask,
 } from "@/shared/lib/appwrite/tasks";
 import { appwriteTaskRowSchema } from "@/shared/lib/appwrite/schemas/task-row.schema";
 
@@ -177,6 +178,31 @@ describe("buildTaskPageQueries", () => {
 describe("buildTaskSearchText", () => {
   it("组合标题、描述和去重后的标签内容", () => {
     expect(buildTaskSearchText("  项目复盘 ", "整理结论", ["工作", "重要"])).toBe("项目复盘 整理结论 工作 重要");
+  });
+});
+
+describe("网页任务编辑", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("清除桌面同步时间，后续冲突以服务端更新时间为准", async () => {
+    mocks.appwriteFetch.mockResolvedValue({
+      $id: "task-1",
+      $createdAt: "2026-10-30T08:00:00.000Z",
+      $updatedAt: "2026-10-30T09:00:00.000Z",
+      title: "网页编辑",
+      description: "",
+      status: "todo",
+      priority: "medium",
+    });
+
+    await updateTask("session-secret", "task-1", {
+      title: "网页编辑",
+      description: "",
+      status: "todo",
+      priority: "medium",
+    });
+
+    expect(mocks.appwriteFetch.mock.calls[0][0].body.data.syncClientUpdatedAt).toBeNull();
   });
 });
 

@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
-import { remoteTaskRepository } from "@/features/tasks/repositories/remote-task-repository";
+import { getTaskRepository } from "@/features/tasks/repositories/task-repository-selector";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import type { TaskPageInitialData } from "@/features/tasks/types/task.types";
@@ -33,14 +33,14 @@ export function useTaskPage({ filters, page, initialFilters, initialData }: Task
   const load = useCallback(
     (signal: AbortSignal) => {
       const query = new URLSearchParams(params);
-      return remoteTaskRepository.listPage(
+      return getTaskRepository(userId).listPage(
         // Use the same normalized filter parser as URL navigation.
         parseTaskFiltersFromParams(query),
         Number(query.get("page")),
         { signal },
       );
     },
-    [params],
+    [params, userId],
   );
   const remote = useKeyedQuery<TaskPageResult>({
     key,
