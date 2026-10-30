@@ -11,7 +11,7 @@ import type { TaskPageInitialData } from "@/features/tasks/types/task.types";
 import { hasActiveTaskDateRangeFilter, parseTaskDateParam } from "@/features/tasks/utils/task-date-filters";
 import { DASHBOARD_RANGE_VALUES, TASK_QUERY_KEYS, type DashboardRangeValue } from "@/shared/lib/constants/query-params";
 import { useTaskPage } from "@/features/tasks/hooks/use-task-page";
-import { remoteTaskRepository } from "@/features/tasks/repositories/remote-task-repository";
+import { getTaskRepository } from "@/features/tasks/repositories/task-repository-selector";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 import { createTaskExportPayload, PartialTaskImportError } from "@/features/tasks/utils/task-transfer";
@@ -203,9 +203,7 @@ export function TaskListClient({
   const handleExportTasks = async () => {
     try {
       let tasksToExport = localTasks;
-      if (!isGuest) {
-        tasksToExport = await remoteTaskRepository.exportAll();
-      }
+      if (!isGuest && activeUserId) tasksToExport = await getTaskRepository(activeUserId).exportAll();
 
       const file = new Blob([JSON.stringify(createTaskExportPayload(tasksToExport), null, 2)], {
         type: "application/json",

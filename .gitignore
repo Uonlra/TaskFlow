@@ -74,3 +74,6 @@ blob-report/
 /CLAUDE.md
 /AGENTS.md
 /docs/proceedfiles/
+desktop-web/.next/
+desktop-web/out/
+dist/electron/

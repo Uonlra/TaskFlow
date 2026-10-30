@@ -15,6 +15,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  clearAppwriteSessionCookie(response);
+  clearAppwriteSessionCookie(response, request);
   return response;
 }

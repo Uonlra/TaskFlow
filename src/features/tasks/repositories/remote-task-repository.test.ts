@@ -87,6 +87,7 @@ describe("RemoteTaskRepository", () => {
       method: "GET",
       headers: undefined,
       body: undefined,
+      credentials: "include",
     });
   });
 
@@ -98,6 +99,7 @@ describe("RemoteTaskRepository", () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formValues),
+      credentials: "include",
     });
   });
 
@@ -105,7 +107,7 @@ describe("RemoteTaskRepository", () => {
     const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(new Response(null, { status: 404 }));
 
     await expect(repository.get("task/one")).resolves.toBeNull();
-    expect(fetchMock).toHaveBeenCalledWith("/api/tasks/task%2Fone", { method: "GET" });
+    expect(fetchMock).toHaveBeenCalledWith("/api/tasks/task%2Fone", { method: "GET", credentials: "include" });
   });
 
   it("updates task fields and status through explicit repository methods", async () => {
@@ -121,11 +123,13 @@ describe("RemoteTaskRepository", () => {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formValues),
+      credentials: "include",
     });
     expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/tasks/task%2Fone", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "done" }),
+      credentials: "include",
     });
   });
 
@@ -137,6 +141,7 @@ describe("RemoteTaskRepository", () => {
       method: "DELETE",
       headers: undefined,
       body: undefined,
+      credentials: "include",
     });
   });
 

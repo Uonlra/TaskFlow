@@ -1,13 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { appwriteSessionCookieName, hasAppwriteAuthEnv } from "@/shared/lib/appwrite/env";
+import { createCorsPreflightResponse, withApiCors } from "@/shared/lib/api/cors";
 
 const protectedPages = ["/settings"];
 const protectedApiPrefixes = ["/api/tasks", "/api/profile"];
 
 export function proxy(request: NextRequest) {
+  const isApiRequest = request.nextUrl.pathname.startsWith("/api/");
+
+  if (isApiRequest && request.method === "OPTIONS") {
+    return createCorsPreflightResponse(request);
+  }
+
   if (!hasAppwriteAuthEnv) {
-    return NextResponse.next();
+    return isApiRequest ? withApiCors(NextResponse.next(), request) : NextResponse.next();
   }
 
   const { pathname } = request.nextUrl;
@@ -23,13 +30,13 @@ export function proxy(request: NextRequest) {
 
   if (!sessionCookie) {
     if (isProtectedApi) {
-      return NextResponse.json({ message: "请先登录后再执行此操作。" }, { status: 401 });
+      return withApiCors(NextResponse.json({ message: "请先登录后再执行此操作。" }, { status: 401 }), request);
     }
 
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  return NextResponse.next();
+  return isApiRequest ? withApiCors(NextResponse.next(), request) : NextResponse.next();
 }
 
 export const config = {

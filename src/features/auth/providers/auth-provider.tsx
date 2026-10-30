@@ -4,8 +4,10 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 import type { AuthSession, AuthUser } from "@/features/auth/types/auth.types";
 import type { Profile, ProfileFormValues } from "@/features/auth/types/profile.types";
+import { apiFetch } from "@/shared/lib/api/client";
 import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
 import { useTaskStore } from "@/features/tasks/store/task-store";
+import { getDesktopBridge, isDesktopRuntime } from "@/shared/lib/desktop/bridge";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -55,15 +57,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void (async () => {
       try {
-        const response = await fetch("/api/auth/me", { cache: "no-store", signal: controller.signal });
+        const response = await apiFetch("/api/auth/me", { cache: "no-store", signal: controller.signal });
 
         if (!mounted) return;
 
         if (!response.ok) {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          hydrateGuestTasks();
+          if (response.status === 401 || response.status === 403) {
+            void getDesktopBridge()
+              ?.auth.clear()
+              .catch(() => undefined);
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            hydrateGuestTasks();
+          } else {
+            const stored = await readDesktopAuthEnvelope();
+            if (stored) {
+              setSession(stored.session);
+              setUser(stored.user);
+              setProfile(stored.profile);
+              void syncTasks(stored.user.id);
+            } else {
+              setSession(null);
+              setUser(null);
+              setProfile(null);
+              hydrateGuestTasks();
+            }
+          }
           return;
         }
 
@@ -71,13 +91,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(payload.session ?? null);
         setUser(payload.user);
         setProfile(payload.profile);
+        void getDesktopBridge()
+          ?.auth.set(payload)
+          .catch(() => undefined);
         void syncTasks(payload.user.id);
       } catch {
         if (!mounted) return;
-        setSession(null);
-        setUser(null);
-        setProfile(null);
-        hydrateGuestTasks();
+        const stored = await readDesktopAuthEnvelope();
+        if (stored) {
+          setSession(stored.session);
+          setUser(stored.user);
+          setProfile(stored.profile);
+          void syncTasks(stored.user.id);
+        } else {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          hydrateGuestTasks();
+        }
       } finally {
         window.clearTimeout(timeoutId);
         if (mounted) setIsLoading(false);
@@ -104,22 +135,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(envelope.session ?? null);
         setUser(envelope.user);
         setProfile(envelope.profile);
+        void getDesktopBridge()
+          ?.auth.set(envelope)
+          .catch(() => undefined);
       },
       signOut: async () => {
-        if (hasAppwritePublicEnv) {
-          await fetch("/api/auth/logout", { method: "POST" });
+        try {
+          if (hasAppwritePublicEnv) {
+            await apiFetch("/api/auth/logout", { method: "POST" });
+          }
+        } finally {
+          await getDesktopBridge()
+            ?.auth.clear()
+            .catch(() => undefined);
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          hydrateGuestTasks();
         }
-        setSession(null);
-        setUser(null);
-        setProfile(null);
-        hydrateGuestTasks();
       },
       refreshProfile: async () => {
         if (!hasAppwritePublicEnv || !user) return;
 
         setIsProfileLoading(true);
         try {
-          const response = await fetch("/api/profile", { cache: "no-store" });
+          const response = await apiFetch("/api/profile", { cache: "no-store" });
           if (!response.ok) throw new Error("无法刷新当前资料。");
 
           const payload = (await response.json()) as { profile: Profile };
@@ -138,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setIsProfileLoading(true);
         try {
-          const response = await fetch("/api/profile", {
+          const response = await apiFetch("/api/profile", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(values),
@@ -164,6 +204,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+async function readDesktopAuthEnvelope(): Promise<AuthEnvelope | null> {
+  if (!isDesktopRuntime()) return null;
+
+  try {
+    const value = await getDesktopBridge()?.auth.get();
+    return isAuthEnvelope(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function isAuthEnvelope(value: unknown): value is AuthEnvelope {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<AuthEnvelope>;
+  return Boolean(candidate.user?.id && candidate.profile && typeof candidate.profile === "object");
 }
 
 export function useAuth() {

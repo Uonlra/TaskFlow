@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
-import { remoteTaskRepository } from "@/features/tasks/repositories/remote-task-repository";
+import { getTaskRepository } from "@/features/tasks/repositories/task-repository-selector";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 import type { TaskDueRangeQuery, TaskDueRangeResult } from "@/features/tasks/types/task-query";
@@ -47,7 +47,7 @@ export function useCalendarTasks({ from, to }: TaskDueRangeQuery) {
     const controller = new AbortController();
     activeRequest.current = controller;
     try {
-      const data = await remoteTaskRepository.listByDueRange({ from, to }, { signal: controller.signal });
+      const data = await getTaskRepository(userId).listByDueRange({ from, to }, { signal: controller.signal });
       if (controller.signal.aborted) return null;
       return { key, data, isLoading: false, error: null };
     } catch (error) {
@@ -59,7 +59,7 @@ export function useCalendarTasks({ from, to }: TaskDueRangeQuery) {
         error: getWorkspaceErrorMessage(error, "日历任务暂时无法加载，请稍后重试。"),
       };
     }
-  }, [from, to, key]);
+  }, [from, to, key, userId]);
 
   const commit = useCallback((next: RemoteState | null) => {
     if (!next || activeScope.current !== next.key) return false;

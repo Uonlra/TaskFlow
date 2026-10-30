@@ -11,6 +11,7 @@ import { AuthFormShell } from "@/features/auth/components/auth-form-shell";
 import { useAuthPreviewState } from "@/features/auth/components/auth-preview-state";
 import { useAuthAccountLookup } from "@/features/auth/hooks/use-auth-account-lookup";
 import { registerSchema, type RegisterFormValues } from "@/features/auth/schemas/register-schema";
+import { apiFetch } from "@/shared/lib/api/client";
 import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
 import { useToast } from "@/shared/providers/toast-provider";
 
@@ -83,7 +84,7 @@ export function RegisterForm() {
       return;
     }
 
-    const response = await fetch("/api/auth/register", {
+    const response = await apiFetch("/api/auth/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -4,7 +4,7 @@ import type { Task } from "@/features/tasks/types/task.types";
 import type { TaskDueRangeQuery, TaskDueRangeResult, TaskRequestOptions } from "@/features/tasks/types/task-query";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { buildTaskPageParams, type TaskPageResult } from "@/features/tasks/utils/task-list-query";
-import { requestJson as request, readJsonResponse as readResponse } from "@/shared/lib/api/client";
+import { apiFetch, requestJson as request, readJsonResponse as readResponse } from "@/shared/lib/api/client";
 
 export class RemoteTaskRepository implements TaskRepository {
   async listPage(filters: TaskFilters, page: number, options?: TaskRequestOptions): Promise<TaskPageResult> {
@@ -41,7 +41,7 @@ export class RemoteTaskRepository implements TaskRepository {
   }
 
   async get(id: string, options?: TaskRequestOptions): Promise<Task | null> {
-    const response = await fetch(taskPath(id), { method: "GET", ...signalOptions(options) });
+    const response = await apiFetch(taskPath(id), { method: "GET", ...signalOptions(options) });
 
     if (response.status === 404) return null;
 

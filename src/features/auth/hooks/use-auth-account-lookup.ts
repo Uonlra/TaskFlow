@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import type { AuthAccountLookupStatus } from "@/features/auth/components/auth-preview-state";
 import { useAuthPreviewState } from "@/features/auth/components/auth-preview-state";
+import { apiFetch } from "@/shared/lib/api/client";
 import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
 
 const emailSchema = z.email();
@@ -38,7 +39,7 @@ export function useAuthAccountLookup(email: string) {
       setPreloginAccountStatus("checking");
 
       try {
-        const response = await fetch(`/api/auth/lookup?email=${encodeURIComponent(normalizedEmail)}`, {
+        const response = await apiFetch(`/api/auth/lookup?email=${encodeURIComponent(normalizedEmail)}`, {
           signal: controller.signal,
         });
         const payload = (await response.json().catch(() => null)) as LookupResponse | null;
