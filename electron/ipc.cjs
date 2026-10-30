@@ -3,10 +3,13 @@ const { ipcMain } = require("electron");
 const { getDatabase } = require("./database.cjs");
 const { clearStoredAuth, getStoredAuth, setStoredAuth } = require("./auth.cjs");
 const {
+  acknowledgeSyncOperations,
   createLocalTask,
   deleteLocalTask,
   getLocalTask,
+  listPendingSyncOperations,
   listLocalTasks,
+  recordSyncOperationFailures,
   upsertLocalTasks,
   updateLocalTask,
   updateLocalTaskStatus,
@@ -100,6 +103,21 @@ function registerIpcHandlers() {
   ipcMain.handle("taskflow:local-tasks:delete", (event, input) => {
     assertTrustedSender(event);
     deleteLocalTask(getDatabase(), input?.accountId, input?.taskId);
+  });
+
+  ipcMain.handle("taskflow:sync-queue:list", (event, input) => {
+    assertTrustedSender(event);
+    return listPendingSyncOperations(getDatabase(), input?.accountId, input?.limit);
+  });
+
+  ipcMain.handle("taskflow:sync-queue:acknowledge", (event, input) => {
+    assertTrustedSender(event);
+    acknowledgeSyncOperations(getDatabase(), input?.accountId, input?.operations);
+  });
+
+  ipcMain.handle("taskflow:sync-queue:fail", (event, input) => {
+    assertTrustedSender(event);
+    recordSyncOperationFailures(getDatabase(), input?.accountId, input?.failures);
   });
 }
 

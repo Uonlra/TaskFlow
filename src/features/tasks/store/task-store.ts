@@ -7,6 +7,7 @@ import { DesktopTaskRepository } from "@/features/tasks/repositories/desktop-tas
 import { getTaskRepository } from "@/features/tasks/repositories/task-repository-selector";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
+import { flushDesktopSyncQueue } from "@/features/tasks/sync/desktop-sync";
 import { parseTagsInput } from "@/features/tasks/utils/task-tags";
 import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
 import { isDesktopRuntime } from "@/shared/lib/desktop/bridge";
@@ -58,7 +59,11 @@ export const useTaskStore = create<TaskStore>()((set) => ({
       return;
     }
 
-    set({ isLoading: true, error: null, tasks: [] });
+    set((state) => ({
+      isLoading: state.lastLoadedUserId !== userId,
+      error: null,
+      tasks: state.lastLoadedUserId === userId ? state.tasks : [],
+    }));
     const repository = getTaskRepository(userId);
 
     if (isDesktopRuntime()) {
@@ -66,6 +71,12 @@ export const useTaskStore = create<TaskStore>()((set) => ({
         // Refresh the local cache when online. A failed request is expected
         // when starting the desktop app offline, so the encrypted cache wins.
         await mergeGuestTasks();
+      } catch {
+        // Guest task migration and queue replay are independent network operations.
+      }
+
+      try {
+        await flushDesktopSyncQueue(userId);
         const remoteTasks = await remoteTaskRepository.list();
         if (repository instanceof DesktopTaskRepository) {
           await repository.importRemoteTasks(remoteTasks);

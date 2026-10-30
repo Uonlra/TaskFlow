@@ -21,4 +21,9 @@ contextBridge.exposeInMainWorld("taskflowDesktop", {
     updateStatus: (input) => invoke("taskflow:local-tasks:update-status", input),
     delete: (input) => invoke("taskflow:local-tasks:delete", input),
   },
+  syncQueue: {
+    list: (input) => invoke("taskflow:sync-queue:list", input),
+    acknowledge: (input) => invoke("taskflow:sync-queue:acknowledge", input),
+    fail: (input) => invoke("taskflow:sync-queue:fail", input),
+  },
 });

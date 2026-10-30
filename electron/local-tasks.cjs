@@ -60,6 +60,8 @@ function mapTaskRow(row) {
 }
 
 function queueOperation(database, input) {
+  // Retain older entries until the newest snapshot is acknowledged. A new
+  // edit can arrive while a previous snapshot is already in flight.
   database
     .prepare(
       `INSERT INTO sync_queue
@@ -135,7 +137,7 @@ function updateLocalTask(database, accountId, taskId, input) {
   const current = getTaskRow(database, normalizedAccountId, taskId);
   if (!current) throw new Error("任务不存在。");
 
-  const now = new Date().toISOString();
+  const now = nextTaskTimestamp(current.updated_at);
   const task = {
     id: current.id,
     title: taskInput.title,
@@ -247,6 +249,11 @@ function upsertLocalTasks(database, accountId, tasks) {
         sync_state = 'synced'
       WHERE tasks.account_id = excluded.account_id
         AND tasks.updated_at <= excluded.updated_at
+        AND NOT EXISTS (
+          SELECT 1 FROM sync_queue
+          WHERE sync_queue.account_id = tasks.account_id
+            AND sync_queue.task_id = tasks.id
+        )
     `);
 
     for (const input of tasks) {
@@ -277,7 +284,7 @@ function deleteLocalTask(database, accountId, taskId) {
   const current = getTaskRow(database, normalizedAccountId, taskId);
   if (!current) return;
 
-  const deletedAt = new Date().toISOString();
+  const deletedAt = nextTaskTimestamp(current.updated_at);
   const transaction = database.transaction(() => {
     database
       .prepare(
@@ -299,11 +306,104 @@ function deleteLocalTask(database, accountId, taskId) {
   transaction();
 }
 
+function listPendingSyncOperations(database, accountId, limit = 50) {
+  const normalizedAccountId = normalizeAccountId(accountId);
+  const normalizedLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 100) : 50;
+
+  return database
+    .prepare(
+      `SELECT queue.operation_id, queue.account_id, queue.task_id, queue.operation,
+              queue.payload_json, queue.client_updated_at, queue.attempts, queue.last_error, queue.created_at
+       FROM sync_queue AS queue
+       WHERE queue.account_id = ?
+         AND queue.id = (
+           SELECT MAX(latest.id) FROM sync_queue AS latest
+           WHERE latest.account_id = queue.account_id AND latest.task_id = queue.task_id
+         )
+       ORDER BY queue.id ASC
+       LIMIT ?`,
+    )
+    .all(normalizedAccountId, normalizedLimit)
+    .map((row) => ({
+      operationId: row.operation_id,
+      accountId: row.account_id,
+      taskId: row.task_id,
+      operation: row.operation,
+      payload: JSON.parse(row.payload_json),
+      clientUpdatedAt: row.client_updated_at,
+      attempts: row.attempts,
+      lastError: row.last_error ?? undefined,
+      createdAt: row.created_at,
+    }));
+}
+
+function acknowledgeSyncOperations(database, accountId, operations) {
+  const normalizedAccountId = normalizeAccountId(accountId);
+  if (!Array.isArray(operations)) throw new TypeError("同步确认列表格式不正确。");
+
+  const transaction = database.transaction(() => {
+    const getOperation = database.prepare(
+      `SELECT id, task_id, client_updated_at
+       FROM sync_queue
+       WHERE operation_id = ? AND account_id = ?`,
+    );
+    const deleteOperation = database.prepare("DELETE FROM sync_queue WHERE account_id = ? AND task_id = ? AND id <= ?");
+    const markTaskSynced = database.prepare(
+      `UPDATE tasks
+       SET sync_state = 'synced'
+       WHERE account_id = ?
+         AND id = ?
+         AND updated_at <= ?
+         AND NOT EXISTS (
+           SELECT 1 FROM sync_queue
+           WHERE sync_queue.account_id = tasks.account_id
+             AND sync_queue.task_id = tasks.id
+         )`,
+    );
+
+    for (const input of operations) {
+      if (!input || typeof input.operationId !== "string") continue;
+
+      const row = getOperation.get(input.operationId, normalizedAccountId);
+      if (!row) continue;
+
+      deleteOperation.run(normalizedAccountId, row.task_id, row.id);
+      markTaskSynced.run(normalizedAccountId, row.task_id, row.client_updated_at);
+    }
+  });
+
+  transaction();
+}
+
+function recordSyncOperationFailures(database, accountId, failures) {
+  const normalizedAccountId = normalizeAccountId(accountId);
+  if (!Array.isArray(failures)) throw new TypeError("同步失败列表格式不正确。");
+
+  const update = database.prepare(
+    `UPDATE sync_queue
+     SET attempts = attempts + 1, last_error = ?
+     WHERE operation_id = ? AND account_id = ?`,
+  );
+
+  const transaction = database.transaction(() => {
+    for (const failure of failures) {
+      if (!failure || typeof failure.operationId !== "string") continue;
+      const message = typeof failure.message === "string" ? failure.message.slice(0, 500) : "同步失败。";
+      update.run(message, failure.operationId, normalizedAccountId);
+    }
+  });
+
+  transaction();
+}
+
 module.exports = {
+  acknowledgeSyncOperations,
   createLocalTask,
   deleteLocalTask,
   getLocalTask,
+  listPendingSyncOperations,
   listLocalTasks,
+  recordSyncOperationFailures,
   upsertLocalTasks,
   updateLocalTask,
   updateLocalTaskStatus,
@@ -315,4 +415,9 @@ function normalizeImportedTask(input) {
   const createdAt = typeof input.createdAt === "string" ? input.createdAt : new Date().toISOString();
   const updatedAt = typeof input.updatedAt === "string" ? input.updatedAt : createdAt;
   return { ...task, id: input.id, createdAt, updatedAt };
+}
+
+function nextTaskTimestamp(previous) {
+  const lastTime = Date.parse(previous);
+  return new Date(Math.max(Date.now(), Number.isFinite(lastTime) ? lastTime + 1 : 0)).toISOString();
 }

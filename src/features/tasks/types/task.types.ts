@@ -12,6 +12,7 @@ export type Task = {
   dueDate?: string;
   createdAt: string;
   updatedAt?: string;
+  syncClientUpdatedAt?: string;
   completedAt?: string;
 };
 

@@ -57,6 +57,7 @@ const DASHBOARD_SELECT_FIELDS = [
   "tags",
   "dueDate",
   "completedAt",
+  "syncClientUpdatedAt",
 ];
 
 export async function listTasksForDashboard(
@@ -411,8 +412,15 @@ export async function listTasksByDueRange(
   };
 }
 
-export async function createTask(sessionSecret: string, userId: string, input: TaskFormValues, request?: NextRequest) {
-  const rowId = crypto.randomUUID();
+export async function createTask(
+  sessionSecret: string,
+  userId: string,
+  input: TaskFormValues,
+  request?: NextRequest,
+  taskId?: string,
+  syncClientUpdatedAt?: string,
+) {
+  const rowId = taskId || crypto.randomUUID();
   const taskKey = Date.now();
   const row = await appwriteTaskRequest<AppwriteTaskRow>(
     "",
@@ -422,7 +430,7 @@ export async function createTask(sessionSecret: string, userId: string, input: T
       request,
       body: {
         rowId,
-        data: buildTaskData(input, taskKey),
+        data: buildTaskData(input, taskKey, syncClientUpdatedAt),
         permissions: buildTaskPermissions(userId),
       },
     },
@@ -432,7 +440,13 @@ export async function createTask(sessionSecret: string, userId: string, input: T
   return mapTaskRow(row);
 }
 
-export async function updateTask(sessionSecret: string, taskId: string, input: TaskFormValues, request?: NextRequest) {
+export async function updateTask(
+  sessionSecret: string,
+  taskId: string,
+  input: TaskFormValues,
+  request?: NextRequest,
+  syncClientUpdatedAt?: string,
+) {
   const row = await appwriteTaskRequest<AppwriteTaskRow>(
     `/${taskId}`,
     {
@@ -440,7 +454,7 @@ export async function updateTask(sessionSecret: string, taskId: string, input: T
       sessionSecret,
       request,
       body: {
-        data: buildTaskData(input),
+        data: buildTaskData(input, undefined, syncClientUpdatedAt),
       },
     },
     appwriteTaskRowSchema,
@@ -465,6 +479,7 @@ export async function updateTaskStatus(
         data: {
           status,
           completedAt: status === "done" ? new Date().toISOString() : null,
+          syncClientUpdatedAt: null,
         },
       },
     },
@@ -506,6 +521,7 @@ export function mapTaskRow(row: AppwriteTaskRow): Task {
     dueDate: normalizeDateOnly(row.dueDate),
     createdAt: row.$createdAt,
     updatedAt: row.$updatedAt,
+    syncClientUpdatedAt: row.syncClientUpdatedAt ?? undefined,
     completedAt: row.completedAt ?? undefined,
   };
 }
@@ -514,7 +530,7 @@ function buildTaskPermissions(userId: string) {
   return [`read("user:${userId}")`, `update("user:${userId}")`, `delete("user:${userId}")`];
 }
 
-function buildTaskData(input: TaskFormValues, taskKey?: number) {
+function buildTaskData(input: TaskFormValues, taskKey?: number, syncClientUpdatedAt?: string) {
   const tags = Array.from(
     new Set(
       (input.tags ?? "")
@@ -534,6 +550,7 @@ function buildTaskData(input: TaskFormValues, taskKey?: number) {
     tags,
     dueDate: toAppwriteDateTime(input.dueDate),
     completedAt: input.status === "done" ? new Date().toISOString() : null,
+    syncClientUpdatedAt: syncClientUpdatedAt ?? null,
     ...(typeof taskKey === "number" ? { taskId: taskKey } : {}),
   };
 }

@@ -122,6 +122,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [clearTasks, hydrateGuestTasks, syncTasks]);
 
+  useEffect(() => {
+    if (!isDesktopRuntime() || !user) return;
+
+    const replaySyncQueue = () => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
+      void syncTasks(user.id);
+    };
+
+    window.addEventListener("online", replaySyncQueue);
+    const intervalId = window.setInterval(replaySyncQueue, 30_000);
+
+    return () => {
+      window.removeEventListener("online", replaySyncQueue);
+      window.clearInterval(intervalId);
+    };
+  }, [syncTasks, user]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,

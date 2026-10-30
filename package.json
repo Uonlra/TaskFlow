@@ -25,6 +25,7 @@
     "postinstall": "electron-builder install-app-deps",
     "prepush:check": "node scripts/pre-push-check.mjs",
     "appwrite:backfill-task-search": "node --env-file=.env.local scripts/backfill-task-search.mjs",
+    "appwrite:ensure-task-sync-column": "node --env-file=.env.local scripts/ensure-task-sync-column.mjs",
     "test:e2e": "playwright test",
     "test:e2e:mock": "playwright test test/e2e/login.spec.ts test/e2e/auth-guard.spec.ts test/e2e/task-create.spec.ts"
   },

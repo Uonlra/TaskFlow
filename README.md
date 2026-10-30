@@ -129,9 +129,11 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 打包版本默认使用 `app://taskflow/` 加载本地页面资源，任务和认证接口仍通过 `https://www.uta4k.top/` 的 Next.js API Routes 访问。设置 `TASKFLOW_WEB_URL` 或 `ELECTRON_START_URL` 可以临时覆盖启动地址。桌面包不会把包含服务端密钥的 Next.js 服务端代码打进客户端。
 
-Windows x64 安装包由 electron-builder 生成，发布配置指向 GitHub Releases。自动更新接入会在远程 API 和本地离线存储完成后进入第二批桌面端工作。
+Windows x64 安装包由 electron-builder 生成，发布配置指向 GitHub Releases。自动更新接入会在远程 API 和本地离线存储稳定后进入第二批桌面端工作。
 
-离线数据层已采用 SQLCipher SQLite。数据库文件保存在 Electron 的 `userData` 目录，随机数据库密钥由 Windows DPAPI 通过 Electron `safeStorage` 保护。首次在线登录后，远端任务会导入本地缓存；之后任务创建、编辑、完成和删除通过受信任来源校验的 preload IPC 写入本地数据库，并记录同步队列。同步 worker 和托盘、快捷键、通知属于后续批次。
+离线数据层已采用 SQLCipher SQLite。数据库文件保存在 Electron 的 `userData` 目录，随机数据库密钥由 Windows DPAPI 通过 Electron `safeStorage` 保护。首次在线登录后，远端任务会导入本地缓存；之后任务创建、编辑、完成和删除通过受信任来源校验的 preload IPC 写入本地数据库，并记录同步队列。联网后，桌面端通过 `POST /api/tasks/sync` 批量回放队列，同一任务仅发送最新快照；服务端按客户端逻辑编辑时间判断桌面回放冲突，并将冲突时的远端版本回传给本地缓存。回放会在登录初始化、恢复联网和定时同步时触发，失败操作保留并记录重试次数。托盘、快捷键和通知属于后续批次。
+
+部署同步 API 前，在 Appwrite 任务表中新增可选 `datetime` 字段 `syncClientUpdatedAt`，或运行 `pnpm appwrite:ensure-task-sync-column`（需要具有数据库结构写入权限的 `APPWRITE_API_KEY`）。确认字段状态为 `available` 后再部署代码；此字段用于区分桌面端离线编辑时间与 Appwrite 处理请求的时间。已有任务无需回填，缺少该字段时按 Appwrite 的 `$updatedAt` 比较。
 
 ## 质量保障
 

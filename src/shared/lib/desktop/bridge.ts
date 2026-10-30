@@ -11,6 +11,24 @@ export type DesktopLocalTasksBridge = {
   delete(input: { accountId: string; taskId: string }): Promise<void>;
 };
 
+export type DesktopSyncOperation = {
+  operationId: string;
+  accountId: string;
+  taskId: string;
+  operation: "upsert" | "delete";
+  payload: unknown;
+  clientUpdatedAt: string;
+  attempts: number;
+  lastError?: string;
+  createdAt: string;
+};
+
+export type DesktopSyncQueueBridge = {
+  list(input: { accountId: string; limit?: number }): Promise<DesktopSyncOperation[]>;
+  acknowledge(input: { accountId: string; operations: Array<{ operationId: string }> }): Promise<void>;
+  fail(input: { accountId: string; failures: Array<{ operationId: string; message?: string }> }): Promise<void>;
+};
+
 export type DesktopAuthBridge = {
   get(): Promise<unknown>;
   set(envelope: unknown): Promise<void>;
@@ -22,6 +40,7 @@ export type TaskflowDesktopBridge = {
   platform: string;
   version: string;
   localTasks: DesktopLocalTasksBridge;
+  syncQueue: DesktopSyncQueueBridge;
   auth: DesktopAuthBridge;
 };
 
