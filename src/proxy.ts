@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { appwriteSessionCookieName, hasAppwriteAuthEnv } from "@/shared/lib/appwrite/env";
 import { createCorsPreflightResponse, withApiCors } from "@/shared/lib/api/cors";
+import { isAllowedDesktopOrigin } from "@/shared/lib/api/desktop-origins";
 
 const protectedPages = ["/settings"];
 const protectedApiPrefixes = ["/api/tasks", "/api/profile"];
@@ -11,6 +12,13 @@ export function proxy(request: NextRequest) {
 
   if (isApiRequest && request.method === "OPTIONS") {
     return createCorsPreflightResponse(request);
+  }
+
+  if (isApiRequest && !["GET", "HEAD"].includes(request.method)) {
+    const origin = request.headers.get("origin");
+    if (origin && origin !== request.nextUrl.origin && !isAllowedDesktopOrigin(origin)) {
+      return NextResponse.json({ message: "请求来源不受信任。" }, { status: 403 });
+    }
   }
 
   if (!hasAppwriteAuthEnv) {
@@ -23,7 +31,7 @@ export function proxy(request: NextRequest) {
   const isProtectedApi = protectedApiPrefixes.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 
   if (!isProtectedPage && !isProtectedApi) {
-    return NextResponse.next();
+    return isApiRequest ? withApiCors(NextResponse.next(), request) : NextResponse.next();
   }
 
   const sessionCookie = request.cookies.get(appwriteSessionCookieName)?.value;
