@@ -54,4 +54,29 @@ describe("proxy workspace access", () => {
     expect(response.status).toBe(204);
     expect(response.headers.get("access-control-allow-origin")).toBe("http://tauri.localhost");
   });
+
+  it("允许桌面端读取实际认证接口响应", () => {
+    const response = proxy(
+      new NextRequest("http://localhost/api/auth/login", {
+        method: "POST",
+        headers: { origin: "app://taskflow" },
+      }),
+    );
+
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+    expect(response.headers.get("access-control-allow-origin")).toBe("app://taskflow");
+    expect(response.headers.get("access-control-allow-credentials")).toBe("true");
+  });
+
+  it("拒绝其他来源使用跨站 Cookie 提交写请求", async () => {
+    const response = proxy(
+      new NextRequest("https://taskflow.example/api/tasks", {
+        method: "POST",
+        headers: { origin: "https://evil.example", cookie: "taskflow-session=session-secret" },
+      }),
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ message: "请求来源不受信任。" });
+  });
 });
