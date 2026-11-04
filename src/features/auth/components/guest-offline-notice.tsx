@@ -5,10 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { useAuth } from "@/features/auth/providers/auth-provider";
+import { useDesktopRuntime } from "@/shared/hooks/use-desktop-runtime";
 
 const guestWorkspaceRoutes = ["/dashboard", "/tasks", "/calendar", "/stats"];
 
 export function GuestOfflineNotice() {
+  const isDesktop = useDesktopRuntime();
   const pathname = usePathname();
   const { user, isLoading } = useAuth();
 
@@ -25,13 +27,17 @@ export function GuestOfflineNotice() {
           <CloudOff size={17} strokeWidth={1.8} />
         </span>
         <p>
-          <strong>离线访客模式</strong>
-          <span>数据临时保存在当前浏览器，关闭后将无法恢复。</span>
+          <strong>{isDesktop ? "本地工作区" : "离线访客模式"}</strong>
+          <span>
+            {isDesktop
+              ? "任务已加密保存在此设备，关闭应用后仍可恢复。"
+              : "数据临时保存在当前浏览器，关闭后将无法恢复。"}
+          </span>
         </p>
       </div>
-      <Link className="guest-offline-notice__action" href={loginHref}>
+      <Link className="guest-offline-notice__action" href={isDesktop ? "/settings" : loginHref}>
         <LogIn size={16} strokeWidth={1.8} aria-hidden="true" />
-        登录并同步
+        {isDesktop ? "云同步设置（可选）" : "登录并同步"}
       </Link>
     </div>
   );

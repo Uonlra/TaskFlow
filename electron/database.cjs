@@ -1,6 +1,7 @@
 const crypto = require("node:crypto");
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const { setTimeout: delay } = require("node:timers/promises");
 
 const { app, safeStorage } = require("electron");
 const Database = require("better-sqlite3-multiple-ciphers");
@@ -9,6 +10,24 @@ const DATABASE_FILENAME = "taskflow.sqlite";
 const DATABASE_KEY_FILENAME = "taskflow.sqlite.key";
 
 let database;
+
+async function waitForWindowsKeyPersistence() {
+  if (process.platform !== "win32") return;
+  // Electron 45's asynchronous Windows encryptor stores its DPAPI-wrapped
+  // master key in Local State. Its first preference write is delayed; accepting
+  // tasks before that write makes an early forced exit lose access to the DB.
+  const statePath = path.join(app.getPath("userData"), "Local State");
+  for (let attempt = 0; attempt < 100; attempt++) {
+    try {
+      const state = JSON.parse(await fs.readFile(statePath, "utf8"));
+      if (state.os_crypt?.encrypted_key) return;
+    } catch (error) {
+      if (error?.code !== "ENOENT" && !(error instanceof SyntaxError)) throw error;
+    }
+    await delay(250);
+  }
+  throw new Error("系统安全存储尚未完成初始化，请稍后重新打开应用。已有数据不会被清除。");
+}
 
 async function readOrCreateDatabaseKey(keyPath) {
   const encryptionAvailable = await safeStorage.isAsyncEncryptionAvailable();
@@ -35,6 +54,7 @@ async function readOrCreateDatabaseKey(keyPath) {
 
   const key = crypto.randomBytes(32);
   const encryptedKey = await safeStorage.encryptStringAsync(key.toString("base64"));
+  await waitForWindowsKeyPersistence();
   await fs.writeFile(keyPath, encryptedKey, { mode: 0o600 });
   return key;
 }

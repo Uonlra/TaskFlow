@@ -7,6 +7,11 @@ contextBridge.exposeInMainWorld("taskflowDesktop", {
   isDesktop: true,
   platform: process.platform,
   version: process.versions.electron,
+  workspace: {
+    get: () => invoke("taskflow:workspace:get"),
+    connect: () => invoke("taskflow:workspace:connect"),
+    pause: () => invoke("taskflow:workspace:pause"),
+  },
   auth: {
     get: () => invoke("taskflow:auth:get"),
     set: (envelope) => invoke("taskflow:auth:set", envelope),

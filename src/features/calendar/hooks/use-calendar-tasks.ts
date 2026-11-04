@@ -1,5 +1,7 @@
 "use client";
 
+import { useDesktopRuntime } from "@/shared/hooks/use-desktop-runtime";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "@/features/auth/providers/auth-provider";
@@ -25,15 +27,16 @@ type RemoteState = {
 };
 
 export function useCalendarTasks({ from, to }: TaskDueRangeQuery) {
+  const isDesktop = useDesktopRuntime();
   const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
   const userId = user?.id;
-  const isGuest = !isAuthLoading && !userId;
+  const isGuest = !isAuthLoading && (!userId || isDesktop);
   const storeTasks = useTaskStore((state) => state.tasks);
   const createTask = useTaskStore((state) => state.createTaskAsync);
   const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
-  const key = !isAuthLoading && isConfigured && userId ? JSON.stringify([userId, from, to]) : null;
+  const key = !isDesktop && !isAuthLoading && isConfigured && userId ? JSON.stringify([userId, from, to]) : null;
   const [remoteState, setRemoteState] = useState<RemoteState | null>(null);
   const activeScope = useRef<string | null>(null);
   const activeRequest = useRef<AbortController | null>(null);

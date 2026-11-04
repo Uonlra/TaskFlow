@@ -36,6 +36,11 @@ export type DesktopAuthBridge = {
 };
 
 export type TaskflowDesktopBridge = {
+  workspace: {
+    get(): Promise<{ accountId: string; syncEnabled: boolean }>;
+    connect(): Promise<{ accountId: string; syncEnabled: boolean }>;
+    pause(): Promise<{ accountId: string; syncEnabled: boolean }>;
+  };
   isDesktop: true;
   platform: string;
   version: string;

@@ -133,7 +133,9 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 Windows x64 安装包由 electron-builder 生成，发布配置指向 GitHub Releases。自动更新接入会在远程 API 和本地离线存储稳定后进入第二批桌面端工作。
 
-离线数据层已采用 SQLCipher SQLite。数据库文件保存在 Electron 的 `userData` 目录，随机数据库密钥由 Windows DPAPI 通过 Electron `safeStorage` 保护。首次在线登录后，远端任务会导入本地缓存；之后任务创建、编辑、完成和删除通过受信任来源校验的 preload IPC 写入本地数据库，并记录同步队列。联网后，桌面端通过 `POST /api/tasks/sync` 批量回放队列，同一任务仅发送最新快照；服务端按客户端逻辑编辑时间判断桌面回放冲突，并将冲突时的远端版本回传给本地缓存。回放会在登录初始化、恢复联网和定时同步时触发，失败操作保留并记录重试次数。托盘、快捷键和通知属于后续批次。
+桌面端默认使用本地工作区，无需注册、登录或联网。任务通过 SQLCipher SQLite 加密保存在 Electron 的 `userData` 目录，随机数据库密钥由 Windows DPAPI 和 Electron `safeStorage` 保护。创建、编辑、完成、删除以及总览、日历和统计均使用本地数据，关闭应用后会恢复。任务页支持导入、导出 JSON 备份。
+
+云端账户登录和任务同步为可选功能。登录不会自动上传本地任务；在设置中主动开启云同步后，未绑定账户的本地任务会加入当前账户并进入同步队列。联网后通过 `POST /api/tasks/sync` 回放，冲突按逻辑编辑时间处理。暂停同步或退出登录后，本地任务仍可查看、编辑，待下次连接同一账户后同步。切换云端账户会进入对应的独立工作区，原账户数据保留在本机，不会上传给新账户。已有旧版账户缓存也保留在原账户下，登录该账户并开启同步后可重新访问。托盘、快捷键和通知属于后续批次。
 
 部署同步 API 前，在 Appwrite 任务表中新增可选 `datetime` 字段 `syncClientUpdatedAt`，或运行 `pnpm appwrite:ensure-task-sync-column`（需要具有数据库结构写入权限的 `APPWRITE_API_KEY`）。确认字段状态为 `available` 后再部署代码；此字段用于区分桌面端离线编辑时间与 Appwrite 处理请求的时间。已有任务无需回填，缺少该字段时按 Appwrite 的 `$updatedAt` 比较。
 

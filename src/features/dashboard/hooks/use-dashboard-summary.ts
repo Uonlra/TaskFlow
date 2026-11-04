@@ -1,5 +1,7 @@
 "use client";
 
+import { useDesktopRuntime } from "@/shared/hooks/use-desktop-runtime";
+
 import { useCallback, useMemo } from "react";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
@@ -11,9 +13,10 @@ import { matchesTaskDueFilter } from "@/features/tasks/utils/task-deadline";
 import { useKeyedQuery } from "@/shared/hooks/use-keyed-query";
 
 export function useDashboardSummary({ range, status, priority, due }: DashboardSummaryQuery) {
+  const isDesktop = useDesktopRuntime();
   const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
   const tasks = useTaskStore((state) => state.tasks);
-  const isGuest = !isAuthLoading && !user;
+  const isGuest = !isAuthLoading && (!user || isDesktop);
   const key = user ? JSON.stringify([user.id, range, status, priority, due]) : null;
   const load = useCallback(
     (signal: AbortSignal) => dashboardRepository.getSummary({ range, status, priority, due }, { signal }),
@@ -21,7 +24,7 @@ export function useDashboardSummary({ range, status, priority, due }: DashboardS
   );
   const remote = useKeyedQuery({
     key,
-    enabled: !isAuthLoading && isConfigured && Boolean(user),
+    enabled: !isDesktop && !isAuthLoading && isConfigured && Boolean(user),
     load,
     formatError,
   });

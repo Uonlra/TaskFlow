@@ -1,5 +1,7 @@
 "use client";
 
+import { useDesktopRuntime } from "@/shared/hooks/use-desktop-runtime";
+
 import { useCallback, useMemo } from "react";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
@@ -23,9 +25,12 @@ type TaskPageOptions = {
 };
 
 export function useTaskPage({ filters, page, initialFilters, initialData }: TaskPageOptions) {
+  const isDesktop = useDesktopRuntime();
   const { user, isConfigured, isLoading: isAuthLoading } = useAuth();
   const localTasks = useTaskStore((state) => state.tasks);
-  const isGuest = !isAuthLoading && !user;
+  const localError = useTaskStore((state) => state.error);
+  const localLoading = useTaskStore((state) => state.isLoading);
+  const isGuest = !isAuthLoading && (!user || isDesktop);
   const userId = user?.id ?? (isAuthLoading ? initialData?.userId : undefined);
   const params = buildTaskPageParams(filters, page).toString();
   const key = userId ? JSON.stringify([userId, params]) : null;
@@ -44,7 +49,7 @@ export function useTaskPage({ filters, page, initialFilters, initialData }: Task
   );
   const remote = useKeyedQuery<TaskPageResult>({
     key,
-    enabled: !isAuthLoading && isConfigured && Boolean(userId),
+    enabled: !isDesktop && !isAuthLoading && isConfigured && Boolean(userId),
     load,
     formatError,
     initial: initialData
@@ -60,8 +65,8 @@ export function useTaskPage({ filters, page, initialFilters, initialData }: Task
   );
   return {
     pageData: isGuest ? guestData : remote.data,
-    isLoading: isGuest ? false : (isAuthLoading && !remote.data) || remote.isLoading,
-    error: isGuest ? null : remote.error,
+    isLoading: isGuest ? isDesktop && localLoading : (isAuthLoading && !remote.data) || remote.isLoading,
+    error: isGuest ? (isDesktop ? localError : null) : remote.error,
     userId,
     isGuest,
     reload: isGuest ? async () => true : remote.reload,
