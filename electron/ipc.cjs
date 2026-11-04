@@ -2,6 +2,7 @@ const { ipcMain } = require("electron");
 
 const { getDatabase } = require("./database.cjs");
 const { clearStoredAuth, getStoredAuth, setStoredAuth } = require("./auth.cjs");
+const { getWorkspace, connectWorkspace, pauseWorkspace } = require("./workspace.cjs");
 const {
   acknowledgeSyncOperations,
   createLocalTask,
@@ -54,7 +55,27 @@ function assertTrustedSender(event) {
   }
 }
 
+function getActiveDatabase(input) {
+  const database = getDatabase();
+  if (getWorkspace(database).accountId !== input?.accountId) throw new Error("工作区已切换，请重试操作。");
+  return database;
+}
+
 function registerIpcHandlers() {
+  ipcMain.handle("taskflow:workspace:get", (event) => {
+    assertTrustedSender(event);
+    return getWorkspace(getDatabase());
+  });
+  ipcMain.handle("taskflow:workspace:connect", async (event) => {
+    assertTrustedSender(event);
+    const auth = await getStoredAuth();
+    if (!auth?.user?.id) throw new Error("请先登录云端账户。");
+    return connectWorkspace(getDatabase(), auth.user.id);
+  });
+  ipcMain.handle("taskflow:workspace:pause", (event) => {
+    assertTrustedSender(event);
+    return pauseWorkspace(getDatabase());
+  });
   ipcMain.handle("taskflow:auth:get", async (event) => {
     assertTrustedSender(event);
     return getStoredAuth();
@@ -67,42 +88,43 @@ function registerIpcHandlers() {
 
   ipcMain.handle("taskflow:auth:clear", async (event) => {
     assertTrustedSender(event);
+    pauseWorkspace(getDatabase());
     await clearStoredAuth();
   });
 
   ipcMain.handle("taskflow:local-tasks:list", (event, input) => {
     assertTrustedSender(event);
-    return listLocalTasks(getDatabase(), input?.accountId);
+    return listLocalTasks(getActiveDatabase(input), input?.accountId);
   });
 
   ipcMain.handle("taskflow:local-tasks:get", (event, input) => {
     assertTrustedSender(event);
-    return getLocalTask(getDatabase(), input?.accountId, input?.taskId);
+    return getLocalTask(getActiveDatabase(input), input?.accountId, input?.taskId);
   });
 
   ipcMain.handle("taskflow:local-tasks:upsert", (event, input) => {
     assertTrustedSender(event);
-    return upsertLocalTasks(getDatabase(), input?.accountId, input?.tasks);
+    return upsertLocalTasks(getActiveDatabase(input), input?.accountId, input?.tasks);
   });
 
   ipcMain.handle("taskflow:local-tasks:create", (event, input) => {
     assertTrustedSender(event);
-    return createLocalTask(getDatabase(), input?.accountId, input?.task);
+    return createLocalTask(getActiveDatabase(input), input?.accountId, input?.task);
   });
 
   ipcMain.handle("taskflow:local-tasks:update", (event, input) => {
     assertTrustedSender(event);
-    return updateLocalTask(getDatabase(), input?.accountId, input?.taskId, input?.task);
+    return updateLocalTask(getActiveDatabase(input), input?.accountId, input?.taskId, input?.task);
   });
 
   ipcMain.handle("taskflow:local-tasks:update-status", (event, input) => {
     assertTrustedSender(event);
-    return updateLocalTaskStatus(getDatabase(), input?.accountId, input?.taskId, input?.status);
+    return updateLocalTaskStatus(getActiveDatabase(input), input?.accountId, input?.taskId, input?.status);
   });
 
   ipcMain.handle("taskflow:local-tasks:delete", (event, input) => {
     assertTrustedSender(event);
-    deleteLocalTask(getDatabase(), input?.accountId, input?.taskId);
+    deleteLocalTask(getActiveDatabase(input), input?.accountId, input?.taskId);
   });
 
   ipcMain.handle("taskflow:sync-queue:list", (event, input) => {

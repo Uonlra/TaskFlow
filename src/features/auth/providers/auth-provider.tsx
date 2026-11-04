@@ -57,6 +57,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void (async () => {
       try {
+        if (isDesktopRuntime()) {
+          const stored = await readDesktopAuthEnvelope();
+          await syncTasks(stored?.user.id);
+          if (!mounted) return;
+          setIsLoading(false);
+          if (!stored) return;
+          setSession(stored.session);
+          setUser(stored.user);
+          setProfile(stored.profile);
+        }
         const response = await apiFetch("/api/auth/me", { cache: "no-store", signal: controller.signal });
 
         if (!mounted) return;
@@ -157,6 +167,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .catch(() => undefined);
       },
       signOut: async () => {
+        if (isDesktopRuntime()) {
+          await getDesktopBridge()!.auth.clear();
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          hydrateGuestTasks();
+          void apiFetch("/api/auth/logout", { method: "POST", signal: AbortSignal.timeout(4000) }).catch(
+            () => undefined,
+          );
+          return;
+        }
         try {
           if (hasAppwritePublicEnv) {
             await apiFetch("/api/auth/logout", { method: "POST" });

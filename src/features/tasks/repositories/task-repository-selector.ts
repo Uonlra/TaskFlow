@@ -4,6 +4,6 @@ import { remoteTaskRepository } from "@/features/tasks/repositories/remote-task-
 import { isDesktopRuntime } from "@/shared/lib/desktop/bridge";
 
 export function getTaskRepository(accountId?: string): TaskRepository {
-  if (isDesktopRuntime() && accountId) return new DesktopTaskRepository(accountId);
+  if (isDesktopRuntime()) return new DesktopTaskRepository(accountId);
   return remoteTaskRepository;
 }

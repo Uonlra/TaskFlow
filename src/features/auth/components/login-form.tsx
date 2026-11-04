@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { AuthInput } from "@/features/auth/components/auth-input";
 import { AuthFormShell } from "@/features/auth/components/auth-form-shell";
+import { useDesktopRuntime } from "@/shared/hooks/use-desktop-runtime";
 import { useAuthPreviewState } from "@/features/auth/components/auth-preview-state";
 import { useAuthAccountLookup } from "@/features/auth/hooks/use-auth-account-lookup";
 import type { AuthEnvelope } from "@/features/auth/providers/auth-provider";
@@ -19,6 +20,7 @@ import { useToast } from "@/shared/providers/toast-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 
 export function LoginForm() {
+  const isDesktop = useDesktopRuntime();
   const searchParams = useSearchParams();
   const { showToast } = useToast();
   const nextPath = getSafeNextPath(searchParams.get("next"));
@@ -134,7 +136,15 @@ export function LoginForm() {
     <AuthFormShell
       eyebrow={isPreviewReady ? "已连接" : "登录"}
       title={isPreviewReady ? "工作台已准备好" : "欢迎回来"}
-      description={isPreviewReady ? "任务已同步，确认后返回刚才的功能页。" : "登录后继续整理你的任务。"}
+      description={
+        isDesktop
+          ? isPreviewReady
+            ? "账户已登录。任务仍保存在本地，可在设置中开启云同步。"
+            : "本地使用无需登录。登录账户后，可在设置中选择开启云同步。"
+          : isPreviewReady
+            ? "任务已同步，确认后返回刚才的功能页。"
+            : "登录后继续整理你的任务。"
+      }
       footer={
         isPreviewReady ? (
           <span className="auth-preview-footer">登录身份已确认，下一步返回刚才的页面。</span>

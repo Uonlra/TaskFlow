@@ -60,6 +60,12 @@ function mapTaskRow(row) {
 }
 
 function queueOperation(database, input) {
+  if (input.accountId === "local:device") {
+    database
+      .prepare("UPDATE tasks SET sync_state = 'local' WHERE id = ? AND account_id = ?")
+      .run(input.taskId, input.accountId);
+    return;
+  }
   // Retain older entries until the newest snapshot is acknowledged. A new
   // edit can arrive while a previous snapshot is already in flight.
   database
@@ -281,6 +287,10 @@ function upsertLocalTasks(database, accountId, tasks) {
 
 function deleteLocalTask(database, accountId, taskId) {
   const normalizedAccountId = normalizeAccountId(accountId);
+  if (normalizedAccountId === "local:device") {
+    database.prepare("DELETE FROM tasks WHERE id = ? AND account_id = ?").run(taskId, normalizedAccountId);
+    return;
+  }
   const current = getTaskRow(database, normalizedAccountId, taskId);
   if (!current) return;
 

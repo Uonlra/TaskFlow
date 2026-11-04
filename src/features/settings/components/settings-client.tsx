@@ -5,11 +5,14 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CircleHelp, Database, LockKeyhole, PlugZap, SlidersHorizontal, UserRound } from "lucide-react";
 
 import { MobileSettingsView } from "@/features/settings/components/mobile-settings-view";
+import { DesktopWorkspacePanel } from "@/features/settings/components/desktop-workspace-panel";
+import { useDesktopRuntime } from "@/shared/hooks/use-desktop-runtime";
 import type { ProfileFormValues } from "@/features/auth/types/profile.types";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useToast } from "@/shared/providers/toast-provider";
 
 export function SettingsClient() {
+  const isDesktop = useDesktopRuntime();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -52,7 +55,7 @@ export function SettingsClient() {
       description: "当前会话已结束，可以换个账号继续。",
       tone: "success",
     });
-    router.push("/login");
+    router.push(isDesktop ? "/tasks" : "/login");
   };
 
   const displayName = namePreview || profile?.fullName || user?.email || "访客";
@@ -72,6 +75,7 @@ export function SettingsClient() {
 
   return (
     <>
+      <DesktopWorkspacePanel />
       <div className="settings-mobile-only">
         <MobileSettingsView
           displayName={displayName}
@@ -90,7 +94,13 @@ export function SettingsClient() {
               <span className={isAuthenticated ? "settings-status-dot is-connected" : "settings-status-dot"} />
               <div>
                 <strong>{isAuthenticated ? "账号已连接" : "访客工作区"}</strong>
-                <span>{isAuthenticated ? "资料和任务会安全同步" : "任务仅保存在此标签页"}</span>
+                <span>
+                  {isDesktop
+                    ? "任务保存在本地，可选开启云同步"
+                    : isAuthenticated
+                      ? "资料和任务会安全同步"
+                      : "任务仅保存在此标签页"}
+                </span>
               </div>
             </div>
             <div className="settings-profile-card">
@@ -248,6 +258,7 @@ function SettingsReadOnlySection({
   isAuthenticated: boolean;
   onLogin: () => void;
 }) {
+  const isDesktop = useDesktopRuntime();
   const rows =
     section === "preferences"
       ? [
@@ -290,7 +301,11 @@ function SettingsReadOnlySection({
         ))}
       </div>
       {section === "data" ? (
-        <p className="settings-inline-note">访客任务只存在于当前标签页，关闭标签页后会自动清除。</p>
+        <p className="settings-inline-note">
+          {isDesktop
+            ? "任务保存在此设备，可在任务页导出备份或导入到其他设备。"
+            : "访客任务只存在于当前标签页，关闭标签页后会自动清除。"}
+        </p>
       ) : null}
     </div>
   );

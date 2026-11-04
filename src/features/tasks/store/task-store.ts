@@ -10,7 +10,9 @@ import type { Task } from "@/features/tasks/types/task.types";
 import { flushDesktopSyncQueue } from "@/features/tasks/sync/desktop-sync";
 import { parseTagsInput } from "@/features/tasks/utils/task-tags";
 import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
-import { isDesktopRuntime } from "@/shared/lib/desktop/bridge";
+import { getDesktopBridge, isDesktopRuntime } from "@/shared/lib/desktop/bridge";
+
+let taskLoadVersion = 0;
 
 export const GUEST_TASKS_STORAGE_KEY = "u-task-guest-tasks";
 
@@ -36,6 +38,10 @@ export const useTaskStore = create<TaskStore>()((set) => ({
   lastLoadedUserId: null,
   clearTasks: () => set({ tasks: [], error: null, lastLoadedUserId: null }),
   hydrateGuestTasks: () => {
+    if (isDesktopRuntime()) {
+      void useTaskStore.getState().syncTasks();
+      return;
+    }
     const tasks = readGuestTasks();
     set({ tasks, error: null, lastLoadedUserId: null, isLoading: false });
   },
@@ -53,7 +59,8 @@ export const useTaskStore = create<TaskStore>()((set) => ({
       };
     }),
   syncTasks: async (userId?: string): Promise<void> => {
-    if (!hasAppwritePublicEnv || !userId) {
+    const version = ++taskLoadVersion;
+    if (!isDesktopRuntime() && (!hasAppwritePublicEnv || !userId)) {
       const guestTasks = readGuestTasks();
       set({ tasks: guestTasks, error: null, lastLoadedUserId: null, isLoading: false });
       return;
@@ -68,26 +75,20 @@ export const useTaskStore = create<TaskStore>()((set) => ({
 
     if (isDesktopRuntime()) {
       try {
-        // Refresh the local cache when online. A failed request is expected
-        // when starting the desktop app offline, so the encrypted cache wins.
-        await mergeGuestTasks();
-      } catch {
-        // Guest task migration and queue replay are independent network operations.
-      }
-
-      try {
-        await flushDesktopSyncQueue(userId);
-        const remoteTasks = await remoteTaskRepository.list();
-        if (repository instanceof DesktopTaskRepository) {
-          await repository.importRemoteTasks(remoteTasks);
+        const workspace = await getDesktopBridge()!.workspace.get();
+        if (userId && hasAppwritePublicEnv && workspace.syncEnabled && workspace.accountId === userId) {
+          await flushDesktopSyncQueue(userId);
+          const remoteTasks = await remoteTaskRepository.list();
+          if (repository instanceof DesktopTaskRepository) await repository.importRemoteTasks(remoteTasks);
         }
       } catch {
-        // Continue with the last local snapshot below.
+        // Local tasks remain available when cloud synchronization fails.
       }
 
       try {
         const tasks = await repository.list();
-        set({ tasks: tasks.map(normalizeTask), isLoading: false, error: null, lastLoadedUserId: userId });
+        if (version === taskLoadVersion)
+          set({ tasks: tasks.map(normalizeTask), isLoading: false, error: null, lastLoadedUserId: userId ?? null });
       } catch (error) {
         set({ isLoading: false, error: error instanceof Error ? error.message : "无法加载本地任务列表。" });
       }
@@ -97,13 +98,13 @@ export const useTaskStore = create<TaskStore>()((set) => ({
     try {
       await mergeGuestTasks();
       const tasks = await repository.list();
-      set({ tasks: tasks.map(normalizeTask), isLoading: false, error: null, lastLoadedUserId: userId });
+      set({ tasks: tasks.map(normalizeTask), isLoading: false, error: null, lastLoadedUserId: userId ?? null });
     } catch (error) {
       set({ isLoading: false, error: error instanceof Error ? error.message : "无法同步任务列表。" });
     }
   },
   createTaskAsync: async (input, userId) => {
-    if (!userId) {
+    if (!userId && !isDesktopRuntime()) {
       const task = createGuestTask(input);
       set((state) => {
         const tasks = [task, ...state.tasks];
@@ -118,7 +119,7 @@ export const useTaskStore = create<TaskStore>()((set) => ({
     return createdTask.id;
   },
   updateTask: async (id, input, userId) => {
-    if (!userId) {
+    if (!userId && !isDesktopRuntime()) {
       set((state) => {
         const tasks = state.tasks.map((task) => (task.id === id ? updateGuestTask(task, input) : task));
         writeGuestTasks(tasks);
@@ -134,7 +135,7 @@ export const useTaskStore = create<TaskStore>()((set) => ({
     }));
   },
   updateTaskStatus: async (id, status, userId) => {
-    if (!userId) {
+    if (!userId && !isDesktopRuntime()) {
       set((state) => {
         const tasks = state.tasks.map((task) => (task.id === id ? updateGuestTaskStatus(task, status) : task));
         writeGuestTasks(tasks);
@@ -150,7 +151,7 @@ export const useTaskStore = create<TaskStore>()((set) => ({
     }));
   },
   deleteTask: async (id, userId) => {
-    if (!userId) {
+    if (!userId && !isDesktopRuntime()) {
       set((state) => {
         const tasks = state.tasks.filter((task) => task.id !== id);
         writeGuestTasks(tasks);

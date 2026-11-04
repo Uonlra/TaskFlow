@@ -3,9 +3,11 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { useDesktopRuntime } from "@/shared/hooks/use-desktop-runtime";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 
 export function AppTopbar() {
+  const isDesktop = useDesktopRuntime();
   const router = useRouter();
   const pathname = usePathname();
   const { user, profile, isAuthenticated, signOut } = useAuth();
@@ -15,9 +17,9 @@ export function AppTopbar() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push("/login");
+    router.push(isDesktop ? "/tasks" : "/login");
   };
-  const displayName = profile?.fullName || user?.email || "访客";
+  const displayName = profile?.fullName || user?.email || (isDesktop ? "本地工作区" : "访客");
   const avatarContent = profile?.avatarUrl ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={profile.avatarUrl} alt={displayName || "头像"} />
@@ -46,7 +48,7 @@ export function AppTopbar() {
         <span className="dashboard-avatar">{avatarContent}</span>
         <span className="dashboard-sidebar-account__copy">
           <strong title={displayName}>{displayName}</strong>
-          <small>{isAuthenticated ? "账号已连接" : "访客工作区"}</small>
+          <small>{isAuthenticated ? "账号已连接" : isDesktop ? "已保存在此设备" : "访客工作区"}</small>
         </span>
       </button>
       {menuOpen ? (

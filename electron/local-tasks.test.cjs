@@ -7,6 +7,7 @@ const {
   deleteLocalTask,
   getLocalTask,
   listPendingSyncOperations,
+  listLocalTasks,
   updateLocalTask,
   upsertLocalTasks,
 } = require("./local-tasks.cjs");
@@ -32,6 +33,29 @@ function createDatabase() {
 }
 
 const taskInput = { title: "初稿", description: "", status: "todo", priority: "medium", tags: [] };
+
+test("本地工作区无需登录且不排队上传，主动连接后归属云端，暂停后仍可编辑", () => {
+  const { getWorkspace, connectWorkspace, pauseWorkspace, LOCAL_WORKSPACE } = require("./workspace.cjs");
+  const database = createDatabase();
+  try {
+    assert.equal(getWorkspace(database).accountId, LOCAL_WORKSPACE);
+    const local = createLocalTask(database, LOCAL_WORKSPACE, taskInput);
+    assert.equal(listPendingSyncOperations(database, LOCAL_WORKSPACE).length, 0);
+    assert.equal(getLocalTask(database, LOCAL_WORKSPACE, local.id).title, "初稿");
+    connectWorkspace(database, "account-a");
+    assert.equal(getLocalTask(database, "account-a", local.id).title, "初稿");
+    assert.equal(listPendingSyncOperations(database, "account-a").length, 1);
+    pauseWorkspace(database);
+    assert.deepEqual(getWorkspace(database), { accountId: "account-a", syncEnabled: false });
+    updateLocalTask(database, "account-a", local.id, { ...taskInput, title: "退出后修改" });
+    assert.equal(getLocalTask(database, "account-a", local.id).title, "退出后修改");
+    connectWorkspace(database, "account-b");
+    assert.equal(listLocalTasks(database, "account-b").length, 0);
+    assert.equal(getLocalTask(database, "account-a", local.id).title, "退出后修改");
+  } finally {
+    database.close();
+  }
+});
 
 test("同一任务离线多次修改只回放最新快照，确认后清理旧操作", () => {
   const database = createDatabase();

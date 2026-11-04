@@ -13,8 +13,11 @@ import { getDesktopBridge } from "@/shared/lib/desktop/bridge";
  * normal web app continue to use the remote repository.
  */
 export class DesktopTaskRepository implements TaskRepository {
-  constructor(private readonly accountId: string) {
-    if (!accountId) throw new Error("桌面端任务操作缺少当前账户。");
+  constructor(private readonly fallbackAccountId?: string) {}
+
+  private async getAccountId() {
+    const bridge = requireBridge();
+    return bridge.workspace ? (await bridge.workspace.get()).accountId : (this.fallbackAccountId ?? "local:device");
   }
 
   async listPage(filters: TaskFilters, page: number, options?: TaskRequestOptions): Promise<TaskPageResult> {
@@ -31,13 +34,13 @@ export class DesktopTaskRepository implements TaskRepository {
   async list(options?: TaskRequestOptions): Promise<Task[]> {
     throwIfAborted(options?.signal);
     const bridge = requireBridge();
-    const tasks = await bridge.localTasks.list({ accountId: this.accountId });
+    const tasks = await bridge.localTasks.list({ accountId: await this.getAccountId() });
     throwIfAborted(options?.signal);
     return tasks.map(normalizeTask);
   }
 
   async importRemoteTasks(tasks: Task[]) {
-    const imported = await requireBridge().localTasks.upsert({ accountId: this.accountId, tasks });
+    const imported = await requireBridge().localTasks.upsert({ accountId: await this.getAccountId(), tasks });
     return imported.map(normalizeTask);
   }
 
@@ -65,33 +68,35 @@ export class DesktopTaskRepository implements TaskRepository {
 
   async get(id: string, options?: TaskRequestOptions): Promise<Task | null> {
     throwIfAborted(options?.signal);
-    const task = await requireBridge().localTasks.get({ accountId: this.accountId, taskId: id });
+    const task = await requireBridge().localTasks.get({ accountId: await this.getAccountId(), taskId: id });
     throwIfAborted(options?.signal);
     return task ? normalizeTask(task) : null;
   }
 
   async create(input: TaskFormValues, options?: TaskRequestOptions): Promise<Task> {
     throwIfAborted(options?.signal);
-    return normalizeTask(await requireBridge().localTasks.create({ accountId: this.accountId, task: input }));
+    return normalizeTask(
+      await requireBridge().localTasks.create({ accountId: await this.getAccountId(), task: input }),
+    );
   }
 
   async update(id: string, input: TaskFormValues, options?: TaskRequestOptions): Promise<Task> {
     throwIfAborted(options?.signal);
     return normalizeTask(
-      await requireBridge().localTasks.update({ accountId: this.accountId, taskId: id, task: input }),
+      await requireBridge().localTasks.update({ accountId: await this.getAccountId(), taskId: id, task: input }),
     );
   }
 
   async updateStatus(id: string, status: Task["status"], options?: TaskRequestOptions): Promise<Task> {
     throwIfAborted(options?.signal);
     return normalizeTask(
-      await requireBridge().localTasks.updateStatus({ accountId: this.accountId, taskId: id, status }),
+      await requireBridge().localTasks.updateStatus({ accountId: await this.getAccountId(), taskId: id, status }),
     );
   }
 
   async delete(id: string, options?: TaskRequestOptions): Promise<void> {
     throwIfAborted(options?.signal);
-    await requireBridge().localTasks.delete({ accountId: this.accountId, taskId: id });
+    await requireBridge().localTasks.delete({ accountId: await this.getAccountId(), taskId: id });
   }
 }
 
