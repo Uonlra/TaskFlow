@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { describe, expect, it, vi } from "vitest";
 
-import { proxy } from "../proxy";
+import { proxy } from "./proxy";
 
 vi.mock("@/shared/lib/appwrite/env", () => ({
   appwriteSessionCookieName: "taskflow-session",

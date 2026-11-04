@@ -2,13 +2,7 @@ import type { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 import { appwriteSessionCookieName, publicSiteUrl } from "@/shared/lib/appwrite/env";
-
-const desktopAllowedOrigins = new Set(
-  (process.env.DESKTOP_ALLOWED_ORIGINS ?? "")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean),
-);
+import { isAllowedDesktopOrigin } from "@/shared/lib/api/desktop-origins";
 
 const cookieBaseOptions = {
   httpOnly: true,
@@ -42,7 +36,7 @@ export function clearAppwriteSessionCookie(response: NextResponse, request?: Req
 
 function getCookieOptions(request?: Request) {
   const origin = request?.headers.get("origin");
-  const isDesktopRequest = Boolean(origin && desktopAllowedOrigins.has(origin));
+  const isDesktopRequest = isAllowedDesktopOrigin(origin ?? null);
 
   return {
     ...cookieBaseOptions,
