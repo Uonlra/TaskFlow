@@ -1,20 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isAllowedDesktopOrigin } from "@/shared/lib/api/desktop-origins";
 
 const allowedMethods = "GET,POST,PATCH,DELETE,OPTIONS";
 const allowedHeaders = "Content-Type, X-Requested-With";
 
-function getAllowedOrigins() {
-  return new Set(
-    (process.env.DESKTOP_ALLOWED_ORIGINS ?? "")
-      .split(",")
-      .map((origin) => origin.trim())
-      .filter(Boolean),
-  );
-}
-
 export function getCorsOrigin(request: NextRequest) {
   const origin = request.headers.get("origin");
-  if (!origin || !getAllowedOrigins().has(origin)) return null;
+  if (!isAllowedDesktopOrigin(origin)) return null;
   return origin;
 }
 

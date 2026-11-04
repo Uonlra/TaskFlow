@@ -4,6 +4,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { createCorsPreflightResponse, withApiCors } from "@/shared/lib/api/cors";
 
 describe("desktop API CORS", () => {
+  it("默认允许已打包 Electron 页面的来源", () => {
+    vi.stubEnv("DESKTOP_ALLOWED_ORIGINS", "");
+    const request = new NextRequest("https://taskflow.example/api/tasks/sync", {
+      method: "OPTIONS",
+      headers: { origin: "app://taskflow" },
+    });
+
+    const response = createCorsPreflightResponse(request);
+
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("app://taskflow");
+    expect(response.headers.get("Access-Control-Allow-Credentials")).toBe("true");
+  });
+
   it("允许配置的 Tauri 来源携带 Cookie 访问 API", () => {
     vi.stubEnv("DESKTOP_ALLOWED_ORIGINS", "http://tauri.localhost,https://tauri.localhost");
     const request = new NextRequest("https://taskflow.example/api/auth/me", {
