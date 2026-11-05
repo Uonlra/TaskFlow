@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import { createReadStream } from "node:fs";
 import { access, mkdir, readFile, readdir, rename, stat, writeFile } from "node:fs/promises";
 import http from "node:http";
@@ -122,9 +122,42 @@ async function attach() {
   throw new Error("无法连接更新验收程序");
 }
 async function launch() {
-  const child = spawn(executable, [], { windowsHide: true, stdio: "ignore", env: testEnv });
+  const child = spawn(executable, [`--remote-debugging-port=${debugPort}`], {
+    windowsHide: true,
+    stdio: "ignore",
+    env: testEnv,
+  });
   child.on("error", () => undefined);
   app = { ...(await attach()), child };
+}
+function nativeWindow() {
+  const output = execFileSync(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-Command",
+      "@(Get-Process -Name TaskFlowUpdateCheck -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $env:TASKFLOW_CHECK_EXE -and $_.MainWindowHandle -ne 0 } | Select-Object Id,MainWindowTitle) | ConvertTo-Json -Compress",
+    ],
+    { env: { ...process.env, TASKFLOW_CHECK_EXE: executable }, encoding: "utf8", windowsHide: true },
+  ).trim();
+  if (!output) return null;
+  const values = JSON.parse(output);
+  const windows = Array.isArray(values) ? values : [values];
+  assert.ok(!windows.some((window) => /^(Error|错误)$/.test(window.MainWindowTitle)), "升级后出现主进程错误窗口");
+  return windows.find((window) => window.MainWindowTitle.startsWith("U's Task")) ?? null;
+}
+async function closeNativeWindow() {
+  await run(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-Command",
+      "Get-Process -Name TaskFlowUpdateCheck -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $env:TASKFLOW_CHECK_EXE -and $_.MainWindowHandle -ne 0 } | ForEach-Object { [void]$_.CloseMainWindow() }",
+    ],
+    { ...process.env, TASKFLOW_CHECK_EXE: executable },
+  );
+  await expect.poll(() => nativeWindow(), { timeout: 30_000 }).toBeNull();
+  await delay(1000);
 }
 async function close() {
   if (!app) return;
@@ -310,8 +343,13 @@ try {
     .catch(() => undefined);
   await app.browser.close().catch(() => undefined);
   app = null;
-  // The NSIS updater relaunch inherits the fixture's fixed debug port.
-  app = await attach();
+  // NSIS relaunch is observed through its actual window. Its shell launch can
+  // omit the debugging listener; reopen with an explicit CLI switch to inspect
+  // encrypted storage, rather than confusing test transport with app failure.
+  await expect.poll(() => Boolean(nativeWindow()), { timeout: 90_000 }).toBe(true);
+  record("NSIS 自动重启后出现正常应用窗口，无主进程错误对话框");
+  await closeNativeWindow();
+  await launch();
   await expect.poll(async () => (await state()).currentVersion).toBe(versions[1]);
   await verifyTask(task.id);
   record("确认后完成真实 NSIS 下载、升级及自动重启，任务、身份、工作区和队列保留");

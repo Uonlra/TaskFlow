@@ -33,6 +33,12 @@ pnpm desktop:smoke:update
 
 报告位于 `dist/update-acceptance/run-<时间戳>/report.json`。失败可 `node scripts/smoke-desktop-update.mjs --resume=<时间戳>` 复用包重跑，旧测试数据会先备份；源码变更后须添加 `--rebuild`，不能用旧包冒充新代码。
 
+2026-11-05 已通过 `dist/update-acceptance/run-1793864900068/report.json` 中的 6 项真实更新验收。测试入口最初依赖临时环境和外部配置，安装器重启曾出现主进程异常；已改为将回环更新地址和调试端口嵌入测试包元数据。NSIS 自动重启通过正常应用窗口验证；随后显式带调试参数重新打开升级后的程序，验证版本和加密存储。最终任务、完成状态、身份、暂停的工作区及待同步队列均保留，测试安装已卸载。正式包校验会拒绝测试入口和测试元数据。
+
+本轮 `2.2.0-beta.1` 的本地发布物位于 `dist/beta-release`，安装包为 `TaskFlow-Setup-2.2.0-beta.1-win-x64.exe`，签名状态 `NotSigned`，尚未上传或公开发布。发布元数据、SHA-512、blockmap、SHA-256 和 ASAR 内容边界校验通过。安装包 SHA-256 为 `abef55a9b606c1b1136068ecb1d46db7e72c8b8e0712ef2cbb064594459d0f05`，后续重建必须使用新生成的清单。
+
+同一份正式候选程序通过未登录离线 CRUD、全部页面加载及强制退出恢复（`dist/electron/local-smoke-1793867709643`）；连接生产 API 的 15 项真实云同步回归通过，测试任务清理完成（`dist/electron/cloud-smoke-1793867783478/report.json`）。288 项单元/组件测试、4 项更新策略测试、lint（19 条现有警告）、类型检查和桌面静态导出均通过。
+
 同步、本地及安装验收脚本设置 `TASKFLOW_DISABLE_UPDATE_CHECK=1`，仅跳过主进程定时更新检查，不禁用手动更新能力。
 
 ## GitHub 草稿流水线
