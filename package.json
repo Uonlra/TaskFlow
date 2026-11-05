@@ -1,6 +1,6 @@
 {
   "name": "taskflow",
-  "version": "2.1.1",
+  "version": "2.2.0-beta.1",
   "private": true,
   "description": "TaskFlow personal task workspace",
   "author": "Uonlra",
@@ -13,12 +13,15 @@
     "electron": "electron electron/main.cjs",
     "electron:dev": "concurrently -k \"pnpm dev -- --hostname 127.0.0.1 --port 3000\" \"wait-on http://127.0.0.1:3000 && electron electron/main.cjs\"",
     "desktop:pack": "pnpm desktop:web-build && electron-builder --dir",
-    "desktop:dist": "pnpm desktop:web-build && electron-builder --win --x64",
+    "desktop:dist": "pnpm desktop:web-build && electron-builder --win --x64 --publish never",
     "desktop:web-build": "node scripts/build-desktop-web.mjs",
     "desktop:smoke:local": "node scripts/smoke-desktop-local.mjs",
     "desktop:smoke:sync": "node scripts/smoke-desktop-sync.mjs",
     "desktop:smoke:install": "node scripts/smoke-desktop-install.mjs",
+    "desktop:smoke:update": "node scripts/smoke-desktop-update.mjs",
+    "desktop:verify-release": "node scripts/verify-desktop-release.mjs",
     "desktop:smoke:cloud": "node scripts/smoke-desktop-cloud.mjs",
+    "test:desktop-updater": "node --test electron/updater.test.cjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
@@ -38,6 +41,7 @@
     "animejs": "^4.5.0",
     "better-sqlite3-multiple-ciphers": "13.0.3",
     "echarts": "^6.1.0",
+    "electron-updater": "6.8.11",
     "gsap": "^3.15.0",
     "lenis": "^1.3.26",
     "lucide-react": "^1.33.0",
@@ -71,15 +75,18 @@
     "prettier": "^3.9.6",
     "typescript": "6.0.3",
     "vitest": "^4.1.10",
-    "wait-on": "^9.5.1"
+    "wait-on": "^9.5.1",
+    "yaml": "^2.9.1"
   },
   "build": {
     "appId": "top.uta4k.taskflow",
     "productName": "TaskFlow",
     "artifactName": "TaskFlow-Setup-${version}-${os}-${arch}.${ext}",
     "asar": true,
+    "generateUpdatesFilesForAllChannels": false,
     "files": [
       "electron/**/*",
+      "!electron/**/*.test.cjs",
       "desktop-web/out/**/*",
       "package.json"
     ],
@@ -108,6 +115,7 @@
       "provider": "github",
       "owner": "Uonlra",
       "repo": "TaskFlow",
+      "channel": "beta",
       "releaseType": "draft"
     }
   }

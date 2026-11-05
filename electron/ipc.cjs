@@ -61,7 +61,21 @@ function getActiveDatabase(input) {
   return database;
 }
 
-function registerIpcHandlers() {
+function registerIpcHandlers({ updates } = {}) {
+  for (const [action, method] of [
+    ["state", "getState"],
+    ["check", "check"],
+    ["download", "download"],
+    ["install", "install"],
+  ]) {
+    ipcMain.handle(`taskflow:updates:${action}`, (event) => {
+      assertTrustedSender(event);
+      const url = new URL(event.senderFrame?.url || event.sender.getURL());
+      if (!(url.protocol === "app:" && url.host === "taskflow") || event.senderFrame !== event.sender.mainFrame)
+        throw new Error("请在桌面应用中操作更新。");
+      return updates[method]();
+    });
+  }
   ipcMain.handle("taskflow:workspace:get", (event) => {
     assertTrustedSender(event);
     return getWorkspace(getDatabase());

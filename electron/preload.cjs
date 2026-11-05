@@ -7,6 +7,17 @@ contextBridge.exposeInMainWorld("taskflowDesktop", {
   isDesktop: true,
   platform: process.platform,
   version: process.versions.electron,
+  updates: {
+    getState: () => invoke("taskflow:updates:state"),
+    check: () => invoke("taskflow:updates:check"),
+    download: () => invoke("taskflow:updates:download"),
+    install: () => invoke("taskflow:updates:install"),
+    subscribe: (listener) => {
+      const handler = (_event, state) => listener(state);
+      ipcRenderer.on("taskflow:updates:changed", handler);
+      return () => ipcRenderer.removeListener("taskflow:updates:changed", handler);
+    },
+  },
   workspace: {
     get: () => invoke("taskflow:workspace:get"),
     connect: () => invoke("taskflow:workspace:connect"),

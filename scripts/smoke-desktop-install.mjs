@@ -135,6 +135,7 @@ async function launch() {
     stdio: "ignore",
     env: {
       ...process.env,
+      TASKFLOW_DISABLE_UPDATE_CHECK: "1",
       ELECTRON_START_URL: "app://taskflow/tasks/?status=all",
       TASKFLOW_WEB_URL: "app://taskflow/tasks/?status=all",
     },

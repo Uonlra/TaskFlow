@@ -35,7 +35,32 @@ export type DesktopAuthBridge = {
   clear(): Promise<void>;
 };
 
+export type DesktopUpdateState = {
+  phase:
+    | "disabled"
+    | "idle"
+    | "checking"
+    | "available"
+    | "not-available"
+    | "downloading"
+    | "downloaded"
+    | "installing"
+    | "error";
+  currentVersion: string;
+  channel: "beta" | "latest";
+  version: string | null;
+  percent: number;
+  message: string;
+};
+
 export type TaskflowDesktopBridge = {
+  updates: {
+    getState(): Promise<DesktopUpdateState>;
+    check(): Promise<DesktopUpdateState>;
+    download(): Promise<DesktopUpdateState>;
+    install(): Promise<void>;
+    subscribe(listener: (state: DesktopUpdateState) => void): () => void;
+  };
   workspace: {
     get(): Promise<{ accountId: string; syncEnabled: boolean }>;
     connect(): Promise<{ accountId: string; syncEnabled: boolean }>;

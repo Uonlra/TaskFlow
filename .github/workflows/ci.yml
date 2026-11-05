@@ -41,6 +41,9 @@ jobs:
       - name: Run unit and component tests
         run: pnpm test
 
+      - name: Desktop updater policy tests
+        run: pnpm test:desktop-updater
+
       - name: Typecheck
         run: pnpm typecheck
 
