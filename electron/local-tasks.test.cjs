@@ -34,6 +34,34 @@ function createDatabase() {
 
 const taskInput = { title: "初稿", description: "", status: "todo", priority: "medium", tags: [] };
 
+test("远程删除隐藏本地任务，重复导入幂等；未确认的较新编辑不被覆盖", () => {
+  const database = createDatabase();
+  try {
+    const task = {
+      ...taskInput,
+      id: "deleted-remote",
+      createdAt: "2026-01-01T00:00:00Z",
+      updatedAt: "2026-01-01T00:00:00Z",
+    };
+    upsertLocalTasks(database, "account", [task]);
+    const deleted = {
+      ...task,
+      updatedAt: "2026-02-01T00:00:00Z",
+      syncClientUpdatedAt: "2026-02-01T00:00:00Z",
+      deletedAt: "2026-02-01T00:00:00Z",
+    };
+    upsertLocalTasks(database, "account", [deleted, deleted]);
+    assert.equal(getLocalTask(database, "account", task.id), null);
+    upsertLocalTasks(database, "account", [{ ...task, updatedAt: "2026-03-01T00:00:00Z" }]);
+    updateLocalTask(database, "account", task.id, { ...taskInput, title: "尚未确认的新编辑" });
+    upsertLocalTasks(database, "account", [deleted]);
+    assert.equal(getLocalTask(database, "account", task.id).title, "尚未确认的新编辑");
+    assert.equal(listPendingSyncOperations(database, "account").length, 1);
+  } finally {
+    database.close();
+  }
+});
+
 test("本地工作区无需登录且不排队上传，主动连接后归属云端，暂停后仍可编辑", () => {
   const { getWorkspace, connectWorkspace, pauseWorkspace, LOCAL_WORKSPACE } = require("./workspace.cjs");
   const database = createDatabase();

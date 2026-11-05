@@ -39,8 +39,11 @@ export class DesktopTaskRepository implements TaskRepository {
     return tasks.map(normalizeTask);
   }
 
-  async importRemoteTasks(tasks: Task[]) {
-    const imported = await requireBridge().localTasks.upsert({ accountId: await this.getAccountId(), tasks });
+  async importRemoteTasks(tasks: Task[], expectedAccountId?: string) {
+    const imported = await requireBridge().localTasks.upsert({
+      accountId: expectedAccountId ?? (await this.getAccountId()),
+      tasks,
+    });
     return imported.map(normalizeTask);
   }
 

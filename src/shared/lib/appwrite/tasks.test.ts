@@ -12,6 +12,14 @@ vi.mock("@/shared/lib/appwrite/env", () => ({
 }));
 vi.mock("@/shared/lib/appwrite/request", () => ({
   appwriteFetch: mocks.appwriteFetch,
+  AppwriteRequestError: class extends Error {
+    constructor(
+      public status: number,
+      message: string,
+    ) {
+      super(message);
+    }
+  },
 }));
 
 import {
@@ -20,8 +28,56 @@ import {
   listTasksByDueRange,
   listTasksForDashboard,
   updateTask,
+  listTasks,
+  listSyncTasksPage,
+  getTask,
+  deleteTask,
 } from "@/shared/lib/appwrite/tasks";
 import { appwriteTaskRowSchema } from "@/shared/lib/appwrite/schemas/task-row.schema";
+
+const syncRow = (id: string, deletedAt?: string) => ({
+  $id: id,
+  $createdAt: "2026-11-01T00:00:00Z",
+  $updatedAt: "2026-11-05T00:00:00Z",
+  title: "任务",
+  description: "",
+  status: "todo",
+  priority: "medium",
+  deletedAt,
+});
+describe("同步删除和完整分页", () => {
+  beforeEach(() => mocks.appwriteFetch.mockReset());
+  it("普通列表跨游标读取全部页，且每页隐藏软删除记录", async () => {
+    mocks.appwriteFetch
+      .mockResolvedValueOnce({ rows: Array.from({ length: 100 }, (_, i) => syncRow(`task-${i}`)) })
+      .mockResolvedValueOnce({ rows: [syncRow("last")] });
+    expect(await listTasks("secret")).toHaveLength(101);
+    const queries = mocks.appwriteFetch.mock.calls[1][0].searchParams.queries;
+    expect(queries).toContain('{"method":"cursorAfter","values":["task-99"]}');
+    expect(queries).toContain('{"method":"isNull","attribute":"deletedAt"}');
+  });
+  it("同步页保留删除时间，而普通详情返回404", async () => {
+    const row = syncRow("gone", "2026-11-05T00:00:00Z");
+    mocks.appwriteFetch.mockResolvedValueOnce({ rows: [row] });
+    expect((await listSyncTasksPage("secret")).tasks[0].deletedAt).toBe(row.deletedAt);
+    expect(mocks.appwriteFetch.mock.calls[0][0].searchParams.queries).not.toContain(
+      '{"method":"isNull","attribute":"deletedAt"}',
+    );
+    mocks.appwriteFetch.mockResolvedValue(row);
+    await expect(getTask("secret", "gone")).rejects.toMatchObject({ status: 404 });
+    expect((await getTask("secret", "gone", undefined, true)).deletedAt).toBe(row.deletedAt);
+  });
+  it("删除只写标记和逻辑时间，不物理删除行", async () => {
+    mocks.appwriteFetch
+      .mockResolvedValueOnce(syncRow("gone"))
+      .mockResolvedValueOnce(syncRow("gone", "2026-11-06T00:00:00Z"));
+    await deleteTask("secret", "gone", undefined, "2026-11-06T00:00:00Z");
+    expect(mocks.appwriteFetch.mock.calls[1][0]).toMatchObject({
+      method: "PATCH",
+      body: { data: { deletedAt: "2026-11-06T00:00:00Z", syncClientUpdatedAt: "2026-11-06T00:00:00Z" } },
+    });
+  });
+});
 
 describe("listTasksByDueRange", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -60,8 +116,12 @@ describe("listTasksByDueRange", () => {
       '{"method":"lessThan","attribute":"dueDate","values":["2026-08-17T00:00:00.000Z"]}',
       '{"method":"orderAsc","attribute":"dueDate"}',
       '{"method":"limit","values":[5000]}',
+      '{"method":"isNull","attribute":"deletedAt"}',
     ]);
-    expect(mocks.appwriteFetch.mock.calls[1][0].searchParams.queries).toEqual(['{"method":"limit","values":[1]}']);
+    expect(mocks.appwriteFetch.mock.calls[1][0].searchParams.queries).toEqual([
+      '{"method":"limit","values":[1]}',
+      '{"method":"isNull","attribute":"deletedAt"}',
+    ]);
     expect(mocks.appwriteFetch.mock.calls[2][0].searchParams.queries).toEqual(
       expect.arrayContaining([
         '{"method":"isNotNull","attribute":"dueDate"}',
@@ -219,13 +279,16 @@ describe("listTasksForDashboard", () => {
 
     expect(result).toEqual({ tasks: [], paceTasks: [], hasAnyTasks: false });
     const scopedCall = mocks.appwriteFetch.mock.calls[0][0];
-    expect(scopedCall.searchParams.queries).toHaveLength(3);
+    expect(scopedCall.searchParams.queries).toHaveLength(4);
     expect(scopedCall.searchParams.queries[0]).toContain('"method":"or"');
     expect(scopedCall.searchParams.queries[1]).toContain('"method":"select"');
     expect(scopedCall.searchParams.queries[2]).toBe('{"method":"limit","values":[5000]}');
     expect(mocks.appwriteFetch.mock.calls[1][0].searchParams.queries[0]).toContain('"method":"or"');
     expect(mocks.appwriteFetch.mock.calls[1][0].searchParams.queries[1]).toContain('"method":"select"');
     expect(mocks.appwriteFetch.mock.calls[1][0].searchParams.queries[2]).toBe('{"method":"limit","values":[5000]}');
-    expect(mocks.appwriteFetch.mock.calls[2][0].searchParams.queries).toEqual(['{"method":"limit","values":[1]}']);
+    expect(mocks.appwriteFetch.mock.calls[2][0].searchParams.queries).toEqual([
+      '{"method":"limit","values":[1]}',
+      '{"method":"isNull","attribute":"deletedAt"}',
+    ]);
   });
 });
