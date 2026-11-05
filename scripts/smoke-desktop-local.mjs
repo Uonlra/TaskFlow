@@ -15,7 +15,12 @@ async function launch() {
   const child = spawn(executable, [`--user-data-dir=${profile}`, "--remote-debugging-port=9246"], {
     windowsHide: true,
     stdio: ["ignore", "ignore", "pipe"],
-    env: { ...process.env, TASKFLOW_WEB_URL: "app://taskflow/tasks/", ELECTRON_START_URL: "app://taskflow/tasks/" },
+    env: {
+      ...process.env,
+      TASKFLOW_DISABLE_UPDATE_CHECK: "1",
+      TASKFLOW_WEB_URL: "app://taskflow/tasks/",
+      ELECTRON_START_URL: "app://taskflow/tasks/",
+    },
   });
   child.stderr.on("data", (data) => process.stderr.write(data));
   let browser;

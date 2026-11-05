@@ -1,0 +1,82 @@
+name: Windows desktop beta draft
+
+on:
+  push:
+    tags: ["v*-beta.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Must match package.json, e.g. v2.2.0-beta.1"
+        required: true
+        default: "v2.2.0-beta.1"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-beta-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build-draft:
+    runs-on: windows-latest
+    env:
+      NEXT_PUBLIC_API_BASE_URL: https://www.uta4k.top
+      NEXT_PUBLIC_APPWRITE_ENDPOINT: ${{ vars.NEXT_PUBLIC_APPWRITE_ENDPOINT }}
+      NEXT_PUBLIC_APPWRITE_PROJECT_ID: ${{ vars.NEXT_PUBLIC_APPWRITE_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.7.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Validate beta version and public configuration
+        shell: pwsh
+        env:
+          REQUESTED_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($version -notmatch '^\d+\.\d+\.\d+-beta\.\d+$' -or $env:REQUESTED_TAG -ne "v$version") { throw 'Tag must match the beta package version.' }
+          if (!$env:NEXT_PUBLIC_APPWRITE_ENDPOINT -or !$env:NEXT_PUBLIC_APPWRITE_PROJECT_ID) { throw 'Configure repository Actions variables NEXT_PUBLIC_APPWRITE_ENDPOINT and NEXT_PUBLIC_APPWRITE_PROJECT_ID before building a usable cloud-enabled desktop release.' }
+          if (!(Test-Path "docs/releases/v$version.md")) { throw 'Missing release notes.' }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:desktop-updater
+      - run: pnpm typecheck
+      - name: Build Windows NSIS and beta update metadata
+        run: pnpm desktop:dist
+        env:
+          CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+      - run: pnpm desktop:verify-release
+      - uses: actions/upload-artifact@v6
+        with:
+          name: taskflow-windows-beta
+          path: |
+            dist/electron/TaskFlow-Setup-*-win-x64.exe
+            dist/electron/TaskFlow-Setup-*-win-x64.exe.blockmap
+            dist/electron/beta.yml
+            dist/electron/SHA256SUMS.txt
+            dist/electron/release-manifest.json
+          if-no-files-found: error
+      - name: Create or refresh draft prerelease
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $tag = "v$version"
+          $existing = gh release view $tag --json isDraft,targetCommitish 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            $release = $existing | ConvertFrom-Json
+            if (!$release.isDraft -or $release.targetCommitish -ne $env:GITHUB_SHA) { throw 'Refusing to replace a public release or a draft from another commit.' }
+          } else {
+            gh release create $tag --draft --prerelease --target $env:GITHUB_SHA --title "TaskFlow $version Windows beta" --notes-file "docs/releases/$tag.md"
+            if ($LASTEXITCODE -ne 0) { throw 'Could not create draft release.' }
+          }
+          $assets = @(Get-ChildItem dist/electron -File | Where-Object { $_.Name -in @("TaskFlow-Setup-$version-win-x64.exe", "TaskFlow-Setup-$version-win-x64.exe.blockmap", 'beta.yml', 'SHA256SUMS.txt', 'release-manifest.json') } | ForEach-Object FullName)
+          if ($assets.Count -ne 5) { throw 'Incomplete release assets.' }
+          gh release upload $tag @assets --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Draft asset upload failed.' }

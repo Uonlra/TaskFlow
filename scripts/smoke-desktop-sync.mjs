@@ -93,7 +93,12 @@ async function launch() {
     {
       windowsHide: true,
       stdio: "ignore",
-      env: { ...process.env, ELECTRON_START_URL: "app://taskflow/tasks/", TASKFLOW_WEB_URL: "app://taskflow/tasks/" },
+      env: {
+        ...process.env,
+        TASKFLOW_DISABLE_UPDATE_CHECK: "1",
+        ELECTRON_START_URL: "app://taskflow/tasks/",
+        TASKFLOW_WEB_URL: "app://taskflow/tasks/",
+      },
     },
   );
   let spawnError;

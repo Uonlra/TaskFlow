@@ -5,6 +5,7 @@ const { pathToFileURL } = require("node:url");
 
 const { closeDatabase, initializeDatabase } = require("./database.cjs");
 const { registerIpcHandlers } = require("./ipc.cjs");
+const { createUpdateController } = require("./updater.cjs");
 
 const DEV_URL = "http://127.0.0.1:3000";
 const PRODUCTION_URL = "https://www.uta4k.top/";
@@ -181,24 +182,47 @@ async function createMainWindow() {
   });
 }
 
-app.whenReady().then(async () => {
-  registerIpcHandlers();
-  await registerLocalAppProtocol();
-
-  try {
-    await initializeDatabase();
-  } catch (error) {
-    console.error("[TaskFlow] 本地数据库初始化失败。", error);
-  }
-
-  await createMainWindow();
-
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      void createMainWindow();
-    }
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (mainWindow?.isMinimized()) mainWindow.restore();
+    mainWindow?.show();
+    mainWindow?.focus();
   });
-});
+  app.whenReady().then(async () => {
+    const { autoUpdater } = require("electron-updater");
+    const updates = createUpdateController({
+      app,
+      updater: autoUpdater,
+      notify: (state) => {
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("taskflow:updates:changed", state);
+      },
+    });
+    registerIpcHandlers({ updates });
+    await registerLocalAppProtocol();
+
+    try {
+      await initializeDatabase();
+    } catch (error) {
+      console.error("[TaskFlow] 本地数据库初始化失败。", error);
+    }
+
+    await createMainWindow();
+    if (app.isPackaged && process.platform === "win32" && process.env.TASKFLOW_DISABLE_UPDATE_CHECK !== "1") {
+      const timer = setTimeout(() => void updates.check(), 10_000);
+      timer.unref();
+      const interval = setInterval(() => void updates.check(), 6 * 60 * 60 * 1000);
+      interval.unref();
+    }
+
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        void createMainWindow();
+      }
+    });
+  });
+}
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {

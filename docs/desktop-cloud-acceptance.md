@@ -2,7 +2,7 @@
 
 ## 结论
 
-初次生产验收发现“云端删除未传回桌面”。该缺陷已在候选代码中修复，候选桌面程序连接本机候选 API、使用真实 Appwrite 的回归验收已通过。**新 API 尚未部署到生产，不能将候选环境通过视为生产发布验收通过。**
+初次生产验收发现“云端删除未传回桌面”。PR #119 已合并为 `a1a09741a0ab2b6d355637ac56e6b3e4812f842f`，Vercel 部署及主线 CI 均成功。连接生产 API 的桌面程序已通过真实功能验收，包括 105 条任务分页与删除冲突；本轮 107 条测试记录清理后，经生产同步接口独立复核，无残留。尚未发布新版本，自动更新和真实跨账户验收仍待完成。
 
 环境：当前 Windows x64 打包程序、应用版本 2.1.1、Electron 45.1.0、本地页面 `app://taskflow`、生产 API `https://www.uta4k.top`。测试使用专用账户和隔离的 Electron 数据目录；另一独立 Cookie 会话模拟另一台设备，不模拟云端 API 响应。
 
@@ -56,11 +56,21 @@ node --env-file=.env.local scripts/smoke-desktop-cloud.mjs dist/sync-candidate/w
 
 ## 上线顺序及边界
 
+以下部署和生产复测已于 2026-11-05 执行，结果见下节。正式安装包仍应遵循相同顺序，避免使用本机候选 API 地址。
+
 1. 执行 `pnpm appwrite:ensure-task-sync-column`，确认两个字段 available。本机当前配置对应的 Appwrite 已完成此步骤。
 2. 合并、部署新 API，再构建连接生产 API 的正式候选桌面程序。发布前移除上面三个验收环境变量和 `NEXT_PUBLIC_API_BASE_URL` 的本地覆盖。
 3. 使用生产地址重跑 `pnpm desktop:smoke:cloud`，再推进测试版发布及自动更新。
 
 删除记录暂不自动过期，防止长期离线设备用旧修改复活任务；后续清理策略需要另行确定。已经被旧 API 物理删除的历史记录无法补出删除时间，此修复覆盖新协议生效后的删除。现有内部桌面版本需要升级，旧客户端不会正确消费删除记录。生产已有删除记录后，不能直接回滚到不识别删除标记的旧 API，否则旧查询会重新显示这些记录。
+
+## 合并后的生产验收（2026-11-05）
+
+- PR #119 已手动合并；合并提交的 Vercel 状态成功，主线 CI 成功。生产认证 `GET /api/tasks/sync` 返回任务页及 `nextCursor`，证明新同步接口已生效。
+- 使用合并后的源码重新静态导出并打包 `dist/production-candidate/win-unpacked/TaskFlow.exe`。资源检查没有 `http://127.0.0.1:3000`，实际 API 为 `https://www.uta4k.top`。程序版本仍为内部验收用 2.1.1；构建来源和文件哈希记录在 `dist/production-candidate/build-provenance.json`。
+- 批量生产报告：`dist/electron/cloud-smoke-1793863426229/report.json`。16 项功能检查全部通过，包含 105 条任务分页；初次清理有 1 条待处理，随后使用限定本轮 ID 的清理工具完成。原始 `passed: false` 状态保留，未改写历史命令结果。
+- 独立生产接口清理复核：`dist/electron/cloud-smoke-1793863426229/production-cleanup-audit.json`，核对全部 107 个本轮 ID，`remaining: 0`、`passed: true`。清理覆盖活动任务及删除记录，不影响账户原有任务。
+- 最终小规模生产完整回归：`dist/electron/cloud-smoke-1793863752782/report.json`，`passed: true`，`cleanup.remainingTaskIds` 为空。该轮重验全部基础功能、删除冲突及恢复，并正常完成清理。
 
 ## 复测命令及数据清理
 
