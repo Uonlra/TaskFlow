@@ -43,6 +43,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   try {
     const { id } = await context.params;
 
+    // Ordinary web edits cannot accidentally restore a tombstone by its old URL.
+    await getTask(sessionSecret, id, request);
+
     const payload = await request.json().catch(() => null);
     const parsedStatus = taskStatusRequestSchema.safeParse(payload);
 

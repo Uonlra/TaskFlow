@@ -15,6 +15,10 @@
     "desktop:pack": "pnpm desktop:web-build && electron-builder --dir",
     "desktop:dist": "pnpm desktop:web-build && electron-builder --win --x64",
     "desktop:web-build": "node scripts/build-desktop-web.mjs",
+    "desktop:smoke:local": "node scripts/smoke-desktop-local.mjs",
+    "desktop:smoke:sync": "node scripts/smoke-desktop-sync.mjs",
+    "desktop:smoke:install": "node scripts/smoke-desktop-install.mjs",
+    "desktop:smoke:cloud": "node scripts/smoke-desktop-cloud.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
@@ -93,6 +97,7 @@
       ]
     },
     "nsis": {
+      "deleteAppDataOnUninstall": false,
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,

@@ -16,6 +16,30 @@ type DesktopSyncResponse = {
 
 const inFlightSyncs = new Map<string, Promise<{ processed: number; failed: number }>>();
 
+export async function pullDesktopSyncRecords(): Promise<Task[]> {
+  const tasks: Task[] = [];
+  const cursors = new Set<string>();
+  let cursor: string | null = null;
+  do {
+    const page: { tasks: Task[]; nextCursor: string | null } = await requestJson(
+      `/api/tasks/sync${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`,
+      { cache: "no-store" },
+    );
+    if (
+      !Array.isArray(page?.tasks) ||
+      !page.tasks.every(isTask) ||
+      !(page.nextCursor === null || (typeof page.nextCursor === "string" && page.nextCursor.length > 0))
+    ) {
+      throw new Error("同步记录格式不正确。");
+    }
+    tasks.push(...page.tasks);
+    cursor = page.nextCursor;
+    if (cursor && cursors.has(cursor)) throw new Error("同步分页游标没有前进。");
+    if (cursor) cursors.add(cursor);
+  } while (cursor);
+  return tasks;
+}
+
 export function flushDesktopSyncQueue(accountId: string) {
   const existing = inFlightSyncs.get(accountId);
   if (existing) return existing;

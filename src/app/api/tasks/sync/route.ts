@@ -6,7 +6,20 @@ import { taskPrioritySchema, taskStatusSchema } from "@/features/tasks/types/tas
 import type { Task } from "@/features/tasks/types/task.types";
 import { getCurrentAuthEnvelope, AppwriteRequestError } from "@/shared/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
-import { createTask, deleteTask, getTask, updateTask } from "@/shared/lib/appwrite/tasks";
+import { createTask, deleteTask, getTask, updateTask, listSyncTasksPage } from "@/shared/lib/appwrite/tasks";
+import { handleApiError } from "@/shared/lib/api/error";
+
+export async function GET(request: NextRequest) {
+  const secret = await getAppwriteSessionSecret();
+  const auth = await getCurrentAuthEnvelope();
+  if (!secret || !auth?.user) return NextResponse.json({ message: "请先登录后再同步任务。" }, { status: 401 });
+  try {
+    const cursor = request.nextUrl.searchParams.get("cursor") ?? undefined;
+    return NextResponse.json(await listSyncTasksPage(secret, request, cursor));
+  } catch (error) {
+    return handleApiError(error, "无法拉取任务同步记录。");
+  }
+}
 
 const syncDateSchema = z.string().refine((value) => Number.isFinite(Date.parse(value)), "时间格式不正确。");
 
@@ -89,15 +102,25 @@ async function applySyncOperation(
     const remote = await findRemoteTask(sessionSecret, operation.taskId, request);
 
     if (!remote) {
-      return { operationId: operation.operationId, taskId: operation.taskId, status: "deleted" };
+      // Retain deletion history even for a task created and deleted offline.
+      const tombstone = await createTask(
+        sessionSecret,
+        userId,
+        { title: "已删除任务", description: "", status: "todo", priority: "medium", tags: "", dueDate: "" },
+        request,
+        operation.taskId,
+        operation.clientUpdatedAt,
+        operation.clientUpdatedAt,
+      );
+      return { operationId: operation.operationId, taskId: operation.taskId, status: "deleted", task: tombstone };
     }
 
     if (isRemoteNewer(remote, operation.clientUpdatedAt)) {
       return { operationId: operation.operationId, taskId: operation.taskId, status: "stale", task: remote };
     }
 
-    await deleteTask(sessionSecret, operation.taskId, request);
-    return { operationId: operation.operationId, taskId: operation.taskId, status: "deleted" };
+    const tombstone = await deleteTask(sessionSecret, operation.taskId, request, operation.clientUpdatedAt);
+    return { operationId: operation.operationId, taskId: operation.taskId, status: "deleted", task: tombstone };
   }
 
   const input = parseTaskPayload(operation.payload, operation.taskId);
@@ -141,7 +164,7 @@ function parseTaskPayload(payload: unknown, taskId: string): TaskFormValues {
 
 async function findRemoteTask(sessionSecret: string, taskId: string, request: NextRequest) {
   try {
-    return await getTask(sessionSecret, taskId, request);
+    return await getTask(sessionSecret, taskId, request, true);
   } catch (error) {
     if (isNotFound(error)) return null;
     throw error;

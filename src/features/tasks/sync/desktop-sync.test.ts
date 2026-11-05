@@ -13,7 +13,7 @@ vi.mock("@/shared/lib/desktop/bridge", () => ({
   getDesktopBridge: mocks.getDesktopBridge,
 }));
 
-import { flushDesktopSyncQueue } from "@/features/tasks/sync/desktop-sync";
+import { flushDesktopSyncQueue, pullDesktopSyncRecords } from "@/features/tasks/sync/desktop-sync";
 
 const task = {
   id: "task-1",
@@ -102,5 +102,26 @@ describe("flushDesktopSyncQueue", () => {
       accountId: "user-1",
       failures: [{ operationId: "operation-1", message: "网络不可用" }],
     });
+  });
+});
+
+describe("pullDesktopSyncRecords", () => {
+  beforeEach(() => mocks.requestJson.mockReset());
+  it("读取所有页并保留删除记录", async () => {
+    mocks.requestJson
+      .mockResolvedValueOnce({ tasks: [task], nextCursor: "page 2" })
+      .mockResolvedValueOnce({ tasks: [{ ...task, deletedAt: "2026-11-05T00:00:00Z" }], nextCursor: null });
+    const records = await pullDesktopSyncRecords();
+    expect(records).toHaveLength(2);
+    expect(records[1].deletedAt).toBeTruthy();
+    expect(mocks.requestJson).toHaveBeenLastCalledWith("/api/tasks/sync?cursor=page%202", { cache: "no-store" });
+  });
+  it("后续页失败或游标重复时拒绝部分结果", async () => {
+    mocks.requestJson
+      .mockResolvedValueOnce({ tasks: [task], nextCursor: "same" })
+      .mockRejectedValueOnce(new Error("断网"));
+    await expect(pullDesktopSyncRecords()).rejects.toThrow("断网");
+    mocks.requestJson.mockResolvedValue({ tasks: [task], nextCursor: "same" });
+    await expect(pullDesktopSyncRecords()).rejects.toThrow("游标");
   });
 });

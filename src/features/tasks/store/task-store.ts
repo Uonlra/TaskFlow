@@ -7,7 +7,7 @@ import { DesktopTaskRepository } from "@/features/tasks/repositories/desktop-tas
 import { getTaskRepository } from "@/features/tasks/repositories/task-repository-selector";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
-import { flushDesktopSyncQueue } from "@/features/tasks/sync/desktop-sync";
+import { flushDesktopSyncQueue, pullDesktopSyncRecords } from "@/features/tasks/sync/desktop-sync";
 import { parseTagsInput } from "@/features/tasks/utils/task-tags";
 import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
 import { getDesktopBridge, isDesktopRuntime } from "@/shared/lib/desktop/bridge";
@@ -78,8 +78,9 @@ export const useTaskStore = create<TaskStore>()((set) => ({
         const workspace = await getDesktopBridge()!.workspace.get();
         if (userId && hasAppwritePublicEnv && workspace.syncEnabled && workspace.accountId === userId) {
           await flushDesktopSyncQueue(userId);
-          const remoteTasks = await remoteTaskRepository.list();
-          if (repository instanceof DesktopTaskRepository) await repository.importRemoteTasks(remoteTasks);
+          const remoteTasks = await pullDesktopSyncRecords();
+          if (version !== taskLoadVersion) return;
+          if (repository instanceof DesktopTaskRepository) await repository.importRemoteTasks(remoteTasks, userId);
         }
       } catch {
         // Local tasks remain available when cloud synchronization fails.

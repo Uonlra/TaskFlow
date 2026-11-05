@@ -7,6 +7,7 @@ export const appwriteTaskRowSchema = z.object({
   $createdAt: z.string(),
   $updatedAt: z.string(),
   syncClientUpdatedAt: z.string().nullable().optional(),
+  deletedAt: z.string().nullable().optional(),
   title: z.string(),
   description: z.string(),
   status: taskStatusSchema,

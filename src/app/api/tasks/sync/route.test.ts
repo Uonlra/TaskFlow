@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   deleteTask: vi.fn(),
   getTask: vi.fn(),
   updateTask: vi.fn(),
+  listSyncTasksPage: vi.fn(),
   AppwriteRequestError: class MockAppwriteRequestError extends Error {
     status: number;
 
@@ -32,9 +33,10 @@ vi.mock("@/shared/lib/appwrite/tasks", () => ({
   deleteTask: mocks.deleteTask,
   getTask: mocks.getTask,
   updateTask: mocks.updateTask,
+  listSyncTasksPage: mocks.listSyncTasksPage,
 }));
 
-import { POST } from "@/app/api/tasks/sync/route";
+import { POST, GET } from "@/app/api/tasks/sync/route";
 
 const authEnvelope = {
   user: {
@@ -87,6 +89,39 @@ describe("/api/tasks/sync", () => {
     const response = await POST(requestFor([upsertOperation()]));
 
     expect(response.status).toBe(401);
+  });
+
+  it("同步下载需要认证，按游标返回包含删除标记的页", async () => {
+    mocks.listSyncTasksPage.mockResolvedValue({
+      tasks: [{ id: "gone", deletedAt: "2026-11-05T00:00:00Z" }],
+      nextCursor: null,
+    });
+    const response = await GET(new NextRequest("http://localhost/api/tasks/sync?cursor=last"));
+    expect((await response.json()).tasks[0].deletedAt).toBeTruthy();
+    expect(mocks.listSyncTasksPage).toHaveBeenCalledWith("session-secret", expect.any(NextRequest), "last");
+    mocks.getCurrentAuthEnvelope.mockResolvedValue(null);
+    expect((await GET(new NextRequest("http://localhost/api/tasks/sync"))).status).toBe(401);
+  });
+
+  it("删除记录阻止旧编辑复活，但允许较新的完整编辑恢复", async () => {
+    const tombstone = {
+      id: "task-1",
+      title: "已删除",
+      updatedAt: "2026-10-30T10:00:00Z",
+      syncClientUpdatedAt: "2026-10-30T10:00:00Z",
+      deletedAt: "2026-10-30T10:00:00Z",
+    };
+    mocks.getTask.mockResolvedValue(tombstone);
+    expect((await (await POST(requestFor([upsertOperation()]))).json()).results[0]).toMatchObject({
+      status: "stale",
+      task: { deletedAt: tombstone.deletedAt },
+    });
+    expect(mocks.updateTask).not.toHaveBeenCalled();
+    mocks.updateTask.mockResolvedValue({ id: "task-1", title: "恢复后的编辑" });
+    expect(
+      (await (await POST(requestFor([upsertOperation({ clientUpdatedAt: "2026-10-30T11:00:00Z" })]))).json()).results[0]
+        .status,
+    ).toBe("applied");
   });
 
   it("拒绝不属于当前账户的同步操作", async () => {
@@ -144,8 +179,9 @@ describe("/api/tasks/sync", () => {
     expect(mocks.updateTask).not.toHaveBeenCalled();
   });
 
-  it("远端不存在时将删除操作视为已完成", async () => {
+  it("远端不存在时创建删除记录，防止旧离线编辑复活任务", async () => {
     mocks.getTask.mockRejectedValue(new mocks.AppwriteRequestError(404));
+    mocks.createTask.mockResolvedValue({ id: "task-2", deletedAt: "2026-10-30T09:00:00.000Z" });
 
     const response = await POST(
       requestFor([
@@ -161,7 +197,14 @@ describe("/api/tasks/sync", () => {
     );
 
     await expect(response.json()).resolves.toEqual({
-      results: [{ operationId: "operation-2", taskId: "task-2", status: "deleted" }],
+      results: [
+        {
+          operationId: "operation-2",
+          taskId: "task-2",
+          status: "deleted",
+          task: { id: "task-2", deletedAt: "2026-10-30T09:00:00.000Z" },
+        },
+      ],
     });
     expect(mocks.deleteTask).not.toHaveBeenCalled();
   });

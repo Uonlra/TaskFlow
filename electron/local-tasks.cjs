@@ -239,7 +239,7 @@ function upsertLocalTasks(database, accountId, tasks) {
          created_at, updated_at, deleted_at, remote_updated_at, sync_state)
       VALUES
         (@id, @accountId, @title, @description, @status, @priority, @tagsJson, @dueDate, @completedAt,
-         @createdAt, @updatedAt, NULL, @remoteUpdatedAt, 'synced')
+         @createdAt, @updatedAt, @deletedAt, @remoteUpdatedAt, 'synced')
       ON CONFLICT(id) DO UPDATE SET
         title = excluded.title,
         description = excluded.description,
@@ -250,7 +250,7 @@ function upsertLocalTasks(database, accountId, tasks) {
         completed_at = excluded.completed_at,
         created_at = excluded.created_at,
         updated_at = excluded.updated_at,
-        deleted_at = NULL,
+        deleted_at = excluded.deleted_at,
         remote_updated_at = excluded.remote_updated_at,
         sync_state = 'synced'
       WHERE tasks.account_id = excluded.account_id
@@ -277,6 +277,7 @@ function upsertLocalTasks(database, accountId, tasks) {
         createdAt: task.createdAt,
         updatedAt: task.updatedAt,
         remoteUpdatedAt: task.updatedAt,
+        deletedAt: task.deletedAt ?? null,
       });
     }
   });
@@ -423,8 +424,8 @@ function normalizeImportedTask(input) {
   const task = normalizeTaskInput(input);
   if (typeof input.id !== "string" || !input.id.trim()) throw new TypeError("任务标识不正确。");
   const createdAt = typeof input.createdAt === "string" ? input.createdAt : new Date().toISOString();
-  const updatedAt = typeof input.updatedAt === "string" ? input.updatedAt : createdAt;
-  return { ...task, id: input.id, createdAt, updatedAt };
+  const updatedAt = input.syncClientUpdatedAt ?? (typeof input.updatedAt === "string" ? input.updatedAt : createdAt);
+  return { ...task, id: input.id, createdAt, updatedAt, deletedAt: input.deletedAt, completedAt: input.completedAt };
 }
 
 function nextTaskTimestamp(previous) {

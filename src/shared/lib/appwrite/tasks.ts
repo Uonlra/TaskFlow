@@ -21,6 +21,7 @@ import {
   type TaskPageResult,
 } from "@/features/tasks/utils/task-list-query";
 import { appwriteDatabaseId, appwriteTasksTableId, hasAppwriteDatabaseEnv } from "@/shared/lib/appwrite/env";
+import { AppwriteRequestError } from "@/shared/lib/appwrite/request";
 import { appwriteFetch } from "@/shared/lib/appwrite/request";
 import {
   appwriteRowsListSchema,
@@ -32,16 +33,40 @@ import {
 const CALENDAR_QUERY_LIMIT = 5000;
 
 export async function listTasks(sessionSecret: string, request?: NextRequest) {
+  const tasks: Task[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await listSyncTasksPage(sessionSecret, request, cursor, false);
+    tasks.push(...page.tasks);
+    cursor = page.nextCursor ?? undefined;
+  } while (cursor);
+  return tasks;
+}
+
+export async function listSyncTasksPage(
+  sessionSecret: string,
+  request?: NextRequest,
+  cursor?: string,
+  includeDeleted = true,
+) {
   const payload = await appwriteTaskRequest<AppwriteRowsList>(
     "",
     {
       sessionSecret,
       request,
+      includeDeleted,
+      searchParams: {
+        queries: [
+          queryOrderAsc("$id"),
+          queryLimit(100),
+          ...(cursor ? [buildQuery("cursorAfter", undefined, cursor)] : []),
+        ],
+      },
     },
     appwriteRowsListSchema,
   );
-
-  return (payload.rows ?? []).map(mapTaskRow);
+  const rows = payload.rows;
+  return { tasks: rows.map(mapTaskRow), nextCursor: rows.length === 100 ? rows.at(-1)!.$id : null };
 }
 
 const DASHBOARD_QUERY_LIMIT = 5000;
@@ -419,6 +444,7 @@ export async function createTask(
   request?: NextRequest,
   taskId?: string,
   syncClientUpdatedAt?: string,
+  deletedAt?: string,
 ) {
   const rowId = taskId || crypto.randomUUID();
   const taskKey = Date.now();
@@ -430,7 +456,7 @@ export async function createTask(
       request,
       body: {
         rowId,
-        data: buildTaskData(input, taskKey, syncClientUpdatedAt),
+        data: { ...buildTaskData(input, taskKey, syncClientUpdatedAt), deletedAt: deletedAt ?? null },
         permissions: buildTaskPermissions(userId),
       },
     },
@@ -489,15 +515,33 @@ export async function updateTaskStatus(
   return mapTaskRow(row);
 }
 
-export async function deleteTask(sessionSecret: string, taskId: string, request?: NextRequest) {
-  await appwriteTaskRequest(`/${taskId}`, {
-    method: "DELETE",
-    sessionSecret,
-    request,
-  });
+export async function deleteTask(
+  sessionSecret: string,
+  taskId: string,
+  request?: NextRequest,
+  clientUpdatedAt?: string,
+) {
+  const current = await getTask(sessionSecret, taskId, request, true);
+  if (current.deletedAt && !clientUpdatedAt) return current;
+  const timestamp =
+    clientUpdatedAt ??
+    new Date(
+      Math.max(Date.now(), Date.parse(current.syncClientUpdatedAt ?? current.updatedAt ?? "") + 1 || 0),
+    ).toISOString();
+  const row = await appwriteTaskRequest<AppwriteTaskRow>(
+    `/${taskId}`,
+    {
+      method: "PATCH",
+      sessionSecret,
+      request,
+      body: { data: { deletedAt: timestamp, syncClientUpdatedAt: timestamp } },
+    },
+    appwriteTaskRowSchema,
+  );
+  return mapTaskRow(row);
 }
 
-export async function getTask(sessionSecret: string, taskId: string, request?: NextRequest) {
+export async function getTask(sessionSecret: string, taskId: string, request?: NextRequest, includeDeleted = false) {
   const row = await appwriteTaskRequest<AppwriteTaskRow>(
     `/${taskId}`,
     {
@@ -507,6 +551,7 @@ export async function getTask(sessionSecret: string, taskId: string, request?: N
     appwriteTaskRowSchema,
   );
 
+  if (row.deletedAt && !includeDeleted) throw new AppwriteRequestError(404, "任务不存在或已删除。");
   return mapTaskRow(row);
 }
 
@@ -522,6 +567,7 @@ export function mapTaskRow(row: AppwriteTaskRow): Task {
     createdAt: row.$createdAt,
     updatedAt: row.$updatedAt,
     syncClientUpdatedAt: row.syncClientUpdatedAt ?? undefined,
+    deletedAt: row.deletedAt ?? undefined,
     completedAt: row.completedAt ?? undefined,
   };
 }
@@ -551,6 +597,7 @@ function buildTaskData(input: TaskFormValues, taskKey?: number, syncClientUpdate
     dueDate: toAppwriteDateTime(input.dueDate),
     completedAt: input.status === "done" ? new Date().toISOString() : null,
     syncClientUpdatedAt: syncClientUpdatedAt ?? null,
+    deletedAt: null,
     ...(typeof taskKey === "number" ? { taskId: taskKey } : {}),
   };
 }
@@ -646,6 +693,7 @@ async function appwriteTaskRequest<T = unknown>(
     body?: unknown;
     request?: NextRequest;
     searchParams?: Record<string, string | string[]>;
+    includeDeleted?: boolean;
   },
   schema?: z.ZodType<T>,
 ) {
@@ -659,7 +707,13 @@ async function appwriteTaskRequest<T = unknown>(
     body: options.body,
     sessionSecret: options.sessionSecret,
     request: options.request,
-    searchParams: options.searchParams as Record<string, string | number | boolean | Array<string>> | undefined,
+    searchParams:
+      path === "" && !options.method && !options.includeDeleted
+        ? {
+            ...options.searchParams,
+            queries: [...(options.searchParams?.queries ?? []), buildQuery("isNull", "deletedAt")],
+          }
+        : (options.searchParams as Record<string, string | number | boolean | Array<string>> | undefined),
     errorMessage: "Task request failed.",
   });
 
