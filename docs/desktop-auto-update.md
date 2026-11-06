@@ -1,6 +1,6 @@
 # GitHub Releases 自动更新与 beta 发布
 
-应用版本 `2.2.0-beta.1`，使用 electron-updater 6.8.11、electron-builder 26.18.0 和 Windows NSIS。设置页的“应用更新”不要求登录云端账户。
+当前已公开版本为 `2.2.0-beta.1`，下一候选版本为 `2.2.0-beta.2`。使用 electron-updater 6.8.11、electron-builder 26.18.0 和 Windows NSIS。设置页的“应用更新”不要求登录云端账户。
 
 ## 行为
 
@@ -35,7 +35,9 @@ pnpm desktop:smoke:update
 
 2026-11-05 已通过 `dist/update-acceptance/run-1793864900068/report.json` 中的 6 项真实更新验收。测试入口最初依赖临时环境和外部配置，安装器重启曾出现主进程异常；已改为将回环更新地址和调试端口嵌入测试包元数据。NSIS 自动重启通过正常应用窗口验证；随后显式带调试参数重新打开升级后的程序，验证版本和加密存储。最终任务、完成状态、身份、暂停的工作区及待同步队列均保留，测试安装已卸载。正式包校验会拒绝测试入口和测试元数据。
 
-本轮 `2.2.0-beta.1` 的本地发布物位于 `dist/beta-release`，安装包为 `TaskFlow-Setup-2.2.0-beta.1-win-x64.exe`，签名状态 `NotSigned`，尚未上传或公开发布。发布元数据、SHA-512、blockmap、SHA-256 和 ASAR 内容边界校验通过。安装包 SHA-256 为 `abef55a9b606c1b1136068ecb1d46db7e72c8b8e0712ef2cbb064594459d0f05`，后续重建必须使用新生成的清单。
+早期 `2.2.0-beta.1` 的本地候选发布物位于 `dist/beta-release`，安装包为 `TaskFlow-Setup-2.2.0-beta.1-win-x64.exe`，签名状态 `NotSigned`。发布元数据、SHA-512、blockmap、SHA-256 和 ASAR 内容边界校验通过。该本地候选的 SHA-256 为 `abef55a9b606c1b1136068ecb1d46db7e72c8b8e0712ef2cbb064594459d0f05`，与后续 CI 重建产物不同，不应用于校验公开安装包。
+
+2026-11-06 已公开 [v2.2.0-beta.1](https://github.com/Uonlra/TaskFlow/releases/tag/v2.2.0-beta.1)，由 [Actions 第二次运行](https://github.com/Uonlra/TaskFlow/actions/runs/42038849693) 构建，源码提交为 `ad8bb6557b51fe3d7610bfce53779b4bddebad00`。公开安装包 SHA-256 为 `ea89bbbfec159b912e64cc04b3f68fa157563077b3310b5263a6ac6524bc7c65`。5 个附件的匿名下载、SHA-256、beta.yml 中的 SHA-512，以及真实 GitHub Atom feed 的 beta 发现均已核对通过；本机报告位于 `dist/github-beta-public-2.2.0-beta.1/public-verification-report.json`。这不代表跨版本安装已通过。
 
 同一份正式候选程序通过未登录离线 CRUD、全部页面加载及强制退出恢复（`dist/electron/local-smoke-1793867709643`）；连接生产 API 的 15 项真实云同步回归通过，测试任务清理完成（`dist/electron/cloud-smoke-1793867783478/report.json`）。288 项单元/组件测试、4 项更新策略测试、lint（19 条现有警告）、类型检查和桌面静态导出均通过。
 
@@ -56,6 +58,30 @@ pnpm desktop:smoke:update
 
 草稿包括安装包、对应 `.blockmap`、`beta.yml`、`SHA256SUMS.txt` 和 `release-manifest.json`。流水线拒绝覆盖公开 Release 或其他提交的同版本草稿；正式版本必须使用新的版本号。
 
-先审查并合并 PR，再运行工作流或推送匹配 `package.json` 的 `v2.2.0-beta.1` 标签。审核草稿、签名状态、校验清单和说明后，再由用户确认公开为 Pre-release。客户端无法发现草稿；真实 GitHub 更新发现和下载仍须在公开发布后验证，不能用本机更新源的成功替代。
+先审查并合并 PR，再运行工作流或推送匹配 `package.json` 的新版本标签（下一候选为 `v2.2.0-beta.2`）。不得移动或重用已公开的 `v2.2.0-beta.1`。审核草稿、签名状态、校验清单和说明后，再由用户确认公开为 Pre-release。客户端无法发现草稿；真实 GitHub 更新发现和下载仍须在公开发布后验证，不能用本机更新源的成功替代。
 
 当前旧版 2.1.1 没有更新器，首次必须手动安装新 beta。公开 beta.1 后，beta.1 检查自身应报告无新版本；验证 GitHub 端到端升级需要后续公开的更新版本。
+
+## 重复验证公开更新源
+
+```powershell
+# 元数据、匿名可访问性及真实 electron-updater GitHubProvider 发现检查
+pnpm desktop:verify-published --version=2.2.0-beta.1
+# Windows 完整下载与文件哈希检查（不安装）
+pnpm desktop:verify-published --version=2.2.0-beta.1 --download
+```
+
+未指定版本时使用 package.json；候选版本尚未公开时会失败，这是预期行为。发布 beta.2 后应改为 `--version=2.2.0-beta.2`；检查目标必须是当前 beta feed 指向的版本。脚本仅访问公开端点，不读取 `.env.local`、不需要 GitHub 凭据、不连接 Appwrite、不运行安装程序。报告保存到 `dist/published-verification/<版本>-<时间戳>/report.json`，失败也会写入原因。默认模式只下载元数据并检查附件 HTTP 状态和长度，不能代替完整文件哈希检查。
+
+## beta.1 → beta.2 真实安装验收
+
+建议使用独立 Windows x64 虚拟机或专用测试电脑，保留安装前快照。真实生产安装包使用相同应用标识，不能在日常工作区中仅靠 `--user-data-dir` 声称安装器、注册表和自动重启已隔离。
+
+1. 审查合并 beta.2 PR 后，给合并提交创建新标签，等待草稿构建通过。用户确认公开后，在发布页保留 Pre-release 标记再发布。此步骤会让已有 beta.1 用户发现 beta.2。
+2. 在测试 Windows 环境安装公开 beta.1 安装包。创建、编辑并完成本地任务，验证 JSON 导出；正常退出并重开，确认数据持久化。若测试云同步，使用专用账户，记录脱敏任务 ID、关闭同步并保留一条离线待同步操作；不要保存密码到报告。
+3. beta.2 公开后运行 `pnpm desktop:verify-published --version=2.2.0-beta.2 --download`。从 beta.1 设置页检查更新，应显示 beta.2；手动下载后正常退出，重开仍应为 beta.1，任务保留。
+4. 再次下载并确认重启安装，观察 NSIS 完成后自动打开正常窗口，不能有主进程 Error 弹窗。确认应用版本为 beta.2，任务正文、完成状态、工作区、云同步开关及待同步队列与升级前一致。启用同步后检查队列回放，清理测试任务。
+5. 在 beta.2 再次检查更新，应提示当前为最新版本。离线重启并检查总览、任务、详情、日历、统计及设置可用。
+6. 将 Windows 版本、安装包哈希、实际版本、各项结果和脱敏证据记录到报告；明确是否覆盖了云账户/待同步队列。全部完成后才能标记“真实 GitHub 跨版本升级通过”。失败时保留日志和数据，暂停后续发布，先定位原因。
+
+当前进度：beta.1 公开更新源及完整文件下载已通过；beta.2 是候选版本，真实升级、自动重启及数据保留仍待公开后按上述步骤验收。
