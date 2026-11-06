@@ -1,6 +1,6 @@
 {
   "name": "taskflow",
-  "version": "2.2.0-beta.1",
+  "version": "2.2.0-beta.2",
   "private": true,
   "description": "TaskFlow personal task workspace",
   "author": "Uonlra",
@@ -20,6 +20,7 @@
     "desktop:smoke:install": "node scripts/smoke-desktop-install.mjs",
     "desktop:smoke:update": "node scripts/smoke-desktop-update.mjs",
     "desktop:verify-release": "node scripts/verify-desktop-release.mjs",
+    "desktop:verify-published": "node scripts/verify-published-desktop.mjs",
     "desktop:smoke:cloud": "node scripts/smoke-desktop-cloud.mjs",
     "test:desktop-updater": "node --test electron/updater.test.cjs",
     "lint": "eslint .",
