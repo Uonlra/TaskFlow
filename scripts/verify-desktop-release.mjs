@@ -6,17 +6,18 @@ import { access, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { parse } from "yaml";
+import policyModule from "./lib/desktop-release-policy.cjs";
 
 const pkg = JSON.parse(await readFile("package.json", "utf8"));
-assert.match(pkg.version, /^\d+\.\d+\.\d+-beta\.\d+$/);
+const policy = policyModule.getReleasePolicy(pkg.version);
 const root = path.resolve(process.argv[2] ?? "dist/electron");
 const name = `TaskFlow-Setup-${pkg.version}-win-x64.exe`;
-const metadata = parse(await readFile(path.join(root, "beta.yml"), "utf8"));
+const metadata = parse(await readFile(path.join(root, policy.metadataFile), "utf8"));
 assert.equal(metadata.version, pkg.version);
 assert.equal(metadata.path, name);
 assert.equal(metadata.files.length, 1);
 assert.equal(metadata.files[0].url, name);
-await assert.rejects(() => access(path.join(root, "latest.yml")), "beta 目录不应包含正式通道元数据");
+await assert.rejects(() => access(path.join(root, policy.oppositeMetadataFile)), "发布目录不应混入其他通道元数据");
 async function digest(file, algorithm, encoding = "hex") {
   const hash = createHash(algorithm);
   for await (const chunk of createReadStream(file)) hash.update(chunk);
@@ -59,9 +60,9 @@ assert.equal(
 assert.equal(settings.provider, "github");
 assert.equal(settings.owner, "Uonlra");
 assert.equal(settings.repo, "TaskFlow");
-assert.equal(settings.channel, "beta");
+assert.equal(settings.channel, policy.channel);
 const files = await Promise.all(
-  [name, `${name}.blockmap`, "beta.yml"].map(async (file) => ({
+  [name, `${name}.blockmap`, policy.metadataFile].map(async (file) => ({
     file,
     size: (await stat(path.join(root, file))).size,
     sha256: await digest(path.join(root, file), "sha256"),
@@ -77,7 +78,7 @@ await writeFile(
     {
       version: pkg.version,
       tag: `v${pkg.version}`,
-      channel: "beta",
+      channel: policy.channel,
       sourceCommit: process.env.GITHUB_SHA ?? execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
       authenticode,
       files,
@@ -86,4 +87,4 @@ await writeFile(
     2,
   ) + "\n",
 );
-console.log(`PASS: ${pkg.version} beta 元数据、GitHub 配置、安装包 SHA-512、blockmap 和 SHA-256 清单。`);
+console.log(`PASS: ${pkg.version} ${policy.channel} 元数据、GitHub 配置、安装包 SHA-512、blockmap 和 SHA-256 清单。`);

@@ -19,7 +19,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["electron/**/*.cjs", "scripts/fixtures/**/*.cjs"],
+    files: ["electron/**/*.cjs", "scripts/fixtures/**/*.cjs", "scripts/lib/**/*.cjs", "electron-builder.config.cjs"],
     rules: {
       "@typescript-eslint/no-require-imports": "off",
     },

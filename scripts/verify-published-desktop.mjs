@@ -6,19 +6,27 @@ import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { parse } from "yaml";
+import policyModule from "./lib/desktop-release-policy.cjs";
 
 // Reads public GitHub endpoints only. Never installs an update or opens user data.
 const pkg = JSON.parse(await readFile("package.json", "utf8"));
 const version = process.argv.find((arg) => arg.startsWith("--version="))?.slice(10) ?? pkg.version;
-assert.match(version, /^\d+\.\d+\.\d+-beta\.\d+$/);
+const policy = policyModule.getReleasePolicy(version);
 const download = process.argv.includes("--download");
 if (download) assert.equal(process.platform, "win32", "完整下载模式使用 Windows 系统下载器");
 const root = path.resolve(`dist/published-verification/${version}-${Date.now()}`);
 await mkdir(root, { recursive: true });
 const tag = `v${version}`;
 const installer = `TaskFlow-Setup-${version}-win-x64.exe`;
-const names = [installer, `${installer}.blockmap`, "beta.yml", "SHA256SUMS.txt", "release-manifest.json"];
-const report = { version, tag, startedAt: new Date().toISOString(), download, passed: false, checks: [] };
+const report = {
+  version,
+  tag,
+  channel: policy.channel,
+  startedAt: new Date().toISOString(),
+  download,
+  passed: false,
+  checks: [],
+};
 const record = (step) => {
   report.checks.push(step);
   console.log(`PASS: ${step}`);
@@ -39,13 +47,9 @@ async function digest(file, algorithm, encoding = "hex") {
 }
 try {
   const release = await (await request(`https://api.github.com/repos/Uonlra/TaskFlow/releases/tags/${tag}`)).json();
-  assert.equal(release.tag_name, tag);
-  assert.equal(release.draft, false);
-  assert.equal(release.prerelease, true);
-  assert.equal(release.assets.length, names.length);
-  assert.deepEqual(release.assets.map((asset) => asset.name).sort(), [...names].sort());
+  policyModule.assertPublishedRelease(release, policy);
   report.releaseUrl = release.html_url;
-  record("公开版本为预发布且 5 个附件齐全");
+  record(`公开版本状态符合 ${policy.channel} 通道，5 个附件齐全`);
 
   const base = `https://github.com/Uonlra/TaskFlow/releases/download/${tag}/`;
   for (const asset of release.assets) {
@@ -57,7 +61,7 @@ try {
   record("全部附件可匿名访问，文件大小正确");
 
   const metadata = new Map();
-  for (const name of ["beta.yml", "SHA256SUMS.txt", "release-manifest.json"]) {
+  for (const name of [policy.metadataFile, "SHA256SUMS.txt", "release-manifest.json"]) {
     const bytes = Buffer.from(await (await request(base + name)).arrayBuffer());
     const asset = release.assets.find((item) => item.name === name);
     assert.equal(`sha256:${createHash("sha256").update(bytes).digest("hex")}`, asset.digest);
@@ -67,14 +71,14 @@ try {
   const manifest = JSON.parse(metadata.get("release-manifest.json"));
   assert.equal(manifest.version, version);
   assert.equal(manifest.tag, tag);
-  assert.equal(manifest.channel, "beta");
+  assert.equal(manifest.channel, policy.channel);
   assert.match(manifest.sourceCommit, /^[a-f0-9]{40}$/);
   // Resolve the immutable tag rather than trusting target_commitish (which may be a branch).
   const commit = await (await request(`https://api.github.com/repos/Uonlra/TaskFlow/commits/${tag}`)).json();
   assert.equal(manifest.sourceCommit, commit.sha);
   assert.deepEqual(
     manifest.files.map((file) => file.file).sort(),
-    [installer, `${installer}.blockmap`, "beta.yml"].sort(),
+    [installer, `${installer}.blockmap`, policy.metadataFile].sort(),
   );
   for (const file of manifest.files) {
     const asset = release.assets.find((item) => item.name === file.file);
@@ -101,14 +105,19 @@ try {
     },
   };
   const provider = new GitHubProvider(
-    { provider: "github", owner: "Uonlra", repo: "TaskFlow", channel: "beta" },
-    { channel: "beta", allowPrerelease: true, currentVersion: semver.parse(version), fullChangelog: false },
+    { provider: "github", owner: "Uonlra", repo: "TaskFlow", channel: policy.channel },
+    {
+      channel: policy.channel,
+      allowPrerelease: policy.prerelease,
+      currentVersion: semver.parse(version),
+      fullChangelog: false,
+    },
     { executor, platform: "win32", isUseMultipleRangeRequest: false },
   );
   const info = await provider.getLatestVersion();
-  assert.equal(info.version, version, "当前 beta 更新源已指向其他版本；请指定最新版本进行检查");
+  assert.equal(info.version, version, "当前更新源已指向其他版本；请指定此通道最新版本进行检查");
   assert.equal(info.tag, tag);
-  const yaml = parse(metadata.get("beta.yml"));
+  const yaml = parse(metadata.get(policy.metadataFile));
   assert.equal(yaml.version, version);
   assert.equal(yaml.path, installer);
   assert.equal(yaml.files.length, 1);
@@ -117,7 +126,7 @@ try {
   assert.equal(yaml.sha512, yaml.files[0].sha512);
   assert.equal(info.files[0].sha512, yaml.sha512);
   assert.equal(provider.resolveFiles(info)[0].url.href, base + installer);
-  record("真实 GitHub Atom feed、beta 通道与安装包解析正确");
+  record(`真实 GitHub Atom feed、${policy.channel} 通道与安装包解析正确`);
 
   if (download) {
     for (const name of [installer, `${installer}.blockmap`]) {
