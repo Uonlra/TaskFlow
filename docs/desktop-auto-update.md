@@ -45,7 +45,7 @@ pnpm desktop:smoke:update
 
 ## GitHub 草稿流水线
 
-`.github/workflows/desktop-beta.yml` 在 beta 标签推送或手动运行时构建 Windows 安装包、验证元数据并创建 **draft prerelease**，不会公开发布。
+`.github/workflows/desktop-beta.yml` 现按版本支持 beta 和正式版标签：beta 创建 **draft prerelease**，正式版创建非 prerelease 的 **draft release**，不会公开发布。两者的构建配置、预检、通道文件和发布类型共用版本规则，详见 [Windows 发布链](./desktop-release-pipeline.md)。
 
 在仓库 Settings → Secrets and variables → Actions 的 Variables 配置以下非秘密公开变量，值与生产环境一致：
 
@@ -56,7 +56,7 @@ pnpm desktop:smoke:update
 
 如果采用代码签名，配置 Secrets `WINDOWS_CSC_LINK`、`WINDOWS_CSC_KEY_PASSWORD`。未设置则准备未签名包。GitHub 上传使用工作流自带的 `github.token`，不把个人 token 放入应用。
 
-草稿包括安装包、对应 `.blockmap`、`beta.yml`、`SHA256SUMS.txt` 和 `release-manifest.json`。流水线拒绝覆盖公开 Release 或其他提交的同版本草稿；正式版本必须使用新的版本号。
+草稿包括安装包、对应 `.blockmap`、通道文件（beta 使用 `beta.yml`、正式版使用 `latest.yml`）、`SHA256SUMS.txt` 和 `release-manifest.json`。流水线拒绝覆盖公开 Release、其他提交或发布类型不同的同版本草稿；正式版本必须使用新的版本号。
 
 先审查并合并 PR，再运行工作流或推送匹配 `package.json` 的新版本标签（下一候选为 `v2.2.0-beta.2`）。不得移动或重用已公开的 `v2.2.0-beta.1`。审核草稿、签名状态、校验清单和说明后，再由用户确认公开为 Pre-release。客户端无法发现草稿；真实 GitHub 更新发现和下载仍须在公开发布后验证，不能用本机更新源的成功替代。
 
