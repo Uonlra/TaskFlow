@@ -1,6 +1,6 @@
 # GitHub Releases 自动更新与 beta 发布
 
-当前已公开版本为 `2.2.0-beta.1`，下一候选版本为 `2.2.0-beta.2`。使用 electron-updater 6.8.11、electron-builder 26.18.0 和 Windows NSIS。设置页的“应用更新”不要求登录云端账户。
+当前已公开版本为 `2.2.0-beta.2`。使用 electron-updater 6.8.11、electron-builder 26.18.0 和 Windows NSIS。设置页的“应用更新”不要求登录云端账户。
 
 ## 行为
 
@@ -58,20 +58,20 @@ pnpm desktop:smoke:update
 
 草稿包括安装包、对应 `.blockmap`、通道文件（beta 使用 `beta.yml`、正式版使用 `latest.yml`）、`SHA256SUMS.txt` 和 `release-manifest.json`。流水线拒绝覆盖公开 Release、其他提交或发布类型不同的同版本草稿；正式版本必须使用新的版本号。
 
-先审查并合并 PR，再运行工作流或推送匹配 `package.json` 的新版本标签（下一候选为 `v2.2.0-beta.2`）。不得移动或重用已公开的 `v2.2.0-beta.1`。审核草稿、签名状态、校验清单和说明后，再由用户确认公开为 Pre-release。客户端无法发现草稿；真实 GitHub 更新发现和下载仍须在公开发布后验证，不能用本机更新源的成功替代。
+先审查并合并 PR，再运行工作流或推送匹配 `package.json` 的新版本标签。不得移动或重用已公开的 `v2.2.0-beta.1` 和 `v2.2.0-beta.2`。审核草稿、签名状态、校验清单和说明后，再由用户确认公开为 Pre-release。客户端无法发现草稿；真实 GitHub 更新发现和下载仍须在公开发布后验证，不能用本机更新源的成功替代。
 
-当前旧版 2.1.1 没有更新器，首次必须手动安装新 beta。公开 beta.1 后，beta.1 检查自身应报告无新版本；验证 GitHub 端到端升级需要后续公开的更新版本。
+当前旧版 2.1.1 没有更新器，首次必须手动安装新 beta。beta.1 现可发现并升级到公开的 beta.2；beta.2 检查自身应报告无新版本。2026-11-08 已完成本机真实升级，范围及证据见 [GitHub 升级验收记录](./desktop-github-upgrade-acceptance.md)。
 
 ## 重复验证公开更新源
 
 ```powershell
 # 元数据、匿名可访问性及真实 electron-updater GitHubProvider 发现检查
-pnpm desktop:verify-published --version=2.2.0-beta.1
+pnpm desktop:verify-published --version=2.2.0-beta.2
 # Windows 完整下载与文件哈希检查（不安装）
-pnpm desktop:verify-published --version=2.2.0-beta.1 --download
+pnpm desktop:verify-published --version=2.2.0-beta.2 --download
 ```
 
-未指定版本时使用 package.json；候选版本尚未公开时会失败，这是预期行为。发布 beta.2 后应改为 `--version=2.2.0-beta.2`；检查目标必须是当前 beta feed 指向的版本。脚本仅访问公开端点，不读取 `.env.local`、不需要 GitHub 凭据、不连接 Appwrite、不运行安装程序。报告保存到 `dist/published-verification/<版本>-<时间戳>/report.json`，失败也会写入原因。默认模式只下载元数据并检查附件 HTTP 状态和长度，不能代替完整文件哈希检查。
+未指定版本时使用 package.json；候选版本尚未公开时会失败，这是预期行为。检查目标必须是当前 beta feed 指向的版本。脚本仅访问公开端点，不读取 `.env.local`、不需要 GitHub 凭据、不连接 Appwrite、不运行安装程序。报告保存到 `dist/published-verification/<版本>-<时间戳>/report.json`，失败也会写入原因。默认模式只下载元数据并检查附件 HTTP 状态和长度，不能代替完整文件哈希检查。
 
 ## beta.1 → beta.2 真实安装验收
 
@@ -84,4 +84,4 @@ pnpm desktop:verify-published --version=2.2.0-beta.1 --download
 5. 在 beta.2 再次检查更新，应提示当前为最新版本。离线重启并检查总览、任务、详情、日历、统计及设置可用。
 6. 将 Windows 版本、安装包哈希、实际版本、各项结果和脱敏证据记录到报告；明确是否覆盖了云账户/待同步队列。全部完成后才能标记“真实 GitHub 跨版本升级通过”。失败时保留日志和数据，暂停后续发布，先定位原因。
 
-当前进度：beta.1 公开更新源及完整文件下载已通过；beta.2 是候选版本，真实升级、自动重启及数据保留仍待公开后按上述步骤验收。
+当前进度：beta.2 已公开，公开源、完整文件下载及本机 beta.1 → beta.2 安装、自动重启、本地数据保留和模拟离线启动已通过。2026-11-08 用户另行确认云登录状态、非空待同步队列的升级保留及联网回放均已手测通过。自动与手测范围分开记录，详见 [GitHub 升级验收记录](./desktop-github-upgrade-acceptance.md)。
