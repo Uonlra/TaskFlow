@@ -1,4 +1,4 @@
-const { app, BrowserWindow, net, protocol, shell } = require("electron");
+const { app, BrowserWindow, net, protocol, shell, Tray, Menu, nativeImage } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
@@ -6,6 +6,7 @@ const { pathToFileURL } = require("node:url");
 const { closeDatabase, initializeDatabase } = require("./database.cjs");
 const { registerIpcHandlers } = require("./ipc.cjs");
 const { createUpdateController } = require("./updater.cjs");
+const { createTrayController } = require("./tray.cjs");
 
 const DEV_URL = "http://127.0.0.1:3000";
 const PRODUCTION_URL = "https://www.uta4k.top/";
@@ -19,6 +20,7 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 let mainWindow;
+let desktopTray;
 
 function getConfiguredStartUrl() {
   const configuredUrl = process.env.ELECTRON_START_URL || process.env.TASKFLOW_WEB_URL;
@@ -186,6 +188,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on("second-instance", () => {
+    if (desktopTray?.show()) return;
     if (mainWindow?.isMinimized()) mainWindow.restore();
     mainWindow?.show();
     mainWindow?.focus();
@@ -209,6 +212,20 @@ if (!app.requestSingleInstanceLock()) {
     }
 
     await createMainWindow();
+    if (process.platform === "win32") {
+      try {
+        desktopTray = createTrayController({
+          app,
+          Tray,
+          Menu,
+          nativeImage,
+          iconPath: path.join(__dirname, "assets", "tray.ico"),
+          getWindow: () => mainWindow,
+        });
+      } catch (error) {
+        console.error("[TaskFlow] 托盘初始化失败。", error);
+      }
+    }
     if (app.isPackaged && process.platform === "win32" && process.env.TASKFLOW_DISABLE_UPDATE_CHECK !== "1") {
       const timer = setTimeout(() => void updates.check(), 10_000);
       timer.unref();
@@ -231,5 +248,6 @@ app.on("window-all-closed", () => {
 });
 
 app.on("will-quit", () => {
+  desktopTray?.destroy();
   closeDatabase();
 });

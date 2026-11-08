@@ -151,6 +151,11 @@ test("both channels pass the actual artifact verifier; wrong channel files and a
       const resources = path.join(out, "win-unpacked/resources");
       await mkdir(resources, { recursive: true });
       await mkdir(path.join(source, "electron"), { recursive: true });
+      await mkdir(path.join(source, "electron/assets"), { recursive: true });
+      await copyFile(
+        fileURLToPath(new URL("../electron/assets/tray.ico", import.meta.url)),
+        path.join(source, "electron/assets/tray.ico"),
+      );
       const fixturePkg = { version, main: "electron/main.cjs" };
       await writeFile(path.join(root, "package.json"), JSON.stringify(fixturePkg));
       await writeFile(path.join(source, "package.json"), JSON.stringify(fixturePkg));
