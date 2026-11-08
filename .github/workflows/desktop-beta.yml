@@ -42,6 +42,7 @@ jobs:
         run: node scripts/prepare-desktop-release.mjs
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:desktop-updater
+      - run: pnpm test:desktop-tray
       - run: pnpm test:desktop-release
       - run: pnpm typecheck
       - name: Build Windows NSIS and channel update metadata

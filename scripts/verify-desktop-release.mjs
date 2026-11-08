@@ -52,8 +52,12 @@ const bundled = JSON.parse(asar.extractFile(archive, "package.json").toString())
 assert.equal(bundled.version, pkg.version);
 assert.equal(bundled.main, "electron/main.cjs");
 assert.equal(Object.hasOwn(bundled, "taskflowUpdateTest"), false);
+const trayIcon = asar.extractFile(archive, path.join("electron", "assets", "tray.ico"));
+assert.equal(trayIcon.readUInt16LE(0), 0);
+assert.equal(trayIcon.readUInt16LE(2), 1);
+assert.ok(trayIcon.readUInt16LE(4) > 0, "安装包缺少托盘图标图层");
 assert.equal(
-  asar.listPackage(archive).some((file) => /update-test-main|\.test\.cjs$/.test(file)),
+  asar.listPackage(archive).some((file) => /update-test-main|tray-test-main|\.test\.cjs$/.test(file)),
   false,
   "正式包不得包含测试入口或单元测试",
 );

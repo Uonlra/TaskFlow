@@ -44,6 +44,9 @@ jobs:
       - name: Desktop updater policy tests
         run: pnpm test:desktop-updater
 
+      - name: Desktop tray lifecycle tests
+        run: pnpm test:desktop-tray
+
       - name: Desktop release channel tests
         run: pnpm test:desktop-release
 
