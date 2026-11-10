@@ -54,6 +54,23 @@ export type DesktopUpdateState = {
 };
 
 export type TaskflowDesktopBridge = {
+  shell?: {
+    quickWindow: boolean;
+    menu(): Promise<void>;
+    theme(dark: boolean): Promise<void>;
+    onSettings(listener: () => void): () => void;
+    onTasksChanged(listener: (input: { accountId: string }) => void): () => void;
+  };
+  quickCapture?: {
+    show(): Promise<void>;
+    hide(): Promise<void>;
+    create(input: { accountId: string; task: TaskFormValues }): Promise<Task>;
+    onFocus(listener: () => void): () => void;
+  };
+  shortcuts?: {
+    get(): Promise<DesktopShortcutState>;
+    set(input: { shortcut: string; enabled: boolean }): Promise<DesktopShortcutState>;
+  };
   updates: {
     getState(): Promise<DesktopUpdateState>;
     check(): Promise<DesktopUpdateState>;
@@ -73,6 +90,8 @@ export type TaskflowDesktopBridge = {
   syncQueue: DesktopSyncQueueBridge;
   auth: DesktopAuthBridge;
 };
+
+export type DesktopShortcutState = { shortcut: string; enabled: boolean; registered: boolean; message: string };
 
 declare global {
   interface Window {

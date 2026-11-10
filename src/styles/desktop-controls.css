@@ -1,0 +1,209 @@
+html[data-desktop-chrome] {
+  --desktop-titlebar-height: max(40px, env(titlebar-area-height, 40px));
+}
+.desktop-titlebar {
+  position: fixed;
+  inset: 0 0 auto;
+  height: var(--desktop-titlebar-height, 40px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 154px 0 8px;
+  padding-right: max(154px, calc(100vw - env(titlebar-area-width, 100vw)));
+  background: var(--background);
+  color: var(--foreground);
+  border-bottom: 1px solid var(--border);
+  app-region: drag;
+  font-size: 12px;
+  user-select: none;
+}
+.desktop-titlebar button {
+  app-region: no-drag;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.desktop-titlebar button:hover {
+  background: var(--surface);
+}
+.desktop-titlebar button:focus-visible {
+  outline: 2px solid var(--primary);
+}
+.desktop-titlebar-caption {
+  color: var(--muted);
+}
+.desktop-titlebar-capture {
+  margin-left: auto;
+}
+html[data-desktop-chrome] body {
+  padding-top: var(--desktop-titlebar-height);
+}
+html[data-desktop-chrome] .dashboard-skip-link {
+  top: calc(var(--desktop-titlebar-height) + 12px);
+}
+html[data-desktop-chrome] .dashboard-sidebar {
+  top: var(--desktop-titlebar-height);
+  height: calc(100dvh - var(--desktop-titlebar-height));
+}
+html[data-desktop-chrome] .dashboard-shell {
+  min-height: calc(100dvh - var(--desktop-titlebar-height));
+}
+.quick-capture {
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 720px;
+  padding: 20px;
+  margin: auto;
+  color: var(--foreground);
+}
+.quick-capture fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.quick-capture label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+.quick-capture input,
+.quick-capture textarea,
+.quick-capture select,
+.desktop-shortcuts input {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  margin-bottom: 12px;
+}
+.quick-capture input:focus,
+.quick-capture textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.quick-capture textarea {
+  resize: vertical;
+  min-height: 72px;
+  max-height: 180px;
+}
+.quick-capture button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 12px;
+  color: var(--muted);
+  background: transparent;
+}
+.quick-capture .capture-details-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: 12px;
+}
+.capture-details-toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+.capture-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+.capture-details label:last-child {
+  grid-column: 1 / -1;
+}
+.quick-capture footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.quick-capture button[type="submit"] {
+  background: var(--primary);
+  color: white;
+}
+.quick-capture button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.quick-capture .capture-clear {
+  padding: 8px;
+}
+.quick-capture .capture-clear:disabled {
+  visibility: hidden;
+}
+.quick-capture button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.capture-error {
+  color: var(--danger);
+  font-size: 12px;
+}
+.desktop-shortcuts label {
+  display: block;
+  margin: 12px 0;
+}
+.desktop-shortcuts input[type="checkbox"] {
+  width: auto;
+  margin: 0 8px 0 0;
+}
+.desktop-shortcuts input[type="text"] {
+  max-width: 300px;
+  display: block;
+  margin-top: 8px;
+}
+.settings-profile-panel.desktop-shortcuts {
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.desktop-shortcuts h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.desktop-shortcuts p {
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.desktop-shortcuts label {
+  color: var(--foreground);
+  font-size: 13px;
+}
+.desktop-shortcuts input[type="text"] {
+  padding: 9px 12px;
+  font-size: 13px;
+}
+.desktop-shortcuts button {
+  margin-top: 8px;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 13px;
+  cursor: pointer;
+}
+.desktop-shortcuts button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.desktop-shortcuts [role="status"] {
+  margin-top: 10px;
+}
+.desktop-shortcuts [role="alert"] {
+  color: var(--danger);
+}

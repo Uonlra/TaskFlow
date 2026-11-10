@@ -2,9 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
-import { AuthProvider } from "@/features/auth/providers/auth-provider";
-import { LenisProvider } from "@/shared/providers/lenis-provider";
-import { ToastProvider } from "@/shared/providers/toast-provider";
+import { AppProviders } from "@/shared/providers/app-providers";
 
 export const metadata: Metadata = {
   title: {
@@ -25,11 +23,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="zh-CN">
       <body>
-        <AuthProvider>
-          <ToastProvider>
-            <LenisProvider>{children}</LenisProvider>
-          </ToastProvider>
-        </AuthProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

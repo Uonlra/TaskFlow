@@ -6,6 +6,7 @@ import { CircleHelp, Database, LockKeyhole, PlugZap, SlidersHorizontal, UserRoun
 
 import { MobileSettingsView } from "@/features/settings/components/mobile-settings-view";
 import { DesktopWorkspacePanel } from "@/features/settings/components/desktop-workspace-panel";
+import { DesktopShortcutsPanel } from "@/features/settings/components/desktop-shortcuts-panel";
 import { DesktopUpdatesPanel } from "@/features/settings/components/desktop-updates-panel";
 import { useDesktopRuntime } from "@/shared/hooks/use-desktop-runtime";
 import type { ProfileFormValues } from "@/features/auth/types/profile.types";
@@ -78,6 +79,7 @@ export function SettingsClient() {
     <>
       <DesktopWorkspacePanel />
       <DesktopUpdatesPanel />
+      <DesktopShortcutsPanel />
       <div className="settings-mobile-only">
         <MobileSettingsView
           displayName={displayName}

@@ -1,4 +1,4 @@
-function createTrayController({ app, Tray, Menu, nativeImage, iconPath, getWindow }) {
+function createTrayController({ app, Tray, Menu, nativeImage, iconPath, getWindow, quickCreate }) {
   const icon = nativeImage.createFromPath(iconPath);
   if (icon.isEmpty()) throw new Error("无法读取 TaskFlow 托盘图标。");
   const tray = new Tray(icon);
@@ -37,6 +37,7 @@ function createTrayController({ app, Tray, Menu, nativeImage, iconPath, getWindo
     tray.setToolTip("TaskFlow");
     tray.setContextMenu(
       Menu.buildFromTemplate([
+        ...(quickCreate ? [{ id: "quick-create", label: "快速新建任务", click: quickCreate }] : []),
         { id: "show", label: "显示 TaskFlow", click: show },
         { id: "hide", label: "隐藏窗口", click: hide },
         { type: "separator" },

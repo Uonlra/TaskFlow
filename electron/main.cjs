@@ -1,4 +1,16 @@
-const { app, BrowserWindow, net, protocol, shell, Tray, Menu, nativeImage } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  net,
+  protocol,
+  shell,
+  Tray,
+  Menu,
+  nativeImage,
+  globalShortcut,
+  screen,
+  ipcMain,
+} = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
@@ -7,6 +19,10 @@ const { closeDatabase, initializeDatabase } = require("./database.cjs");
 const { registerIpcHandlers } = require("./ipc.cjs");
 const { createUpdateController } = require("./updater.cjs");
 const { createTrayController } = require("./tray.cjs");
+const { createDesktopControls } = require("./desktop-controls.cjs");
+const { getDatabase } = require("./database.cjs");
+const { getWorkspace } = require("./workspace.cjs");
+const { createLocalTask } = require("./local-tasks.cjs");
 
 const DEV_URL = "http://127.0.0.1:3000";
 const PRODUCTION_URL = "https://www.uta4k.top/";
@@ -21,6 +37,14 @@ protocol.registerSchemesAsPrivileged([
 
 let mainWindow;
 let desktopTray;
+let desktopControls;
+
+function secureQuickWindow(window) {
+  window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  window.webContents.on("will-navigate", (event, url) => {
+    if (url !== new URL("/quick-create/", getConfiguredStartUrl()).toString()) event.preventDefault();
+  });
+}
 
 function getConfiguredStartUrl() {
   const configuredUrl = process.env.ELECTRON_START_URL || process.env.TASKFLOW_WEB_URL;
@@ -130,6 +154,9 @@ async function createMainWindow() {
     minWidth: 960,
     minHeight: 640,
     show: false,
+    ...(process.platform === "win32"
+      ? { titleBarStyle: "hidden", titleBarOverlay: { color: "#ffffff", symbolColor: "#171a20", height: 40 } }
+      : {}),
     backgroundColor: "#f5f7fb",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
@@ -141,6 +168,8 @@ async function createMainWindow() {
   });
 
   mainWindow.once("ready-to-show", () => mainWindow.show());
+  mainWindow.setMenu(null);
+  mainWindow.on("close", () => app.quit());
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     try {
@@ -212,6 +241,19 @@ if (!app.requestSingleInstanceLock()) {
     }
 
     await createMainWindow();
+    desktopControls = createDesktopControls({
+      app,
+      BrowserWindow,
+      Menu,
+      globalShortcut,
+      screen,
+      ipcMain,
+      getMainWindow: () => mainWindow,
+      startUrl: getConfiguredStartUrl(),
+      secureWindow: secureQuickWindow,
+      getWorkspace: () => getWorkspace(getDatabase()),
+      createTask: (input) => createLocalTask(getDatabase(), input.accountId, input.task),
+    });
     if (process.platform === "win32") {
       try {
         desktopTray = createTrayController({
@@ -221,6 +263,7 @@ if (!app.requestSingleInstanceLock()) {
           nativeImage,
           iconPath: path.join(__dirname, "assets", "tray.ico"),
           getWindow: () => mainWindow,
+          quickCreate: () => desktopControls.showQuick(),
         });
       } catch (error) {
         console.error("[TaskFlow] 托盘初始化失败。", error);

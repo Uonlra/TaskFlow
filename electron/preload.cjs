@@ -1,12 +1,44 @@
 const { contextBridge } = require("electron");
 const { ipcRenderer } = require("electron");
 
-const invoke = (channel, payload) => ipcRenderer.invoke(channel, payload);
+const invoke = async (channel, payload) => {
+  try {
+    return await ipcRenderer.invoke(channel, payload);
+  } catch (error) {
+    const message = String(error?.message || "桌面操作失败，请重试。").replace(
+      /^Error invoking remote method '[^']+': (?:Error|TypeError): /,
+      "",
+    );
+    throw new Error(message);
+  }
+};
+const subscribe = (channel, listener) => {
+  const handler = (_event, payload) => listener(payload);
+  ipcRenderer.on(channel, handler);
+  return () => ipcRenderer.removeListener(channel, handler);
+};
 
 contextBridge.exposeInMainWorld("taskflowDesktop", {
   isDesktop: true,
   platform: process.platform,
   version: process.versions.electron,
+  shell: {
+    quickWindow: process.argv.includes("--taskflow-quick"),
+    menu: () => invoke("taskflow:shell:menu"),
+    theme: (dark) => invoke("taskflow:shell:theme", dark),
+    onSettings: (listener) => subscribe("taskflow:shell:settings", listener),
+    onTasksChanged: (listener) => subscribe("taskflow:tasks:changed", listener),
+  },
+  quickCapture: {
+    show: () => invoke("taskflow:quick:show"),
+    hide: () => invoke("taskflow:quick:hide"),
+    create: (input) => invoke("taskflow:quick:create", input),
+    onFocus: (listener) => subscribe("taskflow:quick:focus", listener),
+  },
+  shortcuts: {
+    get: () => invoke("taskflow:shortcuts:get"),
+    set: (input) => invoke("taskflow:shortcuts:set", input),
+  },
   updates: {
     getState: () => invoke("taskflow:updates:state"),
     check: () => invoke("taskflow:updates:check"),
