@@ -68,13 +68,15 @@ describe("同步删除和完整分页", () => {
     expect((await getTask("secret", "gone", undefined, true)).deletedAt).toBe(row.deletedAt);
   });
   it("删除只写标记和逻辑时间，不物理删除行", async () => {
-    mocks.appwriteFetch
-      .mockResolvedValueOnce(syncRow("gone"))
-      .mockResolvedValueOnce(syncRow("gone", "2026-11-06T00:00:00Z"));
+    mocks.appwriteFetch.mockResolvedValue(syncRow("gone"));
     await deleteTask("secret", "gone", undefined, "2026-11-06T00:00:00Z");
-    expect(mocks.appwriteFetch.mock.calls[1][0]).toMatchObject({
+    const deletion = mocks.appwriteFetch.mock.calls.find(([call]) => call.body?.data?.deletedAt);
+    expect(deletion?.[0]).toMatchObject({
       method: "PATCH",
-      body: { data: { deletedAt: "2026-11-06T00:00:00Z", syncClientUpdatedAt: "2026-11-06T00:00:00Z" } },
+      body: {
+        transactionId: "gone",
+        data: { deletedAt: "2026-11-06T00:00:00Z", syncClientUpdatedAt: "2026-11-06T00:00:00Z" },
+      },
     });
   });
 });
@@ -262,7 +264,10 @@ describe("网页任务编辑", () => {
       priority: "medium",
     });
 
-    expect(mocks.appwriteFetch.mock.calls[0][0].body.data.syncClientUpdatedAt).toBeNull();
+    const update = mocks.appwriteFetch.mock.calls.find(
+      ([call]) => call.body?.data && "syncClientUpdatedAt" in call.body.data,
+    );
+    expect(update?.[0].body.data.syncClientUpdatedAt).toBeNull();
   });
 });
 

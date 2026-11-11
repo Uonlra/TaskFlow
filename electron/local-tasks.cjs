@@ -1,4 +1,14 @@
 const crypto = require("node:crypto");
+const {
+  assertOrdinaryTaskEdit,
+  executeTaskEvolution,
+  readTaskEvolutionJson,
+  parseTaskEvolution,
+  restoreTaskEvolution,
+  projectTaskEvolution,
+  assertEvolutionExtension,
+  assertTaskEvolutionProjection,
+} = require("./generated/task-evolution.cjs");
 
 const TASK_STATUSES = new Set(["todo", "in_progress", "done"]);
 const TASK_PRIORITIES = new Set(["low", "medium", "high"]);
@@ -45,7 +55,7 @@ function normalizeTaskInput(input) {
 }
 
 function mapTaskRow(row) {
-  return {
+  const task = {
     id: row.id,
     title: row.title,
     description: row.description,
@@ -56,7 +66,10 @@ function mapTaskRow(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     completedAt: row.completed_at ?? undefined,
+    ...(row.evolution_json != null ? { evolution: readTaskEvolutionJson(row.evolution_json, row.id) } : {}),
   };
+  assertTaskEvolutionProjection(task);
+  return task;
 }
 
 function queueOperation(database, input) {
@@ -88,9 +101,10 @@ function queueOperation(database, input) {
 function createLocalTask(database, accountId, input) {
   const normalizedAccountId = normalizeAccountId(accountId);
   const taskInput = normalizeTaskInput(input);
+  assertTaskEvolutionProjection(input);
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
-  const task = {
+  let task = {
     id,
     title: taskInput.title,
     description: taskInput.description,
@@ -102,13 +116,14 @@ function createLocalTask(database, accountId, input) {
     updatedAt: now,
     completedAt: taskInput.status === "done" ? now : undefined,
   };
+  if (input.evolution) task = projectTaskEvolution(task, restoreTaskEvolution(input.evolution, id), now);
 
   const transaction = database.transaction(() => {
     database
       .prepare(
         `INSERT INTO tasks
-          (id, account_id, title, description, status, priority, tags_json, due_date, completed_at, created_at, updated_at, sync_state)
-         VALUES (@id, @accountId, @title, @description, @status, @priority, @tagsJson, @dueDate, @completedAt, @createdAt, @updatedAt, 'pending')`,
+          (id, account_id, title, description, status, priority, tags_json, due_date, completed_at, created_at, updated_at, sync_state, evolution_json)
+         VALUES (@id, @accountId, @title, @description, @status, @priority, @tagsJson, @dueDate, @completedAt, @createdAt, @updatedAt, 'pending', @evolutionJson)`,
       )
       .run({
         id: task.id,
@@ -122,6 +137,7 @@ function createLocalTask(database, accountId, input) {
         completedAt: task.completedAt ?? null,
         createdAt: task.createdAt,
         updatedAt: task.updatedAt,
+        evolutionJson: task.evolution ? JSON.stringify(task.evolution) : null,
       });
 
     queueOperation(database, {
@@ -142,6 +158,7 @@ function updateLocalTask(database, accountId, taskId, input) {
   const taskInput = normalizeTaskInput(input);
   const current = getTaskRow(database, normalizedAccountId, taskId);
   if (!current) throw new Error("任务不存在。");
+  assertOrdinaryTaskEdit(mapTaskRow(current), taskInput);
 
   const now = nextTaskTimestamp(current.updated_at);
   const task = {
@@ -155,6 +172,7 @@ function updateLocalTask(database, accountId, taskId, input) {
     createdAt: current.created_at,
     updatedAt: now,
     completedAt: taskInput.status === "done" ? (current.completed_at ?? now) : undefined,
+    ...(current.evolution_json ? { evolution: readTaskEvolutionJson(current.evolution_json, taskId) } : {}),
   };
 
   const transaction = database.transaction(() => {
@@ -215,6 +233,39 @@ function getTaskRow(database, accountId, taskId) {
     .get(taskId, accountId);
 }
 
+function executeLocalTaskEvolution(database, accountId, taskId, command) {
+  const normalizedAccountId = normalizeAccountId(accountId);
+  return database.transaction(() => {
+    const current = getLocalTask(database, normalizedAccountId, taskId);
+    if (!current) throw new Error("任务不存在。");
+    const task = executeTaskEvolution(current, command, nextTaskTimestamp(current.updatedAt));
+    if (task === current) return current;
+    database
+      .prepare(
+        `UPDATE tasks SET title = @title, status = @status, completed_at = @completedAt,
+      evolution_json = @evolutionJson, updated_at = @updatedAt, sync_state = 'pending'
+      WHERE id = @id AND account_id = @accountId AND deleted_at IS NULL`,
+      )
+      .run({
+        id: taskId,
+        accountId: normalizedAccountId,
+        title: task.title,
+        status: task.status,
+        completedAt: task.completedAt ?? null,
+        evolutionJson: JSON.stringify(task.evolution),
+        updatedAt: task.updatedAt,
+      });
+    queueOperation(database, {
+      accountId: normalizedAccountId,
+      taskId,
+      operation: "upsert",
+      payload: task,
+      clientUpdatedAt: task.updatedAt,
+    });
+    return task;
+  })();
+}
+
 function getLocalTask(database, accountId, taskId) {
   const row = getTaskRow(database, normalizeAccountId(accountId), taskId);
   return row ? mapTaskRow(row) : null;
@@ -236,10 +287,10 @@ function upsertLocalTasks(database, accountId, tasks) {
     const statement = database.prepare(`
       INSERT INTO tasks
         (id, account_id, title, description, status, priority, tags_json, due_date, completed_at,
-         created_at, updated_at, deleted_at, remote_updated_at, sync_state)
+         created_at, updated_at, deleted_at, remote_updated_at, sync_state, evolution_json)
       VALUES
         (@id, @accountId, @title, @description, @status, @priority, @tagsJson, @dueDate, @completedAt,
-         @createdAt, @updatedAt, @deletedAt, @remoteUpdatedAt, 'synced')
+         @createdAt, @updatedAt, @deletedAt, @remoteUpdatedAt, 'synced', @evolutionJson)
       ON CONFLICT(id) DO UPDATE SET
         title = excluded.title,
         description = excluded.description,
@@ -252,9 +303,10 @@ function upsertLocalTasks(database, accountId, tasks) {
         updated_at = excluded.updated_at,
         deleted_at = excluded.deleted_at,
         remote_updated_at = excluded.remote_updated_at,
+        evolution_json = excluded.evolution_json,
         sync_state = 'synced'
       WHERE tasks.account_id = excluded.account_id
-        AND tasks.updated_at <= excluded.updated_at
+        AND (tasks.updated_at <= excluded.updated_at OR @historyAdvance = 1)
         AND NOT EXISTS (
           SELECT 1 FROM sync_queue
           WHERE sync_queue.account_id = tasks.account_id
@@ -264,6 +316,23 @@ function upsertLocalTasks(database, accountId, tasks) {
 
     for (const input of tasks) {
       const task = normalizeImportedTask(input);
+      const currentRow = database
+        .prepare("SELECT * FROM tasks WHERE id = ? AND account_id = ?")
+        .get(task.id, normalizedAccountId);
+      const current = currentRow ? mapTaskRow(currentRow) : null;
+      if (
+        database
+          .prepare("SELECT 1 FROM sync_queue WHERE account_id = ? AND task_id = ?")
+          .get(normalizedAccountId, task.id)
+      )
+        continue;
+      if (current?.evolution) {
+        if (task.evolution && current.evolution.revision > task.evolution.revision) {
+          assertEvolutionExtension(task.evolution, current.evolution);
+          continue;
+        }
+        assertEvolutionExtension(current.evolution, task.evolution);
+      }
       statement.run({
         id: task.id,
         accountId: normalizedAccountId,
@@ -278,6 +347,8 @@ function upsertLocalTasks(database, accountId, tasks) {
         updatedAt: task.updatedAt,
         remoteUpdatedAt: task.updatedAt,
         deletedAt: task.deletedAt ?? null,
+        evolutionJson: task.evolution ? JSON.stringify(task.evolution) : null,
+        historyAdvance: task.evolution && task.evolution.revision > (current?.evolution?.revision ?? -1) ? 1 : 0,
       });
     }
   });
@@ -289,7 +360,11 @@ function upsertLocalTasks(database, accountId, tasks) {
 function deleteLocalTask(database, accountId, taskId) {
   const normalizedAccountId = normalizeAccountId(accountId);
   if (normalizedAccountId === "local:device") {
-    database.prepare("DELETE FROM tasks WHERE id = ? AND account_id = ?").run(taskId, normalizedAccountId);
+    const current = getTaskRow(database, normalizedAccountId, taskId);
+    if (current)
+      database
+        .prepare("UPDATE tasks SET deleted_at = ?, updated_at = ? WHERE id = ? AND account_id = ?")
+        .run(nextTaskTimestamp(current.updated_at), nextTaskTimestamp(current.updated_at), taskId, normalizedAccountId);
     return;
   }
   const current = getTaskRow(database, normalizedAccountId, taskId);
@@ -309,7 +384,7 @@ function deleteLocalTask(database, accountId, taskId) {
       accountId: normalizedAccountId,
       taskId,
       operation: "delete",
-      payload: { id: taskId, deletedAt },
+      payload: { ...mapTaskRow(current), deletedAt },
       clientUpdatedAt: deletedAt,
     });
   });
@@ -407,9 +482,18 @@ function recordSyncOperationFailures(database, accountId, failures) {
   transaction();
 }
 
+function settleSyncOperations(database, accountId, operations, tasks) {
+  return database.transaction(() => {
+    acknowledgeSyncOperations(database, accountId, operations);
+    return upsertLocalTasks(database, accountId, tasks);
+  })();
+}
+
 module.exports = {
   acknowledgeSyncOperations,
   createLocalTask,
+  executeLocalTaskEvolution,
+  settleSyncOperations,
   deleteLocalTask,
   getLocalTask,
   listPendingSyncOperations,
@@ -425,7 +509,18 @@ function normalizeImportedTask(input) {
   if (typeof input.id !== "string" || !input.id.trim()) throw new TypeError("任务标识不正确。");
   const createdAt = typeof input.createdAt === "string" ? input.createdAt : new Date().toISOString();
   const updatedAt = input.syncClientUpdatedAt ?? (typeof input.updatedAt === "string" ? input.updatedAt : createdAt);
-  return { ...task, id: input.id, createdAt, updatedAt, deletedAt: input.deletedAt, completedAt: input.completedAt };
+  const evolution = input.evolution ? parseTaskEvolution(input.evolution, input.id) : undefined;
+  if (evolution && (evolution.goal.objective !== task.title || evolution.status !== task.status))
+    throw new Error("任务投影与演进记录不一致。");
+  return {
+    ...task,
+    id: input.id,
+    createdAt,
+    updatedAt,
+    deletedAt: input.deletedAt,
+    completedAt: input.completedAt,
+    ...(evolution ? { evolution } : {}),
+  };
 }
 
 function nextTaskTimestamp(previous) {

@@ -65,6 +65,7 @@ function TaskPreviewList({
         <button
           key={task.id}
           type="button"
+          data-task-preview-id={task.id}
           className={`dashboard-v2-task dashboard-v2-task--${task.priority}`}
           onClick={() => onPreviewTask(task)}
         >

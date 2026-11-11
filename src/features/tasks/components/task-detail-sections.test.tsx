@@ -13,11 +13,11 @@ describe("TaskDetailMoreContent", () => {
 
     const trigger = screen.getByRole("button", { name: "更多内容" });
     expect(trigger).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByText("暂无子任务，后续可在这里拆分执行步骤。")).not.toBeInTheDocument();
+    expect(screen.queryByText("暂无子任务")).not.toBeInTheDocument();
 
     await user.click(trigger);
 
     expect(trigger).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText("暂无子任务，后续可在这里拆分执行步骤。")).toBeInTheDocument();
+    expect(screen.getByText("暂无子任务")).toBeInTheDocument();
   });
 });

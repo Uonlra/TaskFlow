@@ -5,6 +5,7 @@ const { setTimeout: delay } = require("node:timers/promises");
 
 const { app, safeStorage } = require("electron");
 const Database = require("better-sqlite3-multiple-ciphers");
+const { migrateTaskEvolution } = require("./task-evolution-migration.cjs");
 
 const DATABASE_FILENAME = "taskflow.sqlite";
 const DATABASE_KEY_FILENAME = "taskflow.sqlite.key";
@@ -121,6 +122,7 @@ async function initializeDatabase() {
         ON sync_queue (account_id, created_at ASC);
     `);
 
+    migrateTaskEvolution(connection);
     database = connection;
     return database;
   } catch (error) {

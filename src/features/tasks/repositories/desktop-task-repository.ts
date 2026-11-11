@@ -1,5 +1,6 @@
 import type { TaskRepository } from "@/features/tasks/repositories/task-repository";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
+import type { TaskEvolutionCommand } from "@/features/tasks/schemas/task-evolution-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import type { TaskDueRangeQuery, TaskDueRangeResult, TaskRequestOptions } from "@/features/tasks/types/task-query";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
@@ -100,6 +101,13 @@ export class DesktopTaskRepository implements TaskRepository {
   async delete(id: string, options?: TaskRequestOptions): Promise<void> {
     throwIfAborted(options?.signal);
     await requireBridge().localTasks.delete({ accountId: await this.getAccountId(), taskId: id });
+  }
+
+  async executeEvolution(id: string, command: TaskEvolutionCommand, options?: TaskRequestOptions): Promise<Task> {
+    throwIfAborted(options?.signal);
+    return normalizeTask(
+      await requireBridge().localTasks.executeEvolution({ accountId: await this.getAccountId(), taskId: id, command }),
+    );
   }
 }
 

@@ -26,6 +26,7 @@ export default defineConfig([
   },
   prettier,
   globalIgnores([
+    "electron/generated/**",
     ".next/**",
     "desktop-web/.next/**",
     "desktop-web/out/**",

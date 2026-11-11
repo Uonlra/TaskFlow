@@ -7,6 +7,33 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 
 describe("TaskFormDialog", () => {
+  it("已有演进的任务保留目标和状态，只允许编辑普通属性", async () => {
+    const user = userEvent.setup();
+    const save = vi.fn();
+    render(
+      <TaskFormDialog
+        initiallyOpen
+        lockGoalAndStatus
+        initialValues={{
+          title: "当前目标",
+          description: "",
+          status: "in_progress",
+          priority: "medium",
+          tags: "",
+          dueDate: "",
+        }}
+        onSubmitTask={save}
+        submitLabel="保存属性"
+      />,
+    );
+    expect(screen.getByRole("textbox", { name: "任务名称" })).toHaveAttribute("readonly");
+    expect(screen.getByRole("button", { name: "任务状态" })).toBeDisabled();
+    await user.type(screen.getByRole("textbox", { name: "备注" }), "新背景");
+    await user.click(screen.getByRole("button", { name: "保存属性" }));
+    expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "当前目标", status: "in_progress", description: "新背景" }),
+    );
+  });
   beforeEach(() => {
     window.sessionStorage.clear();
     Object.defineProperty(window, "scrollTo", {

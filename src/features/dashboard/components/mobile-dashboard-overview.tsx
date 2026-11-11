@@ -215,6 +215,7 @@ function MobileTaskRow({
     <button
       type="button"
       className={`mobile-dashboard__task-row mobile-dashboard__task-row--${task.priority}`}
+      data-task-preview-id={task.id}
       onClick={() => onPreviewTask(task)}
     >
       <span className="mobile-dashboard__task-status" aria-hidden="true" />
@@ -235,7 +236,12 @@ function TimelineItem({
   onPreviewTask: (task: DashboardTaskPreview) => void;
 }) {
   return (
-    <button type="button" className="mobile-dashboard__timeline-item" onClick={() => onPreviewTask(task)}>
+    <button
+      type="button"
+      data-task-preview-id={task.id}
+      className="mobile-dashboard__timeline-item"
+      onClick={() => onPreviewTask(task)}
+    >
       <time>{formatShortDate(task.dueDate)}</time>
       <span>
         <strong>{task.title}</strong>

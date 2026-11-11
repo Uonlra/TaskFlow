@@ -22,6 +22,7 @@ type TaskFormDialogProps = {
   dialogTitle?: string;
   submitLabel?: string;
   triggerClassName?: string;
+  lockGoalAndStatus?: boolean;
 };
 
 const createTaskDefaults: TaskFormValues = {
@@ -47,6 +48,7 @@ export function TaskFormDialog({
   dialogTitle = "记下一条新的任务",
   submitLabel = "创建任务",
   triggerClassName,
+  lockGoalAndStatus = false,
 }: TaskFormDialogProps) {
   const createValues = { ...createTaskDefaults, ...createDefaults };
   const headingId = useId();
@@ -434,6 +436,9 @@ export function TaskFormDialog({
                   ) : null}
 
                   <section className="task-dialog__core" aria-label="任务内容">
+                    {lockGoalAndStatus ? (
+                      <p className="task-dialog__draft-note">目标和状态请在任务详情中通过目标调整或验收操作修改。</p>
+                    ) : null}
                     <Field label="任务名称" required error={errors.title?.message} errorId={titleErrorId}>
                       <input
                         {...register("title")}
@@ -444,6 +449,7 @@ export function TaskFormDialog({
                         }}
                         placeholder="例如：完成项目说明文档初稿"
                         aria-label="任务名称"
+                        readOnly={lockGoalAndStatus}
                         aria-invalid={Boolean(errors.title)}
                         aria-describedby={errors.title ? titleErrorId : undefined}
                       />
@@ -493,6 +499,7 @@ export function TaskFormDialog({
                             render={({ field }) => (
                               <CustomSelect
                                 ariaLabel="任务状态"
+                                disabled={lockGoalAndStatus}
                                 value={field.value}
                                 options={taskStatusOptions}
                                 onChange={field.onChange}

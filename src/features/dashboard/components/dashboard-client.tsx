@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { MobileDashboardOverview } from "@/features/dashboard/components/mobile-dashboard-overview";
@@ -15,6 +15,9 @@ import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics
 import type { Task } from "@/features/tasks/types/task.types";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { buildTasksHref } from "@/shared/lib/constants/query-params";
+import { getTaskRepository } from "@/features/tasks/repositories/task-repository-selector";
+import { isDesktopRuntime } from "@/shared/lib/desktop/bridge";
+import { latestTask } from "@/features/tasks/utils/task-evolution-navigation";
 
 type DashboardRange = "today" | "week" | "all";
 
@@ -45,12 +48,26 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
   const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
+  const executeEvolution = useTaskStore((state) => state.executeEvolution);
   const storeTasks = useTaskStore((state) => state.tasks);
   const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
   const syncedTasks = !isAuthLoading && (!user || lastLoadedUserId === user.id) ? storeTasks : [];
   const [preview, setPreview] = useState<{ userId?: string; task: Task } | null>(null);
-  const previewTask = preview?.userId === user?.id && !isAuthLoading ? (preview?.task ?? null) : null;
+  const previewTask =
+    preview?.userId === user?.id && !isAuthLoading
+      ? (latestTask(
+          preview?.task,
+          syncedTasks.find((task) => task.id === preview?.task.id),
+        ) ?? null)
+      : null;
   const setPreviewTask = (task: Task | null) => setPreview(task ? { userId: user?.id, task } : null);
+  const loadPreview = useCallback(
+    async (id: string) => {
+      if (!user?.id && !isDesktopRuntime()) return useTaskStore.getState().tasks.find((task) => task.id === id) ?? null;
+      return getTaskRepository(user?.id).get(id);
+    },
+    [user?.id],
+  );
   const {
     stats,
     hasAnyTasks,
@@ -81,7 +98,6 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
 
   const handleCreateTask = async (values: TaskFormValues) => {
     await createTaskAsync(values, user?.id);
-    await loadSummary();
   };
 
   const handlePreviewTask = (task: DashboardTaskPreview) => {
@@ -93,13 +109,11 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
 
   const handlePreviewStatus = async (task: Task) => {
     await updateTaskStatus(task.id, task.status === "done" ? "todo" : "done", user?.id);
-    await loadSummary();
     setPreviewTask(null);
   };
 
   const handlePreviewUpdate = async (task: Task, values: TaskFormValues) => {
     await updateTask(task.id, values, user?.id);
-    await loadSummary();
 
     const updatedTask = useTaskStore.getState().tasks.find((item) => item.id === task.id);
     setPreviewTask(updatedTask ?? null);
@@ -107,7 +121,6 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
 
   const handlePreviewDelete = async (task: Task) => {
     await deleteTask(task.id, user?.id);
-    await loadSummary();
     setPreviewTask(null);
   };
 
@@ -152,7 +165,18 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
         />
       </div>
       <TaskQuickViewDialog
+        key={user?.id ?? "guest"}
         task={previewTask}
+        onLoadTask={loadPreview}
+        onExecuteEvolution={async (task, command) => {
+          const saved = await executeEvolution(task.id, command, user?.id);
+          setPreview((current) =>
+            current && current.userId === user?.id && current.task.id === task.id
+              ? { ...current, task: saved }
+              : current,
+          );
+          return saved;
+        }}
         onClose={() => setPreviewTask(null)}
         onUpdateTask={handlePreviewUpdate}
         onToggleComplete={handlePreviewStatus}

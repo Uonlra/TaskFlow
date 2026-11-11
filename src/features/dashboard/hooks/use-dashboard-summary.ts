@@ -2,7 +2,7 @@
 
 import { useDesktopRuntime } from "@/shared/hooks/use-desktop-runtime";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
 import { dashboardRepository } from "@/features/dashboard/repositories/dashboard-repository";
@@ -28,6 +28,13 @@ export function useDashboardSummary({ range, status, priority, due }: DashboardS
     load,
     formatError,
   });
+  const observedTasks = useRef(tasks);
+  const reloadRemote = remote.reload;
+  useEffect(() => {
+    const changed = observedTasks.current !== tasks;
+    observedTasks.current = tasks;
+    if (changed && !isGuest && user?.id) void reloadRemote();
+  }, [tasks, isGuest, user?.id, reloadRemote]);
   const guestSummary = useMemo(() => {
     if (!isGuest) return null;
     const stats = buildDashboardStats(tasks, { range });

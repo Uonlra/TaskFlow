@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { executeTaskEvolution } from "@/features/tasks/domain/task-evolution-storage";
+import type { Task } from "@/features/tasks/types/task.types";
 
 const mocks = vi.hoisted(() => ({
   getAppwriteSessionSecret: vi.fn(),
@@ -76,6 +78,69 @@ function upsertOperation(overrides: Record<string, unknown> = {}) {
 }
 
 describe("/api/tasks/sync", () => {
+  it("历史分叉即使本地时间更新也不能覆盖，历史已包含则安全确认", async () => {
+    const base: Task = {
+      id: "task-1",
+      title: "知识库",
+      description: "",
+      status: "todo",
+      priority: "medium",
+      tags: [],
+      createdAt: "2026-10-01T00:00:00.000Z",
+    };
+    const command = {
+      operationId: "branch-a",
+      expectedRevision: 0,
+      action: { type: "create_branch", title: "A", question: "有效吗？" },
+    };
+    const local = executeTaskEvolution(base, command, "2026-10-02T00:00:00.000Z");
+    const fork = executeTaskEvolution(base, { ...command, operationId: "branch-b" }, "2026-10-02T00:00:00.000Z");
+    mocks.getTask.mockResolvedValue(fork);
+    const conflicted = await POST(requestFor([upsertOperation({ payload: local })]));
+    expect((await conflicted.json()).results[0]).toMatchObject({
+      status: "error",
+      message: expect.stringContaining("分叉"),
+    });
+    expect(mocks.updateTask).not.toHaveBeenCalled();
+    const newer = executeTaskEvolution(
+      local,
+      { operationId: "note", expectedRevision: 1, action: { type: "record_progress", note: "继续推进" } },
+      "2026-10-03T00:00:00.000Z",
+    );
+    mocks.getTask.mockResolvedValue(newer);
+    const contained = await POST(requestFor([upsertOperation({ payload: local })]));
+    expect((await contained.json()).results[0].status).toBe("stale");
+  });
+
+  it("删除离线新任务时也保存探索历史", async () => {
+    const base: Task = {
+      id: "task-1",
+      title: "知识库",
+      description: "",
+      status: "todo",
+      priority: "medium",
+      tags: [],
+      createdAt: "2026-10-01T00:00:00.000Z",
+    };
+    const saved = executeTaskEvolution(
+      base,
+      { operationId: "b", expectedRevision: 0, action: { type: "create_branch", title: "A", question: "有效吗？" } },
+      "2026-10-02T00:00:00.000Z",
+    );
+    mocks.getTask.mockRejectedValue(new mocks.AppwriteRequestError(404));
+    mocks.createTask.mockResolvedValue({ ...saved, deletedAt: "2026-10-30T09:00:00.000Z" });
+    const response = await POST(requestFor([upsertOperation({ operation: "delete", payload: saved })]));
+    expect((await response.json()).results[0].status).toBe("deleted");
+    expect(mocks.createTask).toHaveBeenCalledWith(
+      "session-secret",
+      "user-1",
+      expect.objectContaining({ evolution: saved.evolution }),
+      expect.any(NextRequest),
+      "task-1",
+      "2026-10-30T09:00:00.000Z",
+      "2026-10-30T09:00:00.000Z",
+    );
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAppwriteSessionSecret.mockResolvedValue("session-secret");

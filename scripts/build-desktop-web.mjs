@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import "./build-task-evolution-runtime.mjs";
 
 try {
   process.loadEnvFile(fileURLToPath(new URL("../.env.local", import.meta.url)));

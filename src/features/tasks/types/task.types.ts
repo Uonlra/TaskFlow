@@ -1,6 +1,7 @@
 export type { TaskPriority, TaskStatus } from "./task-values";
 
 import type { TaskPriority, TaskStatus } from "./task-values";
+import type { TaskEvolution } from "./task-evolution.types";
 
 export type Task = {
   id: string;
@@ -15,6 +16,7 @@ export type Task = {
   syncClientUpdatedAt?: string;
   deletedAt?: string;
   completedAt?: string;
+  evolution?: TaskEvolution;
 };
 
 export type TaskPageInitialData = {

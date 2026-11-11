@@ -53,6 +53,52 @@ function createBridge() {
 describe("flushDesktopSyncQueue", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it("大型快照按容量分批，尚未发送的操作不会被确认", async () => {
+    const bridge = createBridge();
+    const large = {
+      operationId: "operation-1",
+      accountId: "user-1",
+      taskId: "task-1",
+      operation: "upsert",
+      payload: { ...task, description: "a".repeat(1100000) },
+      clientUpdatedAt: task.updatedAt,
+      attempts: 0,
+      createdAt: task.createdAt,
+    };
+    bridge.syncQueue.list.mockResolvedValue([large, { ...large, operationId: "operation-2", taskId: "task-2" }]);
+    mocks.getDesktopBridge.mockReturnValue(bridge);
+    mocks.requestJson.mockResolvedValue({
+      results: [{ operationId: "operation-1", taskId: "task-1", status: "applied", task }],
+    });
+    expect(await flushDesktopSyncQueue("user-1")).toEqual({ processed: 1, failed: 0 });
+    expect(mocks.requestJson.mock.calls[0][1].body.operations).toHaveLength(1);
+    expect(bridge.syncQueue.acknowledge).toHaveBeenCalledWith({
+      accountId: "user-1",
+      operations: [{ operationId: "operation-1" }],
+    });
+  });
+
+  it("使用原子确认入口，失败时保留队列并记录错误", async () => {
+    const original = createBridge();
+    const bridge = {
+      ...original,
+      syncQueue: { ...original.syncQueue, settle: vi.fn().mockRejectedValueOnce(new Error("历史分叉")) },
+    };
+    mocks.getDesktopBridge.mockReturnValue(bridge);
+    mocks.requestJson.mockResolvedValue({
+      results: [{ operationId: "operation-1", taskId: "task-1", status: "applied", task }],
+    });
+    await expect(flushDesktopSyncQueue("user-1")).rejects.toThrow("历史分叉");
+    expect(bridge.syncQueue.acknowledge).not.toHaveBeenCalled();
+    expect(bridge.localTasks.upsert).not.toHaveBeenCalled();
+    expect(bridge.syncQueue.fail).toHaveBeenCalledWith({
+      accountId: "user-1",
+      failures: [{ operationId: "operation-1", message: "历史分叉" }],
+    });
+    bridge.syncQueue.settle.mockResolvedValueOnce([task]);
+    await expect(flushDesktopSyncQueue("user-1")).resolves.toEqual({ processed: 1, failed: 0 });
+  });
+
   it("提交队列并导入服务端返回的任务后确认操作", async () => {
     const bridge = createBridge();
     mocks.getDesktopBridge.mockReturnValue(bridge);

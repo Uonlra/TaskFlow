@@ -6,6 +6,8 @@ const { getWorkspace, connectWorkspace, pauseWorkspace } = require("./workspace.
 const {
   acknowledgeSyncOperations,
   createLocalTask,
+  executeLocalTaskEvolution,
+  settleSyncOperations,
   deleteLocalTask,
   getLocalTask,
   listPendingSyncOperations,
@@ -110,6 +112,10 @@ function registerIpcHandlers({ updates } = {}) {
     assertTrustedSender(event);
     return listLocalTasks(getActiveDatabase(input), input?.accountId);
   });
+  ipcMain.handle("taskflow:local-tasks:evolution", (event, input) => {
+    assertTrustedSender(event);
+    return executeLocalTaskEvolution(getActiveDatabase(input), input?.accountId, input?.taskId, input?.command);
+  });
 
   ipcMain.handle("taskflow:local-tasks:get", (event, input) => {
     assertTrustedSender(event);
@@ -144,6 +150,10 @@ function registerIpcHandlers({ updates } = {}) {
   ipcMain.handle("taskflow:sync-queue:list", (event, input) => {
     assertTrustedSender(event);
     return listPendingSyncOperations(getDatabase(), input?.accountId, input?.limit);
+  });
+  ipcMain.handle("taskflow:sync-queue:settle", (event, input) => {
+    assertTrustedSender(event);
+    return settleSyncOperations(getDatabase(), input?.accountId, input?.operations, input?.tasks);
   });
 
   ipcMain.handle("taskflow:sync-queue:acknowledge", (event, input) => {

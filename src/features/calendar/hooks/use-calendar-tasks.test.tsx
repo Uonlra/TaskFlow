@@ -60,6 +60,26 @@ afterEach(() => {
 });
 
 describe("useCalendarTasks", () => {
+  it("keeps a saved evolution visible if the follow-up calendar read fails", async () => {
+    auth.user = { id: "user-1" };
+    vi.spyOn(remoteTaskRepository, "listByDueRange")
+      .mockResolvedValueOnce(data())
+      .mockRejectedValueOnce(new Error("刷新失败"));
+    const updated = { ...task, title: "保存后的目标" };
+    const execute = vi.spyOn(remoteTaskRepository, "executeEvolution").mockResolvedValue(updated);
+    const { result } = renderHook(() => useCalendarTasks(range));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await act(async () => {
+      await result.current.executeEvolution(task.id, {
+        operationId: "progress",
+        expectedRevision: 0,
+        action: { type: "record_progress", note: "记录" },
+      });
+    });
+    expect(execute).toHaveBeenCalledOnce();
+    expect(result.current.tasks[0].title).toBe("保存后的目标");
+    expect(result.current.error).toBeTruthy();
+  });
   it("直接派生访客任务和提醒，响应其他页面的 Store 更新，且不发出请求", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 9, 15, 12));

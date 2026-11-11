@@ -1,4 +1,15 @@
 import "server-only";
+import { TaskEvolutionError } from "@/features/tasks/domain/task-evolution";
+import {
+  assertOrdinaryTaskEdit,
+  executeTaskEvolution,
+  readTaskEvolutionJson,
+  restoreTaskEvolution,
+  parseTaskEvolution,
+  assertEvolutionExtension,
+  assertTaskEvolutionProjection,
+} from "@/features/tasks/domain/task-evolution-storage";
+import { mutateTaskTransaction } from "./task-transaction";
 
 import { z } from "zod";
 import type { NextRequest } from "next/server";
@@ -447,6 +458,11 @@ export async function createTask(
   deletedAt?: string,
 ) {
   const rowId = taskId || crypto.randomUUID();
+  if (input.evolution) {
+    const evolution = parseTaskEvolution(input.evolution);
+    if (evolution.goal.objective !== input.title || evolution.status !== input.status)
+      throw new AppwriteRequestError(400, "任务投影与历史不一致。");
+  }
   const taskKey = Date.now();
   const row = await appwriteTaskRequest<AppwriteTaskRow>(
     "",
@@ -456,7 +472,11 @@ export async function createTask(
       request,
       body: {
         rowId,
-        data: { ...buildTaskData(input, taskKey, syncClientUpdatedAt), deletedAt: deletedAt ?? null },
+        data: {
+          ...buildTaskData(input, taskKey, syncClientUpdatedAt),
+          deletedAt: deletedAt ?? null,
+          ...(input.evolution ? { evolutionJson: JSON.stringify(restoreTaskEvolution(input.evolution, rowId)) } : {}),
+        },
         permissions: buildTaskPermissions(userId),
       },
     },
@@ -473,20 +493,58 @@ export async function updateTask(
   request?: NextRequest,
   syncClientUpdatedAt?: string,
 ) {
-  const row = await appwriteTaskRequest<AppwriteTaskRow>(
-    `/${taskId}`,
-    {
-      method: "PATCH",
-      sessionSecret,
-      request,
-      body: {
-        data: buildTaskData(input, undefined, syncClientUpdatedAt),
-      },
-    },
-    appwriteTaskRowSchema,
-  );
-
+  const row = await mutateTaskTransaction(sessionSecret, taskId, request, (raw) => {
+    const current = mapTaskRow(raw);
+    if (current.deletedAt && !syncClientUpdatedAt) throw new AppwriteRequestError(404, "任务不存在。");
+    if (syncClientUpdatedAt) {
+      if (input.evolution) {
+        const incoming = parseTaskEvolution(input.evolution, taskId);
+        if (incoming.goal.objective !== input.title || incoming.status !== input.status)
+          throw new AppwriteRequestError(400, "任务投影与历史不一致。");
+      }
+      assertEvolutionExtension(current.evolution, input.evolution);
+      const remoteTime = Date.parse(current.syncClientUpdatedAt ?? current.updatedAt ?? "");
+      if (remoteTime >= Date.parse(syncClientUpdatedAt)) {
+        if (input.evolution && input.evolution.revision > (current.evolution?.revision ?? -1)) {
+          throw new TaskEvolutionError("conflict", "云端任务已有修改，已保留本地探索记录。");
+        }
+        return null;
+      }
+    } else {
+      assertOrdinaryTaskEdit(current, input);
+      if (input.evolution) throw new AppwriteRequestError(400, "请使用演进操作更新历史。");
+    }
+    return {
+      ...buildTaskData(input, undefined, syncClientUpdatedAt),
+      completedAt: input.status === "done" ? (current.completedAt ?? new Date().toISOString()) : null,
+      ...(syncClientUpdatedAt && input.evolution ? { evolutionJson: JSON.stringify(input.evolution) } : {}),
+    };
+  });
   return mapTaskRow(row);
+}
+
+export async function executeTaskEvolutionRemote(
+  sessionSecret: string,
+  taskId: string,
+  command: unknown,
+  request?: NextRequest,
+) {
+  return mapTaskRow(
+    await mutateTaskTransaction(sessionSecret, taskId, request, (row) => {
+      const current = mapTaskRow(row);
+      const next = executeTaskEvolution(current, command, new Date().toISOString());
+      if (next === current) return null;
+      return {
+        title: next.title,
+        taskName: next.title,
+        status: next.status,
+        completedAt: next.completedAt ?? null,
+        searchText: buildTaskSearchText(next.title, next.description, next.tags),
+        evolutionJson: JSON.stringify(next.evolution),
+        syncClientUpdatedAt: null,
+      };
+    }),
+  );
 }
 
 export async function updateTaskStatus(
@@ -495,24 +553,18 @@ export async function updateTaskStatus(
   status: Task["status"],
   request?: NextRequest,
 ) {
-  const row = await appwriteTaskRequest<AppwriteTaskRow>(
-    `/${taskId}`,
-    {
-      method: "PATCH",
-      sessionSecret,
-      request,
-      body: {
-        data: {
-          status,
-          completedAt: status === "done" ? new Date().toISOString() : null,
-          syncClientUpdatedAt: null,
-        },
-      },
-    },
-    appwriteTaskRowSchema,
+  return mapTaskRow(
+    await mutateTaskTransaction(sessionSecret, taskId, request, (row) => {
+      const current = mapTaskRow(row);
+      if (current.deletedAt) throw new AppwriteRequestError(404, "任务不存在。");
+      assertOrdinaryTaskEdit(current, { title: current.title, status });
+      return {
+        status,
+        completedAt: status === "done" ? (current.completedAt ?? new Date().toISOString()) : null,
+        syncClientUpdatedAt: null,
+      };
+    }),
   );
-
-  return mapTaskRow(row);
 }
 
 export async function deleteTask(
@@ -520,25 +572,46 @@ export async function deleteTask(
   taskId: string,
   request?: NextRequest,
   clientUpdatedAt?: string,
+  snapshot?: TaskFormValues,
 ) {
-  const current = await getTask(sessionSecret, taskId, request, true);
-  if (current.deletedAt && !clientUpdatedAt) return current;
-  const timestamp =
-    clientUpdatedAt ??
-    new Date(
-      Math.max(Date.now(), Date.parse(current.syncClientUpdatedAt ?? current.updatedAt ?? "") + 1 || 0),
-    ).toISOString();
-  const row = await appwriteTaskRequest<AppwriteTaskRow>(
-    `/${taskId}`,
-    {
-      method: "PATCH",
-      sessionSecret,
-      request,
-      body: { data: { deletedAt: timestamp, syncClientUpdatedAt: timestamp } },
-    },
-    appwriteTaskRowSchema,
+  return mapTaskRow(
+    await mutateTaskTransaction(sessionSecret, taskId, request, (raw) => {
+      const current = mapTaskRow(raw);
+      if (snapshot?.evolution) {
+        parseTaskEvolution(snapshot.evolution, taskId);
+        assertEvolutionExtension(current.evolution, snapshot.evolution);
+      }
+      if (
+        clientUpdatedAt &&
+        Date.parse(current.syncClientUpdatedAt ?? current.updatedAt ?? "") >= Date.parse(clientUpdatedAt)
+      ) {
+        if (snapshot?.evolution && snapshot.evolution.revision > (current.evolution?.revision ?? -1)) {
+          throw new TaskEvolutionError("conflict", "云端任务已有修改，已保留本地删除和探索记录。");
+        }
+        return null;
+      }
+      if (current.deletedAt && !clientUpdatedAt) return null;
+      const timestamp =
+        clientUpdatedAt ??
+        new Date(
+          Math.max(Date.now(), Date.parse(current.syncClientUpdatedAt ?? current.updatedAt ?? "") + 1 || 0),
+        ).toISOString();
+      return {
+        deletedAt: timestamp,
+        syncClientUpdatedAt: timestamp,
+        ...(snapshot?.evolution
+          ? {
+              evolutionJson: JSON.stringify(snapshot.evolution),
+              title: snapshot.evolution.goal.objective,
+              taskName: snapshot.evolution.goal.objective,
+              status: snapshot.evolution.status,
+              completedAt: snapshot.evolution.status === "done" ? (current.completedAt ?? timestamp) : null,
+              searchText: buildTaskSearchText(snapshot.evolution.goal.objective, current.description, current.tags),
+            }
+          : {}),
+      };
+    }),
   );
-  return mapTaskRow(row);
 }
 
 export async function getTask(sessionSecret: string, taskId: string, request?: NextRequest, includeDeleted = false) {
@@ -556,7 +629,7 @@ export async function getTask(sessionSecret: string, taskId: string, request?: N
 }
 
 export function mapTaskRow(row: AppwriteTaskRow): Task {
-  return {
+  const task: Task = {
     id: row.$id,
     title: row.title || row.taskName || "",
     description: row.description,
@@ -569,7 +642,10 @@ export function mapTaskRow(row: AppwriteTaskRow): Task {
     syncClientUpdatedAt: row.syncClientUpdatedAt ?? undefined,
     deletedAt: row.deletedAt ?? undefined,
     completedAt: row.completedAt ?? undefined,
+    ...(row.evolutionJson != null ? { evolution: readTaskEvolutionJson(row.evolutionJson, row.$id) } : {}),
   };
+  assertTaskEvolutionProjection(task);
+  return task;
 }
 
 function buildTaskPermissions(userId: string) {

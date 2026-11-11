@@ -39,6 +39,18 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("useDashboardSummary", () => {
+  it("refreshes remote summaries after Store changes from another task view", async () => {
+    const getSummary = vi
+      .spyOn(dashboardRepository, "getSummary")
+      .mockResolvedValueOnce(summary())
+      .mockResolvedValueOnce(summary([{ ...task, title: "新目标" }]));
+    const { result, rerender } = renderHook(() => useDashboardSummary(query));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    mocks.tasks = [{ ...task, title: "新目标" }];
+    rerender();
+    await waitFor(() => expect(getSummary).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(result.current.stats.focusTasks[0].title).toBe("新目标"));
+  });
   it("cancels changed filters and only accepts the latest summary", async () => {
     const first = deferred<DashboardSummary>();
     const latest = deferred<DashboardSummary>();

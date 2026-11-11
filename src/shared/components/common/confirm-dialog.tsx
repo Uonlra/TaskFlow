@@ -50,10 +50,10 @@ export function ConfirmDialog({
 
   useEffect(() => {
     if (!open || !mounted) {
-      document.body.style.removeProperty("overflow");
       return;
     }
 
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     cancelButtonRef.current?.focus();
@@ -67,7 +67,7 @@ export function ConfirmDialog({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.removeProperty("overflow");
+      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isSubmitting, mounted, open]);

@@ -1,4 +1,5 @@
 node_modules
+electron/generated
 .next
 coverage
 playwright-report

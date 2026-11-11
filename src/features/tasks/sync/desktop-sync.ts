@@ -15,6 +15,7 @@ type DesktopSyncResponse = {
 };
 
 const inFlightSyncs = new Map<string, Promise<{ processed: number; failed: number }>>();
+const MAX_SYNC_BATCH_BYTES = 2000000;
 
 export async function pullDesktopSyncRecords(): Promise<Task[]> {
   const tasks: Task[] = [];
@@ -57,7 +58,15 @@ async function runDesktopSyncQueue(accountId: string) {
   const bridge = getDesktopBridge();
   if (!bridge) return { processed: 0, failed: 0 };
 
-  const operations = await bridge.syncQueue.list({ accountId, limit: 50 });
+  const pending = await bridge.syncQueue.list({ accountId, limit: 50 });
+  const operations: DesktopSyncOperation[] = [];
+  let batchBytes = 0;
+  for (const operation of pending) {
+    const size = new TextEncoder().encode(JSON.stringify(operation)).length;
+    if (operations.length && batchBytes + size > MAX_SYNC_BATCH_BYTES) break;
+    operations.push(operation);
+    batchBytes += size;
+  }
   if (!operations.length) return { processed: 0, failed: 0 };
 
   let payload: DesktopSyncResponse;
@@ -92,12 +101,29 @@ async function runDesktopSyncQueue(accountId: string) {
     if (result.task && isTask(result.task)) remoteTasks.push(result.task);
   }
 
-  if (acknowledged.length) {
-    await bridge.syncQueue.acknowledge({ accountId, operations: acknowledged });
-  }
+  if (bridge.syncQueue.settle) {
+    try {
+      await bridge.syncQueue.settle({ accountId, operations: acknowledged, tasks: remoteTasks });
+    } catch (error) {
+      await recordFailures(bridge, accountId, operations, error);
+      throw error;
+    }
+  } else {
+    if (
+      remoteTasks.some((task) => task.evolution) ||
+      operations.some(
+        (operation) => operation.payload && typeof operation.payload === "object" && "evolution" in operation.payload,
+      )
+    ) {
+      throw new Error("请更新桌面应用后同步探索记录。");
+    }
+    if (acknowledged.length) {
+      await bridge.syncQueue.acknowledge({ accountId, operations: acknowledged });
+    }
 
-  if (remoteTasks.length) {
-    await bridge.localTasks.upsert({ accountId, tasks: remoteTasks });
+    if (remoteTasks.length) {
+      await bridge.localTasks.upsert({ accountId, tasks: remoteTasks });
+    }
   }
 
   if (failures.length) {

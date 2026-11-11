@@ -1,5 +1,6 @@
 import { taskSchema, type TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
+import { parseTaskEvolution, assertTaskEvolutionProjection } from "@/features/tasks/domain/task-evolution-storage";
 
 const TASK_EXPORT_FORMAT = "taskflow-task-export";
 const TASK_EXPORT_VERSION = 1;
@@ -7,7 +8,7 @@ const LEGACY_TASK_EXPORT_SOURCE = "U's Task";
 
 type TaskExportPayload = {
   format: typeof TASK_EXPORT_FORMAT;
-  version: typeof TASK_EXPORT_VERSION;
+  version: 1 | 2;
   exportedAt: string;
   tasks: TaskFormValues[];
 };
@@ -35,9 +36,10 @@ export class PartialTaskImportError extends Error {
 }
 
 export function createTaskExportPayload(tasks: Task[]): TaskExportPayload {
+  for (const task of tasks) assertTaskEvolutionProjection(task);
   return {
     format: TASK_EXPORT_FORMAT,
-    version: TASK_EXPORT_VERSION,
+    version: tasks.some((task) => task.evolution) ? 2 : TASK_EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
     tasks: tasks.map((task) => ({
       title: task.title,
@@ -46,6 +48,7 @@ export function createTaskExportPayload(tasks: Task[]): TaskExportPayload {
       priority: task.priority,
       tags: task.tags.join(", "),
       dueDate: task.dueDate ?? "",
+      ...(task.evolution ? { evolution: parseTaskEvolution(task.evolution, task.id) } : {}),
     })),
   };
 }
@@ -81,7 +84,11 @@ export function parseTaskImportPayload(input: unknown): TaskFormValues[] {
     throw new Error("导入文件中的任务字段不符合要求。");
   }
 
-  return parsedTasks.data;
+  return parsedTasks.data.map((task) => {
+    const restored = { ...task, ...(task.evolution ? { evolution: parseTaskEvolution(task.evolution) } : {}) };
+    assertTaskEvolutionProjection(restored);
+    return restored;
+  });
 }
 
 function isLegacyTaskExportPayload(input: unknown): input is LegacyTaskExportPayload {
@@ -103,7 +110,7 @@ function isTaskExportPayload(input: unknown): input is TaskExportPayload {
   const payload = input as Partial<TaskExportPayload>;
   return (
     payload.format === TASK_EXPORT_FORMAT &&
-    payload.version === TASK_EXPORT_VERSION &&
+    (payload.version === TASK_EXPORT_VERSION || payload.version === 2) &&
     typeof payload.exportedAt === "string" &&
     Array.isArray(payload.tasks)
   );

@@ -11,6 +11,7 @@ import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 import type { TaskDueRangeQuery, TaskDueRangeResult } from "@/features/tasks/types/task-query";
 import type { Task } from "@/features/tasks/types/task.types";
+import type { TaskEvolutionCommand } from "@/features/tasks/schemas/task-evolution-schema";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 
 const emptyData: TaskDueRangeResult = {
@@ -36,6 +37,7 @@ export function useCalendarTasks({ from, to }: TaskDueRangeQuery) {
   const updateTask = useTaskStore((state) => state.updateTask);
   const updateTaskStatus = useTaskStore((state) => state.updateTaskStatus);
   const deleteTask = useTaskStore((state) => state.deleteTask);
+  const executeEvolution = useTaskStore((state) => state.executeEvolution);
   const key = !isDesktop && !isAuthLoading && isConfigured && userId ? JSON.stringify([userId, from, to]) : null;
   const [remoteState, setRemoteState] = useState<RemoteState | null>(null);
   const activeScope = useRef<string | null>(null);
@@ -66,7 +68,7 @@ export function useCalendarTasks({ from, to }: TaskDueRangeQuery) {
 
   const commit = useCallback((next: RemoteState | null) => {
     if (!next || activeScope.current !== next.key) return false;
-    setRemoteState(next);
+    setRemoteState((current) => (next.error && current?.key === next.key ? { ...next, data: current.data } : next));
     return !next.error;
   }, []);
 
@@ -126,6 +128,21 @@ export function useCalendarTasks({ from, to }: TaskDueRangeQuery) {
     deleteTask: async (id: string) => {
       await deleteTask(id, userId);
       return reload();
+    },
+    executeEvolution: async (id: string, command: TaskEvolutionCommand) => {
+      const saved = await executeEvolution(id, command, userId);
+      if (key && activeScope.current === key) {
+        setRemoteState((current) =>
+          current?.key === key
+            ? {
+                ...current,
+                data: { ...current.data, tasks: current.data.tasks.map((task) => (task.id === id ? saved : task)) },
+              }
+            : current,
+        );
+      }
+      await reload();
+      return saved;
     },
   };
 }

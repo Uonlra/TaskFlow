@@ -61,6 +61,7 @@ contextBridge.exposeInMainWorld("taskflowDesktop", {
     clear: () => invoke("taskflow:auth:clear"),
   },
   localTasks: {
+    executeEvolution: (input) => invoke("taskflow:local-tasks:evolution", input),
     list: (input) => invoke("taskflow:local-tasks:list", input),
     get: (input) => invoke("taskflow:local-tasks:get", input),
     upsert: (input) => invoke("taskflow:local-tasks:upsert", input),
@@ -70,6 +71,7 @@ contextBridge.exposeInMainWorld("taskflowDesktop", {
     delete: (input) => invoke("taskflow:local-tasks:delete", input),
   },
   syncQueue: {
+    settle: (input) => invoke("taskflow:sync-queue:settle", input),
     list: (input) => invoke("taskflow:sync-queue:list", input),
     acknowledge: (input) => invoke("taskflow:sync-queue:acknowledge", input),
     fail: (input) => invoke("taskflow:sync-queue:fail", input),

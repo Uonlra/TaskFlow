@@ -132,12 +132,35 @@
 }
 
 .task-quick-view-dialog {
-  width: min(560px, 100%);
+  --quick-view-danger: #b42323;
+  display: flex;
+  flex-direction: column;
+  width: min(640px, 100%);
   max-height: min(760px, calc(100dvh - 48px));
-  overflow-y: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
   border-radius: 8px;
   padding: 24px;
+}
+:root[data-theme="dark"] .task-quick-view-dialog {
+  --quick-view-danger: #ff9c9c;
+}
+.task-quick-view-dialog.card-surface {
+  background: var(--surface-strong);
+  color: var(--foreground);
+}
+.task-quick-view-dialog .task-detail-status {
+  color: var(--foreground);
+  background: var(--surface-soft);
+}
+.task-quick-view-dialog__actions .tesla-action--danger {
+  color: var(--quick-view-danger);
+}
+.task-quick-view-dialog__actions .tesla-action--secondary,
+.task-quick-view-dialog__actions .tesla-action--danger {
+  background: var(--surface-strong);
+  border-color: var(--border-strong);
+  box-shadow: none;
 }
 
 .task-quick-view-dialog__header,
@@ -150,21 +173,112 @@
 }
 
 .task-quick-view-dialog__header {
+  flex-shrink: 0;
   justify-content: space-between;
   gap: 20px;
 }
 
 .task-quick-view-dialog__header h2 {
-  margin: 8px 0 0;
+  margin: 0;
   font-size: 1.45rem;
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
-.task-quick-view-dialog__body {
+.task-quick-view-dialog__progress,
+.task-quick-view-dialog .task-evolution-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface-strong);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.task-quick-view-dialog .task-evolution-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.task-quick-view-dialog .task-evolution-form .task-evolution-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+}
+.task-evolution-preview {
   display: grid;
-  gap: 18px;
-  margin-top: 24px;
+  gap: 16px;
+}
+.task-evolution-preview__attention {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--primary);
+  border-radius: 4px;
+  color: var(--foreground);
+  background: var(--primary-surface);
+  text-decoration: none;
+}
+.task-evolution-preview__attention > span {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.task-evolution-preview__attention strong {
+  font-size: 12px;
+}
+.task-evolution-preview__attention span > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.task-evolution-preview__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.task-evolution-preview .task-evolution-graph {
+  padding: 16px 0 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: transparent;
+}
+.task-evolution-preview .task-evolution-graph-heading h2 {
+  font-size: 16px;
+}
+.task-evolution-preview .task-evolution-graph-toolbar,
+.task-evolution-preview .task-evolution-graph-footer {
+  display: none;
+}
+.task-evolution-preview .task-evolution-graph .task-evolution-actions a {
+  color: var(--foreground);
+  font-size: 12px;
+  text-underline-offset: 4px;
+}
+
+.task-quick-view-dialog__body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+  padding-right: 4px;
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
 }
 
 .task-quick-view-dialog__body h3,
@@ -287,10 +401,11 @@
 }
 
 .task-quick-view-dialog__actions {
+  flex-shrink: 0;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 28px;
-  padding-top: 18px;
+  margin-top: 16px;
+  padding-top: 12px;
   border-top: 1px solid var(--border);
 }
 
@@ -328,6 +443,10 @@
 
   .task-quick-view-dialog__actions .tesla-action {
     flex: 1 1 100%;
+  }
+  .task-quick-view-dialog .task-quick-view-dialog__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .task-quick-view-dialog__meta {

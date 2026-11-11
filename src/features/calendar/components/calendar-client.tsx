@@ -103,6 +103,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     updateTask,
     updateTaskStatus,
     deleteTask,
+    executeEvolution,
   } = useCalendarTasks({ from: rangeFrom, to: rangeTo });
   const isSyncing = isLoading;
   const dueTasks = useMemo(() => tasks.filter(hasValidDueDate), [tasks]);
@@ -340,6 +341,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
       />
       <TaskQuickViewDialog
         task={previewTask}
+        onExecuteEvolution={(task, command) => executeEvolution(task.id, command)}
         onClose={closeTaskPreview}
         onUpdateTask={handleUpdateTask}
         onToggleComplete={handleToggleTaskComplete}

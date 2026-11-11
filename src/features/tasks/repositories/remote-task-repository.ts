@@ -1,5 +1,6 @@
 import type { TaskRepository } from "@/features/tasks/repositories/task-repository";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
+import type { TaskEvolutionCommand } from "@/features/tasks/schemas/task-evolution-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import type { TaskDueRangeQuery, TaskDueRangeResult, TaskRequestOptions } from "@/features/tasks/types/task-query";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
@@ -78,6 +79,15 @@ export class RemoteTaskRepository implements TaskRepository {
 
   async delete(id: string, options?: TaskRequestOptions): Promise<void> {
     await request(taskPath(id), { method: "DELETE", ...options });
+  }
+
+  async executeEvolution(id: string, command: TaskEvolutionCommand, options?: TaskRequestOptions): Promise<Task> {
+    const payload = await request<{ task: Task }>(`${taskPath(id)}/evolution`, {
+      method: "POST",
+      body: command,
+      ...options,
+    });
+    return payload.task;
   }
 }
 

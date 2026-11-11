@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { parseTaskEvolution, assertEvolutionExtension } from "@/features/tasks/domain/task-evolution-storage";
+import { TaskEvolutionError } from "@/features/tasks/domain/task-evolution";
+import { taskEvolutionSnapshotSchema } from "@/features/tasks/schemas/task-evolution-snapshot-schema";
 
 import { taskSchema, type TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { taskPrioritySchema, taskStatusSchema } from "@/features/tasks/types/task-values";
@@ -31,6 +34,7 @@ const syncTaskPayloadSchema = z.object({
   priority: taskPrioritySchema,
   tags: z.union([z.array(z.string()), z.string()]).optional(),
   dueDate: z.string().optional(),
+  evolution: taskEvolutionSnapshotSchema.optional(),
 });
 
 const syncOperationSchema = z.object({
@@ -79,12 +83,12 @@ export async function POST(request: NextRequest) {
   for (const operation of parsed.data.operations) {
     try {
       results.push(await applySyncOperation(sessionSecret, auth.user.id, operation, request));
-    } catch {
+    } catch (error) {
       results.push({
         operationId: operation.operationId,
         taskId: operation.taskId,
         status: "error",
-        message: "同步任务失败，将在下次联网时重试。",
+        message: error instanceof TaskEvolutionError ? error.message : "同步任务失败，将在下次联网时重试。",
       });
     }
   }
@@ -99,6 +103,10 @@ async function applySyncOperation(
   request: NextRequest,
 ): Promise<SyncResult> {
   if (operation.operation === "delete") {
+    const snapshot =
+      operation.payload && typeof operation.payload === "object" && "title" in operation.payload
+        ? parseTaskPayload(operation.payload, operation.taskId)
+        : undefined;
     const remote = await findRemoteTask(sessionSecret, operation.taskId, request);
 
     if (!remote) {
@@ -106,7 +114,7 @@ async function applySyncOperation(
       const tombstone = await createTask(
         sessionSecret,
         userId,
-        { title: "已删除任务", description: "", status: "todo", priority: "medium", tags: "", dueDate: "" },
+        snapshot ?? { title: "已删除任务", description: "", status: "todo", priority: "medium", tags: "", dueDate: "" },
         request,
         operation.taskId,
         operation.clientUpdatedAt,
@@ -115,16 +123,41 @@ async function applySyncOperation(
       return { operationId: operation.operationId, taskId: operation.taskId, status: "deleted", task: tombstone };
     }
 
+    if (snapshot?.evolution) assertEvolutionExtension(remote.evolution, snapshot.evolution);
+    if (
+      snapshot?.evolution &&
+      snapshot.evolution.revision > (remote.evolution?.revision ?? -1) &&
+      isRemoteNewer(remote, operation.clientUpdatedAt)
+    ) {
+      throw new TaskEvolutionError("conflict", "云端任务已有修改，已保留本地删除和探索记录。");
+    }
     if (isRemoteNewer(remote, operation.clientUpdatedAt)) {
       return { operationId: operation.operationId, taskId: operation.taskId, status: "stale", task: remote };
     }
 
-    const tombstone = await deleteTask(sessionSecret, operation.taskId, request, operation.clientUpdatedAt);
+    const tombstone = await deleteTask(sessionSecret, operation.taskId, request, operation.clientUpdatedAt, snapshot);
     return { operationId: operation.operationId, taskId: operation.taskId, status: "deleted", task: tombstone };
   }
 
   const input = parseTaskPayload(operation.payload, operation.taskId);
   const remote = await findRemoteTask(sessionSecret, operation.taskId, request);
+
+  if (remote?.evolution) {
+    // Only acknowledge a superseded snapshot when all its events are present remotely.
+    if (input.evolution && remote.evolution.revision > input.evolution.revision) {
+      assertEvolutionExtension(input.evolution, remote.evolution);
+      return { operationId: operation.operationId, taskId: operation.taskId, status: "stale", task: remote };
+    }
+    assertEvolutionExtension(remote.evolution, input.evolution);
+  }
+  if (
+    remote &&
+    input.evolution &&
+    input.evolution.revision > (remote.evolution?.revision ?? -1) &&
+    isRemoteNewer(remote, operation.clientUpdatedAt)
+  ) {
+    throw new TaskEvolutionError("conflict", "云端任务已有修改，已保留本地探索记录，请处理同步冲突。");
+  }
 
   if (remote && isRemoteNewer(remote, operation.clientUpdatedAt)) {
     return { operationId: operation.operationId, taskId: operation.taskId, status: "stale", task: remote };
@@ -143,6 +176,20 @@ async function applySyncOperation(
 
     const existing = await findRemoteTask(sessionSecret, operation.taskId, request);
     if (!existing) throw error;
+    if (existing.evolution) {
+      if (input.evolution && existing.evolution.revision > input.evolution.revision) {
+        assertEvolutionExtension(input.evolution, existing.evolution);
+        return { operationId: operation.operationId, taskId: operation.taskId, status: "stale", task: existing };
+      }
+      assertEvolutionExtension(existing.evolution, input.evolution);
+    }
+    if (
+      input.evolution &&
+      input.evolution.revision > (existing.evolution?.revision ?? -1) &&
+      isRemoteNewer(existing, operation.clientUpdatedAt)
+    ) {
+      throw new TaskEvolutionError("conflict", "云端任务已有修改，已保留本地探索记录。");
+    }
     if (isRemoteNewer(existing, operation.clientUpdatedAt)) {
       return { operationId: operation.operationId, taskId: operation.taskId, status: "stale", task: existing };
     }
@@ -159,6 +206,11 @@ function parseTaskPayload(payload: unknown, taskId: string): TaskFormValues {
   }
 
   const tags = Array.isArray(parsed.data.tags) ? parsed.data.tags.join(", ") : (parsed.data.tags ?? "");
+  if (parsed.data.evolution) {
+    const evolution = parseTaskEvolution(parsed.data.evolution, taskId);
+    if (evolution.goal.objective !== parsed.data.title || evolution.status !== parsed.data.status)
+      throw new TaskEvolutionError("invalid", "任务投影与历史不一致。");
+  }
   return taskSchema.parse({ ...parsed.data, tags });
 }
 
