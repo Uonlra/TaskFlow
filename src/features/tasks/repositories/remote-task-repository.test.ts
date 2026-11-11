@@ -31,6 +31,22 @@ const formValues: TaskFormValues = {
 afterEach(() => vi.restoreAllMocks());
 
 describe("RemoteTaskRepository", () => {
+  it("posts evolution commands to the encoded task path with cancellation", async () => {
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(jsonResponse({ task }));
+    const controller = new AbortController();
+    const command = {
+      operationId: "b",
+      expectedRevision: 0,
+      action: { type: "create_branch" as const, title: "A", question: "有效吗？" },
+    };
+    expect(await repository.executeEvolution(task.id, command, { signal: controller.signal })).toEqual(task);
+    expect(fetchMock.mock.calls[0][0]).toContain("/api/tasks/task%2Fone/evolution");
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({
+      method: "POST",
+      signal: controller.signal,
+      body: JSON.stringify(command),
+    });
+  });
   it("serializes all page filters, bypasses cache, and forwards cancellation", async () => {
     const result = getTaskPage([task], DEFAULT_TASK_FILTERS);
     const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(jsonResponse(result));

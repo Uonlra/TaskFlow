@@ -1,7 +1,9 @@
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
+import type { TaskEvolutionCommand } from "@/features/tasks/schemas/task-evolution-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 
 export type DesktopLocalTasksBridge = {
+  executeEvolution(input: { accountId: string; taskId: string; command: TaskEvolutionCommand }): Promise<Task>;
   list(input: { accountId: string }): Promise<Task[]>;
   get(input: { accountId: string; taskId: string }): Promise<Task | null>;
   upsert(input: { accountId: string; tasks: Task[] }): Promise<Task[]>;
@@ -24,6 +26,7 @@ export type DesktopSyncOperation = {
 };
 
 export type DesktopSyncQueueBridge = {
+  settle?(input: { accountId: string; operations: Array<{ operationId: string }>; tasks: Task[] }): Promise<Task[]>;
   list(input: { accountId: string; limit?: number }): Promise<DesktopSyncOperation[]>;
   acknowledge(input: { accountId: string; operations: Array<{ operationId: string }> }): Promise<void>;
   fail(input: { accountId: string; failures: Array<{ operationId: string; message?: string }> }): Promise<void>;

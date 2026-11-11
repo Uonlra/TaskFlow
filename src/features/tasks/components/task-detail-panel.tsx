@@ -1,6 +1,7 @@
 "use client";
 
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import Link from "next/link";
 import { useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
@@ -129,7 +130,9 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
 
           <TaskDetailPropertyList
             task={task}
-            onStatusClick={() => void onUpdateStatus(task.id, task.status === "done" ? "todo" : "done")}
+            onStatusClick={
+              task.evolution ? undefined : () => void onUpdateStatus(task.id, task.status === "done" ? "todo" : "done")
+            }
           />
           <TaskDetailTags task={task} />
         </div>
@@ -165,7 +168,11 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
       )}
 
       <footer className="task-detail-panel__actions">
+        <Link className="task-detail-panel__exploration-link" href={`/tasks/${encodeURIComponent(task.id)}`}>
+          探索与成果采纳 →
+        </Link>
         <TaskFormDialog
+          lockGoalAndStatus={Boolean(task.evolution)}
           onSubmitTask={(values) => onUpdateTask(task.id, values)}
           initialValues={taskValues}
           triggerLabel="编辑"

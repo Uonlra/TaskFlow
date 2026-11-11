@@ -34,7 +34,7 @@ describe("TaskDetailPanel", () => {
     renderPanel({ ...task, tags: [] });
 
     expect(screen.getByText("未添加")).toBeInTheDocument();
-    expect(screen.getByText("暂无标签，可通过编辑任务添加。")).toBeInTheDocument();
+    expect(screen.getByText("暂无标签")).toBeInTheDocument();
   });
 
   it("shows verified activity events in reverse chronological order", async () => {

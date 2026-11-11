@@ -135,7 +135,7 @@ function PriorityTaskRow({
   const className = ["dashboard-workspace__task", "dashboard-workspace__task--" + task.priority].join(" ");
 
   return (
-    <button type="button" className={className} onClick={() => onPreviewTask(task)}>
+    <button type="button" data-task-preview-id={task.id} className={className} onClick={() => onPreviewTask(task)}>
       <span className="dashboard-workspace__check" aria-hidden="true" />
       <strong>{task.title}</strong>
       <span className="dashboard-workspace__priority-label">{priorityLabels[task.priority]}优先级</span>

@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
 const Database = require("better-sqlite3-multiple-ciphers");
+const { migrateTaskEvolution } = require("./task-evolution-migration.cjs");
 const {
   acknowledgeSyncOperations,
   createLocalTask,
@@ -29,6 +30,7 @@ function createDatabase() {
       attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT, created_at TEXT NOT NULL
     );
   `);
+  migrateTaskEvolution(database);
   return database;
 }
 

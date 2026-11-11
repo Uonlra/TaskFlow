@@ -15,3 +15,11 @@ Display the response's page number: deleting the last item on a page can cause p
 ## Task transfer
 
 `utils/task-transfer.ts` defines the portable JSON format for both guest and account exports. The importer also accepts the earlier `source: "U's Task"` backup shape and validates its task fields before creating anything. Imports append tasks sequentially. If a later save fails, the list refreshes once and reports how many tasks were saved, which item failed, and that retrying the whole file would duplicate completed items.
+
+## Task evolution persistence
+
+`Task.evolution` is optional for legacy tasks. `executeEvolution` is the mutation boundary for exploration commands; it persists the task projection and complete history together. Browser guests retain the existing per-tab session storage policy. Desktop SQLite includes history in its transaction and sync queue; cloud mutations use a transaction fence and row permissions. Snapshot synchronization rejects divergent histories instead of choosing one by timestamp.
+
+Exports containing evolution use v2 and validate history by replay before import. Ordinary task edits cannot bypass goal and completion commands once a task has history. The full detail page now exposes exploration, conclusions, adoption, goal changes, review, withdrawal, and acceptance; see [detail workflow](../../../docs/task-evolution-detail.md). The [Git-style evolution graph](../../../docs/task-evolution-graph.md) uses D3 Shape for SVG paths and React for accessible event rows. [Quick views](../../../docs/task-evolution-overview.md) now show decision attention, five key events, and progress recording, with links to the exact detail event or result.
+
+See [persistence and deployment](../../../docs/task-evolution-persistence.md) for migrations, capacity limits, verification, and the generated Electron runtime build.

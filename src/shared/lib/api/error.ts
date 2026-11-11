@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { TaskEvolutionError } from "@/features/tasks/domain/task-evolution";
 
 import { AppwriteRequestError } from "@/shared/lib/appwrite/server";
 
@@ -12,6 +13,14 @@ const statusMessages: Record<number, string> = {
 };
 
 export function handleApiError(error: unknown, fallbackMessage = "服务暂时不可用，请稍后再试。"): NextResponse {
+  if (error instanceof TaskEvolutionError) {
+    return NextResponse.json(
+      { message: error.message, code: error.code },
+      {
+        status: error.code === "conflict" ? 409 : error.code === "not_found" ? 404 : 400,
+      },
+    );
+  }
   if (error instanceof AppwriteRequestError) {
     const status = error.status || 500;
     const message = statusMessages[status] ?? fallbackMessage;

@@ -136,6 +136,7 @@ export function DashboardEmptyOrbit({ tasks, onPreviewTask, onCreateTask }: Dash
             <button
               key={task.id}
               type="button"
+              data-task-preview-id={task.id}
               className={`dashboard-empty-orbit__node dashboard-empty-orbit__node--position-${index % 8}${taskTone}`}
               onClick={() => {
                 setSelectedTaskId(task.id);

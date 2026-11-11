@@ -13,6 +13,7 @@ const repositoryMocks = vi.hoisted(() => ({
   update: vi.fn(),
   updateStatus: vi.fn(),
   delete: vi.fn(),
+  executeEvolution: vi.fn(),
 }));
 
 vi.mock("@/features/tasks/repositories/remote-task-repository", () => ({
@@ -57,6 +58,48 @@ afterEach(() => {
 });
 
 describe("task store", () => {
+  it("从详情页修改尚未包含在本地分页集合的任务时保留服务端新记录", async () => {
+    const updated = makeTask({ id: "detail-only", title: "详情页新内容" });
+    repositoryMocks.update.mockResolvedValue(updated);
+    await useTaskStore.getState().updateTask(updated.id, formValues, "user-1");
+    expect(useTaskStore.getState().tasks).toEqual([updated]);
+  });
+  it("访客演进刷新后恢复，重复提交不重复记账，旧状态入口不能绕过验收", async () => {
+    const id = await useTaskStore.getState().createTaskAsync(formValues);
+    const command = {
+      operationId: "branch",
+      expectedRevision: 0,
+      action: { type: "create_branch" as const, title: "方案 A", question: "是否有效？" },
+    };
+    const saved = await useTaskStore.getState().executeEvolution(id, command);
+    useTaskStore.setState({ tasks: [] });
+    useTaskStore.getState().hydrateGuestTasks();
+    expect(useTaskStore.getState().tasks[0]).toEqual(saved);
+    expect(await useTaskStore.getState().executeEvolution(id, command)).toEqual(saved);
+    await expect(useTaskStore.getState().updateTaskStatus(id, "done")).rejects.toThrow("验收");
+  });
+
+  it("访客存储失败时不提交内存状态或演进历史", async () => {
+    const id = await useTaskStore.getState().createTaskAsync(formValues);
+    const before = useTaskStore.getState().tasks;
+    const stored = window.sessionStorage.getItem(GUEST_TASKS_STORAGE_KEY);
+    const spy = vi.spyOn(Object.getPrototypeOf(window.sessionStorage), "setItem").mockImplementationOnce(() => {
+      throw new Error("quota");
+    });
+    try {
+      await expect(
+        useTaskStore.getState().executeEvolution(id, {
+          operationId: "b",
+          expectedRevision: 0,
+          action: { type: "create_branch", title: "方案", question: "问题" },
+        }),
+      ).rejects.toThrow("本地保存失败");
+      expect(useTaskStore.getState().tasks).toBe(before);
+      expect(window.sessionStorage.getItem(GUEST_TASKS_STORAGE_KEY)).toBe(stored);
+    } finally {
+      spy.mockRestore();
+    }
+  });
   it("initializeTasks 写入服务端预取数据并规范化 tags", () => {
     useTaskStore.getState().initializeTasks(
       [

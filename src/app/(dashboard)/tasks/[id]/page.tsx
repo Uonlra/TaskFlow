@@ -13,5 +13,19 @@ type TaskDetailPageProps = {
 export default async function TaskDetailPage({ params, searchParams }: TaskDetailPageProps) {
   const { id } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  return <TaskDetailClient id={id} initiallyEditing={resolvedSearchParams?.edit === "true"} />;
+  const value = (key: string) =>
+    typeof resolvedSearchParams?.[key] === "string" ? (resolvedSearchParams[key] as string) : undefined;
+  const action = value("action");
+  return (
+    <TaskDetailClient
+      id={id}
+      initiallyEditing={value("edit") === "true"}
+      evolutionTarget={{
+        eventId: value("event"),
+        branchId: value("branch"),
+        resultId: value("result"),
+        action: action === "adopt" || action === "review" ? action : undefined,
+      }}
+    />
+  );
 }

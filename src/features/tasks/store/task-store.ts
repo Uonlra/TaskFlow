@@ -1,6 +1,14 @@
 "use client";
 
 import { create } from "zustand";
+import type { TaskEvolutionCommand } from "@/features/tasks/schemas/task-evolution-schema";
+import {
+  assertOrdinaryTaskEdit,
+  executeTaskEvolution,
+  restoreTaskEvolution,
+  projectTaskEvolution,
+  assertTaskEvolutionProjection,
+} from "@/features/tasks/domain/task-evolution-storage";
 
 import { remoteTaskRepository } from "@/features/tasks/repositories/remote-task-repository";
 import { DesktopTaskRepository } from "@/features/tasks/repositories/desktop-task-repository";
@@ -29,6 +37,7 @@ type TaskStore = {
   updateTask: (id: string, input: TaskFormValues, userId?: string) => Promise<void>;
   updateTaskStatus: (id: string, status: Task["status"], userId?: string) => Promise<void>;
   deleteTask: (id: string, userId?: string) => Promise<void>;
+  executeEvolution: (id: string, command: TaskEvolutionCommand, userId?: string) => Promise<Task>;
 };
 
 export const useTaskStore = create<TaskStore>()((set) => ({
@@ -119,6 +128,24 @@ export const useTaskStore = create<TaskStore>()((set) => ({
     set((state) => ({ tasks: [createdTask, ...state.tasks], error: null }));
     return createdTask.id;
   },
+  executeEvolution: async (id, command, userId) => {
+    if (!userId && !isDesktopRuntime()) {
+      let updated: Task | undefined;
+      set((state) => {
+        const current = state.tasks.find((task) => task.id === id);
+        if (!current) throw new Error("任务不存在。");
+        updated = executeTaskEvolution(current, command, new Date().toISOString());
+        if (updated === current) return state;
+        const tasks = state.tasks.map((task) => (task.id === id ? updated! : task));
+        writeGuestTasks(tasks);
+        return { tasks, error: null };
+      });
+      return updated!;
+    }
+    const updated = normalizeTask(await getTaskRepository(userId).executeEvolution(id, command));
+    set((state) => ({ tasks: replaceKnownTask(state.tasks, updated), error: null }));
+    return updated;
+  },
   updateTask: async (id, input, userId) => {
     if (!userId && !isDesktopRuntime()) {
       set((state) => {
@@ -131,7 +158,7 @@ export const useTaskStore = create<TaskStore>()((set) => ({
 
     const updatedTask = normalizeTask(await getTaskRepository(userId).update(id, input));
     set((state) => ({
-      tasks: state.tasks.map((task) => (task.id === id ? updatedTask : task)),
+      tasks: replaceKnownTask(state.tasks, updatedTask),
       error: null,
     }));
   },
@@ -147,7 +174,7 @@ export const useTaskStore = create<TaskStore>()((set) => ({
 
     const updatedTask = normalizeTask(await getTaskRepository(userId).updateStatus(id, status));
     set((state) => ({
-      tasks: state.tasks.map((task) => (task.id === id ? updatedTask : task)),
+      tasks: replaceKnownTask(state.tasks, updatedTask),
       error: null,
     }));
   },
@@ -176,8 +203,9 @@ async function mergeGuestTasks() {
 }
 
 function createGuestTask(input: TaskFormValues): Task {
+  assertTaskEvolutionProjection(input);
   const now = new Date().toISOString();
-  return {
+  const task: Task = {
     id: crypto.randomUUID(),
     title: input.title,
     description: input.description,
@@ -189,9 +217,11 @@ function createGuestTask(input: TaskFormValues): Task {
     updatedAt: now,
     completedAt: input.status === "done" ? now : undefined,
   };
+  return input.evolution ? projectTaskEvolution(task, restoreTaskEvolution(input.evolution, task.id), now) : task;
 }
 
 function updateGuestTask(task: Task, input: TaskFormValues): Task {
+  assertOrdinaryTaskEdit(task, input);
   const updatedAt = new Date().toISOString();
   return {
     ...task,
@@ -207,6 +237,7 @@ function updateGuestTask(task: Task, input: TaskFormValues): Task {
 }
 
 function updateGuestTaskStatus(task: Task, status: Task["status"]): Task {
+  assertOrdinaryTaskEdit(task, { title: task.title, status });
   const updatedAt = new Date().toISOString();
   return {
     ...task,
@@ -224,6 +255,7 @@ function taskToFormValues(task: Task): TaskFormValues {
     priority: task.priority,
     tags: task.tags.join(", "),
     dueDate: task.dueDate ?? "",
+    ...(task.evolution ? { evolution: task.evolution } : {}),
   };
 }
 
@@ -247,10 +279,16 @@ function writeGuestTasks(tasks: Task[]) {
     if (tasks.length) window.sessionStorage.setItem(GUEST_TASKS_STORAGE_KEY, JSON.stringify(tasks));
     else window.sessionStorage.removeItem(GUEST_TASKS_STORAGE_KEY);
   } catch {
-    // Local persistence can be unavailable; the in-memory workspace remains usable.
+    throw new Error("本地保存失败，任务尚未保存。请检查浏览器存储空间后重试。");
   }
 }
 
 function normalizeTask(task: Task): Task {
   return { ...task, tags: task.tags ?? [] };
+}
+
+function replaceKnownTask(tasks: Task[], updated: Task): Task[] {
+  return tasks.some((task) => task.id === updated.id)
+    ? tasks.map((task) => (task.id === updated.id ? updated : task))
+    : [updated, ...tasks];
 }

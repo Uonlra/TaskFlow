@@ -29,11 +29,9 @@ export function TaskDetailHero({ task, statusAnimationKey }: { task: Task; statu
   return (
     <section className="task-detail-hero">
       <div className="task-detail-hero__copy">
-        <p className="task-detail-kicker">任务详情</p>
         <h1>{task.title}</h1>
-        <p className="task-detail-hero__summary">{task.description || "暂无描述。"}</p>
       </div>
-      <div className="task-detail-hero__badges" aria-label="任务状态和优先级">
+      <div className="task-detail-hero__badges" role="group" aria-label="任务状态和优先级">
         <span ref={statusRef} className="task-detail-status-pulse">
           <TaskStatusBadge status={task.status} />
         </span>
@@ -162,7 +160,7 @@ export function TaskDetailTags({ task }: { task: Task }) {
           ))}
         </div>
       ) : (
-        <p className="task-detail-tags-board__empty">暂无标签，可通过编辑任务添加。</p>
+        <p className="task-detail-tags-board__empty">暂无标签</p>
       )}
     </section>
   );
@@ -212,10 +210,8 @@ export function TaskDetailActivity({ task }: { task: Task }) {
     <section ref={activityRef} className="task-detail-activity" aria-labelledby="task-detail-activity-title">
       <div className="task-detail-activity__head">
         <div>
-          <p className="task-detail-kicker">活动</p>
           <h2 id="task-detail-activity-title">任务活动</h2>
         </div>
-        <p>仅展示任务记录中可以确认的时间节点。</p>
       </div>
       <ol className="task-detail-timeline">
         {activityItems.map((item) => (
@@ -263,7 +259,7 @@ export function TaskDetailMoreContent() {
             <div className="task-detail-more-content__grid">
               <div>
                 <h3>子任务</h3>
-                <p>暂无子任务，后续可在这里拆分执行步骤。</p>
+                <p>暂无子任务</p>
               </div>
               <div>
                 <h3>评论与附件</h3>
