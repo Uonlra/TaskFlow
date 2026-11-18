@@ -15,17 +15,26 @@ import {
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import { formatTagsInput } from "@/features/tasks/utils/task-tags";
+import { TaskWorkbenchExploration } from "./task-workbench-exploration";
+import { TaskEvolutionGraph } from "./task-evolution-graph";
 
 type TaskDetailPanelProps = {
   task: Task | null;
   onUpdateTask: (id: string, values: TaskFormValues) => void | Promise<void>;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
   onDeleteTask: (id: string) => void | Promise<void>;
+  initiallyOpenRelations?: boolean;
 };
 
 type TaskDetailTab = "details" | "activity";
 
-export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTask }: TaskDetailPanelProps) {
+export function TaskDetailPanel({
+  task,
+  onUpdateTask,
+  onUpdateStatus,
+  onDeleteTask,
+  initiallyOpenRelations = false,
+}: TaskDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<TaskDetailTab>("details");
   const detailsTabRef = useRef<HTMLButtonElement | null>(null);
   const activityTabRef = useRef<HTMLButtonElement | null>(null);
@@ -114,58 +123,73 @@ export function TaskDetailPanel({ task, onUpdateTask, onUpdateStatus, onDeleteTa
         </div>
       </header>
 
-      {activeTab === "details" ? (
-        <div
-          id="task-detail-panel-details"
-          role="tabpanel"
-          aria-labelledby="task-detail-tab-details"
-          className="task-detail-panel__content"
-        >
-          <section className="task-detail-panel__summary">
-            <div>
-              <h2>{task.title}</h2>
-              <p>{task.description || "暂无描述"}</p>
-            </div>
-          </section>
+      <div
+        hidden={activeTab !== "details"}
+        id="task-detail-panel-details"
+        role="tabpanel"
+        aria-labelledby="task-detail-tab-details"
+        className="task-detail-panel__content"
+      >
+        <section className="task-detail-panel__summary">
+          <div>
+            <h2>{task.title}</h2>
+            <p>{task.description || "暂无描述"}</p>
+          </div>
+        </section>
 
-          <TaskDetailPropertyList
-            task={task}
-            onStatusClick={
-              task.evolution ? undefined : () => void onUpdateStatus(task.id, task.status === "done" ? "todo" : "done")
-            }
-          />
-          <TaskDetailTags task={task} />
-        </div>
-      ) : (
+        {task.evolution?.goal.successCriteria ? (
+          <section className="task-workbench-criteria" aria-label="完成标准">
+            <span>完成标准</span>
+            <p>{task.evolution.goal.successCriteria}</p>
+          </section>
+        ) : null}
+        {task.evolution ? (
+          <TaskWorkbenchExploration evolution={task.evolution} initiallyOpen={initiallyOpenRelations} />
+        ) : null}
+        <TaskDetailPropertyList
+          task={task}
+          onStatusClick={
+            task.evolution ? undefined : () => void onUpdateStatus(task.id, task.status === "done" ? "todo" : "done")
+          }
+        />
+        <TaskDetailTags task={task} />
+      </div>
+      {activeTab === "activity" ? (
         <section
           id="task-detail-panel-activity"
           role="tabpanel"
           aria-labelledby="task-detail-tab-activity"
           className="task-detail-panel__activity"
         >
-          <div className="task-detail-panel__activity-head">
-            <h2>任务活动</h2>
-            <p>仅展示任务记录中可以确认的时间节点。</p>
-          </div>
-          <ol className="task-detail-panel__timeline">
-            {activityItems.map((item) => (
-              <li
-                key={item.id}
-                className={`task-detail-panel__timeline-item task-detail-panel__timeline-item--${item.id}`}
-              >
-                <span className="task-detail-panel__timeline-marker" aria-hidden="true" />
-                <div>
-                  <div className="task-detail-panel__timeline-meta">
-                    <strong>{item.label}</strong>
-                    <time dateTime={item.occurredAt}>{formatDateTime(item.occurredAt)}</time>
-                  </div>
-                  <p>{item.description}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          {task.evolution && task.evolution.events.length > 1 ? (
+            <TaskEvolutionGraph evolution={task.evolution} compact />
+          ) : (
+            <>
+              <div className="task-detail-panel__activity-head">
+                <h2>任务活动</h2>
+                <p>仅展示任务记录中可以确认的时间节点。</p>
+              </div>
+              <ol className="task-detail-panel__timeline">
+                {activityItems.map((item) => (
+                  <li
+                    key={item.id}
+                    className={`task-detail-panel__timeline-item task-detail-panel__timeline-item--${item.id}`}
+                  >
+                    <span className="task-detail-panel__timeline-marker" aria-hidden="true" />
+                    <div>
+                      <div className="task-detail-panel__timeline-meta">
+                        <strong>{item.label}</strong>
+                        <time dateTime={item.occurredAt}>{formatDateTime(item.occurredAt)}</time>
+                      </div>
+                      <p>{item.description}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
         </section>
-      )}
+      ) : null}
 
       <footer className="task-detail-panel__actions">
         <Link className="task-detail-panel__exploration-link" href={`/tasks/${encodeURIComponent(task.id)}`}>

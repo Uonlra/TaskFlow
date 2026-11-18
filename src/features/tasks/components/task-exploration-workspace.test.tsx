@@ -8,6 +8,7 @@ import { TaskEvolutionActionForm } from "./task-evolution-action-form";
 import { initializeTaskEvolution } from "@/features/tasks/domain/task-evolution";
 import { executeTaskEvolution } from "@/features/tasks/domain/task-evolution-storage";
 import type { Task } from "@/features/tasks/types/task.types";
+import { graphCommand, graphFixture } from "../../../../test/fixtures/task-evolution";
 
 const now = "2026-11-10T00:00:00.000Z";
 beforeEach(() => {
@@ -63,6 +64,86 @@ function Harness({ seed = initial(), onSave = () => {} }: { seed?: Task; onSave?
 }
 
 describe("task exploration workflow", () => {
+  it("limits comparison to three branches and restores the selected evolution node on return", async () => {
+    const user = userEvent.setup();
+    const state = graphCommand(graphFixture(), "d", { type: "create_branch", title: "新方案", question: "可行吗？" });
+    const seed = { ...plain, id: state.taskId, title: state.goal.objective, evolution: state };
+    render(<Harness seed={seed} />);
+    await user.selectOptions(screen.getByRole("combobox", { name: "突出分支" }), "a");
+    const node = screen.getByRole("button", { name: /提交结论 Markdown 方案.*目录与链接验证有效/ });
+    await user.click(node);
+    await user.click(screen.getByRole("button", { name: "比较方案" }));
+    expect(screen.getByRole("button", { name: "开始对比 · 1" })).toBeDisabled();
+    await user.click(screen.getByRole("checkbox", { name: "对比 Markdown 方案" }));
+    await user.click(screen.getByRole("checkbox", { name: "对比 搜索工具方案" }));
+    expect(screen.getByRole("checkbox", { name: "对比 自动分类方案" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "开始对比 · 3" }));
+    expect(screen.getByRole("region", { name: "方案对比" })).toHaveTextContent("尚无结论");
+    expect(screen.queryByRole("region", { name: "演进记录" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "分支：新方案" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "返回演进" }));
+    expect(screen.getByRole("combobox", { name: "突出分支" })).toHaveValue("a");
+    expect(node).toHaveAttribute("aria-expanded", "true");
+    await waitFor(() => expect(screen.getByRole("button", { name: "比较方案" })).toHaveFocus());
+  });
+
+  it("confirms adoption of a selected historical result and refreshes the comparison without duplicating it", async () => {
+    const user = userEvent.setup();
+    const saved = vi.fn();
+    const state = graphFixture();
+    render(
+      <Harness seed={{ ...plain, id: state.taskId, title: state.goal.objective, evolution: state }} onSave={saved} />,
+    );
+    await user.click(screen.getByRole("button", { name: "比较方案" }));
+    await user.click(screen.getByRole("checkbox", { name: "对比 Markdown 方案" }));
+    await user.click(screen.getByRole("button", { name: "开始对比 · 2" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: "Markdown 方案的结论版本" }), "ra");
+    await user.click(screen.getByRole("checkbox", { name: "双向链接" }));
+    await user.click(screen.getByRole("button", { name: "纳入主线 · 1" }));
+    const form = screen.getByRole("form", { name: "纳入主线" });
+    expect(within(form).getByRole("checkbox", { name: "双向链接" })).toBeChecked();
+    expect(within(form).getByRole("checkbox", { name: /目录组织/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "返回演进" })).toBeDisabled();
+    await user.type(within(form).getByRole("textbox", { name: "选择理由" }), "比较后保留关联方法");
+    await user.click(within(form).getByRole("button", { name: "确认采纳并保存" }));
+    expect(saved).toHaveBeenCalledTimes(1);
+    const next = saved.mock.calls[0][0] as Task;
+    expect(next.evolution?.adoptions.at(-1)).toMatchObject({
+      resultId: "ra",
+      branchId: "a",
+      selectedPoints: [{ id: "ra:1", text: "双向链接" }],
+    });
+    expect(screen.getByText("已全部采纳")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "纳入主线 · 1" })).not.toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Markdown 方案的结论版本" })).toHaveValue("ra");
+  });
+
+  it("filters duplicate, unavailable and foreign preselected result ids before confirmation", async () => {
+    const user = userEvent.setup();
+    const state = graphFixture();
+    const save = vi.fn(async (command) => executeTaskEvolution(task, command, now));
+    const task = { ...plain, id: state.taskId, title: state.goal.objective, evolution: state };
+    render(
+      <TaskEvolutionActionForm
+        task={task}
+        intent={{
+          type: "adopt_result",
+          branchId: "a",
+          resultId: "ra",
+          pointIds: ["ra:1", "ra:0", "ra:1", "rc:0", "missing"],
+        }}
+        onExecute={save}
+        onCancel={vi.fn()}
+        onSuccess={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("已选 1 项")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /目录组织/ })).not.toBeChecked();
+    await user.type(screen.getByRole("textbox", { name: "选择理由" }), "仅确认可用条目");
+    await user.click(screen.getByRole("button", { name: "确认采纳并保存" }));
+    expect(save.mock.calls[0][0].action).toMatchObject({ type: "adopt_result", resultId: "ra", pointIds: ["ra:1"] });
+  });
+
   it("opens the exact result linked from a preview and ignores a missing source", () => {
     const view = render(
       <TaskExplorationWorkspace

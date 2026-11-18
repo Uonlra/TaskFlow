@@ -1,4 +1,5 @@
 @import "./task-evolution-graph.css";
+@import "./task-exploration-comparison.css";
 
 .task-detail-page {
   display: grid;
@@ -32,10 +33,10 @@
   color: var(--muted-strong);
   font-size: 13px;
 }
-.task-evolution-workspace > .task-evolution-graph .task-evolution-graph-scroll {
+.task-evolution-workspace .task-evolution-graph .task-evolution-graph-scroll {
   max-height: clamp(360px, calc(100dvh - 320px), 900px);
 }
-.task-evolution-workspace > .task-evolution-graph:has(.task-evolution-graph-inspector) .task-evolution-graph-scroll {
+.task-evolution-workspace .task-evolution-graph:has(.task-evolution-graph-inspector) .task-evolution-graph-scroll {
   max-height: clamp(240px, calc(100dvh - 660px), 420px);
 }
 
@@ -396,8 +397,8 @@
     overflow-x: auto;
     padding-bottom: 6px;
   }
-  .task-exploration-branches button {
-    flex: 0 0 150px;
+  .task-exploration-branch-choice {
+    flex: 0 0 170px;
   }
   .task-evolution-events summary {
     flex-wrap: wrap;

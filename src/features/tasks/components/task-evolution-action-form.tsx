@@ -17,7 +17,7 @@ export type EvolutionFormIntent =
   | { type: "submit_result" | "review_branch" | "add_step"; branchId: string }
   | { type: "set_branch_status"; branchId: string; status: ExplorationBranch["status"] }
   | { type: "set_step_done"; branchId: string; stepId: string; done: boolean }
-  | { type: "adopt_result"; branchId: string; resultId: string }
+  | { type: "adopt_result"; branchId: string; resultId: string; pointIds?: string[] }
   | { type: "withdraw_adoption"; adoptionId: string };
 
 export function TaskEvolutionActionForm({
@@ -42,7 +42,20 @@ export function TaskEvolutionActionForm({
   const [title, setTitle] = useState("");
   const [detail, setDetail] = useState("");
   const [reason, setReason] = useState("");
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>(() => {
+    if (intent.type !== "adopt_result") return [];
+    const result = baseline.evolution?.results.find(
+      (item) => item.id === intent.resultId && item.branchId === intent.branchId,
+    );
+    const adopted = new Set(
+      baseline.evolution?.adoptions
+        .filter((item) => item.resultId === intent.resultId && !item.withdrawnBy)
+        .flatMap((item) => item.selectedPoints.map((point) => point.id)),
+    );
+    return [...new Set(intent.pointIds ?? [])].filter(
+      (id) => result?.points.some((point) => point.id === id) && !adopted.has(id),
+    );
+  });
   const [status, setStatus] = useState<ExplorationBranch["status"]>(
     intent.type === "set_branch_status" ? intent.status : "exploring",
   );

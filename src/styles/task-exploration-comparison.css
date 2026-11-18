@@ -1,0 +1,212 @@
+.task-evolution-main {
+  min-width: 0;
+}
+.task-exploration-branch-choice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.task-exploration-branch-choice > button {
+  flex: 1;
+  min-width: 0;
+}
+.task-exploration-branch-choice > input {
+  accent-color: var(--primary);
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.task-exploration .task-exploration-compare-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin: 12px 0 8px;
+  font-size: 12px;
+}
+.task-exploration-compare-toggle[aria-pressed="true"] {
+  border-color: var(--primary);
+}
+.task-exploration-compare-actions {
+  display: flex;
+  gap: 8px;
+}
+.task-exploration-compare-actions > button:first-child {
+  flex: 1;
+}
+.task-exploration-compare-actions > button:last-child {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.task-plan-comparison {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  border-radius: var(--radius-panel);
+  background: var(--surface-strong);
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+.task-plan-comparison__heading,
+.task-plan-comparison__heading > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.task-plan-comparison__heading {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.task-plan-comparison h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+.task-plan-comparison button,
+.task-plan-comparison select {
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface-strong);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.task-plan-comparison button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.task-plan-comparison :is(button, select):disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.task-plan-comparison :is(button, select, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.task-plan-comparison__scroll {
+  overflow-x: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.task-plan-comparison table {
+  width: 100%;
+  min-width: calc(96px + var(--comparison-count) * 220px);
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.task-plan-comparison th,
+.task-plan-comparison td {
+  padding: 16px 12px;
+  vertical-align: top;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.task-plan-comparison th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  width: 96px;
+  padding-left: 0;
+  background: var(--surface-strong);
+  box-shadow: 1px 0 var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.task-plan-comparison thead th {
+  background: var(--surface-soft);
+}
+.task-plan-comparison thead th:first-child {
+  padding-left: 12px;
+  background: var(--surface-soft);
+}
+.task-plan-comparison td + td,
+.task-plan-comparison th + th {
+  border-left: 1px solid var(--border);
+}
+.task-plan-comparison p {
+  margin: 6px 0;
+  white-space: pre-wrap;
+}
+.task-plan-comparison small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.task-plan-comparison__statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.task-plan-comparison__statuses > span {
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted-strong);
+}
+.task-plan-comparison__statuses > .is-review {
+  background: var(--primary-surface);
+  color: var(--foreground);
+}
+.task-plan-comparison select {
+  width: 100%;
+  min-width: 0;
+}
+.task-plan-comparison__result-title {
+  font-weight: 600;
+}
+.task-plan-comparison__points {
+  max-height: 260px;
+  margin: 12px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.task-plan-comparison__points label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+.task-plan-comparison__points :is(input, svg) {
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  margin: 3px 0 0;
+  accent-color: var(--primary);
+}
+.task-plan-comparison__points small {
+  display: block;
+}
+.task-plan-comparison .task-plan-comparison__adopt:not(:disabled) {
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+@media (max-width: 700px) {
+  .task-plan-comparison {
+    padding: 18px;
+  }
+  .task-plan-comparison h2 {
+    font-size: 18px;
+  }
+}

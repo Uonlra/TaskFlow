@@ -9,12 +9,19 @@ import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import type { Task } from "@/features/tasks/types/task.types";
 import { createTaskExportPayload, PartialTaskImportError } from "@/features/tasks/utils/task-transfer";
 import { ToastProvider } from "@/shared/providers/toast-provider";
+import { graphFixture } from "../../../../test/fixtures/task-evolution";
 
 vi.mock("next/dynamic", () => ({
   default: () =>
-    function MockTaskDetailPanel({ task }: { task: Task | null }) {
+    function MockTaskDetailPanel({
+      task,
+      initiallyOpenRelations = false,
+    }: {
+      task: Task | null;
+      initiallyOpenRelations?: boolean;
+    }) {
       return task ? (
-        <aside>
+        <aside data-relations-open={initiallyOpenRelations}>
           <h2>{task.title}</h2>
         </aside>
       ) : null;
@@ -57,6 +64,35 @@ const filters: TaskFilters = {
 };
 
 describe("DesktopTaskWorkbench keyboard path", () => {
+  it("opens the requested task's relations and resets the target on a normal row selection", async () => {
+    const user = userEvent.setup();
+    const state = graphFixture();
+    const evolved = { ...tasks[1], id: state.taskId, title: state.goal.objective, evolution: state };
+    render(
+      <ToastProvider>
+        <DesktopTaskWorkbench
+          tasks={[tasks[0], evolved]}
+          filters={filters}
+          isLoading={false}
+          onFiltersChange={vi.fn()}
+          onResetFilters={vi.fn()}
+          onCreateTask={vi.fn()}
+          onImportTasks={vi.fn(async () => 0)}
+          onUpdateTask={vi.fn()}
+          onUpdateStatus={vi.fn()}
+          onDeleteTask={vi.fn()}
+        />
+      </ToastProvider>,
+    );
+    expect(await screen.findByRole("heading", { name: tasks[0].title })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: `查看「${evolved.title}」的探索关系` }));
+    expect(screen.getByRole("complementary")).toHaveAttribute("data-relations-open", "true");
+    expect(screen.getByRole("heading", { name: evolved.title })).toBeInTheDocument();
+    await user.click(screen.getAllByRole("row")[1]);
+    expect(screen.getByRole("complementary")).toHaveAttribute("data-relations-open", "false");
+    expect(screen.getByRole("heading", { name: tasks[0].title })).toBeInTheDocument();
+  });
+
   it("批量导入部分成功时显示已完成数量和失败位置", async () => {
     const user = userEvent.setup();
     const onImportTasks = vi

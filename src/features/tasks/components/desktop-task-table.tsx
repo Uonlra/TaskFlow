@@ -5,6 +5,7 @@ import { useCallback, useLayoutEffect, useRef } from "react";
 import type { Task } from "@/features/tasks/types/task.types";
 import { parseTaskDueDateValue } from "@/features/tasks/utils/task-date-filters";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
+import { TaskExplorationIndicator } from "./task-exploration-indicator";
 
 type DesktopTaskTableEmptyState = {
   title: string;
@@ -16,6 +17,7 @@ type DesktopTaskTableProps = {
   emptyState: DesktopTaskTableEmptyState;
   selectedTaskId: string | null;
   onSelectTask: (taskId: string) => void;
+  onOpenRelations?: (taskId: string) => void;
   onPreviewTask?: (task: Task) => void;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
   scrollPositionRef: { current: number };
@@ -38,6 +40,7 @@ export function DesktopTaskTable({
   emptyState,
   selectedTaskId,
   onSelectTask,
+  onOpenRelations,
   onPreviewTask = () => {},
   onUpdateStatus,
   scrollPositionRef,
@@ -73,7 +76,9 @@ export function DesktopTaskTable({
     <div className="desktop-task-table" role="table" aria-label="任务列表">
       <div className="desktop-task-table__viewport">
         <div className="desktop-task-table__head" role="row">
-          <span role="columnheader" aria-label="完成状态" />
+          <span role="columnheader">
+            <span className="visually-hidden">完成状态</span>
+          </span>
           <span role="columnheader">任务</span>
           <span role="columnheader">标签</span>
           <span role="columnheader">截止时间</span>
@@ -97,6 +102,7 @@ export function DesktopTaskTable({
               task={task}
               selected={task.id === selectedTaskId}
               onSelectTask={onSelectTask}
+              onOpenRelations={onOpenRelations}
               onPreviewTask={onPreviewTask}
               onUpdateStatus={onUpdateStatus}
             />
@@ -111,12 +117,14 @@ function DesktopTaskRow({
   task,
   selected,
   onSelectTask,
+  onOpenRelations,
   onPreviewTask,
   onUpdateStatus,
 }: {
   task: Task;
   selected: boolean;
   onSelectTask: (taskId: string) => void;
+  onOpenRelations?: (taskId: string) => void;
   onPreviewTask: (task: Task) => void;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
 }) {
@@ -136,6 +144,7 @@ function DesktopTaskRow({
         onSelectTask(task.id);
       }}
       onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           onSelectTask(task.id);
@@ -146,18 +155,24 @@ function DesktopTaskRow({
         <button
           type="button"
           className="desktop-task-check"
-          aria-label={task.status === "done" ? "标记为未完成" : "标记为完成"}
+          aria-label={task.evolution ? "进入任务验收" : task.status === "done" ? "标记为未完成" : "标记为完成"}
+          title={task.evolution ? "在详情中验收或重新打开任务" : undefined}
           aria-pressed={task.status === "done"}
           onClick={(event) => {
             event.stopPropagation();
-            void onUpdateStatus(task.id, nextStatus);
+            if (task.evolution) onPreviewTask(task);
+            else void onUpdateStatus(task.id, nextStatus);
           }}
         />
       </span>
 
       <span role="cell" className="desktop-task-table__task-cell">
         <strong>{task.title}</strong>
-        <small>{task.description || "无描述"}</small>
+        {task.evolution?.branches.length ? (
+          <TaskExplorationIndicator task={task} onOpen={() => (onOpenRelations ?? onSelectTask)(task.id)} />
+        ) : (
+          <small>{task.description || "无描述"}</small>
+        )}
       </span>
 
       <span role="cell" className="desktop-task-table__tags">
