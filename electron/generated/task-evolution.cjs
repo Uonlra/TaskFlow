@@ -126,6 +126,17 @@ function initializeTaskEvolution(task, capturedAt, goal, context2 = {}) {
   };
 }
 function applyTaskEvolutionCommand(state, input, occurredAt) {
+  return transitionTaskEvolution(state, input, occurredAt, false);
+}
+function replayTaskEvolutionCommands(initial, events) {
+  let working = structuredClone(initial);
+  for (const event of events) {
+    if (!event.command) throw new TaskEvolutionError("invalid", "\u6F14\u8FDB\u4E8B\u4EF6\u7F3A\u5C11\u64CD\u4F5C\u5185\u5BB9\u3002");
+    working = transitionTaskEvolution(working, event.command, event.occurredAt, true);
+  }
+  return working;
+}
+function transitionTaskEvolution(state, input, occurredAt, owned) {
   const parsed = taskEvolutionCommandSchema.safeParse(input);
   if (!parsed.success) throw new TaskEvolutionError("invalid", "\u4EFB\u52A1\u64CD\u4F5C\u5B57\u6BB5\u4E0D\u7B26\u5408\u8981\u6C42\u3002");
   const command = parsed.data;
@@ -143,7 +154,7 @@ function applyTaskEvolutionCommand(state, input, occurredAt) {
   const action = command.action;
   requireCondition(state.status !== "done" || action.type === "reopen", "\u8BF7\u5148\u91CD\u65B0\u6253\u5F00\u5DF2\u5B8C\u6210\u4EFB\u52A1\u3002");
   requireCondition(state.status === "done" || action.type !== "reopen", "\u4EFB\u52A1\u5C1A\u672A\u5B8C\u6210\u3002");
-  const next = structuredClone(state);
+  const next = owned ? state : structuredClone(state);
   const beforeGoal = { ...state.goal };
   let eventBranchId;
   const branch = (id3) => {
@@ -432,7 +443,7 @@ function parseTaskEvolution(value, taskId) {
   const state = parsed.data;
   if (taskId && state.taskId !== taskId) fail("\u4EFB\u52A1\u4E0E\u6F14\u8FDB\u8BB0\u5F55\u4E0D\u5339\u914D\u3002");
   const baseline = state.events[0];
-  let replay = initializeTaskEvolution(
+  const baselineState = initializeTaskEvolution(
     {
       id: state.taskId,
       title: baseline.beforeGoal.objective,
@@ -449,10 +460,7 @@ function parseTaskEvolution(value, taskId) {
       ...baseline.detachedTaskLinksThrough !== void 0 ? { detachedTaskLinksThrough: baseline.detachedTaskLinksThrough } : {}
     }
   );
-  for (const event of state.events.slice(1)) {
-    if (!event.command) fail("\u6F14\u8FDB\u4E8B\u4EF6\u7F3A\u5C11\u64CD\u4F5C\u5185\u5BB9\u3002");
-    replay = applyTaskEvolutionCommand(replay, event.command, event.occurredAt);
-  }
+  const replay = replayTaskEvolutionCommands(baselineState, state.events.slice(1));
   if (JSON.stringify(taskEvolutionSnapshotSchema.parse(replay)) !== JSON.stringify(state))
     fail("\u6F14\u8FDB\u5386\u53F2\u4E0E\u5F53\u524D\u5185\u5BB9\u4E0D\u4E00\u81F4\u3002");
   if ((state.detachedTaskLinksThrough ?? 0) > state.revision) fail("\u5916\u90E8\u5173\u7CFB\u7684\u5386\u53F2\u7248\u672C\u4E0D\u6B63\u786E\u3002");

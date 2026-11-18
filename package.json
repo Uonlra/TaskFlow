@@ -45,7 +45,8 @@
     "desktop:evolution-build": "node scripts/build-task-evolution-runtime.mjs",
     "test:desktop-evolution": "pnpm desktop:evolution-build && node --test electron/local-tasks.test.cjs electron/task-evolution.test.cjs electron/sync-conflicts.test.cjs",
     "appwrite:ensure-task-evolution": "node --env-file=.env.local scripts/ensure-task-evolution-columns.mjs",
-    "desktop:smoke:evolution-cloud": "node scripts/smoke-task-evolution-cloud.mjs"
+    "desktop:smoke:evolution-cloud": "node scripts/smoke-task-evolution-cloud.mjs",
+    "benchmark:task-evolution": "node scripts/benchmark-task-evolution.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",

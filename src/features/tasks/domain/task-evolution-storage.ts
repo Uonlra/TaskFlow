@@ -1,4 +1,9 @@
-import { applyTaskEvolutionCommand, initializeTaskEvolution, TaskEvolutionError } from "./task-evolution";
+import {
+  applyTaskEvolutionCommand,
+  initializeTaskEvolution,
+  replayTaskEvolutionCommands,
+  TaskEvolutionError,
+} from "./task-evolution";
 import { taskEvolutionSnapshotSchema } from "@/features/tasks/schemas/task-evolution-snapshot-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import type { TaskEvolution } from "@/features/tasks/types/task-evolution.types";
@@ -23,7 +28,7 @@ export function parseTaskEvolution(value: unknown, taskId?: string): TaskEvoluti
   const state = parsed.data;
   if (taskId && state.taskId !== taskId) fail("任务与演进记录不匹配。");
   const baseline = state.events[0];
-  let replay = initializeTaskEvolution(
+  const baselineState = initializeTaskEvolution(
     {
       id: state.taskId,
       title: baseline.beforeGoal.objective,
@@ -42,10 +47,7 @@ export function parseTaskEvolution(value: unknown, taskId?: string): TaskEvoluti
         : {}),
     },
   );
-  for (const event of state.events.slice(1)) {
-    if (!event.command) fail("演进事件缺少操作内容。");
-    replay = applyTaskEvolutionCommand(replay, event.command, event.occurredAt);
-  }
+  const replay = replayTaskEvolutionCommands(baselineState, state.events.slice(1));
   if (JSON.stringify(taskEvolutionSnapshotSchema.parse(replay)) !== JSON.stringify(state))
     fail("演进历史与当前内容不一致。");
   if ((state.detachedTaskLinksThrough ?? 0) > state.revision) fail("外部关系的历史版本不正确。");

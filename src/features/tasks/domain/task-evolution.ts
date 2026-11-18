@@ -4,6 +4,7 @@ import type {
   ExplorationBranch,
   TaskEvolution,
   TaskEvolutionContext,
+  TaskEvolutionEvent,
 } from "@/features/tasks/types/task-evolution.types";
 import type { Task } from "@/features/tasks/types/task.types";
 
@@ -66,6 +67,28 @@ export function initializeTaskEvolution(
  * This function alone is not a database transaction or synchronization mechanism.
  */
 export function applyTaskEvolutionCommand(state: TaskEvolution, input: unknown, occurredAt: string): TaskEvolution {
+  return transitionTaskEvolution(state, input, occurredAt, false);
+}
+
+/** Replay owns one scratch aggregate; all command rules still run for every event. */
+export function replayTaskEvolutionCommands(
+  initial: TaskEvolution,
+  events: ReadonlyArray<Pick<TaskEvolutionEvent, "command" | "occurredAt">>,
+): TaskEvolution {
+  let working = structuredClone(initial);
+  for (const event of events) {
+    if (!event.command) throw new TaskEvolutionError("invalid", "演进事件缺少操作内容。");
+    working = transitionTaskEvolution(working, event.command, event.occurredAt, true);
+  }
+  return working;
+}
+
+function transitionTaskEvolution(
+  state: TaskEvolution,
+  input: unknown,
+  occurredAt: string,
+  owned: boolean,
+): TaskEvolution {
   const parsed = taskEvolutionCommandSchema.safeParse(input);
   if (!parsed.success) throw new TaskEvolutionError("invalid", "任务操作字段不符合要求。");
   const command = parsed.data;
@@ -83,7 +106,7 @@ export function applyTaskEvolutionCommand(state: TaskEvolution, input: unknown, 
   const action = command.action;
   requireCondition(state.status !== "done" || action.type === "reopen", "请先重新打开已完成任务。");
   requireCondition(state.status === "done" || action.type !== "reopen", "任务尚未完成。");
-  const next = structuredClone(state);
+  const next = owned ? state : structuredClone(state);
   const beforeGoal = { ...state.goal };
   let eventBranchId: string | undefined;
   const branch = (id: string): ExplorationBranch => {
