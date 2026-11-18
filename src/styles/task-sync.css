@@ -1,0 +1,166 @@
+.task-sync-notice {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+.task-sync-notice > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--foreground);
+  font-size: 13px;
+}
+.task-sync-notice > button > span {
+  color: var(--primary);
+  font-weight: 600;
+}
+.task-sync-dialog {
+  width: min(860px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--background);
+  color: var(--foreground);
+  overflow: auto;
+}
+.task-sync-dialog::backdrop {
+  background: rgb(0 0 0 / 35%);
+}
+.task-sync-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.task-sync-dialog header,
+.task-sync-dialog h3,
+.task-sync-dialog footer {
+  flex-shrink: 0;
+}
+.task-sync-dialog header,
+.task-sync-dialog footer,
+.task-sync-version-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.task-sync-dialog h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.task-sync-dialog h3 {
+  margin: 20px 0 16px;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.task-sync-dialog button {
+  padding: 8px 12px;
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--foreground);
+  font-size: 13px;
+}
+.task-sync-dialog button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.task-sync-dialog nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.task-sync-dialog nav button[aria-pressed="true"] {
+  border-color: var(--primary);
+}
+.task-sync-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  min-height: 0;
+  overflow: auto;
+}
+.task-sync-comparison > section {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.task-sync-version-label {
+  font-size: 13px;
+}
+.task-sync-version-label > span,
+.task-sync-comparison time,
+.task-sync-comparison small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.task-sync-comparison h4 {
+  margin: 20px 0 12px;
+  font-size: 15px;
+}
+.task-sync-comparison p {
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+.task-sync-comparison .task-sync-difference {
+  padding-left: 10px;
+  border-left: 2px solid var(--primary);
+}
+.task-sync-comparison ol {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0 0;
+}
+.task-sync-comparison li {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+.task-sync-comparison li strong {
+  font-size: 12px;
+}
+.task-sync-comparison li p {
+  margin: 6px 0;
+}
+.task-sync-dialog footer {
+  justify-content: flex-end;
+  margin-top: 24px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.task-sync-dialog .task-sync-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+.task-sync-error {
+  color: var(--foreground);
+  padding: 12px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+@media (max-width: 640px) {
+  .task-sync-dialog {
+    padding: 16px;
+  }
+  .task-sync-comparison {
+    grid-template-columns: 1fr;
+  }
+  .task-sync-dialog footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .task-sync-dialog button {
+    min-height: 44px;
+  }
+}

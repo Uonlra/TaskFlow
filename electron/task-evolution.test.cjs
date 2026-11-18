@@ -10,6 +10,7 @@ const { executeTaskEvolution } = require("./generated/task-evolution.cjs");
 const {
   createLocalTask,
   executeLocalTaskEvolution,
+  transferLocalTaskBranch,
   getLocalTask,
   updateLocalTaskStatus,
   listPendingSyncOperations,
@@ -33,6 +34,70 @@ function open(path = ":memory:") {
   return db;
 }
 const start = command("branch", 0, { type: "create_branch", title: "方案 A", question: "能否提高检索效率？" });
+
+test("a branch transfer persists both tasks and their links after reopen, and retries do not duplicate them", () => {
+  const path = join(tmpdir(), `taskflow-transfer-${randomUUID()}.sqlite`);
+  let db = open(path);
+  const targetTaskId = randomUUID();
+  const transfer = command("transfer", 1, {
+    type: "transfer_branch",
+    branchId: "branch",
+    targetTaskId,
+    goal: { objective: "独立验证检索", successCriteria: "验证 100 篇资料" },
+    reason: "单独推进",
+  });
+  try {
+    const task = createLocalTask(db, "account", input);
+    executeLocalTaskEvolution(db, "account", task.id, start);
+    const saved = transferLocalTaskBranch(db, "account", task.id, transfer);
+    const queued = db.prepare("SELECT count(*) AS n FROM sync_queue").get().n;
+    assert.deepEqual(transferLocalTaskBranch(db, "account", task.id, transfer), saved);
+    assert.equal(db.prepare("SELECT count(*) AS n FROM sync_queue").get().n, queued);
+    assert.equal(listPendingSyncOperations(db, "account").length, 2);
+    assert.equal(listPendingSyncOperations(db, "account", 1)[0].taskId, task.id);
+    db.close();
+    db = open(path);
+    assert.equal(getLocalTask(db, "account", task.id).evolution.branches[0].transferredTaskId, targetTaskId);
+    assert.equal(getLocalTask(db, "account", targetTaskId).evolution.origin.taskId, task.id);
+    assert.throws(() => transferLocalTaskBranch(db, "other", task.id, transfer), /不存在/);
+  } finally {
+    db.close();
+    for (const suffix of ["", "-wal", "-shm"]) rmSync(`${path}${suffix}`, { force: true });
+  }
+});
+
+test("failure writing the source queue entry rolls back the new task and source event", () => {
+  const db = open();
+  const targetTaskId = randomUUID();
+  try {
+    const task = createLocalTask(db, "account", input);
+    const original = executeLocalTaskEvolution(db, "account", task.id, start);
+    db.exec(
+      `CREATE TRIGGER reject_source_queue BEFORE INSERT ON sync_queue WHEN NEW.task_id = '${task.id}' BEGIN SELECT RAISE(ABORT, 'queue unavailable'); END`,
+    );
+    assert.throws(
+      () =>
+        transferLocalTaskBranch(
+          db,
+          "account",
+          task.id,
+          command("transfer", 1, {
+            type: "transfer_branch",
+            branchId: "branch",
+            targetTaskId,
+            goal: { objective: "独立验证", successCriteria: "完成验证" },
+            reason: "单独推进",
+          }),
+        ),
+      /queue unavailable/,
+    );
+    assert.deepEqual(getLocalTask(db, "account", task.id), original);
+    assert.equal(getLocalTask(db, "account", targetTaskId), null);
+    assert.equal(db.prepare("SELECT count(*) AS n FROM tasks").get().n, 1);
+  } finally {
+    db.close();
+  }
+});
 
 test("migration is repeatable and preserves existing tasks", () => {
   const db = open();

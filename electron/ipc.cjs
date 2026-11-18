@@ -1,12 +1,19 @@
 const { ipcMain } = require("electron");
 
 const { getDatabase } = require("./database.cjs");
+const {
+  readSyncConflicts,
+  refreshSyncConflict,
+  readSyncResolution,
+  resolveSyncConflict,
+} = require("./sync-conflicts.cjs");
 const { clearStoredAuth, getStoredAuth, setStoredAuth } = require("./auth.cjs");
 const { getWorkspace, connectWorkspace, pauseWorkspace } = require("./workspace.cjs");
 const {
   acknowledgeSyncOperations,
   createLocalTask,
   executeLocalTaskEvolution,
+  transferLocalTaskBranch,
   settleSyncOperations,
   deleteLocalTask,
   getLocalTask,
@@ -64,6 +71,16 @@ function getActiveDatabase(input) {
 }
 
 function registerIpcHandlers({ updates } = {}) {
+  for (const [name, handler] of [
+    ["conflicts", (database, input) => readSyncConflicts(database, input.accountId)],
+    ["refresh-conflict", refreshSyncConflict],
+    ["resolution", (database, input) => readSyncResolution(database, input.accountId, input.resolutionId)],
+    ["resolve", resolveSyncConflict],
+  ])
+    ipcMain.handle(`taskflow:sync-queue:${name}`, (event, input) => {
+      assertTrustedSender(event);
+      return handler(getActiveDatabase(input), input);
+    });
   for (const [action, method] of [
     ["state", "getState"],
     ["check", "check"],
@@ -115,6 +132,10 @@ function registerIpcHandlers({ updates } = {}) {
   ipcMain.handle("taskflow:local-tasks:evolution", (event, input) => {
     assertTrustedSender(event);
     return executeLocalTaskEvolution(getActiveDatabase(input), input?.accountId, input?.taskId, input?.command);
+  });
+  ipcMain.handle("taskflow:local-tasks:transfer", (event, input) => {
+    assertTrustedSender(event);
+    return transferLocalTaskBranch(getActiveDatabase(input), input?.accountId, input?.taskId, input?.command);
   });
 
   ipcMain.handle("taskflow:local-tasks:get", (event, input) => {

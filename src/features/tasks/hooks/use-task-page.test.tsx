@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskPage } from "@/features/tasks/hooks/use-task-page";
 import { remoteTaskRepository } from "@/features/tasks/repositories/remote-task-repository";
 import type { Task, TaskPageInitialData } from "@/features/tasks/types/task.types";
+import { initializeTaskEvolution } from "@/features/tasks/domain/task-evolution";
+import { graphCommand } from "../../../../test/fixtures/task-evolution";
 import {
   DEFAULT_TASK_FILTERS as filters,
   getTaskPage,
@@ -14,10 +16,12 @@ import {
 const mocks = vi.hoisted(() => ({
   auth: { user: { id: "user-1" } as { id: string } | null, isLoading: false, isConfigured: true },
   tasks: [] as Task[],
+  owner: null as string | null,
 }));
 vi.mock("@/features/auth/providers/auth-provider", () => ({ useAuth: () => mocks.auth }));
 vi.mock("@/features/tasks/store/task-store", () => ({
-  useTaskStore: (selector: (state: { tasks: Task[] }) => unknown) => selector({ tasks: mocks.tasks }),
+  useTaskStore: (selector: (state: { tasks: Task[]; lastLoadedUserId: string | null }) => unknown) =>
+    selector({ tasks: mocks.tasks, lastLoadedUserId: mocks.owner }),
 }));
 
 const task: Task = {
@@ -36,10 +40,60 @@ beforeEach(() => {
   mocks.auth.user = { id: "user-1" };
   mocks.auth.isLoading = false;
   mocks.tasks = [];
+  mocks.owner = null;
 });
 afterEach(() => vi.restoreAllMocks());
 
 describe("useTaskPage", () => {
+  it("refreshes membership and counts for a newly transferred task outside the cached page", async () => {
+    mocks.owner = "user-1";
+    const next = { ...task, id: "independent", title: "新独立任务" };
+    const query = vi.spyOn(remoteTaskRepository, "listPage").mockResolvedValue(getTaskPage([task, next], filters));
+    const { result, rerender } = renderHook(() => useTaskPage(options));
+    mocks.tasks = [next];
+    rerender();
+    await waitFor(() => expect(result.current.pageData?.categoryCounts.all).toBe(2));
+    expect(query).toHaveBeenCalledTimes(1);
+  });
+  it("shows a saved evolution immediately and refreshes cached page membership and counts", async () => {
+    const request = deferred<TaskPageResult>();
+    const query = vi.spyOn(remoteTaskRepository, "listPage").mockReturnValue(request.promise);
+    const { result, rerender } = renderHook(() => useTaskPage(options));
+    const saved = completedTask();
+    mocks.owner = "user-1";
+    mocks.tasks = [saved];
+    rerender();
+    expect(result.current.pageData?.tasks[0]).toEqual(saved);
+    await waitFor(() => expect(query).toHaveBeenCalledTimes(1));
+    const refreshed = getTaskPage([saved], filters);
+    await act(async () => request.resolve(refreshed));
+    expect(result.current.pageData?.tasks).toEqual([]);
+    expect(result.current.pageData?.total).toBe(0);
+    expect(result.current.pageData?.categoryCounts.done).toBe(1);
+  });
+
+  it("ignores newer snapshots belonging to another account", () => {
+    const query = vi.spyOn(remoteTaskRepository, "listPage");
+    mocks.owner = "user-2";
+    mocks.tasks = [completedTask()];
+    const { result } = renderHook(() => useTaskPage(options));
+    expect(result.current.pageData?.tasks).toEqual([task]);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it("keeps the saved evolution after a refresh failure without repeatedly requesting the same version", async () => {
+    const query = vi.spyOn(remoteTaskRepository, "listPage").mockRejectedValue(new Error("刷新暂时不可用"));
+    const saved = completedTask();
+    mocks.owner = "user-1";
+    mocks.tasks = [saved];
+    const { result, rerender } = renderHook(() => useTaskPage(options));
+    await waitFor(() => expect(result.current.error).toBe("刷新暂时不可用"));
+    expect(result.current.pageData?.tasks[0]).toEqual(saved);
+    rerender();
+    expect(query).toHaveBeenCalledTimes(1);
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it("shows matching SSR data while checking auth, then reuses it without a request", () => {
     const query = vi.spyOn(remoteTaskRepository, "listPage");
     mocks.auth.user = null;
@@ -141,4 +195,10 @@ function deferred<T>() {
     resolve = next;
   });
   return { promise, resolve };
+}
+
+function completedTask(): Task {
+  const initial = initializeTaskEvolution(task, task.createdAt, { objective: task.title, successCriteria: "完成验收" });
+  const evolution = graphCommand(initial, "complete", { type: "complete", note: "已满足标准" });
+  return { ...task, status: evolution.status, evolution };
 }

@@ -84,7 +84,8 @@ export function DesktopTaskWorkbench({
   const { showToast } = useToast();
   const importInputRef = useRef<HTMLInputElement>(null);
   const taskListScrollTopRef = useRef(0);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => tasks[0]?.id ?? null);
+  const [relationsTarget, setRelationsTarget] = useState<{ id: string; requestId: string } | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [canLoadDetail, setCanLoadDetail] = useState(false);
   const selectedTask = useMemo(
@@ -103,16 +104,9 @@ export function DesktopTaskWorkbench({
     totalCount: resolvedTotalCount,
   });
 
-  useEffect(() => {
-    if (!tasks.length) {
-      setSelectedTaskId(null);
-      return;
-    }
-
-    if (!selectedTaskId || !tasks.some((task) => task.id === selectedTaskId)) {
-      setSelectedTaskId(tasks[0].id);
-    }
-  }, [selectedTaskId, tasks]);
+  if (tasks.length ? !tasks.some((task) => task.id === selectedTaskId) : selectedTaskId !== null) {
+    setSelectedTaskId(tasks[0]?.id ?? null);
+  }
 
   useEffect(() => {
     const idleWindow = window as unknown as {
@@ -336,7 +330,14 @@ export function DesktopTaskWorkbench({
             tasks={tasks}
             emptyState={emptyState}
             selectedTaskId={selectedTask?.id ?? null}
-            onSelectTask={setSelectedTaskId}
+            onSelectTask={(id) => {
+              setSelectedTaskId(id);
+              setRelationsTarget(null);
+            }}
+            onOpenRelations={(id) => {
+              setSelectedTaskId(id);
+              setRelationsTarget({ id, requestId: crypto.randomUUID() });
+            }}
             onPreviewTask={onPreviewTask}
             onUpdateStatus={onUpdateStatus}
             scrollPositionRef={taskListScrollTopRef}
@@ -389,7 +390,9 @@ export function DesktopTaskWorkbench({
       {tasks.length ? (
         canLoadDetail ? (
           <TaskDetailPanel
+            key={`${selectedTask?.id}:${relationsTarget?.id === selectedTask?.id ? relationsTarget?.requestId : "details"}`}
             task={selectedTask}
+            initiallyOpenRelations={Boolean(relationsTarget && relationsTarget.id === selectedTask?.id)}
             onUpdateTask={onUpdateTask}
             onUpdateStatus={onUpdateStatus}
             onDeleteTask={onDeleteTask}

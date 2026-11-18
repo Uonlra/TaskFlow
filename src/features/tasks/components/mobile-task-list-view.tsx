@@ -12,6 +12,7 @@ import { ROUTES } from "@/shared/lib/constants/routes";
 import type { TaskCategoryCounts } from "@/features/tasks/utils/task-list-query";
 import { MobileTaskListSkeleton } from "@/features/tasks/components/task-page-skeleton";
 import { PageToolbar } from "@/shared/components/layout/page-toolbar";
+import { TaskExplorationIndicator } from "./task-exploration-indicator";
 
 type MobileTaskListViewProps = {
   tasks: Task[];
@@ -205,9 +206,9 @@ function MobileTaskItem({
       <button
         type="button"
         className="mobile-task-item__check"
-        aria-label={task.status === "done" ? "标记为未完成" : "标记为完成"}
+        aria-label={task.evolution ? "进入任务验收" : task.status === "done" ? "标记为未完成" : "标记为完成"}
         aria-pressed={task.status === "done"}
-        onClick={() => onUpdateStatus(task.id, nextStatus)}
+        onClick={() => (task.evolution ? onPreviewTask(task) : onUpdateStatus(task.id, nextStatus))}
       />
       <Link
         href={`${ROUTES.tasks}/${task.id}`}
@@ -220,6 +221,7 @@ function MobileTaskItem({
         <span className="mobile-task-item__main">
           <strong>{task.title}</strong>
           <small>{formatTaskMeta(task, dueMeta.label)}</small>
+          <TaskExplorationIndicator task={task} />
         </span>
         <span className="mobile-task-item__meta">
           <span className="mobile-task-item__priority">{priorityLabel[task.priority]}</span>

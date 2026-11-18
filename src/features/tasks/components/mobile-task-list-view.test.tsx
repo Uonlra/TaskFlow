@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from "vitest";
 import { MobileTaskListView } from "@/features/tasks/components/mobile-task-list-view";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import type { Task } from "@/features/tasks/types/task.types";
+import { graphFixture } from "../../../../test/fixtures/task-evolution";
 
 vi.mock("@/features/tasks/components/task-form-dialog", () => ({
   TaskFormDialog: () => <button type="button">新增</button>,
@@ -57,6 +58,32 @@ function renderTaskList(
 }
 
 describe("MobileTaskListView", () => {
+  it("keeps evolution summaries compact and opens the completion workflow without directly changing status", async () => {
+    const user = userEvent.setup();
+    const state = graphFixture();
+    const evolved = { ...tasks[0], id: state.taskId, evolution: state };
+    const update = vi.fn();
+    const preview = vi.fn();
+    render(
+      <MobileTaskListView
+        tasks={[evolved]}
+        totalCount={1}
+        filters={filters}
+        isLoading={false}
+        onFiltersChange={vi.fn()}
+        onCreateTask={vi.fn()}
+        onUpdateStatus={update}
+        onPreviewTask={preview}
+      />,
+    );
+    expect(screen.getByText("3 个方案")).toBeInTheDocument();
+    expect(screen.getByText("待采纳 3")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "进入任务验收" }));
+    expect(preview).toHaveBeenCalledWith(evolved);
+    expect(update).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /的探索关系/ })).not.toBeInTheDocument();
+  });
+
   it("使用紧凑上下文和隐藏页面标题", () => {
     renderTaskList();
 

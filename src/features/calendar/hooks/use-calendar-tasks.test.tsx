@@ -60,6 +60,18 @@ afterEach(() => {
 });
 
 describe("useCalendarTasks", () => {
+  it("refreshes after a transfer from the same account and ignores other accounts", async () => {
+    auth.user = { id: "user-1" };
+    const read = vi.spyOn(remoteTaskRepository, "listByDueRange").mockResolvedValue(data());
+    const { result } = renderHook(() => useCalendarTasks(range));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() => window.dispatchEvent(new CustomEvent("taskflow:task-transferred", { detail: { accountId: "other" } })));
+    expect(read).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent("taskflow:task-transferred", { detail: { accountId: "user-1" } }));
+    });
+    expect(read).toHaveBeenCalledTimes(2);
+  });
   it("keeps a saved evolution visible if the follow-up calendar read fails", async () => {
     auth.user = { id: "user-1" };
     vi.spyOn(remoteTaskRepository, "listByDueRange")

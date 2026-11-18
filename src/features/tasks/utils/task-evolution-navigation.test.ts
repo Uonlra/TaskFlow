@@ -1,8 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { buildTaskEvolutionHref, getEvolutionAttention, latestTask } from "./task-evolution-navigation";
+import {
+  buildTaskEvolutionHref,
+  getEvolutionAttention,
+  latestTask,
+  parseTaskEvolutionTarget,
+} from "./task-evolution-navigation";
 import { graphCommand, graphFixture } from "../../../../test/fixtures/task-evolution";
 
 describe("evolution quick-view decisions", () => {
+  it("parses the same node, branch and result targets for web and static desktop pages", () => {
+    const href = buildTaskEvolutionHref("task", {
+      eventId: "transfer:a/b",
+      branchId: "方案一",
+      resultId: "result:1",
+      action: "review",
+    });
+    expect(parseTaskEvolutionTarget(new URL(href, "http://localhost").searchParams)).toEqual({
+      eventId: "transfer:a/b",
+      branchId: "方案一",
+      resultId: "result:1",
+      action: "review",
+    });
+    expect(parseTaskEvolutionTarget(new URLSearchParams("action=delete")).action).toBeUndefined();
+  });
   it("links the newest submitted unadopted result, without treating progress as a result", () => {
     let state = graphFixture();
     state = graphCommand(state, "progress", { type: "record_progress", note: "继续尝试" });

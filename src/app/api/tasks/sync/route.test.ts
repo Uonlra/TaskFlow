@@ -99,6 +99,8 @@ describe("/api/tasks/sync", () => {
     const conflicted = await POST(requestFor([upsertOperation({ payload: local })]));
     expect((await conflicted.json()).results[0]).toMatchObject({
       status: "error",
+      code: "conflict",
+      task: JSON.parse(JSON.stringify(fork)),
       message: expect.stringContaining("分叉"),
     });
     expect(mocks.updateTask).not.toHaveBeenCalled();
@@ -292,6 +294,7 @@ describe("/api/tasks/sync", () => {
       expect.any(Object),
       expect.any(NextRequest),
       "2026-10-30T09:00:00.000Z",
+      "user-1",
     );
   });
 });

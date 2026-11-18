@@ -5,6 +5,7 @@ import type { TaskEvolutionCommand } from "@/features/tasks/schemas/task-evoluti
 import {
   assertOrdinaryTaskEdit,
   executeTaskEvolution,
+  transferTaskBranch,
   restoreTaskEvolution,
   projectTaskEvolution,
   assertTaskEvolutionProjection,
@@ -129,6 +130,34 @@ export const useTaskStore = create<TaskStore>()((set) => ({
     return createdTask.id;
   },
   executeEvolution: async (id, command, userId) => {
+    if (command.action.type === "transfer_branch") {
+      if (!userId && !isDesktopRuntime()) {
+        let source: Task | undefined;
+        set((state) => {
+          const current = state.tasks.find((task) => task.id === id);
+          if (!current) throw new Error("任务不存在。");
+          const result = transferTaskBranch(current, command, new Date().toISOString());
+          source = result.source;
+          if (!result.task) return state;
+          if (state.tasks.some((task) => task.id === result.task!.id)) throw new Error("新任务标识已被使用。");
+          const tasks = [result.task, ...state.tasks.map((task) => (task.id === id ? result.source : task))];
+          writeGuestTasks(tasks);
+          return { tasks, error: null };
+        });
+        return source!;
+      }
+      const result = await getTaskRepository(userId).transferBranch(id, command);
+      set((state) => ({
+        tasks:
+          result.task && !result.task.deletedAt
+            ? replaceKnownTask(replaceKnownTask(state.tasks, result.source), result.task)
+            : replaceKnownTask(state.tasks, result.source),
+        error: null,
+      }));
+      if (typeof window !== "undefined")
+        window.dispatchEvent(new CustomEvent("taskflow:task-transferred", { detail: { accountId: userId ?? null } }));
+      return result.source;
+    }
     if (!userId && !isDesktopRuntime()) {
       let updated: Task | undefined;
       set((state) => {

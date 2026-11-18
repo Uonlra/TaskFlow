@@ -6,7 +6,14 @@ const id = z.string().min(1).max(200);
 const version = z.number().int().nonnegative();
 const date = z.iso.datetime();
 const point = z.strictObject({ id, text: z.string() });
+const context = {
+  origin: z
+    .strictObject({ taskId: id, branchId: id, eventId: id, taskTitle: z.string(), branchTitle: z.string() })
+    .optional(),
+  detachedTaskLinksThrough: version.optional(),
+};
 export const taskEvolutionSnapshotSchema = z.strictObject({
+  ...context,
   schemaVersion: z.literal(1),
   taskId: id,
   baselineStatus: taskStatusSchema,
@@ -24,6 +31,7 @@ export const taskEvolutionSnapshotSchema = z.strictObject({
       baseGoalVersion: version,
       reviewedGoalVersion: version,
       steps: z.array(z.strictObject({ id, title: z.string(), done: z.boolean() })),
+      transferredTaskId: z.uuid().optional(),
     }),
   ),
   results: z.array(
@@ -51,6 +59,7 @@ export const taskEvolutionSnapshotSchema = z.strictObject({
   events: z
     .array(
       z.strictObject({
+        ...context,
         id,
         revision: version,
         occurredAt: date,

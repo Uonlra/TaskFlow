@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { TaskDetailPanel } from "@/features/tasks/components/task-detail-panel";
 import type { Task } from "@/features/tasks/types/task.types";
+import { graphFixture } from "../../../../test/fixtures/task-evolution";
 
 const task: Task = {
   id: "task-1",
@@ -21,6 +22,46 @@ const task: Task = {
 };
 
 describe("TaskDetailPanel", () => {
+  it("preserves relation expansion across tabs without moving focus away from the selected tab", async () => {
+    const user = userEvent.setup();
+    Element.prototype.scrollIntoView = vi.fn();
+    const state = graphFixture();
+    renderPanel({ ...task, id: state.taskId, evolution: state }, true);
+    const toggle = screen.getByRole("button", { name: /探索 3/ });
+    expect(toggle).toHaveFocus();
+    await user.click(screen.getByRole("tab", { name: "活动" }));
+    await user.keyboard("{ArrowLeft}");
+    expect(screen.getByRole("tab", { name: "详情" })).toHaveFocus();
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await user.click(toggle);
+    await user.click(screen.getByRole("tab", { name: "活动" }));
+    await user.click(screen.getByRole("tab", { name: "详情" }));
+    expect(screen.getByRole("tab", { name: "详情" })).toHaveFocus();
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("shows goal criteria and keeps exploration relations optional", async () => {
+    const user = userEvent.setup();
+    const state = graphFixture();
+    renderPanel({ ...task, id: state.taskId, evolution: state });
+    expect(screen.getByRole("region", { name: "完成标准" })).toHaveTextContent(state.goal.successCriteria);
+    expect(screen.queryByRole("group", { name: "探索关系" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /探索 3/ }));
+    expect(screen.getByRole("group", { name: "探索关系" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "待开始" })).not.toBeInTheDocument();
+  });
+
+  it("uses real evolution records in the activity tab", async () => {
+    const user = userEvent.setup();
+    const state = graphFixture();
+    renderPanel({ ...task, id: state.taskId, evolution: state });
+    await user.click(screen.getByRole("tab", { name: "活动" }));
+    expect(screen.getByRole("region", { name: "演进记录" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /撤回采纳 主线/ })).toBeInTheDocument();
+    expect(screen.queryByText("最近更新")).not.toBeInTheDocument();
+    expect(screen.queryByText("完成任务")).not.toBeInTheDocument();
+  });
+
   it("uses the lower detail section as a tag board instead of a note", () => {
     renderPanel(task);
 
@@ -139,8 +180,14 @@ describe("TaskDetailPanel", () => {
   });
 });
 
-function renderPanel(currentTask: Task) {
+function renderPanel(currentTask: Task, initiallyOpenRelations = false) {
   return render(
-    <TaskDetailPanel task={currentTask} onUpdateTask={vi.fn()} onUpdateStatus={vi.fn()} onDeleteTask={vi.fn()} />,
+    <TaskDetailPanel
+      task={currentTask}
+      initiallyOpenRelations={initiallyOpenRelations}
+      onUpdateTask={vi.fn()}
+      onUpdateStatus={vi.fn()}
+      onDeleteTask={vi.fn()}
+    />,
   );
 }

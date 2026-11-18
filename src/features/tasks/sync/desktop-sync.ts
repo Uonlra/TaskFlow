@@ -1,6 +1,8 @@
 import type { Task } from "@/features/tasks/types/task.types";
 import { requestJson } from "@/shared/lib/api/client";
 import { getDesktopBridge, type DesktopSyncOperation } from "@/shared/lib/desktop/bridge";
+import { orderTaskTransfers } from "@/features/tasks/utils/task-transfer-order";
+import type { TaskSyncFailureCode } from "@/features/tasks/types/task-sync.types";
 
 type DesktopSyncResult = {
   operationId: string;
@@ -8,6 +10,7 @@ type DesktopSyncResult = {
   status: "applied" | "stale" | "deleted" | "error";
   task?: Task;
   message?: string;
+  code?: TaskSyncFailureCode;
 };
 
 type DesktopSyncResponse = {
@@ -61,7 +64,7 @@ async function runDesktopSyncQueue(accountId: string) {
   const pending = await bridge.syncQueue.list({ accountId, limit: 50 });
   const operations: DesktopSyncOperation[] = [];
   let batchBytes = 0;
-  for (const operation of pending) {
+  for (const operation of orderTaskTransfers(pending)) {
     const size = new TextEncoder().encode(JSON.stringify(operation)).length;
     if (operations.length && batchBytes + size > MAX_SYNC_BATCH_BYTES) break;
     operations.push(operation);
@@ -84,7 +87,7 @@ async function runDesktopSyncQueue(accountId: string) {
     (Array.isArray(payload?.results) ? payload.results : []).map((result) => [result.operationId, result]),
   );
   const acknowledged: Array<{ operationId: string }> = [];
-  const failures: Array<{ operationId: string; message?: string }> = [];
+  const failures: Array<{ operationId: string; message?: string; code?: TaskSyncFailureCode; remote?: Task }> = [];
   const remoteTasks: Task[] = [];
 
   for (const operation of operations) {
@@ -93,6 +96,8 @@ async function runDesktopSyncQueue(accountId: string) {
       failures.push({
         operationId: operation.operationId,
         message: result?.message ?? "同步服务未返回结果。",
+        ...(result?.code ? { code: result.code } : {}),
+        ...(result?.code === "conflict" && result.task && isTask(result.task) ? { remote: result.task } : {}),
       });
       continue;
     }
@@ -129,6 +134,7 @@ async function runDesktopSyncQueue(accountId: string) {
   if (failures.length) {
     await bridge.syncQueue.fail({ accountId, failures });
   }
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("taskflow:sync-state-changed"));
 
   return { processed: acknowledged.length, failed: failures.length };
 }

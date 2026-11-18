@@ -6,8 +6,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TaskExplorationWorkspace } from "./task-exploration-workspace";
 import { TaskEvolutionActionForm } from "./task-evolution-action-form";
 import { initializeTaskEvolution } from "@/features/tasks/domain/task-evolution";
-import { executeTaskEvolution } from "@/features/tasks/domain/task-evolution-storage";
+import { executeTaskEvolution, transferTaskBranch } from "@/features/tasks/domain/task-evolution-storage";
 import type { Task } from "@/features/tasks/types/task.types";
+import { graphCommand, graphFixture } from "../../../../test/fixtures/task-evolution";
+import { branchTransferFixture } from "../../../../test/fixtures/task-branch-transfer";
+vi.mock("@/features/auth/providers/auth-provider", () => ({ useAuth: () => ({ user: null }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const now = "2026-11-10T00:00:00.000Z";
 beforeEach(() => {
@@ -52,7 +56,10 @@ function Harness({ seed = initial(), onSave = () => {} }: { seed?: Task; onSave?
       <TaskExplorationWorkspace
         task={task}
         onExecute={async (command) => {
-          const next = executeTaskEvolution(task, command, now);
+          const next =
+            command.action.type === "transfer_branch"
+              ? transferTaskBranch(task, command, now).source
+              : executeTaskEvolution(task, command, now);
           setTask(next);
           onSave(next);
           return next;
@@ -63,6 +70,137 @@ function Harness({ seed = initial(), onSave = () => {} }: { seed?: Task; onSave?
 }
 
 describe("task exploration workflow", () => {
+  it("confirms an independent goal and leaves the old branch read-only with a task link", async () => {
+    const user = userEvent.setup();
+    const { task } = branchTransferFixture();
+    const saved = vi.fn();
+    render(<Harness seed={task} onSave={saved} />);
+    await user.click(screen.getByRole("button", { name: /Markdown 方案.*待探索/ }));
+    await user.click(screen.getByRole("button", { name: "转为独立任务" }));
+    expect(screen.getByRole("textbox", { name: "新任务目标" })).toHaveValue("Markdown 方案");
+    expect(screen.queryByLabelText("主任务变更预览")).not.toBeInTheDocument();
+    await user.clear(screen.getByRole("textbox", { name: "新任务目标" }));
+    await user.type(screen.getByRole("textbox", { name: "新任务目标" }), "独立验证资料组织方式");
+    await user.type(screen.getByRole("textbox", { name: "完成标准" }), "完成 100 篇资料验证");
+    await user.type(screen.getByRole("textbox", { name: "转出原因" }), "需要持续投入");
+    await user.click(screen.getByRole("button", { name: "创建独立任务" }));
+    expect(saved).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(task.title);
+    const branch = screen.getByRole("region", { name: "分支：Markdown 方案" });
+    expect(within(branch).getByText("已独立")).toBeInTheDocument();
+    expect(within(branch).getByRole("link", { name: "打开独立任务 ↗" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("/tasks/"),
+    );
+    expect(within(branch).queryByRole("button", { name: "提交结论" })).not.toBeInTheDocument();
+    expect(within(branch).queryByRole("button", { name: "调整探索状态" })).not.toBeInTheDocument();
+    expect(within(branch).queryByRole("button", { name: "选择成果并纳入主线" })).not.toBeInTheDocument();
+  });
+
+  it("keeps a failed transfer draft and retries with the same task identity and operation", async () => {
+    const user = userEvent.setup();
+    const { task } = branchTransferFixture();
+    const save = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("网络中断"))
+      .mockImplementationOnce(async (command) => transferTaskBranch(task, command, now).source);
+    render(
+      <TaskEvolutionActionForm
+        task={task}
+        intent={{ type: "transfer_branch", branchId: "a" }}
+        onExecute={save}
+        onCancel={vi.fn()}
+        onSuccess={vi.fn()}
+      />,
+    );
+    await user.type(screen.getByRole("textbox", { name: "完成标准" }), "验证可检索");
+    await user.type(screen.getByRole("textbox", { name: "转出原因" }), "单独推进");
+    await user.click(screen.getByRole("button", { name: "创建独立任务" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("网络中断");
+    await user.click(screen.getByRole("button", { name: "创建独立任务" }));
+    expect(save.mock.calls[0][0]).toEqual(save.mock.calls[1][0]);
+  });
+
+  it("limits comparison to three branches and restores the selected evolution node on return", async () => {
+    const user = userEvent.setup();
+    const state = graphCommand(graphFixture(), "d", { type: "create_branch", title: "新方案", question: "可行吗？" });
+    const seed = { ...plain, id: state.taskId, title: state.goal.objective, evolution: state };
+    render(<Harness seed={seed} />);
+    await user.selectOptions(screen.getByRole("combobox", { name: "突出分支" }), "a");
+    const node = screen.getByRole("button", { name: /提交结论 Markdown 方案.*目录与链接验证有效/ });
+    await user.click(node);
+    await user.click(screen.getByRole("button", { name: "比较方案" }));
+    expect(screen.getByRole("button", { name: "开始对比 · 1" })).toBeDisabled();
+    await user.click(screen.getByRole("checkbox", { name: "对比 Markdown 方案" }));
+    await user.click(screen.getByRole("checkbox", { name: "对比 搜索工具方案" }));
+    expect(screen.getByRole("checkbox", { name: "对比 自动分类方案" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "开始对比 · 3" }));
+    expect(screen.getByRole("region", { name: "方案对比" })).toHaveTextContent("尚无结论");
+    expect(screen.queryByRole("region", { name: "演进记录" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "分支：新方案" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "返回演进" }));
+    expect(screen.getByRole("combobox", { name: "突出分支" })).toHaveValue("a");
+    expect(node).toHaveAttribute("aria-expanded", "true");
+    await waitFor(() => expect(screen.getByRole("button", { name: "比较方案" })).toHaveFocus());
+  });
+
+  it("confirms adoption of a selected historical result and refreshes the comparison without duplicating it", async () => {
+    const user = userEvent.setup();
+    const saved = vi.fn();
+    const state = graphFixture();
+    render(
+      <Harness seed={{ ...plain, id: state.taskId, title: state.goal.objective, evolution: state }} onSave={saved} />,
+    );
+    await user.click(screen.getByRole("button", { name: "比较方案" }));
+    await user.click(screen.getByRole("checkbox", { name: "对比 Markdown 方案" }));
+    await user.click(screen.getByRole("button", { name: "开始对比 · 2" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: "Markdown 方案的结论版本" }), "ra");
+    await user.click(screen.getByRole("checkbox", { name: "双向链接" }));
+    await user.click(screen.getByRole("button", { name: "纳入主线 · 1" }));
+    const form = screen.getByRole("form", { name: "纳入主线" });
+    expect(within(form).getByRole("checkbox", { name: "双向链接" })).toBeChecked();
+    expect(within(form).getByRole("checkbox", { name: /目录组织/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "返回演进" })).toBeDisabled();
+    await user.type(within(form).getByRole("textbox", { name: "选择理由" }), "比较后保留关联方法");
+    await user.click(within(form).getByRole("button", { name: "确认采纳并保存" }));
+    expect(saved).toHaveBeenCalledTimes(1);
+    const next = saved.mock.calls[0][0] as Task;
+    expect(next.evolution?.adoptions.at(-1)).toMatchObject({
+      resultId: "ra",
+      branchId: "a",
+      selectedPoints: [{ id: "ra:1", text: "双向链接" }],
+    });
+    expect(screen.getByText("已全部采纳")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "纳入主线 · 1" })).not.toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Markdown 方案的结论版本" })).toHaveValue("ra");
+  });
+
+  it("filters duplicate, unavailable and foreign preselected result ids before confirmation", async () => {
+    const user = userEvent.setup();
+    const state = graphFixture();
+    const save = vi.fn(async (command) => executeTaskEvolution(task, command, now));
+    const task = { ...plain, id: state.taskId, title: state.goal.objective, evolution: state };
+    render(
+      <TaskEvolutionActionForm
+        task={task}
+        intent={{
+          type: "adopt_result",
+          branchId: "a",
+          resultId: "ra",
+          pointIds: ["ra:1", "ra:0", "ra:1", "rc:0", "missing"],
+        }}
+        onExecute={save}
+        onCancel={vi.fn()}
+        onSuccess={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("已选 1 项")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /目录组织/ })).not.toBeChecked();
+    await user.type(screen.getByRole("textbox", { name: "选择理由" }), "仅确认可用条目");
+    await user.click(screen.getByRole("button", { name: "确认采纳并保存" }));
+    expect(save.mock.calls[0][0].action).toMatchObject({ type: "adopt_result", resultId: "ra", pointIds: ["ra:1"] });
+  });
+
   it("opens the exact result linked from a preview and ignores a missing source", () => {
     const view = render(
       <TaskExplorationWorkspace

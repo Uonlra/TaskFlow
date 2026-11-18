@@ -34,6 +34,13 @@ export const taskEvolutionCommandSchema = z.strictObject({
     z.strictObject({ type: z.literal("adjust_goal"), goal: taskGoalSchema, reason: text }),
     z.strictObject({ type: z.literal("review_branch"), branchId: id, reason: text }),
     z.strictObject({ type: z.literal("set_branch_status"), branchId: id, status: branchStatus, reason: text }),
+    z.strictObject({
+      type: z.literal("transfer_branch"),
+      branchId: id,
+      targetTaskId: z.uuid(),
+      goal: taskGoalSchema.extend({ successCriteria: text }),
+      reason: text,
+    }),
     // An explicit replacement goal avoids silently undoing intervening edits.
     z.strictObject({ type: z.literal("withdraw_adoption"), adoptionId: id, goal: taskGoalSchema, reason: text }),
     z.strictObject({ type: z.literal("complete"), note: text }),

@@ -7,6 +7,16 @@ type JsonRequestOptions = {
   cache?: RequestCache;
 };
 
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiRequestError";
+  }
+}
+
 export async function requestJson<T = unknown>(input: RequestInfo | URL, options: JsonRequestOptions = {}): Promise<T> {
   const response = await apiFetch(input, {
     method: options.method ?? "GET",
@@ -28,7 +38,7 @@ export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
 export async function readJsonResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(payload?.message || "请求失败，请稍后再试。");
+    throw new ApiRequestError(payload?.message || "请求失败，请稍后再试。", response.status);
   }
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;

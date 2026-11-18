@@ -9,6 +9,16 @@ export type TaskEvolutionTarget = {
   action?: "adopt" | "review";
 };
 
+export function parseTaskEvolutionTarget(params: Pick<URLSearchParams, "get">): TaskEvolutionTarget {
+  const action = params.get("action");
+  return {
+    eventId: params.get("event") ?? undefined,
+    branchId: params.get("branch") ?? undefined,
+    resultId: params.get("result") ?? undefined,
+    action: action === "adopt" || action === "review" ? action : undefined,
+  };
+}
+
 export function buildTaskEvolutionHref(id: string, target: TaskEvolutionTarget = {}) {
   const params = new URLSearchParams();
   if (target.eventId) params.set("event", target.eventId);
@@ -27,7 +37,8 @@ export function getEvolutionAttention(state: TaskEvolution) {
     return { label: "分支待检查", title: review.title, target: { branchId: review.id, action: "review" as const } };
   const result = [...state.results].reverse().find((item) => {
     const branch = state.branches.find((branch) => branch.id === item.branchId);
-    if (!branch || branch.status === "paused" || branchNeedsReview(state, branch)) return false;
+    if (!branch || branch.transferredTaskId || branch.status === "paused" || branchNeedsReview(state, branch))
+      return false;
     const adopted = new Set(
       state.adoptions
         .filter((adoption) => adoption.resultId === item.id && !adoption.withdrawnBy)

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { orderTaskTransfers } from "@/features/tasks/utils/task-transfer-order";
 import { z } from "zod";
 import { parseTaskEvolution, assertEvolutionExtension } from "@/features/tasks/domain/task-evolution-storage";
 import { TaskEvolutionError } from "@/features/tasks/domain/task-evolution";
@@ -57,6 +58,7 @@ type SyncResult = {
   status: "applied" | "stale" | "deleted" | "error";
   task?: Task;
   message?: string;
+  code?: "conflict" | "auth" | "permission" | "invalid" | "temporary";
 };
 
 export async function POST(request: NextRequest) {
@@ -80,14 +82,34 @@ export async function POST(request: NextRequest) {
 
   const results: SyncResult[] = [];
 
-  for (const operation of parsed.data.operations) {
+  let ordered: typeof parsed.data.operations;
+  try {
+    ordered = orderTaskTransfers(parsed.data.operations);
+  } catch {
+    return NextResponse.json({ message: "任务来源关系存在循环。" }, { status: 400 });
+  }
+  for (const operation of ordered) {
     try {
       results.push(await applySyncOperation(sessionSecret, auth.user.id, operation, request));
     } catch (error) {
+      const code =
+        error instanceof TaskEvolutionError
+          ? error.code === "conflict"
+            ? "conflict"
+            : "invalid"
+          : error instanceof AppwriteRequestError && error.status === 401
+            ? "auth"
+            : error instanceof AppwriteRequestError && error.status === 403
+              ? "permission"
+              : "temporary";
+      const remote =
+        code === "conflict" ? await findRemoteTask(sessionSecret, operation.taskId, request).catch(() => null) : null;
       results.push({
         operationId: operation.operationId,
         taskId: operation.taskId,
         status: "error",
+        code,
+        ...(remote ? { task: remote } : {}),
         message: error instanceof TaskEvolutionError ? error.message : "同步任务失败，将在下次联网时重试。",
       });
     }
@@ -135,7 +157,14 @@ async function applySyncOperation(
       return { operationId: operation.operationId, taskId: operation.taskId, status: "stale", task: remote };
     }
 
-    const tombstone = await deleteTask(sessionSecret, operation.taskId, request, operation.clientUpdatedAt, snapshot);
+    const tombstone = await deleteTask(
+      sessionSecret,
+      operation.taskId,
+      request,
+      operation.clientUpdatedAt,
+      snapshot,
+      userId,
+    );
     return { operationId: operation.operationId, taskId: operation.taskId, status: "deleted", task: tombstone };
   }
 
@@ -164,7 +193,7 @@ async function applySyncOperation(
   }
 
   if (remote) {
-    const task = await updateTask(sessionSecret, operation.taskId, input, request, operation.clientUpdatedAt);
+    const task = await updateTask(sessionSecret, operation.taskId, input, request, operation.clientUpdatedAt, userId);
     return { operationId: operation.operationId, taskId: operation.taskId, status: "applied", task };
   }
 
@@ -194,7 +223,7 @@ async function applySyncOperation(
       return { operationId: operation.operationId, taskId: operation.taskId, status: "stale", task: existing };
     }
 
-    const task = await updateTask(sessionSecret, operation.taskId, input, request, operation.clientUpdatedAt);
+    const task = await updateTask(sessionSecret, operation.taskId, input, request, operation.clientUpdatedAt, userId);
     return { operationId: operation.operationId, taskId: operation.taskId, status: "applied", task };
   }
 }

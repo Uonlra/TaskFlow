@@ -1,5 +1,8 @@
 import type { TaskEvolution, TaskEvolutionEvent } from "@/features/tasks/types/task-evolution.types";
 import { describeEvolutionEvent, explorationStatusLabels } from "@/features/tasks/utils/task-evolution-presentation";
+import { TaskRelationLink } from "./task-relation-link";
+import { transferredTaskHref } from "@/features/tasks/utils/task-transfer-navigation";
+import { TaskOriginLink } from "./task-origin-link";
 
 export function TaskEvolutionEventDetails({
   evolution,
@@ -24,6 +27,19 @@ export function TaskEvolutionEventDetails({
       {action && "title" in action ? <p>{action.title}</p> : null}
       {action && "question" in action ? <p>验证问题：{action.question}</p> : null}
       {action?.type === "set_branch_status" ? <p>探索状态：{explorationStatusLabels[action.status]}</p> : null}
+      {action?.type === "transfer_branch" && branch ? (
+        <div>
+          <p>独立目标：{action.goal.objective}</p>
+          <p>完成标准：{action.goal.successCriteria}</p>
+          {transferredTaskHref(evolution, branch) ? (
+            <TaskRelationLink taskId={branch.transferredTaskId!} href={transferredTaskHref(evolution, branch)!}>
+              打开独立任务 ↗
+            </TaskRelationLink>
+          ) : (
+            <p className="task-evolution-muted">备份中的转出记录</p>
+          )}
+        </div>
+      ) : null}
       {result ? (
         <ul>
           {result.points.map((point) => (
@@ -67,6 +83,7 @@ export function TaskEvolutionEventDetails({
       ) : null}
       {event.kind === "baseline" ? (
         <>
+          <TaskOriginLink evolution={evolution} />
           <p>{event.afterGoal.objective}</p>
           <p>{event.afterGoal.successCriteria || "尚未设置完成标准"}</p>
         </>

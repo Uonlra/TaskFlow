@@ -1,4 +1,79 @@
 @import "./task-evolution-graph.css";
+@import "./task-exploration-comparison.css";
+
+.task-evolution-origin {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.task-evolution-origin a,
+.task-plan-comparison td > a {
+  color: color-mix(in srgb, var(--primary) 70%, var(--foreground));
+}
+.task-evolution-origin > svg {
+  flex-shrink: 0;
+  align-self: center;
+}
+.task-evolution-origin a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+.task-exploration-branch > a.task-evolution-link,
+.task-exploration-branch > .task-relation > a.task-evolution-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--primary) 70%, var(--foreground));
+}
+
+.task-relation {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  gap: 4px;
+}
+.task-relation > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+.task-relation-status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.task-relation-status button {
+  border: 0;
+  padding: 2px 4px;
+  background: transparent;
+  color: var(--primary);
+  font-size: 12px;
+}
+.task-relation-spinner {
+  flex-shrink: 0;
+  animation: task-relation-spin 1s linear infinite;
+}
+@keyframes task-relation-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-relation-spinner {
+    animation: none;
+  }
+}
 
 .task-detail-page {
   display: grid;
@@ -32,10 +107,10 @@
   color: var(--muted-strong);
   font-size: 13px;
 }
-.task-evolution-workspace > .task-evolution-graph .task-evolution-graph-scroll {
+.task-evolution-workspace .task-evolution-graph .task-evolution-graph-scroll {
   max-height: clamp(360px, calc(100dvh - 320px), 900px);
 }
-.task-evolution-workspace > .task-evolution-graph:has(.task-evolution-graph-inspector) .task-evolution-graph-scroll {
+.task-evolution-workspace .task-evolution-graph:has(.task-evolution-graph-inspector) .task-evolution-graph-scroll {
   max-height: clamp(240px, calc(100dvh - 660px), 420px);
 }
 
@@ -396,8 +471,8 @@
     overflow-x: auto;
     padding-bottom: 6px;
   }
-  .task-exploration-branches button {
-    flex: 0 0 150px;
+  .task-exploration-branch-choice {
+    flex: 0 0 170px;
   }
   .task-evolution-events summary {
     flex-wrap: wrap;

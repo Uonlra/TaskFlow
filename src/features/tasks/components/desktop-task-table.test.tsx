@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { DesktopTaskTable } from "@/features/tasks/components/desktop-task-table";
 import type { Task } from "@/features/tasks/types/task.types";
+import { graphFixture } from "../../../../test/fixtures/task-evolution";
 
 const tasks: Task[] = [
   {
@@ -41,6 +42,58 @@ const tasks: Task[] = [
 ];
 
 describe("DesktopTaskTable", () => {
+  it("opens relations with Enter without selecting the parent row or counting branches as tasks", async () => {
+    const user = userEvent.setup();
+    const state = graphFixture();
+    const evolved = { ...tasks[0], id: state.taskId, title: state.goal.objective, evolution: state };
+    const select = vi.fn();
+    const open = vi.fn();
+    const preview = vi.fn();
+    render(
+      <DesktopTaskTable
+        tasks={[evolved]}
+        emptyState={{ title: "", description: "" }}
+        selectedTaskId={null}
+        onSelectTask={select}
+        onOpenRelations={open}
+        onPreviewTask={preview}
+        onUpdateStatus={vi.fn()}
+        scrollPositionRef={{ current: 0 }}
+      />,
+    );
+    expect(screen.getAllByRole("row")).toHaveLength(2);
+    expect(screen.getByText("3 个方案")).toBeInTheDocument();
+    expect(screen.getByText("待采纳 3")).toBeInTheDocument();
+    const entry = screen.getByRole("button", { name: `查看「${evolved.title}」的探索关系` });
+    entry.focus();
+    await user.keyboard("{Enter}");
+    expect(open).toHaveBeenCalledExactlyOnceWith(evolved.id);
+    expect(select).not.toHaveBeenCalled();
+    expect(preview).not.toHaveBeenCalled();
+  });
+
+  it("routes completion of an evolving task to its detail workflow", async () => {
+    const user = userEvent.setup();
+    const state = graphFixture();
+    const evolved = { ...tasks[0], id: state.taskId, evolution: state };
+    const update = vi.fn();
+    const preview = vi.fn();
+    render(
+      <DesktopTaskTable
+        tasks={[evolved]}
+        emptyState={{ title: "", description: "" }}
+        selectedTaskId={null}
+        onSelectTask={vi.fn()}
+        onPreviewTask={preview}
+        onUpdateStatus={update}
+        scrollPositionRef={{ current: 0 }}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "进入任务验收" }));
+    expect(preview).toHaveBeenCalledWith(evolved);
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it("将任务行放入可聚焦的滚动区域，并保存当前滚动位置", () => {
     const scrollPositionRef = { current: 0 };
     const { container, rerender } = render(

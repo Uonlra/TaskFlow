@@ -2,7 +2,7 @@
 
 import { useDesktopRuntime } from "@/shared/hooks/use-desktop-runtime";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
 import { getTaskRepository } from "@/features/tasks/repositories/task-repository-selector";
@@ -30,6 +30,7 @@ export function useTaskPage({ filters, page, initialFilters, initialData }: Task
   const localTasks = useTaskStore((state) => state.tasks);
   const localError = useTaskStore((state) => state.error);
   const localLoading = useTaskStore((state) => state.isLoading);
+  const localOwner = useTaskStore((state) => state.lastLoadedUserId);
   const isGuest = !isAuthLoading && (!user || isDesktop);
   const userId = user?.id ?? (isAuthLoading ? initialData?.userId : undefined);
   const params = buildTaskPageParams(filters, page).toString();
@@ -63,8 +64,50 @@ export function useTaskPage({ filters, page, initialFilters, initialData }: Task
     () => (isGuest ? getTaskPage(localTasks, filters, page) : null),
     [isGuest, localTasks, filters, page],
   );
+  const reconciled = useMemo(() => {
+    if (!remote.data || !userId || localOwner !== userId) return { page: remote.data, refreshKey: null };
+    const stored = new Map(localTasks.map((task) => [task.id, task]));
+    const newer: [string, number][] = [];
+    const tasks = remote.data.tasks.map((task) => {
+      const saved = stored.get(task.id);
+      if (saved?.evolution && saved.evolution.revision > (task.evolution?.revision ?? -1)) {
+        newer.push([task.id, saved.evolution.revision]);
+        return saved;
+      }
+      return task;
+    });
+    return newer.length
+      ? { page: { ...remote.data, tasks }, refreshKey: JSON.stringify([key, newer]) }
+      : { page: remote.data, refreshKey: null };
+  }, [remote.data, userId, localOwner, localTasks, key]);
+  const refreshKey = reconciled.refreshKey;
+  const reloadRemote = remote.reload;
+  const snapshotKey = JSON.stringify(
+    localTasks.map((task) => [
+      task.id,
+      task.updatedAt,
+      task.evolution?.revision,
+      task.title,
+      task.status,
+      task.priority,
+      task.dueDate,
+      task.tags,
+    ]),
+  );
+  const observed = useRef({ scope: key, snapshotKey });
+  const requested = useRef<string | null>(null);
+  useEffect(() => {
+    const changed = observed.current.scope === key && observed.current.snapshotKey !== snapshotKey;
+    observed.current = { scope: key, snapshotKey };
+    if (isGuest || !userId || localOwner !== userId || (!changed && !refreshKey)) return;
+    // Transfers can create a task outside the currently visible page or filter.
+    const requestKey = JSON.stringify([key, snapshotKey]);
+    if (requested.current === requestKey) return;
+    requested.current = requestKey;
+    void reloadRemote();
+  }, [key, snapshotKey, refreshKey, reloadRemote, isGuest, userId, localOwner]);
   return {
-    pageData: isGuest ? guestData : remote.data,
+    pageData: isGuest ? guestData : reconciled.page,
     isLoading: isGuest ? isDesktop && localLoading : (isAuthLoading && !remote.data) || remote.isLoading,
     error: isGuest ? (isDesktop ? localError : null) : remote.error,
     userId,
