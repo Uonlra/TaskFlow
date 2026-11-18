@@ -58,6 +58,7 @@ type SyncResult = {
   status: "applied" | "stale" | "deleted" | "error";
   task?: Task;
   message?: string;
+  code?: "conflict" | "auth" | "permission" | "invalid" | "temporary";
 };
 
 export async function POST(request: NextRequest) {
@@ -91,10 +92,24 @@ export async function POST(request: NextRequest) {
     try {
       results.push(await applySyncOperation(sessionSecret, auth.user.id, operation, request));
     } catch (error) {
+      const code =
+        error instanceof TaskEvolutionError
+          ? error.code === "conflict"
+            ? "conflict"
+            : "invalid"
+          : error instanceof AppwriteRequestError && error.status === 401
+            ? "auth"
+            : error instanceof AppwriteRequestError && error.status === 403
+              ? "permission"
+              : "temporary";
+      const remote =
+        code === "conflict" ? await findRemoteTask(sessionSecret, operation.taskId, request).catch(() => null) : null;
       results.push({
         operationId: operation.operationId,
         taskId: operation.taskId,
         status: "error",
+        code,
+        ...(remote ? { task: remote } : {}),
         message: error instanceof TaskEvolutionError ? error.message : "同步任务失败，将在下次联网时重试。",
       });
     }

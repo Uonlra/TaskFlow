@@ -2,6 +2,12 @@ import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { TaskEvolutionCommand } from "@/features/tasks/schemas/task-evolution-schema";
 import type { Task } from "@/features/tasks/types/task.types";
 import type { TaskBranchTransferResult } from "@/features/tasks/domain/task-evolution-storage";
+import type {
+  TaskSyncConflict,
+  TaskSyncFailureCode,
+  TaskSyncResolution,
+  ResolveTaskSyncConflict,
+} from "@/features/tasks/types/task-sync.types";
 
 export type DesktopLocalTasksBridge = {
   transferBranch?(input: {
@@ -32,10 +38,17 @@ export type DesktopSyncOperation = {
 };
 
 export type DesktopSyncQueueBridge = {
+  conflicts?(input: { accountId: string }): Promise<TaskSyncConflict[]>;
+  refreshConflict?(input: { accountId: string; taskId: string; operationId: string; remote: Task }): Promise<void>;
+  resolution?(input: { accountId: string; resolutionId: string }): Promise<TaskSyncResolution | null>;
+  resolve?(input: ResolveTaskSyncConflict): Promise<TaskSyncResolution>;
   settle?(input: { accountId: string; operations: Array<{ operationId: string }>; tasks: Task[] }): Promise<Task[]>;
   list(input: { accountId: string; limit?: number }): Promise<DesktopSyncOperation[]>;
   acknowledge(input: { accountId: string; operations: Array<{ operationId: string }> }): Promise<void>;
-  fail(input: { accountId: string; failures: Array<{ operationId: string; message?: string }> }): Promise<void>;
+  fail(input: {
+    accountId: string;
+    failures: Array<{ operationId: string; message?: string; code?: TaskSyncFailureCode; remote?: Task }>;
+  }): Promise<void>;
 };
 
 export type DesktopAuthBridge = {

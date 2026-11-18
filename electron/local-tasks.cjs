@@ -447,7 +447,20 @@ function listPendingSyncOperations(database, accountId, limit = 50) {
       lastError: row.last_error ?? undefined,
       createdAt: row.created_at,
     }));
-  return orderTaskTransfers(operations).slice(0, normalizedLimit);
+  const blocked = new Set(
+    database
+      .prepare("SELECT task_id FROM sync_conflicts WHERE account_id = ?")
+      .all(normalizedAccountId)
+      .map((row) => row.task_id),
+  );
+  return orderTaskTransfers(operations)
+    .filter((operation) => {
+      const evolution = operation.payload?.evolution;
+      if (evolution?.origin && evolution.detachedTaskLinksThrough === undefined && blocked.has(evolution.origin.taskId))
+        blocked.add(operation.taskId);
+      return !blocked.has(operation.taskId);
+    })
+    .slice(0, normalizedLimit);
 }
 
 function acknowledgeSyncOperations(database, accountId, operations) {
@@ -481,6 +494,11 @@ function acknowledgeSyncOperations(database, accountId, operations) {
       if (!row) continue;
 
       deleteOperation.run(normalizedAccountId, row.task_id, row.id);
+      database
+        .prepare(
+          "DELETE FROM sync_conflicts WHERE account_id = ? AND task_id = ? AND NOT EXISTS (SELECT 1 FROM sync_queue WHERE account_id = ? AND task_id = ?)",
+        )
+        .run(normalizedAccountId, row.task_id, normalizedAccountId, row.task_id);
       markTaskSynced.run(normalizedAccountId, row.task_id, row.client_updated_at);
     }
   });
@@ -503,6 +521,27 @@ function recordSyncOperationFailures(database, accountId, failures) {
       if (!failure || typeof failure.operationId !== "string") continue;
       const message = typeof failure.message === "string" ? failure.message.slice(0, 500) : "同步失败。";
       update.run(message, failure.operationId, normalizedAccountId);
+      if (failure.code === "conflict" && failure.remote) {
+        const queued = database
+          .prepare(
+            "SELECT task_id FROM sync_queue WHERE account_id = ? AND operation_id = ? AND id = (SELECT MAX(q.id) FROM sync_queue q WHERE q.account_id = sync_queue.account_id AND q.task_id = sync_queue.task_id)",
+          )
+          .get(normalizedAccountId, failure.operationId);
+        if (queued && failure.remote.id === queued.task_id) {
+          normalizeImportedTask(failure.remote);
+          database
+            .prepare(
+              "INSERT INTO sync_conflicts (account_id, task_id, operation_id, remote_json, detected_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(account_id, task_id) DO UPDATE SET operation_id=excluded.operation_id, remote_json=excluded.remote_json, detected_at=excluded.detected_at",
+            )
+            .run(
+              normalizedAccountId,
+              queued.task_id,
+              failure.operationId,
+              JSON.stringify(failure.remote),
+              new Date().toISOString(),
+            );
+        }
+      }
     }
   });
 
@@ -517,6 +556,9 @@ function settleSyncOperations(database, accountId, operations, tasks) {
 }
 
 module.exports = {
+  normalizeImportedTask,
+  mapTaskRow,
+  queueOperation,
   acknowledgeSyncOperations,
   createLocalTask,
   executeLocalTaskEvolution,

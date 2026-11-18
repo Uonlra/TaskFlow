@@ -182,3 +182,11 @@ export function restoreTaskEvolution(value: unknown, newTaskId: string): TaskEvo
   state.events[0].id = `baseline:${newTaskId}`;
   return parseTaskEvolution(state, newTaskId);
 }
+
+/** Freeze links whose source history cannot be committed after conflict recovery. */
+export function detachTaskEvolutionLinks(value: unknown): TaskEvolution {
+  const state = structuredClone(parseTaskEvolution(value));
+  state.detachedTaskLinksThrough = state.revision;
+  state.events[0].detachedTaskLinksThrough = state.revision;
+  return parseTaskEvolution(state);
+}

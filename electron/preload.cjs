@@ -72,6 +72,10 @@ contextBridge.exposeInMainWorld("taskflowDesktop", {
     delete: (input) => invoke("taskflow:local-tasks:delete", input),
   },
   syncQueue: {
+    conflicts: (input) => invoke("taskflow:sync-queue:conflicts", input),
+    refreshConflict: (input) => invoke("taskflow:sync-queue:refresh-conflict", input),
+    resolution: (input) => invoke("taskflow:sync-queue:resolution", input),
+    resolve: (input) => invoke("taskflow:sync-queue:resolve", input),
     settle: (input) => invoke("taskflow:sync-queue:settle", input),
     list: (input) => invoke("taskflow:sync-queue:list", input),
     acknowledge: (input) => invoke("taskflow:sync-queue:acknowledge", input),

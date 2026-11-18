@@ -57,6 +57,18 @@ export function TaskDetailClient({
   const setFetchedTask = (task: Task) => setFetchedRecord({ owner, task });
   const [finishedRequestId, setFinishedRequestId] = useState<string | null>(null);
   const [statusAnimationKey, setStatusAnimationKey] = useState(0);
+  const [syncResolutionVersion, setSyncResolutionVersion] = useState(0);
+  useEffect(() => {
+    const resolved = (event: Event) => {
+      const detail = (event as CustomEvent<{ taskId: string; accountId: string }>).detail;
+      if (detail?.taskId !== id || detail.accountId !== user?.id) return;
+      ++mutationEpoch.current;
+      setFetchedRecord(null);
+      setSyncResolutionVersion((version) => version + 1);
+    };
+    window.addEventListener("taskflow:task-sync-resolved", resolved);
+    return () => window.removeEventListener("taskflow:task-sync-resolved", resolved);
+  }, [id, user?.id]);
 
   const fetchedTask = fetchedRecord?.owner === owner && fetchedRecord.task.id === id ? fetchedRecord.task : undefined;
   const visibleStoredTask = lastLoadedUserId === (user?.id ?? null) ? storedTask : undefined;
@@ -119,7 +131,7 @@ export function TaskDetailClient({
     return () => {
       cancelled = true;
     };
-  }, [id, isConfigured, user?.id]);
+  }, [id, isConfigured, user?.id, syncResolutionVersion]);
 
   if ((isAuthLoading || (isConfigured && (isDetailLoading || isLoading))) && !task) {
     return (

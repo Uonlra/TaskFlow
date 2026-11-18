@@ -26,6 +26,7 @@ __export(task_evolution_storage_exports, {
   assertOrdinaryTaskEdit: () => assertOrdinaryTaskEdit,
   assertTaskEvolutionProjection: () => assertTaskEvolutionProjection,
   buildTransferredTask: () => buildTransferredTask,
+  detachTaskEvolutionLinks: () => detachTaskEvolutionLinks,
   executeTaskEvolution: () => executeTaskEvolution,
   newTransferredTasks: () => newTransferredTasks,
   orderTaskTransfers: () => orderTaskTransfers,
@@ -561,6 +562,12 @@ function restoreTaskEvolution(value, newTaskId) {
   state.events[0].id = `baseline:${newTaskId}`;
   return parseTaskEvolution(state, newTaskId);
 }
+function detachTaskEvolutionLinks(value) {
+  const state = structuredClone(parseTaskEvolution(value));
+  state.detachedTaskLinksThrough = state.revision;
+  state.events[0].detachedTaskLinksThrough = state.revision;
+  return parseTaskEvolution(state);
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   MAX_EVOLUTION_BYTES,
@@ -568,6 +575,7 @@ function restoreTaskEvolution(value, newTaskId) {
   assertOrdinaryTaskEdit,
   assertTaskEvolutionProjection,
   buildTransferredTask,
+  detachTaskEvolutionLinks,
   executeTaskEvolution,
   newTransferredTasks,
   orderTaskTransfers,

@@ -53,6 +53,31 @@ function createBridge() {
 describe("flushDesktopSyncQueue", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it("stores structured conflicts with the readable cloud snapshot instead of importing it over local work", async () => {
+    const bridge = createBridge();
+    mocks.getDesktopBridge.mockReturnValue(bridge);
+    const remote = { ...task, description: "另一端已更新" };
+    mocks.requestJson.mockResolvedValue({
+      results: [
+        {
+          operationId: "operation-1",
+          taskId: task.id,
+          status: "error",
+          code: "conflict",
+          task: remote,
+          message: "历史分叉",
+        },
+      ],
+    });
+    expect(await flushDesktopSyncQueue("user-1")).toEqual({ processed: 0, failed: 1 });
+    expect(bridge.syncQueue.fail).toHaveBeenCalledWith({
+      accountId: "user-1",
+      failures: [{ operationId: "operation-1", code: "conflict", remote, message: "历史分叉" }],
+    });
+    expect(bridge.localTasks.upsert).not.toHaveBeenCalled();
+    expect(bridge.syncQueue.acknowledge).not.toHaveBeenCalled();
+  });
+
   it("大型快照按容量分批，尚未发送的操作不会被确认", async () => {
     const bridge = createBridge();
     const large = {

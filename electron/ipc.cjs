@@ -1,6 +1,12 @@
 const { ipcMain } = require("electron");
 
 const { getDatabase } = require("./database.cjs");
+const {
+  readSyncConflicts,
+  refreshSyncConflict,
+  readSyncResolution,
+  resolveSyncConflict,
+} = require("./sync-conflicts.cjs");
 const { clearStoredAuth, getStoredAuth, setStoredAuth } = require("./auth.cjs");
 const { getWorkspace, connectWorkspace, pauseWorkspace } = require("./workspace.cjs");
 const {
@@ -65,6 +71,16 @@ function getActiveDatabase(input) {
 }
 
 function registerIpcHandlers({ updates } = {}) {
+  for (const [name, handler] of [
+    ["conflicts", (database, input) => readSyncConflicts(database, input.accountId)],
+    ["refresh-conflict", refreshSyncConflict],
+    ["resolution", (database, input) => readSyncResolution(database, input.accountId, input.resolutionId)],
+    ["resolve", resolveSyncConflict],
+  ])
+    ipcMain.handle(`taskflow:sync-queue:${name}`, (event, input) => {
+      assertTrustedSender(event);
+      return handler(getActiveDatabase(input), input);
+    });
   for (const [action, method] of [
     ["state", "getState"],
     ["check", "check"],

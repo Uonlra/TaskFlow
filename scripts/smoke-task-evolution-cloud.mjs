@@ -283,6 +283,95 @@ try {
   await expect(app.page.getByRole("link", { name: `${source.title} / 离线探索方案`, exact: true })).toBeVisible();
   await app.page.screenshot({ path: path.join(root, "desktop-independent-task.png") });
   record("网页端新进展下载至桌面，独立详情正确显示来源入口");
+  // Real divergent histories: preserve the losing device's work through the UI.
+  await app.context.setOffline(true);
+  let conflictLocal = await local(onlineTargetId);
+  conflictLocal = await bridge("localTasks.executeEvolution", {
+    accountId,
+    taskId: onlineTargetId,
+    command: command(conflictLocal, { type: "record_progress", note: "本地冲突进展：保留离线验证" }),
+  });
+  await evolve(other, await getTask(onlineTargetId), {
+    type: "record_progress",
+    note: "云端冲突进展：另一设备继续推进",
+  });
+  const healthy = await local(child.id);
+  await bridge("localTasks.executeEvolution", {
+    accountId,
+    taskId: child.id,
+    command: command(healthy, { type: "record_progress", note: "其他任务继续正常同步" }),
+  });
+  await app.context.setOffline(false);
+  await replay();
+  await expect.poll(async () => (await bridge("syncQueue.conflicts", { accountId })).length).toBe(1);
+  await expect
+    .poll(async () =>
+      (await getTask(child.id)).evolution.events.some((event) => event.command?.action.note === "其他任务继续正常同步"),
+    )
+    .toBe(true);
+  assert.ok(
+    (await local(onlineTargetId)).evolution.events.some((event) =>
+      event.command?.action.note?.startsWith("本地冲突进展"),
+    ),
+  );
+  await close();
+  app = await launch();
+  await expect.poll(async () => (await bridge("syncQueue.conflicts", { accountId })).length).toBe(1);
+  await app.page.goto(`app://taskflow/tasks/${onlineTargetId}/`);
+  await app.page.getByRole("button", { name: /同步待处理/ }).click();
+  const conflictDialog = app.page.getByRole("dialog", { name: "处理同步冲突" });
+  await expect(conflictDialog.getByRole("region", { name: "本地版本" })).toContainText("本地冲突进展");
+  await expect(conflictDialog.getByRole("region", { name: "云端版本" })).toContainText("云端冲突进展");
+  await expect(conflictDialog.getByRole("button", { name: "保留本地副本并恢复同步" })).toBeEnabled();
+  await app.page.screenshot({ path: path.join(root, "desktop-sync-conflict.png") });
+  await conflictDialog.getByRole("button", { name: "保留本地副本并恢复同步" }).click();
+  await expect.poll(async () => (await bridge("syncQueue.conflicts", { accountId })).length).toBe(0);
+  const copies = (await bridge("localTasks.list", { accountId })).filter(
+    (task) => task.title === conflictLocal.title && task.tags.includes("本地副本"),
+  );
+  assert.equal(copies.length, 1);
+  owned.add(copies[0].id);
+  await expect.poll(async () => (await queue()).length).toBe(0);
+  await expect
+    .poll(async () => Boolean((await getTask(copies[0].id)).evolution.detachedTaskLinksThrough !== undefined))
+    .toBe(true);
+  assert.ok(
+    (await getTask(copies[0].id)).evolution.events.some((event) =>
+      event.command?.action.note?.startsWith("本地冲突进展"),
+    ),
+  );
+  await expect(conflictDialog).not.toBeVisible();
+  record("真实历史分叉在重启后保留，正常任务继续同步；界面保留本地副本并恢复云端版本");
+
+  await app.context.setOffline(true);
+  const secondLocal = await local(onlineTargetId);
+  await bridge("localTasks.executeEvolution", {
+    accountId,
+    taskId: onlineTargetId,
+    command: command(secondLocal, { type: "record_progress", note: "本地待放弃修改" }),
+  });
+  await evolve(other, await getTask(onlineTargetId), { type: "record_progress", note: "确认保留的云端修改" });
+  await app.context.setOffline(false);
+  await replay();
+  await expect.poll(async () => (await bridge("syncQueue.conflicts", { accountId })).length).toBe(1);
+  await app.page.getByRole("button", { name: /同步待处理/ }).click();
+  await expect(conflictDialog.getByRole("button", { name: "采用云端版本", exact: true })).toBeEnabled();
+  await conflictDialog.getByRole("button", { name: "采用云端版本", exact: true }).click();
+  assert.ok(
+    (await local(onlineTargetId)).evolution.events.some((event) => event.command?.action.note === "本地待放弃修改"),
+  );
+  await app.page.getByRole("button", { name: "确认采用云端版本", exact: true }).click();
+  await expect.poll(async () => (await bridge("syncQueue.conflicts", { accountId })).length).toBe(0);
+  assert.ok(
+    !(await local(onlineTargetId)).evolution.events.some((event) => event.command?.action.note === "本地待放弃修改"),
+  );
+  assert.equal(
+    (await bridge("localTasks.list", { accountId })).filter(
+      (task) => task.title === conflictLocal.title && task.tags.includes("本地副本"),
+    ).length,
+    1,
+  );
+  record("采用云端版本需要二次确认，确认前保留本地修改，确认后不额外创建副本");
   source = await evolve(web, source, { type: "complete", note: "原任务按自身标准完成" });
   assert.equal(source.status, "done");
   assert.equal((await getTask(onlineTargetId)).status, "in_progress");
@@ -312,6 +401,12 @@ try {
   }
   const remaining = [];
   if (web) {
+    // Discover a UI-created copy even if its successful IPC response was lost.
+    const listed = await web.get("/api/tasks?export=1").catch(() => null);
+    if (listed?.ok())
+      for (const task of (await listed.json()).tasks ?? []) {
+        if (task.title?.startsWith(marker) && task.tags?.includes("本地副本")) owned.add(task.id);
+      }
     const cookie = (await web.storageState()).cookies.find(
       (item) => item.name === (process.env.APPWRITE_SESSION_COOKIE_NAME || "taskflow-session"),
     );

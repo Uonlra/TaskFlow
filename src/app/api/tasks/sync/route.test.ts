@@ -99,6 +99,8 @@ describe("/api/tasks/sync", () => {
     const conflicted = await POST(requestFor([upsertOperation({ payload: local })]));
     expect((await conflicted.json()).results[0]).toMatchObject({
       status: "error",
+      code: "conflict",
+      task: JSON.parse(JSON.stringify(fork)),
       message: expect.stringContaining("分叉"),
     });
     expect(mocks.updateTask).not.toHaveBeenCalled();

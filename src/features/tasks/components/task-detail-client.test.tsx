@@ -30,6 +30,45 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+it("conflict recovery replaces an older fetched local fork even when the cloud history has fewer events", async () => {
+  const local = executeTaskEvolution(
+    task,
+    {
+      operationId: "local-goal",
+      expectedRevision: 0,
+      action: { type: "adjust_goal", goal: { objective: "本地目标", successCriteria: "本地标准" }, reason: "本地" },
+    },
+    "2026-11-18T00:00:00.000Z",
+  );
+  const localLater = executeTaskEvolution(
+    local,
+    { operationId: "local-note", expectedRevision: 1, action: { type: "record_progress", note: "更多本地记录" } },
+    "2026-11-18T00:01:00.000Z",
+  );
+  const remote = executeTaskEvolution(
+    task,
+    {
+      operationId: "remote-goal",
+      expectedRevision: 0,
+      action: { type: "adjust_goal", goal: { objective: "云端目标", successCriteria: "云端标准" }, reason: "云端" },
+    },
+    "2026-11-18T00:02:00.000Z",
+  );
+  mocks.get.mockResolvedValue(localLater);
+  useTaskStore.setState({ tasks: [localLater], lastLoadedUserId: "owner", isLoading: false });
+  render(<TaskDetailClient id="t" />);
+  await screen.findByRole("heading", { level: 1, name: "本地目标" });
+  mocks.get.mockResolvedValue(remote);
+  await act(async () => {
+    useTaskStore.setState({ tasks: [remote] });
+    window.dispatchEvent(
+      new CustomEvent("taskflow:task-sync-resolved", { detail: { taskId: "t", accountId: "owner" } }),
+    );
+  });
+  expect(await screen.findByRole("heading", { level: 1, name: "云端目标" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { level: 1, name: "本地目标" })).not.toBeInTheDocument();
+});
+
 it("a late detail read cannot replace a newly saved exploration", async () => {
   const user = userEvent.setup();
   let resolve!: (task: Task) => void;
