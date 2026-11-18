@@ -93,6 +93,14 @@ export function useCalendarTasks({ from, to }: TaskDueRangeQuery) {
     }
     return load().then(commit);
   }, [isGuest, key, load, commit]);
+  useEffect(() => {
+    const transferred = (event: Event) => {
+      const detail = (event as CustomEvent<{ accountId: string | null }>).detail;
+      if (!isGuest && userId && detail?.accountId === userId) void reload();
+    };
+    window.addEventListener("taskflow:task-transferred", transferred);
+    return () => window.removeEventListener("taskflow:task-transferred", transferred);
+  }, [isGuest, userId, reload]);
 
   const guestData = useMemo<TaskDueRangeResult>(() => {
     const attention = { overdueCount: 0, nearDueCount: 0 };

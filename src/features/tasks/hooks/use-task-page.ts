@@ -2,7 +2,7 @@
 
 import { useDesktopRuntime } from "@/shared/hooks/use-desktop-runtime";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { getWorkspaceErrorMessage } from "@/features/auth/utils/workspace-state";
 import { getTaskRepository } from "@/features/tasks/repositories/task-repository-selector";
@@ -82,10 +82,30 @@ export function useTaskPage({ filters, page, initialFilters, initialData }: Task
   }, [remote.data, userId, localOwner, localTasks, key]);
   const refreshKey = reconciled.refreshKey;
   const reloadRemote = remote.reload;
+  const snapshotKey = JSON.stringify(
+    localTasks.map((task) => [
+      task.id,
+      task.updatedAt,
+      task.evolution?.revision,
+      task.title,
+      task.status,
+      task.priority,
+      task.dueDate,
+      task.tags,
+    ]),
+  );
+  const observed = useRef({ scope: key, snapshotKey });
+  const requested = useRef<string | null>(null);
   useEffect(() => {
-    // A saved evolution can outlive a cached Next.js list page. Refresh membership and counts once per version.
-    if (refreshKey) void reloadRemote();
-  }, [refreshKey, reloadRemote]);
+    const changed = observed.current.scope === key && observed.current.snapshotKey !== snapshotKey;
+    observed.current = { scope: key, snapshotKey };
+    if (isGuest || !userId || localOwner !== userId || (!changed && !refreshKey)) return;
+    // Transfers can create a task outside the currently visible page or filter.
+    const requestKey = JSON.stringify([key, snapshotKey]);
+    if (requested.current === requestKey) return;
+    requested.current = requestKey;
+    void reloadRemote();
+  }, [key, snapshotKey, refreshKey, reloadRemote, isGuest, userId, localOwner]);
   return {
     pageData: isGuest ? guestData : reconciled.page,
     isLoading: isGuest ? isDesktop && localLoading : (isAuthLoading && !remote.data) || remote.isLoading,

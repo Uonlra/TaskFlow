@@ -9,6 +9,16 @@ export type TaskEvolutionTarget = {
   action?: "adopt" | "review";
 };
 
+export function parseTaskEvolutionTarget(params: Pick<URLSearchParams, "get">): TaskEvolutionTarget {
+  const action = params.get("action");
+  return {
+    eventId: params.get("event") ?? undefined,
+    branchId: params.get("branch") ?? undefined,
+    resultId: params.get("result") ?? undefined,
+    action: action === "adopt" || action === "review" ? action : undefined,
+  };
+}
+
 export function buildTaskEvolutionHref(id: string, target: TaskEvolutionTarget = {}) {
   const params = new URLSearchParams();
   if (target.eventId) params.set("event", target.eventId);

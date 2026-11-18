@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { TaskRelationLink } from "./task-relation-link";
 import { GitBranch } from "lucide-react";
 import type { TaskEvolution } from "@/features/tasks/types/task-evolution.types";
 import { taskOriginHref } from "@/features/tasks/utils/task-transfer-navigation";
@@ -12,9 +12,9 @@ export function TaskOriginLink({ evolution }: { evolution?: TaskEvolution }) {
       <GitBranch size={14} aria-hidden="true" />
       <span>{href ? "来源" : "备份来源"}</span>
       {href ? (
-        <Link href={href} title={name}>
+        <TaskRelationLink taskId={evolution.origin.taskId} href={href} title={name}>
           {name}
-        </Link>
+        </TaskRelationLink>
       ) : (
         <span>{name}</span>
       )}

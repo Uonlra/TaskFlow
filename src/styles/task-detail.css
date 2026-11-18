@@ -23,12 +23,56 @@
   outline: 2px solid var(--primary);
   outline-offset: 3px;
 }
-.task-exploration-branch > a.task-evolution-link {
+.task-exploration-branch > a.task-evolution-link,
+.task-exploration-branch > .task-relation > a.task-evolution-link {
   display: inline-flex;
   align-items: center;
   min-height: 30px;
   font-size: 13px;
   color: color-mix(in srgb, var(--primary) 70%, var(--foreground));
+}
+
+.task-relation {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  gap: 4px;
+}
+.task-relation > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+.task-relation-status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.task-relation-status button {
+  border: 0;
+  padding: 2px 4px;
+  background: transparent;
+  color: var(--primary);
+  font-size: 12px;
+}
+.task-relation-spinner {
+  flex-shrink: 0;
+  animation: task-relation-spin 1s linear infinite;
+}
+@keyframes task-relation-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-relation-spinner {
+    animation: none;
+  }
 }
 
 .task-detail-page {

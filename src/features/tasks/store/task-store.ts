@@ -154,6 +154,8 @@ export const useTaskStore = create<TaskStore>()((set) => ({
             : replaceKnownTask(state.tasks, result.source),
         error: null,
       }));
+      if (typeof window !== "undefined")
+        window.dispatchEvent(new CustomEvent("taskflow:task-transferred", { detail: { accountId: userId ?? null } }));
       return result.source;
     }
     if (!userId && !isDesktopRuntime()) {

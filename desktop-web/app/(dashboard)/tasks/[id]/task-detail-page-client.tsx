@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { TaskDetailClient } from "@/features/tasks/components/task-detail-client";
+import { parseTaskEvolutionTarget } from "@/features/tasks/utils/task-evolution-navigation";
 
 export function TaskDetailPageClient({ fallbackId }: { fallbackId: string }) {
   return (
@@ -21,5 +22,11 @@ function TaskDetailPageContent({ fallbackId }: { fallbackId: string }) {
   const pathId = pathname.split("/").filter(Boolean).at(-1);
   const id = pathId && pathId !== "__task__" ? pathId : fallbackId;
 
-  return <TaskDetailClient id={id} initiallyEditing={searchParams.get("edit") === "true"} />;
+  return (
+    <TaskDetailClient
+      id={id}
+      initiallyEditing={searchParams.get("edit") === "true"}
+      evolutionTarget={parseTaskEvolutionTarget(searchParams)}
+    />
+  );
 }

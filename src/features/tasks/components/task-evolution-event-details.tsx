@@ -1,6 +1,6 @@
 import type { TaskEvolution, TaskEvolutionEvent } from "@/features/tasks/types/task-evolution.types";
 import { describeEvolutionEvent, explorationStatusLabels } from "@/features/tasks/utils/task-evolution-presentation";
-import Link from "next/link";
+import { TaskRelationLink } from "./task-relation-link";
 import { transferredTaskHref } from "@/features/tasks/utils/task-transfer-navigation";
 import { TaskOriginLink } from "./task-origin-link";
 
@@ -32,7 +32,9 @@ export function TaskEvolutionEventDetails({
           <p>独立目标：{action.goal.objective}</p>
           <p>完成标准：{action.goal.successCriteria}</p>
           {transferredTaskHref(evolution, branch) ? (
-            <Link href={transferredTaskHref(evolution, branch)!}>打开独立任务 ↗</Link>
+            <TaskRelationLink taskId={branch.transferredTaskId!} href={transferredTaskHref(evolution, branch)!}>
+              打开独立任务 ↗
+            </TaskRelationLink>
           ) : (
             <p className="task-evolution-muted">备份中的转出记录</p>
           )}

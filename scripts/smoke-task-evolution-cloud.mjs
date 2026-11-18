@@ -7,6 +7,8 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { chromium, request, expect as baseExpect } from "@playwright/test";
+import { build } from "esbuild";
+import { measureEvolutionBrowser } from "./lib/measure-evolution-browser.mjs";
 
 try {
   process.loadEnvFile(".env.local");
@@ -283,6 +285,15 @@ try {
   await expect(app.page.getByRole("link", { name: `${source.title} / 离线探索方案`, exact: true })).toBeVisible();
   await app.page.screenshot({ path: path.join(root, "desktop-independent-task.png") });
   record("网页端新进展下载至桌面，独立详情正确显示来源入口");
+  await app.page.getByRole("link", { name: `${source.title} / 离线探索方案`, exact: true }).click();
+  await expect(app.page.getByRole("heading", { name: source.title, level: 1, exact: true })).toBeVisible();
+  await expect(app.page.getByRole("region", { name: "节点详情", exact: true })).toContainText("转为独立任务");
+  await app.page
+    .getByRole("region", { name: "节点详情", exact: true })
+    .getByRole("link", { name: "打开独立任务 ↗" })
+    .click();
+  await expect(app.page.getByRole("heading", { name: child.title, level: 1, exact: true })).toBeVisible();
+  record("真实桌面来源入口返回原转出节点，目标入口回到对应独立任务");
   // Real divergent histories: preserve the losing device's work through the UI.
   await app.context.setOffline(true);
   let conflictLocal = await local(onlineTargetId);
@@ -383,6 +394,46 @@ try {
   await expect.poll(async () => Boolean(await local(child.id))).toBe(false);
   assert.ok((await getTask(source.id)).evolution.branches.some((branch) => branch.transferredTaskId === child.id));
   record("独立任务不阻塞来源验收，目标删除不清除来源历史且重试不复活目标");
+  await app.page.goto(`app://taskflow/tasks/${source.id}/`);
+  await app.page.getByRole("button", { name: "离线探索方案 已独立", exact: true }).click();
+  const historicalBranch = app.page.getByRole("region", { name: "分支：离线探索方案", exact: true });
+  await historicalBranch.getByRole("link", { name: "打开独立任务 ↗" }).click();
+  await expect(historicalBranch.getByRole("status")).toContainText("未找到关联任务");
+  await expect(app.page.getByRole("heading", { name: source.title, level: 1, exact: true })).toBeVisible();
+  await app.context.setOffline(true);
+  await historicalBranch.getByRole("button", { name: "重试", exact: true }).click();
+  await expect(historicalBranch.getByRole("status")).toContainText("暂时无法读取");
+  await app.context.setOffline(false);
+  await historicalBranch.getByRole("button", { name: "重试", exact: true }).click();
+  await expect(historicalBranch.getByRole("status")).toContainText("未找到关联任务");
+  await app.page.screenshot({ path: path.join(root, "desktop-missing-task-relation.png") });
+  record("删除目标保留历史及关联入口，网络失败与目标缺失分别反馈并可重试");
+  await bridge("workspace.pause");
+  await build({
+    entryPoints: ["test/fixtures/task-evolution-long-history.ts"],
+    bundle: true,
+    platform: "node",
+    format: "cjs",
+    outfile: path.join(root, "long-history.cjs"),
+  });
+  const large = createRequire(import.meta.url)(path.join(root, "long-history.cjs")).longHistoryFixture(
+    1000,
+    30,
+    marker,
+  );
+  const perfTask = await bridge("localTasks.create", { accountId, task: { ...large, tags: large.tags.join(", ") } });
+  owned.add(perfTask.id);
+  const graphStartedAt = performance.now();
+  await app.page.goto(`app://taskflow/tasks/${perfTask.id}/`);
+  await expect(app.page.getByRole("heading", { level: 1, name: perfTask.title, exact: true })).toBeVisible();
+  await expect(app.page.locator(".task-evolution-graph-count")).toHaveText(/^1000(?:\s|$)/);
+  const graphReadyMs = performance.now() - graphStartedAt;
+  report.performance = await measureEvolutionBrowser(app.page, graphReadyMs);
+  assert.equal(report.performance.rows, 30);
+  assert.equal(report.performance.scrolling.complete, true, "可见窗口内未完成滚动帧采样");
+  await app.page.screenshot({ path: path.join(root, "desktop-history-1000.png") });
+  await bridge("localTasks.delete", { accountId, taskId: perfTask.id });
+  record("1000 条历史、30 个分支在真实桌面按 30 行起步渲染，并完成可见窗口滚动采样");
   report.passed = true;
 } catch (error) {
   report.error = String(error.message).replaceAll(email, "[redacted]").replaceAll(password, "[redacted]");

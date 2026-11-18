@@ -84,7 +84,8 @@ describe("DesktopTaskWorkbench keyboard path", () => {
         />
       </ToastProvider>,
     );
-    expect(await screen.findByRole("heading", { name: tasks[0].title })).toBeInTheDocument();
+    // The detail panel intentionally waits for idle; busy parallel workers can exceed the default 1s query timeout.
+    expect(await screen.findByRole("heading", { name: tasks[0].title }, { timeout: 3000 })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: `查看「${evolved.title}」的探索关系` }));
     expect(screen.getByRole("complementary")).toHaveAttribute("data-relations-open", "true");
     expect(screen.getByRole("heading", { name: evolved.title })).toBeInTheDocument();

@@ -10,6 +10,8 @@ import { executeTaskEvolution, transferTaskBranch } from "@/features/tasks/domai
 import type { Task } from "@/features/tasks/types/task.types";
 import { graphCommand, graphFixture } from "../../../../test/fixtures/task-evolution";
 import { branchTransferFixture } from "../../../../test/fixtures/task-branch-transfer";
+vi.mock("@/features/auth/providers/auth-provider", () => ({ useAuth: () => ({ user: null }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const now = "2026-11-10T00:00:00.000Z";
 beforeEach(() => {

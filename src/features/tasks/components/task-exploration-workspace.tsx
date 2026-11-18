@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Link from "next/link";
 import { Columns3, GitBranch, GitMerge, X } from "lucide-react";
 import { branchNeedsReview, getTaskExplorationSummary } from "@/features/tasks/domain/task-evolution";
 import type { TaskEvolutionCommand } from "@/features/tasks/schemas/task-evolution-schema";
@@ -13,6 +12,7 @@ import type { TaskEvolutionTarget } from "@/features/tasks/utils/task-evolution-
 import { TaskExplorationComparison } from "./task-exploration-comparison";
 import { TaskOriginLink } from "./task-origin-link";
 import { transferredTaskHref } from "@/features/tasks/utils/task-transfer-navigation";
+import { TaskRelationLink } from "./task-relation-link";
 import { explorationStatusLabel } from "@/features/tasks/utils/task-evolution-presentation";
 
 export function TaskExplorationWorkspace({
@@ -311,9 +311,13 @@ export function TaskExplorationWorkspace({
                 </div>
                 {branch.transferredTaskId ? (
                   transferredTaskHref(state!, branch) ? (
-                    <Link className="task-evolution-link" href={transferredTaskHref(state!, branch)!}>
+                    <TaskRelationLink
+                      taskId={branch.transferredTaskId!}
+                      className="task-evolution-link"
+                      href={transferredTaskHref(state!, branch)!}
+                    >
                       打开独立任务 ↗
-                    </Link>
+                    </TaskRelationLink>
                   ) : (
                     <p className="task-evolution-muted">备份中的转出记录</p>
                   )

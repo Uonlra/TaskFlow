@@ -45,6 +45,16 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("useTaskPage", () => {
+  it("refreshes membership and counts for a newly transferred task outside the cached page", async () => {
+    mocks.owner = "user-1";
+    const next = { ...task, id: "independent", title: "新独立任务" };
+    const query = vi.spyOn(remoteTaskRepository, "listPage").mockResolvedValue(getTaskPage([task, next], filters));
+    const { result, rerender } = renderHook(() => useTaskPage(options));
+    mocks.tasks = [next];
+    rerender();
+    await waitFor(() => expect(result.current.pageData?.categoryCounts.all).toBe(2));
+    expect(query).toHaveBeenCalledTimes(1);
+  });
   it("shows a saved evolution immediately and refreshes cached page membership and counts", async () => {
     const request = deferred<TaskPageResult>();
     const query = vi.spyOn(remoteTaskRepository, "listPage").mockReturnValue(request.promise);

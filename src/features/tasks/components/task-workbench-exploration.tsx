@@ -8,6 +8,7 @@ import type { TaskEvolution } from "@/features/tasks/types/task-evolution.types"
 import { buildTaskEvolutionHref, getEvolutionAttention } from "@/features/tasks/utils/task-evolution-navigation";
 import { buildExplorationRelations } from "@/features/tasks/utils/task-exploration-relations";
 import { explorationStatusLabel } from "@/features/tasks/utils/task-evolution-presentation";
+import { TaskRelationLink } from "./task-relation-link";
 
 export function TaskWorkbenchExploration({
   evolution,
@@ -87,10 +88,10 @@ export function TaskWorkbenchExploration({
                 </div>
                 <div className="task-workbench-relations__meta">
                   {transferHref ? (
-                    <Link href={transferHref}>
+                    <TaskRelationLink taskId={branch.transferredTaskId!} href={transferHref}>
                       独立任务
                       <ArrowUpRight size={12} aria-hidden="true" />
-                    </Link>
+                    </TaskRelationLink>
                   ) : null}
                   {resultCount ? <span>结论 {resultCount}</span> : null}
                   {adoptedPointCount ? (

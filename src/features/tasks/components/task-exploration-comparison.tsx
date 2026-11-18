@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, Check, Columns3 } from "lucide-react";
-import Link from "next/link";
+import { TaskRelationLink } from "./task-relation-link";
 import type { TaskEvolution } from "@/features/tasks/types/task-evolution.types";
 import { buildExplorationComparison } from "@/features/tasks/utils/task-exploration-comparison";
 import { explorationStatusLabel } from "@/features/tasks/utils/task-evolution-presentation";
@@ -187,7 +187,12 @@ export function TaskExplorationComparison({ evolution, branchIds, actionsDisable
                   <td key={branch.id}>
                     {branch.transferredTaskId ? (
                       transferredTaskHref(evolution, branch) ? (
-                        <Link href={transferredTaskHref(evolution, branch)!}>独立任务 ↗</Link>
+                        <TaskRelationLink
+                          taskId={branch.transferredTaskId!}
+                          href={transferredTaskHref(evolution, branch)!}
+                        >
+                          独立任务 ↗
+                        </TaskRelationLink>
                       ) : (
                         <span>已转出</span>
                       )
