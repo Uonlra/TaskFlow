@@ -6,8 +6,16 @@ import type { TaskDueRangeQuery, TaskDueRangeResult, TaskRequestOptions } from "
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { buildTaskPageParams, type TaskPageResult } from "@/features/tasks/utils/task-list-query";
 import { apiFetch, requestJson as request, readJsonResponse as readResponse } from "@/shared/lib/api/client";
+import type { TaskBranchTransferResult } from "@/features/tasks/domain/task-evolution-storage";
 
 export class RemoteTaskRepository implements TaskRepository {
+  transferBranch(
+    id: string,
+    command: TaskEvolutionCommand,
+    options?: TaskRequestOptions,
+  ): Promise<TaskBranchTransferResult> {
+    return request(`${taskPath(id)}/transfer`, { method: "POST", body: command, ...options });
+  }
   async listPage(filters: TaskFilters, page: number, options?: TaskRequestOptions): Promise<TaskPageResult> {
     const payload = await request<TaskPageResult>(`/api/tasks?${buildTaskPageParams(filters, page)}`, {
       cache: "no-store",

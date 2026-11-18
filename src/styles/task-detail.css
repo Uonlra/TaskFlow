@@ -1,6 +1,36 @@
 @import "./task-evolution-graph.css";
 @import "./task-exploration-comparison.css";
 
+.task-evolution-origin {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.task-evolution-origin a,
+.task-plan-comparison td > a {
+  color: color-mix(in srgb, var(--primary) 70%, var(--foreground));
+}
+.task-evolution-origin > svg {
+  flex-shrink: 0;
+  align-self: center;
+}
+.task-evolution-origin a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+.task-exploration-branch > a.task-evolution-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--primary) 70%, var(--foreground));
+}
+
 .task-detail-page {
   display: grid;
   gap: 12px;

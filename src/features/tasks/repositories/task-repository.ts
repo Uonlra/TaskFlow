@@ -4,6 +4,7 @@ import type { Task } from "@/features/tasks/types/task.types";
 import type { TaskDueRangeQuery, TaskDueRangeResult, TaskRequestOptions } from "@/features/tasks/types/task-query";
 import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import type { TaskPageResult } from "@/features/tasks/utils/task-list-query";
+import type { TaskBranchTransferResult } from "@/features/tasks/domain/task-evolution-storage";
 
 /**
  * Task persistence boundary shared by the web API and desktop SQLite.
@@ -18,5 +19,10 @@ export interface TaskRepository {
   update(id: string, input: TaskFormValues, options?: TaskRequestOptions): Promise<Task>;
   updateStatus(id: string, status: Task["status"], options?: TaskRequestOptions): Promise<Task>;
   executeEvolution(id: string, command: TaskEvolutionCommand, options?: TaskRequestOptions): Promise<Task>;
+  transferBranch(
+    id: string,
+    command: TaskEvolutionCommand,
+    options?: TaskRequestOptions,
+  ): Promise<TaskBranchTransferResult>;
   delete(id: string, options?: TaskRequestOptions): Promise<void>;
 }

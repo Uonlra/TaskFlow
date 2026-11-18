@@ -3,13 +3,18 @@ import { TaskEvolutionError } from "@/features/tasks/domain/task-evolution";
 import {
   assertOrdinaryTaskEdit,
   executeTaskEvolution,
+  transferTaskBranch,
+  newTransferredTasks,
+  buildTransferredTask,
   readTaskEvolutionJson,
   restoreTaskEvolution,
   parseTaskEvolution,
   assertEvolutionExtension,
   assertTaskEvolutionProjection,
 } from "@/features/tasks/domain/task-evolution-storage";
-import { mutateTaskTransaction } from "./task-transaction";
+import { mutateTaskTransaction, createTaskTransaction } from "./task-transaction";
+import type { TaskEvolution } from "@/features/tasks/types/task-evolution.types";
+import { taskEvolutionCommandSchema } from "@/features/tasks/schemas/task-evolution-schema";
 
 import { z } from "zod";
 import type { NextRequest } from "next/server";
@@ -464,6 +469,25 @@ export async function createTask(
       throw new AppwriteRequestError(400, "任务投影与历史不一致。");
   }
   const taskKey = Date.now();
+  const restored = input.evolution ? restoreTaskEvolution(input.evolution, rowId) : undefined;
+  if (restored?.origin && restored.detachedTaskLinksThrough === undefined)
+    await validateTaskOrigin(sessionSecret, restored, request);
+  if (restored && newTransferredTasks(restored).length) {
+    return createTaskTransaction(sessionSecret, request, async (transactionId) => {
+      const task = await createTaskRowInTransaction(
+        sessionSecret,
+        userId,
+        { ...input, evolution: restored },
+        rowId,
+        transactionId,
+        request,
+        syncClientUpdatedAt,
+        deletedAt,
+      );
+      await stageTransferredTasks(sessionSecret, userId, restored, undefined, transactionId, request);
+      return task;
+    });
+  }
   const row = await appwriteTaskRequest<AppwriteTaskRow>(
     "",
     {
@@ -492,8 +516,9 @@ export async function updateTask(
   input: TaskFormValues,
   request?: NextRequest,
   syncClientUpdatedAt?: string,
+  syncUserId?: string,
 ) {
-  const row = await mutateTaskTransaction(sessionSecret, taskId, request, (raw) => {
+  const row = await mutateTaskTransaction(sessionSecret, taskId, request, async (raw, transactionId) => {
     const current = mapTaskRow(raw);
     if (current.deletedAt && !syncClientUpdatedAt) throw new AppwriteRequestError(404, "任务不存在。");
     if (syncClientUpdatedAt) {
@@ -514,6 +539,17 @@ export async function updateTask(
       assertOrdinaryTaskEdit(current, input);
       if (input.evolution) throw new AppwriteRequestError(400, "请使用演进操作更新历史。");
     }
+    if (syncClientUpdatedAt && input.evolution?.origin && input.evolution.detachedTaskLinksThrough === undefined)
+      await validateTaskOrigin(sessionSecret, input.evolution, request);
+    if (syncClientUpdatedAt && input.evolution)
+      await stageTransferredTasks(
+        sessionSecret,
+        syncUserId,
+        input.evolution,
+        current.evolution,
+        transactionId,
+        request,
+      );
     return {
       ...buildTaskData(input, undefined, syncClientUpdatedAt),
       completedAt: input.status === "done" ? (current.completedAt ?? new Date().toISOString()) : null,
@@ -547,6 +583,130 @@ export async function executeTaskEvolutionRemote(
   );
 }
 
+export async function transferTaskBranchRemote(
+  sessionSecret: string,
+  userId: string,
+  taskId: string,
+  command: unknown,
+  request?: NextRequest,
+) {
+  const parsed = taskEvolutionCommandSchema.parse(command);
+  if (parsed.action.type !== "transfer_branch") throw new TaskEvolutionError("invalid", "分支转出操作不正确。");
+  let created: Task | null = null;
+  const row = await mutateTaskTransaction(sessionSecret, taskId, request, async (raw, transactionId) => {
+    const current = mapTaskRow(raw);
+    const result = transferTaskBranch(current, parsed, new Date().toISOString());
+    if (!result.task) return null;
+    created = result.task;
+    await createTaskRowInTransaction(
+      sessionSecret,
+      userId,
+      taskForm(result.task),
+      result.task.id,
+      transactionId,
+      request,
+      result.task.updatedAt,
+    );
+    return { evolutionJson: JSON.stringify(result.source.evolution), syncClientUpdatedAt: null };
+  });
+  if (!created) {
+    try {
+      created = await getTask(sessionSecret, parsed.action.targetTaskId, request);
+    } catch (error) {
+      if (!(error instanceof AppwriteRequestError && error.status === 404)) throw error;
+    }
+  }
+  return { source: mapTaskRow(row), task: created };
+}
+
+function taskForm(task: Task): TaskFormValues {
+  return {
+    title: task.title,
+    description: task.description,
+    priority: task.priority,
+    status: task.status,
+    tags: task.tags.join(", "),
+    dueDate: task.dueDate ?? "",
+    evolution: task.evolution,
+  };
+}
+
+async function createTaskRowInTransaction(
+  sessionSecret: string,
+  userId: string,
+  input: TaskFormValues,
+  id: string,
+  transactionId: string,
+  request?: NextRequest,
+  syncClientUpdatedAt?: string,
+  deletedAt?: string,
+) {
+  const row = await appwriteTaskRequest<AppwriteTaskRow>(
+    "",
+    {
+      method: "POST",
+      sessionSecret,
+      request,
+      body: {
+        transactionId,
+        rowId: id,
+        permissions: buildTaskPermissions(userId),
+        data: {
+          ...buildTaskData(input, Date.now(), syncClientUpdatedAt),
+          deletedAt: deletedAt ?? null,
+          ...(input.evolution ? { evolutionJson: JSON.stringify(input.evolution) } : {}),
+        },
+      },
+    },
+    appwriteTaskRowSchema,
+  );
+  return mapTaskRow(row);
+}
+
+async function stageTransferredTasks(
+  sessionSecret: string,
+  userId: string | undefined,
+  incoming: TaskEvolution,
+  current: TaskEvolution | undefined,
+  transactionId: string,
+  request?: NextRequest,
+) {
+  for (const task of newTransferredTasks(incoming, current)) {
+    if (!userId) throw new TaskEvolutionError("invalid", "转出同步缺少账户标识。");
+    let existing: Task | null = null;
+    try {
+      existing = await getTask(sessionSecret, task.id, request, true);
+    } catch (error) {
+      if (!(error instanceof AppwriteRequestError && error.status === 404)) throw error;
+    }
+    if (existing) {
+      assertEvolutionExtension(task.evolution, existing.evolution);
+    } else {
+      await createTaskRowInTransaction(
+        sessionSecret,
+        userId,
+        taskForm(task),
+        task.id,
+        transactionId,
+        request,
+        task.updatedAt,
+      );
+    }
+  }
+}
+
+async function validateTaskOrigin(sessionSecret: string, state: TaskEvolution, request?: NextRequest) {
+  const origin = state.origin!;
+  const source = await getTask(sessionSecret, origin.taskId, request, true);
+  if (!source.evolution) throw new TaskEvolutionError("conflict", "来源任务尚未同步，已保留独立任务。");
+  const event = source.evolution.events.find((item) => item.id === origin.eventId);
+  if (!event || event.revision <= (source.evolution.detachedTaskLinksThrough ?? -1))
+    throw new TaskEvolutionError("conflict", "来源转出记录不可用。");
+  const expected = buildTransferredTask(source.evolution, origin.eventId);
+  if (expected.id !== state.taskId) throw new TaskEvolutionError("conflict", "独立任务与来源转出记录不匹配。");
+  assertEvolutionExtension(expected.evolution, state);
+}
+
 export async function updateTaskStatus(
   sessionSecret: string,
   taskId: string,
@@ -573,9 +733,10 @@ export async function deleteTask(
   request?: NextRequest,
   clientUpdatedAt?: string,
   snapshot?: TaskFormValues,
+  syncUserId?: string,
 ) {
   return mapTaskRow(
-    await mutateTaskTransaction(sessionSecret, taskId, request, (raw) => {
+    await mutateTaskTransaction(sessionSecret, taskId, request, async (raw, transactionId) => {
       const current = mapTaskRow(raw);
       if (snapshot?.evolution) {
         parseTaskEvolution(snapshot.evolution, taskId);
@@ -596,6 +757,17 @@ export async function deleteTask(
         new Date(
           Math.max(Date.now(), Date.parse(current.syncClientUpdatedAt ?? current.updatedAt ?? "") + 1 || 0),
         ).toISOString();
+      if (snapshot?.evolution?.origin && snapshot.evolution.detachedTaskLinksThrough === undefined)
+        await validateTaskOrigin(sessionSecret, snapshot.evolution, request);
+      if (snapshot?.evolution)
+        await stageTransferredTasks(
+          sessionSecret,
+          syncUserId,
+          snapshot.evolution,
+          current.evolution,
+          transactionId,
+          request,
+        );
       return {
         deletedAt: timestamp,
         syncClientUpdatedAt: timestamp,

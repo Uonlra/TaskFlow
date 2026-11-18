@@ -1,8 +1,14 @@
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { TaskEvolutionCommand } from "@/features/tasks/schemas/task-evolution-schema";
 import type { Task } from "@/features/tasks/types/task.types";
+import type { TaskBranchTransferResult } from "@/features/tasks/domain/task-evolution-storage";
 
 export type DesktopLocalTasksBridge = {
+  transferBranch?(input: {
+    accountId: string;
+    taskId: string;
+    command: TaskEvolutionCommand;
+  }): Promise<TaskBranchTransferResult>;
   executeEvolution(input: { accountId: string; taskId: string; command: TaskEvolutionCommand }): Promise<Task>;
   list(input: { accountId: string }): Promise<Task[]>;
   get(input: { accountId: string; taskId: string }): Promise<Task | null>;

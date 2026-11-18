@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { Columns3, GitBranch, GitMerge, X } from "lucide-react";
 import { branchNeedsReview, getTaskExplorationSummary } from "@/features/tasks/domain/task-evolution";
 import type { TaskEvolutionCommand } from "@/features/tasks/schemas/task-evolution-schema";
@@ -10,8 +11,9 @@ import { TaskEvolutionGraph } from "./task-evolution-graph";
 import { TaskEvolutionActionForm, type EvolutionFormIntent } from "./task-evolution-action-form";
 import type { TaskEvolutionTarget } from "@/features/tasks/utils/task-evolution-navigation";
 import { TaskExplorationComparison } from "./task-exploration-comparison";
-
-const statusLabels = { planned: "待探索", exploring: "探索中", ended: "已结束", paused: "已搁置" };
+import { TaskOriginLink } from "./task-origin-link";
+import { transferredTaskHref } from "@/features/tasks/utils/task-transfer-navigation";
+import { explorationStatusLabel } from "@/features/tasks/utils/task-evolution-presentation";
 
 export function TaskExplorationWorkspace({
   task,
@@ -38,7 +40,7 @@ export function TaskExplorationWorkspace({
   const branches = state?.branches ?? [];
   const branch = branches.find((item) => item.id === selectedId) ?? branches.at(-1);
   const summary = state ? getTaskExplorationSummary(state) : null;
-  const needsReview = Boolean(state && branch && branchNeedsReview(state, branch));
+  const needsReview = Boolean(state && branch && !branch.transferredTaskId && branchNeedsReview(state, branch));
   const done = task.status === "done";
   const editable = !done && !needsReview && (branch?.status === "planned" || branch?.status === "exploring");
   const results =
@@ -131,6 +133,7 @@ export function TaskExplorationWorkspace({
             </div>
           ) : null}
         </header>
+        <TaskOriginLink evolution={state} />
         {task.description ? <p className="task-exploration-description">{task.description}</p> : null}
         <div className="task-exploration-goal">
           <span className="task-evolution-muted">完成标准</span>
@@ -227,8 +230,8 @@ export function TaskExplorationWorkspace({
                   >
                     <strong>{item.title}</strong>
                     <span>
-                      {statusLabels[item.status]}
-                      {state && branchNeedsReview(state, item) ? " · 待检查" : ""}
+                      {explorationStatusLabel(item)}
+                      {state && !item.transferredTaskId && branchNeedsReview(state, item) ? " · 待检查" : ""}
                     </span>
                   </button>
                 </div>
@@ -252,7 +255,7 @@ export function TaskExplorationWorkspace({
               <section className="task-exploration-branch" aria-label={`分支：${branch.title}`}>
                 <header>
                   <h3>{branch.title}</h3>
-                  <span className="task-evolution-muted">{statusLabels[branch.status]}</span>
+                  <span className="task-evolution-muted">{explorationStatusLabel(branch)}</span>
                 </header>
                 <p className="task-evolution-muted">验证问题：{branch.question}</p>
                 {needsReview ? (
@@ -283,7 +286,7 @@ export function TaskExplorationWorkspace({
                       </button>
                     </>
                   ) : null}
-                  {!done ? (
+                  {!done && !branch.transferredTaskId ? (
                     <button
                       type="button"
                       onClick={() =>
@@ -300,7 +303,21 @@ export function TaskExplorationWorkspace({
                       调整探索状态
                     </button>
                   ) : null}
+                  {!done && !needsReview && !branch.transferredTaskId ? (
+                    <button type="button" onClick={() => open({ type: "transfer_branch", branchId: branch.id })}>
+                      转为独立任务
+                    </button>
+                  ) : null}
                 </div>
+                {branch.transferredTaskId ? (
+                  transferredTaskHref(state!, branch) ? (
+                    <Link className="task-evolution-link" href={transferredTaskHref(state!, branch)!}>
+                      打开独立任务 ↗
+                    </Link>
+                  ) : (
+                    <p className="task-evolution-muted">备份中的转出记录</p>
+                  )
+                ) : null}
                 {branch.steps.length ? (
                   <ul className="task-exploration-steps" aria-label="执行步骤">
                     {branch.steps.map((step) => (
@@ -350,6 +367,7 @@ export function TaskExplorationWorkspace({
                             ))}
                           </ul>
                           {!done &&
+                          !branch.transferredTaskId &&
                           !needsReview &&
                           branch.status !== "paused" &&
                           adopted.size < result.points.length ? (
@@ -377,7 +395,7 @@ function targetIntent(task: Task, target?: TaskEvolutionTarget): EvolutionFormIn
   const state = task.evolution;
   if (!state || state.status === "done" || !target) return null;
   const branch = state.branches.find((item) => item.id === target.branchId);
-  if (!branch) return null;
+  if (!branch || branch.transferredTaskId) return null;
   if (target.action === "review" && branchNeedsReview(state, branch))
     return { type: "review_branch", branchId: branch.id };
   const result = state.results.find((item) => item.id === target.resultId && item.branchId === branch.id);

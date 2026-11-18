@@ -7,6 +7,7 @@ const {
   acknowledgeSyncOperations,
   createLocalTask,
   executeLocalTaskEvolution,
+  transferLocalTaskBranch,
   settleSyncOperations,
   deleteLocalTask,
   getLocalTask,
@@ -115,6 +116,10 @@ function registerIpcHandlers({ updates } = {}) {
   ipcMain.handle("taskflow:local-tasks:evolution", (event, input) => {
     assertTrustedSender(event);
     return executeLocalTaskEvolution(getActiveDatabase(input), input?.accountId, input?.taskId, input?.command);
+  });
+  ipcMain.handle("taskflow:local-tasks:transfer", (event, input) => {
+    assertTrustedSender(event);
+    return transferLocalTaskBranch(getActiveDatabase(input), input?.accountId, input?.taskId, input?.command);
   });
 
   ipcMain.handle("taskflow:local-tasks:get", (event, input) => {

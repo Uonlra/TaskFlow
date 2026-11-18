@@ -7,7 +7,7 @@ import { getTaskExplorationSummary } from "@/features/tasks/domain/task-evolutio
 import type { TaskEvolution } from "@/features/tasks/types/task-evolution.types";
 import { buildTaskEvolutionHref, getEvolutionAttention } from "@/features/tasks/utils/task-evolution-navigation";
 import { buildExplorationRelations } from "@/features/tasks/utils/task-exploration-relations";
-import { explorationStatusLabels } from "@/features/tasks/utils/task-evolution-presentation";
+import { explorationStatusLabel } from "@/features/tasks/utils/task-evolution-presentation";
 
 export function TaskWorkbenchExploration({
   evolution,
@@ -74,18 +74,24 @@ export function TaskWorkbenchExploration({
           data-lenis-prevent-wheel="true"
         >
           <ul className="task-workbench-relations">
-            {relations.map(({ branch, href, needsReview, resultCount, adoptedPointCount, action }) => (
+            {relations.map(({ branch, href, needsReview, resultCount, adoptedPointCount, action, transferHref }) => (
               <li key={branch.id} data-status={branch.status}>
                 <div className="task-workbench-relations__branch">
                   <Link href={href} title={branch.title}>
                     {branch.title}
                   </Link>
                   <small>
-                    {explorationStatusLabels[branch.status]}
+                    {explorationStatusLabel(branch)}
                     {evolution.status !== "done" && needsReview ? " · 待检查" : ""}
                   </small>
                 </div>
                 <div className="task-workbench-relations__meta">
+                  {transferHref ? (
+                    <Link href={transferHref}>
+                      独立任务
+                      <ArrowUpRight size={12} aria-hidden="true" />
+                    </Link>
+                  ) : null}
                   {resultCount ? <span>结论 {resultCount}</span> : null}
                   {adoptedPointCount ? (
                     <span>

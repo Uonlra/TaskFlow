@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Task } from "@/features/tasks/types/task.types";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { GUEST_TASKS_STORAGE_KEY, useTaskStore } from "@/features/tasks/store/task-store";
+import { branchTransferFixture } from "../../../../test/fixtures/task-branch-transfer";
+import { transferTaskBranch } from "@/features/tasks/domain/task-evolution-storage";
 
 const repositoryMocks = vi.hoisted(() => ({
   list: vi.fn(),
@@ -14,6 +16,7 @@ const repositoryMocks = vi.hoisted(() => ({
   updateStatus: vi.fn(),
   delete: vi.fn(),
   executeEvolution: vi.fn(),
+  transferBranch: vi.fn(),
 }));
 
 vi.mock("@/features/tasks/repositories/remote-task-repository", () => ({
@@ -58,6 +61,48 @@ afterEach(() => {
 });
 
 describe("task store", () => {
+  it("saves both guest tasks together, restores their links and does not duplicate a retried transfer", async () => {
+    const { task, command } = branchTransferFixture();
+    useTaskStore.setState({ tasks: [task] });
+    const saved = await useTaskStore.getState().executeEvolution(task.id, command);
+    expect(useTaskStore.getState().tasks).toHaveLength(2);
+    expect(await useTaskStore.getState().executeEvolution(task.id, command)).toEqual(saved);
+    expect(useTaskStore.getState().tasks).toHaveLength(2);
+    useTaskStore.setState({ tasks: [] });
+    useTaskStore.getState().hydrateGuestTasks();
+    expect(useTaskStore.getState().tasks).toHaveLength(2);
+    expect(
+      useTaskStore.getState().tasks.find((item) => item.id === task.id)?.evolution?.branches[0].transferredTaskId,
+    ).toBeTruthy();
+    expect(useTaskStore.getState().tasks.find((item) => item.id !== task.id)?.evolution?.origin?.taskId).toBe(task.id);
+  });
+
+  it("leaves both the guest task collection and storage intact when transfer persistence fails", async () => {
+    const { task, command } = branchTransferFixture();
+    useTaskStore.setState({ tasks: [task] });
+    const before = useTaskStore.getState().tasks;
+    const stored = window.sessionStorage.getItem(GUEST_TASKS_STORAGE_KEY);
+    const spy = vi.spyOn(Object.getPrototypeOf(window.sessionStorage), "setItem").mockImplementationOnce(() => {
+      throw new Error("quota");
+    });
+    try {
+      await expect(useTaskStore.getState().executeEvolution(task.id, command)).rejects.toThrow("本地保存失败");
+      expect(useTaskStore.getState().tasks).toBe(before);
+      expect(window.sessionStorage.getItem(GUEST_TASKS_STORAGE_KEY)).toBe(stored);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("adds both committed remote records to the Store even when neither was in its current page", async () => {
+    const { task, command } = branchTransferFixture();
+    const result = transferTaskBranch(task, command, task.createdAt);
+    repositoryMocks.transferBranch.mockResolvedValue(result);
+    expect(await useTaskStore.getState().executeEvolution(task.id, command, "user-1")).toEqual(result.source);
+    expect(useTaskStore.getState().tasks).toEqual(expect.arrayContaining([result.source, result.task]));
+    expect(repositoryMocks.executeEvolution).not.toHaveBeenCalled();
+  });
+
   it("从详情页修改尚未包含在本地分页集合的任务时保留服务端新记录", async () => {
     const updated = makeTask({ id: "detail-only", title: "详情页新内容" });
     repositoryMocks.update.mockResolvedValue(updated);

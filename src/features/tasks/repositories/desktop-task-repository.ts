@@ -7,6 +7,7 @@ import type { TaskFilters } from "@/features/tasks/types/task-filters";
 import { getTaskPage, type TaskPageResult } from "@/features/tasks/utils/task-list-query";
 import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { getDesktopBridge } from "@/shared/lib/desktop/bridge";
+import type { TaskBranchTransferResult } from "@/features/tasks/domain/task-evolution-storage";
 
 /**
  * Task repository backed by Electron's encrypted SQLite bridge.
@@ -14,6 +15,16 @@ import { getDesktopBridge } from "@/shared/lib/desktop/bridge";
  * normal web app continue to use the remote repository.
  */
 export class DesktopTaskRepository implements TaskRepository {
+  async transferBranch(
+    id: string,
+    command: TaskEvolutionCommand,
+    options?: TaskRequestOptions,
+  ): Promise<TaskBranchTransferResult> {
+    throwIfAborted(options?.signal);
+    const bridge = requireBridge();
+    if (!bridge.localTasks.transferBranch) throw new Error("请更新桌面应用后使用分支转出。");
+    return bridge.localTasks.transferBranch({ accountId: await this.getAccountId(), taskId: id, command });
+  }
   constructor(private readonly fallbackAccountId?: string) {}
 
   private async getAccountId() {

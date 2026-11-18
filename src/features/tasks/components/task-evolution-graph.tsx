@@ -250,6 +250,14 @@ function TaskEvolutionGraphView({
                     <path d={`M${x - 1.5},${y - 2}v4 M${x + 1.5},${y - 2}v4`} stroke={color} strokeWidth={1} />
                   ) : null}
                   {node.marker === "ended" ? <path d={`M${x - 2},${y}h4`} stroke={color} strokeWidth={1} /> : null}
+                  {node.marker === "transferred" ? (
+                    <path
+                      d={`M${x - 2},${y + 2}l4,-4 M${x - 1},${y - 2}h3v3`}
+                      stroke="var(--surface-strong)"
+                      strokeWidth={1.1}
+                      fill="none"
+                    />
+                  ) : null}
                   {node.marker === "withdrawn" ? (
                     <path
                       d={`M${x - 2},${y - 2}l4,4 M${x - 2},${y + 2}l4,-4`}
@@ -314,15 +322,17 @@ function TaskEvolutionGraphView({
                     onMouseLeave={() => setHoveredBranch(undefined)}
                   >
                     <span aria-hidden="true" className={`task-evolution-graph-mobile-marker is-${node.marker}`}>
-                      {node.marker === "merge"
-                        ? "◎"
-                        : node.marker === "paused"
-                          ? "Ⅱ"
-                          : node.marker === "ended"
-                            ? "−"
-                            : node.marker === "withdrawn"
-                              ? "×"
-                              : "●"}
+                      {node.marker === "transferred"
+                        ? "↗"
+                        : node.marker === "merge"
+                          ? "◎"
+                          : node.marker === "paused"
+                            ? "Ⅱ"
+                            : node.marker === "ended"
+                              ? "−"
+                              : node.marker === "withdrawn"
+                                ? "×"
+                                : "●"}
                     </span>
                     <span className="task-evolution-graph-copy">
                       <strong>

@@ -9,7 +9,10 @@ export async function mutateTaskTransaction(
   sessionSecret: string,
   taskId: string,
   request: NextRequest | undefined,
-  mutate: (row: AppwriteTaskRow) => Record<string, unknown> | null,
+  mutate: (
+    row: AppwriteTaskRow,
+    transactionId: string,
+  ) => Record<string, unknown> | null | Promise<Record<string, unknown> | null>,
 ) {
   if (!appwriteDatabaseId || !appwriteTasksTableId) throw new Error("任务数据库尚未配置。");
   const tx = await appwriteFetch<{ $id: string }>({
@@ -33,7 +36,7 @@ export async function mutateTaskTransaction(
     // staged $updatedAt and make offline snapshots look artificially stale.
     // Any external change after the fence still makes commit fail.
     const current = appwriteTaskRowSchema.parse(await appwriteFetch({ path: rowPath, sessionSecret, request }));
-    const data = mutate(current);
+    const data = await mutate(current, tx.$id);
     if (data === null) {
       await appwriteFetch({ path: transactionPath, method: "PATCH", sessionSecret, request, body: { rollback: true } });
       return current;
@@ -57,6 +60,31 @@ export async function mutateTaskTransaction(
       request,
       body: { rollback: true },
     }).catch(() => undefined);
+    throw error;
+  }
+}
+
+export async function createTaskTransaction<T>(
+  sessionSecret: string,
+  request: NextRequest | undefined,
+  create: (transactionId: string) => Promise<T>,
+): Promise<T> {
+  const tx = await appwriteFetch<{ $id: string }>({
+    path: "/tablesdb/transactions",
+    method: "POST",
+    sessionSecret,
+    request,
+    body: { ttl: 60 },
+  });
+  const path = `/tablesdb/transactions/${encodeURIComponent(tx.$id)}`;
+  try {
+    const result = await create(tx.$id);
+    await appwriteFetch({ path, method: "PATCH", sessionSecret, request, body: { commit: true } });
+    return result;
+  } catch (error) {
+    await appwriteFetch({ path, method: "PATCH", sessionSecret, request, body: { rollback: true } }).catch(
+      () => undefined,
+    );
     throw error;
   }
 }

@@ -2,9 +2,11 @@
 
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, Check, Columns3 } from "lucide-react";
+import Link from "next/link";
 import type { TaskEvolution } from "@/features/tasks/types/task-evolution.types";
 import { buildExplorationComparison } from "@/features/tasks/utils/task-exploration-comparison";
-import { explorationStatusLabels } from "@/features/tasks/utils/task-evolution-presentation";
+import { explorationStatusLabel } from "@/features/tasks/utils/task-evolution-presentation";
+import { transferredTaskHref } from "@/features/tasks/utils/task-transfer-navigation";
 import { formatDateTime } from "./task-detail-sections";
 import type { EvolutionFormIntent } from "./task-evolution-action-form";
 
@@ -65,7 +67,7 @@ export function TaskExplorationComparison({ evolution, branchIds, actionsDisable
                   <th scope="col" key={branch.id}>
                     <strong>{branch.title}</strong>
                     <div className="task-plan-comparison__statuses">
-                      <span>{explorationStatusLabels[branch.status]}</span>
+                      <span>{explorationStatusLabel(branch)}</span>
                       {needsReview ? <span className="is-review">待检查</span> : null}
                     </div>
                   </th>
@@ -183,7 +185,13 @@ export function TaskExplorationComparison({ evolution, branchIds, actionsDisable
                 <th scope="row">采纳操作</th>
                 {columns.map(({ branch, needsReview, version, selected }) => (
                   <td key={branch.id}>
-                    {evolution.status === "done" ? (
+                    {branch.transferredTaskId ? (
+                      transferredTaskHref(evolution, branch) ? (
+                        <Link href={transferredTaskHref(evolution, branch)!}>独立任务 ↗</Link>
+                      ) : (
+                        <span>已转出</span>
+                      )
+                    ) : evolution.status === "done" ? (
                       <span className="task-evolution-muted">任务已完成</span>
                     ) : needsReview ? (
                       <button

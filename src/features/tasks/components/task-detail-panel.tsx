@@ -17,6 +17,7 @@ import type { Task } from "@/features/tasks/types/task.types";
 import { formatTagsInput } from "@/features/tasks/utils/task-tags";
 import { TaskWorkbenchExploration } from "./task-workbench-exploration";
 import { TaskEvolutionGraph } from "./task-evolution-graph";
+import { TaskOriginLink } from "./task-origin-link";
 
 type TaskDetailPanelProps = {
   task: Task | null;
@@ -137,6 +138,7 @@ export function TaskDetailPanel({
           </div>
         </section>
 
+        <TaskOriginLink evolution={task.evolution} />
         {task.evolution?.goal.successCriteria ? (
           <section className="task-workbench-criteria" aria-label="完成标准">
             <span>完成标准</span>

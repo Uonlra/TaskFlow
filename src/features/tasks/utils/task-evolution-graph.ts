@@ -11,7 +11,7 @@ export type EvolutionGraphNode = {
   lane: number;
   branchId?: string;
   main: boolean;
-  marker: "event" | "fork" | "merge" | "paused" | "ended" | "withdrawn";
+  marker: "event" | "fork" | "merge" | "paused" | "ended" | "withdrawn" | "transferred";
 };
 export type EvolutionGraphEdge = {
   id: string;
@@ -60,17 +60,19 @@ export function buildEvolutionGraph(evolution: TaskEvolution): EvolutionGraphTop
     const action = event.command?.action;
     const main = !event.branchId || ["create_branch", "adopt_result", "withdraw_adoption"].includes(event.kind);
     const marker =
-      event.kind === "create_branch"
-        ? "fork"
-        : event.kind === "adopt_result"
-          ? "merge"
-          : event.kind === "withdraw_adoption"
-            ? "withdrawn"
-            : action?.type === "set_branch_status" && action.status === "paused"
-              ? "paused"
-              : action?.type === "set_branch_status" && action.status === "ended"
-                ? "ended"
-                : "event";
+      event.kind === "transfer_branch"
+        ? "transferred"
+        : event.kind === "create_branch"
+          ? "fork"
+          : event.kind === "adopt_result"
+            ? "merge"
+            : event.kind === "withdraw_adoption"
+              ? "withdrawn"
+              : action?.type === "set_branch_status" && action.status === "paused"
+                ? "paused"
+                : action?.type === "set_branch_status" && action.status === "ended"
+                  ? "ended"
+                  : "event";
     return { event, main, branchId: event.branchId, lane: main ? 0 : (lanes.get(event.branchId!) ?? 0), marker };
   });
   const edges: EvolutionGraphEdge[] = [];

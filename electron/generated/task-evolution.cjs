@@ -25,11 +25,15 @@ __export(task_evolution_storage_exports, {
   assertEvolutionExtension: () => assertEvolutionExtension,
   assertOrdinaryTaskEdit: () => assertOrdinaryTaskEdit,
   assertTaskEvolutionProjection: () => assertTaskEvolutionProjection,
+  buildTransferredTask: () => buildTransferredTask,
   executeTaskEvolution: () => executeTaskEvolution,
+  newTransferredTasks: () => newTransferredTasks,
+  orderTaskTransfers: () => orderTaskTransfers,
   parseTaskEvolution: () => parseTaskEvolution,
   projectTaskEvolution: () => projectTaskEvolution,
   readTaskEvolutionJson: () => readTaskEvolutionJson,
-  restoreTaskEvolution: () => restoreTaskEvolution
+  restoreTaskEvolution: () => restoreTaskEvolution,
+  transferTaskBranch: () => transferTaskBranch
 });
 module.exports = __toCommonJS(task_evolution_storage_exports);
 
@@ -63,6 +67,13 @@ var taskEvolutionCommandSchema = import_zod.z.strictObject({
     import_zod.z.strictObject({ type: import_zod.z.literal("adjust_goal"), goal: taskGoalSchema, reason: text }),
     import_zod.z.strictObject({ type: import_zod.z.literal("review_branch"), branchId: id, reason: text }),
     import_zod.z.strictObject({ type: import_zod.z.literal("set_branch_status"), branchId: id, status: branchStatus, reason: text }),
+    import_zod.z.strictObject({
+      type: import_zod.z.literal("transfer_branch"),
+      branchId: id,
+      targetTaskId: import_zod.z.uuid(),
+      goal: taskGoalSchema.extend({ successCriteria: text }),
+      reason: text
+    }),
     // An explicit replacement goal avoids silently undoing intervening edits.
     import_zod.z.strictObject({ type: import_zod.z.literal("withdraw_adoption"), adoptionId: id, goal: taskGoalSchema, reason: text }),
     import_zod.z.strictObject({ type: import_zod.z.literal("complete"), note: text }),
@@ -81,12 +92,14 @@ var TaskEvolutionError = class extends Error {
 function requireCondition(condition, message) {
   if (!condition) throw new TaskEvolutionError("invalid", message);
 }
-function initializeTaskEvolution(task, capturedAt, goal) {
+function initializeTaskEvolution(task, capturedAt, goal, context2 = {}) {
   requireCondition(!task.deletedAt, "\u5DF2\u5220\u9664\u7684\u4EFB\u52A1\u65E0\u6CD5\u5F00\u59CB\u63A2\u7D22\u3002");
   requireCondition(Boolean(task.id), "\u4EFB\u52A1\u7F3A\u5C11\u6807\u8BC6\u3002");
+  requireCondition(context2.origin?.taskId !== task.id, "\u4EFB\u52A1\u4E0D\u80FD\u4EE5\u81EA\u8EAB\u4F5C\u4E3A\u8F6C\u51FA\u6765\u6E90\u3002");
   requireCondition(Number.isFinite(Date.parse(capturedAt)), "\u8BB0\u5F55\u65F6\u95F4\u4E0D\u6B63\u786E\u3002");
   const currentGoal = taskGoalSchema.parse(goal ?? { objective: task.title, successCriteria: "" });
   return {
+    ...context2,
     schemaVersion: 1,
     taskId: task.id,
     baselineStatus: task.status,
@@ -99,6 +112,7 @@ function initializeTaskEvolution(task, capturedAt, goal) {
     adoptions: [],
     events: [
       {
+        ...context2,
         id: `baseline:${task.id}`,
         revision: 0,
         occurredAt: capturedAt,
@@ -139,6 +153,7 @@ function applyTaskEvolutionCommand(state, input, occurredAt) {
   };
   const editableBranch = (id3) => {
     const found = branch(id3);
+    requireCondition(!found.transferredTaskId, "\u6B64\u5206\u652F\u5DF2\u8F6C\u4E3A\u72EC\u7ACB\u4EFB\u52A1\uFF0C\u8BF7\u524D\u5F80\u65B0\u4EFB\u52A1\u7EE7\u7EED\u63A8\u8FDB\u3002");
     requireCondition(found.status === "planned" || found.status === "exploring", "\u8BF7\u5148\u6062\u590D\u6B64\u5206\u652F\u7684\u63A2\u7D22\u3002");
     requireCondition(!branchNeedsReview(next, found), "\u4E3B\u76EE\u6807\u5DF2\u8C03\u6574\uFF0C\u8BF7\u5148\u68C0\u67E5\u6B64\u5206\u652F\u3002");
     return found;
@@ -189,6 +204,7 @@ function applyTaskEvolutionCommand(state, input, occurredAt) {
       break;
     case "adopt_result": {
       const source = branch(action.branchId);
+      requireCondition(!source.transferredTaskId, "\u6B64\u5206\u652F\u5DF2\u8F6C\u4E3A\u72EC\u7ACB\u4EFB\u52A1\u3002");
       requireCondition(!branchNeedsReview(next, source), "\u4E3B\u76EE\u6807\u5DF2\u8C03\u6574\uFF0C\u8BF7\u5148\u68C0\u67E5\u6B64\u5206\u652F\u3002");
       const result = next.results.find((item) => item.id === action.resultId && item.branchId === source.id);
       if (!result) throw new TaskEvolutionError("not_found", "\u6CA1\u6709\u627E\u5230\u5F53\u524D\u5206\u652F\u7684\u6210\u679C\u7248\u672C\u3002");
@@ -218,16 +234,32 @@ function applyTaskEvolutionCommand(state, input, occurredAt) {
       requireCondition(!sameGoal(next.goal, action.goal), "\u76EE\u6807\u6CA1\u6709\u53D8\u5316\u3002");
       setGoal(action.goal);
       break;
-    case "review_branch":
-      branch(action.branchId).reviewedGoalVersion = next.goalVersion;
+    case "review_branch": {
+      const source = branch(action.branchId);
+      requireCondition(!source.transferredTaskId, "\u6B64\u5206\u652F\u5DF2\u8F6C\u4E3A\u72EC\u7ACB\u4EFB\u52A1\u3002");
+      source.reviewedGoalVersion = next.goalVersion;
       break;
+    }
     case "set_branch_status": {
       const source = branch(action.branchId);
+      requireCondition(!source.transferredTaskId, "\u6B64\u5206\u652F\u5DF2\u8F6C\u4E3A\u72EC\u7ACB\u4EFB\u52A1\u3002");
       requireCondition(source.status !== action.status, "\u5206\u652F\u72B6\u6001\u6CA1\u6709\u53D8\u5316\u3002");
       if (action.status === "exploring" || action.status === "planned") {
         requireCondition(!branchNeedsReview(next, source), "\u4E3B\u76EE\u6807\u5DF2\u8C03\u6574\uFF0C\u8BF7\u5148\u68C0\u67E5\u6B64\u5206\u652F\u3002");
       }
       source.status = action.status;
+      break;
+    }
+    case "transfer_branch": {
+      const source = branch(action.branchId);
+      requireCondition(!source.transferredTaskId, "\u6B64\u5206\u652F\u5DF2\u8F6C\u4E3A\u72EC\u7ACB\u4EFB\u52A1\u3002");
+      requireCondition(!branchNeedsReview(next, source), "\u4E3B\u76EE\u6807\u5DF2\u8C03\u6574\uFF0C\u8BF7\u5148\u68C0\u67E5\u6B64\u5206\u652F\u3002");
+      requireCondition(
+        action.targetTaskId !== state.taskId && !next.branches.some((item) => item.transferredTaskId === action.targetTaskId),
+        "\u65B0\u4EFB\u52A1\u6807\u8BC6\u5DF2\u88AB\u4F7F\u7528\u3002"
+      );
+      source.status = "ended";
+      source.transferredTaskId = action.targetTaskId;
       break;
     }
     case "withdraw_adoption": {
@@ -287,7 +319,12 @@ var id2 = import_zod3.z.string().min(1).max(200);
 var version = import_zod3.z.number().int().nonnegative();
 var date = import_zod3.z.iso.datetime();
 var point = import_zod3.z.strictObject({ id: id2, text: import_zod3.z.string() });
+var context = {
+  origin: import_zod3.z.strictObject({ taskId: id2, branchId: id2, eventId: id2, taskTitle: import_zod3.z.string(), branchTitle: import_zod3.z.string() }).optional(),
+  detachedTaskLinksThrough: version.optional()
+};
 var taskEvolutionSnapshotSchema = import_zod3.z.strictObject({
+  ...context,
   schemaVersion: import_zod3.z.literal(1),
   taskId: id2,
   baselineStatus: taskStatusSchema,
@@ -304,7 +341,8 @@ var taskEvolutionSnapshotSchema = import_zod3.z.strictObject({
       originEventId: id2,
       baseGoalVersion: version,
       reviewedGoalVersion: version,
-      steps: import_zod3.z.array(import_zod3.z.strictObject({ id: id2, title: import_zod3.z.string(), done: import_zod3.z.boolean() }))
+      steps: import_zod3.z.array(import_zod3.z.strictObject({ id: id2, title: import_zod3.z.string(), done: import_zod3.z.boolean() })),
+      transferredTaskId: import_zod3.z.uuid().optional()
     })
   ),
   results: import_zod3.z.array(
@@ -331,6 +369,7 @@ var taskEvolutionSnapshotSchema = import_zod3.z.strictObject({
   ),
   events: import_zod3.z.array(
     import_zod3.z.strictObject({
+      ...context,
       id: id2,
       revision: version,
       occurredAt: date,
@@ -346,6 +385,35 @@ var taskEvolutionSnapshotSchema = import_zod3.z.strictObject({
     })
   ).min(1)
 });
+
+// src/features/tasks/utils/task-transfer-order.ts
+function orderTaskTransfers(operations) {
+  const byId = new Map(operations.map((operation) => [operation.taskId, operation]));
+  const visiting = /* @__PURE__ */ new Set();
+  const done = /* @__PURE__ */ new Set();
+  const ordered = [];
+  function visit(operation) {
+    if (done.has(operation)) return;
+    if (visiting.has(operation)) throw new Error("\u4EFB\u52A1\u6765\u6E90\u5173\u7CFB\u5B58\u5728\u5FAA\u73AF\uFF0C\u5DF2\u4FDD\u7559\u540C\u6B65\u961F\u5217\u3002");
+    visiting.add(operation);
+    const payload = operation.payload;
+    if (payload && typeof payload === "object" && "evolution" in payload) {
+      const evolution = payload.evolution;
+      if (evolution && typeof evolution === "object" && !("detachedTaskLinksThrough" in evolution) && "origin" in evolution) {
+        const origin = evolution.origin;
+        if (origin && typeof origin === "object" && "taskId" in origin && typeof origin.taskId === "string") {
+          const source = byId.get(origin.taskId);
+          if (source) visit(source);
+        }
+      }
+    }
+    visiting.delete(operation);
+    done.add(operation);
+    ordered.push(operation);
+  }
+  operations.forEach(visit);
+  return ordered;
+}
 
 // src/features/tasks/domain/task-evolution-storage.ts
 var MAX_EVOLUTION_BYTES = 1e6;
@@ -374,7 +442,11 @@ function parseTaskEvolution(value, taskId) {
       createdAt: baseline.occurredAt
     },
     baseline.occurredAt,
-    baseline.beforeGoal
+    baseline.beforeGoal,
+    {
+      ...baseline.origin ? { origin: baseline.origin } : {},
+      ...baseline.detachedTaskLinksThrough !== void 0 ? { detachedTaskLinksThrough: baseline.detachedTaskLinksThrough } : {}
+    }
   );
   for (const event of state.events.slice(1)) {
     if (!event.command) fail("\u6F14\u8FDB\u4E8B\u4EF6\u7F3A\u5C11\u64CD\u4F5C\u5185\u5BB9\u3002");
@@ -382,6 +454,7 @@ function parseTaskEvolution(value, taskId) {
   }
   if (JSON.stringify(taskEvolutionSnapshotSchema.parse(replay)) !== JSON.stringify(state))
     fail("\u6F14\u8FDB\u5386\u53F2\u4E0E\u5F53\u524D\u5185\u5BB9\u4E0D\u4E00\u81F4\u3002");
+  if ((state.detachedTaskLinksThrough ?? 0) > state.revision) fail("\u5916\u90E8\u5173\u7CFB\u7684\u5386\u53F2\u7248\u672C\u4E0D\u6B63\u786E\u3002");
   return state;
 }
 function readTaskEvolutionJson(value, taskId) {
@@ -406,11 +479,60 @@ function projectTaskEvolution(task, evolution, updatedAt) {
   };
 }
 function executeTaskEvolution(task, input, now) {
+  const command = readCommand(input);
+  if (command.action.type === "transfer_branch") fail("\u8BF7\u901A\u8FC7\u5206\u652F\u8F6C\u51FA\u64CD\u4F5C\u540C\u65F6\u4FDD\u5B58\u4E24\u4E2A\u4EFB\u52A1\u3002");
+  return evolveTask(task, command, now);
+}
+function evolveTask(task, input, now) {
   if (task.deletedAt) fail("\u5DF2\u5220\u9664\u7684\u4EFB\u52A1\u65E0\u6CD5\u4FEE\u6539\u3002");
   assertTaskEvolutionProjection(task);
   const current = task.evolution ? parseTaskEvolution(task.evolution, task.id) : initializeTaskEvolution(task, now);
   const next = applyTaskEvolutionCommand(current, input, now);
   return next === current ? task : projectTaskEvolution(task, next, now);
+}
+function transferTaskBranch(task, input, now) {
+  const command = readCommand(input);
+  if (command.action.type !== "transfer_branch") fail("\u5206\u652F\u8F6C\u51FA\u64CD\u4F5C\u4E0D\u6B63\u786E\u3002");
+  const source = evolveTask(task, command, now);
+  return { source, task: source === task ? null : buildTransferredTask(source.evolution, command.operationId) };
+}
+function buildTransferredTask(state, eventId) {
+  const event = state.events.find((item) => item.id === eventId);
+  const action = event?.command?.action;
+  if (!event || action?.type !== "transfer_branch") fail("\u6CA1\u6709\u627E\u5230\u8F6C\u51FA\u8BB0\u5F55\u3002");
+  const branch = state.branches.find((item) => item.id === action.branchId);
+  if (!branch) fail("\u6CA1\u6709\u627E\u5230\u8F6C\u51FA\u7684\u5206\u652F\u3002");
+  const task = {
+    id: action.targetTaskId,
+    title: action.goal.objective,
+    description: branch.question,
+    status: "in_progress",
+    priority: "medium",
+    tags: [],
+    createdAt: event.occurredAt,
+    updatedAt: event.occurredAt
+  };
+  task.evolution = initializeTaskEvolution(task, event.occurredAt, action.goal, {
+    origin: {
+      taskId: state.taskId,
+      branchId: branch.id,
+      eventId,
+      taskTitle: event.beforeGoal.objective,
+      branchTitle: branch.title
+    }
+  });
+  withinLimit(task.evolution);
+  return task;
+}
+function newTransferredTasks(state, previous) {
+  return state.events.filter(
+    (event) => event.kind === "transfer_branch" && event.revision > (previous?.revision ?? 0) && event.revision > (state.detachedTaskLinksThrough ?? -1)
+  ).map((event) => buildTransferredTask(state, event.id));
+}
+function readCommand(input) {
+  const parsed = taskEvolutionCommandSchema.safeParse(input);
+  if (!parsed.success) fail("\u4EFB\u52A1\u64CD\u4F5C\u5B57\u6BB5\u4E0D\u7B26\u5408\u8981\u6C42\u3002");
+  return parsed.data;
 }
 function assertOrdinaryTaskEdit(task, input) {
   assertTaskEvolutionProjection(task);
@@ -431,6 +553,10 @@ function assertEvolutionExtension(current, incoming) {
 }
 function restoreTaskEvolution(value, newTaskId) {
   const state = structuredClone(parseTaskEvolution(value));
+  if (state.taskId !== newTaskId && (state.origin || state.branches.some((branch) => branch.transferredTaskId))) {
+    state.detachedTaskLinksThrough = state.revision;
+    state.events[0].detachedTaskLinksThrough = state.revision;
+  }
   state.taskId = newTaskId;
   state.events[0].id = `baseline:${newTaskId}`;
   return parseTaskEvolution(state, newTaskId);
@@ -441,9 +567,13 @@ function restoreTaskEvolution(value, newTaskId) {
   assertEvolutionExtension,
   assertOrdinaryTaskEdit,
   assertTaskEvolutionProjection,
+  buildTransferredTask,
   executeTaskEvolution,
+  newTransferredTasks,
+  orderTaskTransfers,
   parseTaskEvolution,
   projectTaskEvolution,
   readTaskEvolutionJson,
-  restoreTaskEvolution
+  restoreTaskEvolution,
+  transferTaskBranch
 });

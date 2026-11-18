@@ -14,7 +14,7 @@ import type { ExplorationBranch } from "@/features/tasks/types/task-evolution.ty
 export type EvolutionFormIntent =
   | { type: "create_branch" | "adjust_goal" | "complete" | "reopen" }
   | { type: "record_progress"; branchId?: string }
-  | { type: "submit_result" | "review_branch" | "add_step"; branchId: string }
+  | { type: "submit_result" | "review_branch" | "add_step" | "transfer_branch"; branchId: string }
   | { type: "set_branch_status"; branchId: string; status: ExplorationBranch["status"] }
   | { type: "set_step_done"; branchId: string; stepId: string; done: boolean }
   | { type: "adopt_result"; branchId: string; resultId: string; pointIds?: string[] }
@@ -37,8 +37,15 @@ export function TaskEvolutionActionForm({
 }) {
   // Keep the version and source used to compose this draft, even if props refresh.
   const [baseline] = useState(task);
-  const [objective, setObjective] = useState(baseline.evolution?.goal.objective ?? baseline.title);
-  const [criteria, setCriteria] = useState(baseline.evolution?.goal.successCriteria ?? "");
+  const [targetTaskId] = useState(() => crypto.randomUUID());
+  const [objective, setObjective] = useState(
+    intent.type === "transfer_branch"
+      ? (baseline.evolution?.branches.find((item) => item.id === intent.branchId)?.title ?? "")
+      : (baseline.evolution?.goal.objective ?? baseline.title),
+  );
+  const [criteria, setCriteria] = useState(
+    intent.type === "transfer_branch" ? "" : (baseline.evolution?.goal.successCriteria ?? ""),
+  );
   const [title, setTitle] = useState("");
   const [detail, setDetail] = useState("");
   const [reason, setReason] = useState("");
@@ -130,6 +137,8 @@ export function TaskEvolutionActionForm({
         return { type: intent.type, note: reason };
       case "reopen":
         return { type: intent.type, reason };
+      case "transfer_branch":
+        return { ...intent, type: "transfer_branch", targetTaskId, goal, reason };
     }
   }
 
@@ -306,9 +315,9 @@ export function TaskEvolutionActionForm({
             ) : null}
           </>
         ) : null}
-        {editsGoal ? (
+        {editsGoal || intent.type === "transfer_branch" ? (
           <>
-            <FormField label="保存后的目标">
+            <FormField label={intent.type === "transfer_branch" ? "新任务目标" : "保存后的目标"}>
               <textarea
                 value={objective}
                 onChange={(e) => setObjective(e.target.value)}
@@ -318,20 +327,30 @@ export function TaskEvolutionActionForm({
               />
             </FormField>
             <FormField label="完成标准">
-              <textarea value={criteria} onChange={(e) => setCriteria(e.target.value)} maxLength={10000} rows={2} />
+              <textarea
+                value={criteria}
+                onChange={(e) => setCriteria(e.target.value)}
+                required={intent.type === "transfer_branch"}
+                maxLength={10000}
+                rows={2}
+              />
             </FormField>
-            <div className="task-evolution-comparison" aria-label="主任务变更预览">
-              <div>
-                <small>当前目标</small>
-                <p>{baseline.title}</p>
-                <p className="task-evolution-muted">{baseline.evolution?.goal.successCriteria || "尚未设置完成标准"}</p>
+            {editsGoal ? (
+              <div className="task-evolution-comparison" aria-label="主任务变更预览">
+                <div>
+                  <small>当前目标</small>
+                  <p>{baseline.title}</p>
+                  <p className="task-evolution-muted">
+                    {baseline.evolution?.goal.successCriteria || "尚未设置完成标准"}
+                  </p>
+                </div>
+                <div>
+                  <small>保存后</small>
+                  <p>{goal.objective || "请填写目标"}</p>
+                  <p className="task-evolution-muted">{goal.successCriteria || "尚未设置完成标准"}</p>
+                </div>
               </div>
-              <div>
-                <small>保存后</small>
-                <p>{goal.objective || "请填写目标"}</p>
-                <p className="task-evolution-muted">{goal.successCriteria || "尚未设置完成标准"}</p>
-              </div>
-            </div>
+            ) : null}
           </>
         ) : null}
         {intent.type === "complete" ? (
@@ -341,7 +360,15 @@ export function TaskEvolutionActionForm({
         ) : null}
         {!["create_branch", "record_progress", "submit_result", "add_step", "set_step_done"].includes(intent.type) ? (
           <FormField
-            label={intent.type === "complete" ? "验收说明" : intent.type === "adopt_result" ? "选择理由" : "操作原因"}
+            label={
+              intent.type === "complete"
+                ? "验收说明"
+                : intent.type === "adopt_result"
+                  ? "选择理由"
+                  : intent.type === "transfer_branch"
+                    ? "转出原因"
+                    : "操作原因"
+            }
           >
             <textarea value={reason} onChange={(e) => setReason(e.target.value)} required maxLength={10000} rows={3} />
           </FormField>
@@ -354,7 +381,13 @@ export function TaskEvolutionActionForm({
       ) : null}
       <div className="task-evolution-actions">
         <button type="submit" className="task-evolution-primary" disabled={saving || refreshing}>
-          {saving ? "正在保存…" : intent.type === "adopt_result" ? "确认采纳并保存" : "保存记录"}
+          {saving
+            ? "正在保存…"
+            : intent.type === "adopt_result"
+              ? "确认采纳并保存"
+              : intent.type === "transfer_branch"
+                ? "创建独立任务"
+                : "保存记录"}
         </button>
         <button type="button" onClick={onCancel} disabled={saving || refreshing}>
           取消

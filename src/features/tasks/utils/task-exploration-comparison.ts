@@ -6,7 +6,7 @@ export function buildExplorationComparison(state: TaskEvolution, branchIds: stri
     const branch = state.branches.find((item) => item.id === id);
     if (!branch) return [];
     const goal = state.events.find((event) => event.goalVersion === branch.reviewedGoalVersion)?.afterGoal;
-    const needsReview = branchNeedsReview(state, branch);
+    const needsReview = !branch.transferredTaskId && branchNeedsReview(state, branch);
     const results = state.results
       .filter((result) => result.branchId === id)
       .map((result, index) => {
@@ -29,7 +29,7 @@ export function buildExplorationComparison(state: TaskEvolution, branchIds: stri
         goal,
         needsReview,
         results,
-        canAdopt: state.status !== "done" && branch.status !== "paused" && !needsReview,
+        canAdopt: state.status !== "done" && !branch.transferredTaskId && branch.status !== "paused" && !needsReview,
       },
     ];
   });

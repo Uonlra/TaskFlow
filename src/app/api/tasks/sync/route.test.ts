@@ -292,6 +292,7 @@ describe("/api/tasks/sync", () => {
       expect.any(Object),
       expect.any(NextRequest),
       "2026-10-30T09:00:00.000Z",
+      "user-1",
     );
   });
 });

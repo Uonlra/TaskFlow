@@ -1,6 +1,10 @@
 import { taskEvolutionCommandSchema, taskGoalSchema } from "@/features/tasks/schemas/task-evolution-schema";
 import type { TaskGoal } from "@/features/tasks/schemas/task-evolution-schema";
-import type { ExplorationBranch, TaskEvolution } from "@/features/tasks/types/task-evolution.types";
+import type {
+  ExplorationBranch,
+  TaskEvolution,
+  TaskEvolutionContext,
+} from "@/features/tasks/types/task-evolution.types";
 import type { Task } from "@/features/tasks/types/task.types";
 
 export class TaskEvolutionError extends Error {
@@ -18,12 +22,19 @@ function requireCondition(condition: unknown, message: string): asserts conditio
 }
 
 /** A baseline captures what is known now; it does not invent past activity. */
-export function initializeTaskEvolution(task: Task, capturedAt: string, goal?: TaskGoal): TaskEvolution {
+export function initializeTaskEvolution(
+  task: Task,
+  capturedAt: string,
+  goal?: TaskGoal,
+  context: TaskEvolutionContext = {},
+): TaskEvolution {
   requireCondition(!task.deletedAt, "已删除的任务无法开始探索。");
   requireCondition(Boolean(task.id), "任务缺少标识。");
+  requireCondition(context.origin?.taskId !== task.id, "任务不能以自身作为转出来源。");
   requireCondition(Number.isFinite(Date.parse(capturedAt)), "记录时间不正确。");
   const currentGoal = taskGoalSchema.parse(goal ?? { objective: task.title, successCriteria: "" });
   return {
+    ...context,
     schemaVersion: 1,
     taskId: task.id,
     baselineStatus: task.status,
@@ -36,6 +47,7 @@ export function initializeTaskEvolution(task: Task, capturedAt: string, goal?: T
     adoptions: [],
     events: [
       {
+        ...context,
         id: `baseline:${task.id}`,
         revision: 0,
         occurredAt: capturedAt,
@@ -82,6 +94,7 @@ export function applyTaskEvolutionCommand(state: TaskEvolution, input: unknown, 
   };
   const editableBranch = (id: string) => {
     const found = branch(id);
+    requireCondition(!found.transferredTaskId, "此分支已转为独立任务，请前往新任务继续推进。");
     requireCondition(found.status === "planned" || found.status === "exploring", "请先恢复此分支的探索。");
     requireCondition(!branchNeedsReview(next, found), "主目标已调整，请先检查此分支。");
     return found;
@@ -133,6 +146,7 @@ export function applyTaskEvolutionCommand(state: TaskEvolution, input: unknown, 
       break;
     case "adopt_result": {
       const source = branch(action.branchId);
+      requireCondition(!source.transferredTaskId, "此分支已转为独立任务。");
       requireCondition(!branchNeedsReview(next, source), "主目标已调整，请先检查此分支。");
       const result = next.results.find((item) => item.id === action.resultId && item.branchId === source.id);
       if (!result) throw new TaskEvolutionError("not_found", "没有找到当前分支的成果版本。");
@@ -163,16 +177,33 @@ export function applyTaskEvolutionCommand(state: TaskEvolution, input: unknown, 
       requireCondition(!sameGoal(next.goal, action.goal), "目标没有变化。");
       setGoal(action.goal);
       break;
-    case "review_branch":
-      branch(action.branchId).reviewedGoalVersion = next.goalVersion;
+    case "review_branch": {
+      const source = branch(action.branchId);
+      requireCondition(!source.transferredTaskId, "此分支已转为独立任务。");
+      source.reviewedGoalVersion = next.goalVersion;
       break;
+    }
     case "set_branch_status": {
       const source = branch(action.branchId);
+      requireCondition(!source.transferredTaskId, "此分支已转为独立任务。");
       requireCondition(source.status !== action.status, "分支状态没有变化。");
       if (action.status === "exploring" || action.status === "planned") {
         requireCondition(!branchNeedsReview(next, source), "主目标已调整，请先检查此分支。");
       }
       source.status = action.status;
+      break;
+    }
+    case "transfer_branch": {
+      const source = branch(action.branchId);
+      requireCondition(!source.transferredTaskId, "此分支已转为独立任务。");
+      requireCondition(!branchNeedsReview(next, source), "主目标已调整，请先检查此分支。");
+      requireCondition(
+        action.targetTaskId !== state.taskId &&
+          !next.branches.some((item) => item.transferredTaskId === action.targetTaskId),
+        "新任务标识已被使用。",
+      );
+      source.status = "ended";
+      source.transferredTaskId = action.targetTaskId;
       break;
     }
     case "withdraw_adoption": {
@@ -219,7 +250,8 @@ export function branchNeedsReview(state: TaskEvolution, branch: ExplorationBranc
 export function getTaskExplorationSummary(state: TaskEvolution) {
   const pendingResults = state.results.filter((result) => {
     const source = state.branches.find((branch) => branch.id === result.branchId);
-    if (!source || source.status === "paused" || branchNeedsReview(state, source)) return false;
+    if (!source || source.transferredTaskId || source.status === "paused" || branchNeedsReview(state, source))
+      return false;
     const adoptedIds = new Set(
       state.adoptions
         .filter((item) => item.resultId === result.id && !item.withdrawnBy)

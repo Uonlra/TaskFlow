@@ -1,6 +1,7 @@
 import type { Task } from "@/features/tasks/types/task.types";
 import { requestJson } from "@/shared/lib/api/client";
 import { getDesktopBridge, type DesktopSyncOperation } from "@/shared/lib/desktop/bridge";
+import { orderTaskTransfers } from "@/features/tasks/utils/task-transfer-order";
 
 type DesktopSyncResult = {
   operationId: string;
@@ -61,7 +62,7 @@ async function runDesktopSyncQueue(accountId: string) {
   const pending = await bridge.syncQueue.list({ accountId, limit: 50 });
   const operations: DesktopSyncOperation[] = [];
   let batchBytes = 0;
-  for (const operation of pending) {
+  for (const operation of orderTaskTransfers(pending)) {
     const size = new TextEncoder().encode(JSON.stringify(operation)).length;
     if (operations.length && batchBytes + size > MAX_SYNC_BATCH_BYTES) break;
     operations.push(operation);

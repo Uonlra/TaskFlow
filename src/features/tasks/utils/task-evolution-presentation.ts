@@ -1,5 +1,5 @@
 import type { TaskEvolutionAction } from "@/features/tasks/schemas/task-evolution-schema";
-import type { TaskEvolution, TaskEvolutionEvent } from "@/features/tasks/types/task-evolution.types";
+import type { ExplorationBranch, TaskEvolution, TaskEvolutionEvent } from "@/features/tasks/types/task-evolution.types";
 
 export const evolutionActionLabels: Record<TaskEvolutionAction["type"], string> = {
   create_branch: "创建探索分支",
@@ -14,8 +14,12 @@ export const evolutionActionLabels: Record<TaskEvolutionAction["type"], string> 
   withdraw_adoption: "撤回采纳",
   complete: "验收完成",
   reopen: "重新打开",
+  transfer_branch: "转为独立任务",
 };
 export const explorationStatusLabels = { planned: "待探索", exploring: "探索中", ended: "已结束", paused: "已搁置" };
+export function explorationStatusLabel(branch: ExplorationBranch) {
+  return branch.transferredTaskId ? "已独立" : explorationStatusLabels[branch.status];
+}
 
 export function describeEvolutionEvent(evolution: TaskEvolution, event: TaskEvolutionEvent) {
   const action = event.command?.action;
@@ -29,6 +33,7 @@ export function describeEvolutionEvent(evolution: TaskEvolution, event: TaskEvol
   else if (action && "reason" in action) detail = action.reason;
   if (action?.type === "set_branch_status") detail = `${explorationStatusLabels[action.status]} · ${action.reason}`;
   if (action?.type === "adjust_goal") detail = event.afterGoal.objective;
+  if (action?.type === "transfer_branch") detail = `${action.goal.objective} · ${action.reason}`;
   if (adoption) detail = `采纳 ${adoption.selectedPoints.length} 项成果 · ${adoption.reason}`;
   return { label, detail, branch, adoption };
 }

@@ -6,9 +6,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TaskExplorationWorkspace } from "./task-exploration-workspace";
 import { TaskEvolutionActionForm } from "./task-evolution-action-form";
 import { initializeTaskEvolution } from "@/features/tasks/domain/task-evolution";
-import { executeTaskEvolution } from "@/features/tasks/domain/task-evolution-storage";
+import { executeTaskEvolution, transferTaskBranch } from "@/features/tasks/domain/task-evolution-storage";
 import type { Task } from "@/features/tasks/types/task.types";
 import { graphCommand, graphFixture } from "../../../../test/fixtures/task-evolution";
+import { branchTransferFixture } from "../../../../test/fixtures/task-branch-transfer";
 
 const now = "2026-11-10T00:00:00.000Z";
 beforeEach(() => {
@@ -53,7 +54,10 @@ function Harness({ seed = initial(), onSave = () => {} }: { seed?: Task; onSave?
       <TaskExplorationWorkspace
         task={task}
         onExecute={async (command) => {
-          const next = executeTaskEvolution(task, command, now);
+          const next =
+            command.action.type === "transfer_branch"
+              ? transferTaskBranch(task, command, now).source
+              : executeTaskEvolution(task, command, now);
           setTask(next);
           onSave(next);
           return next;
@@ -64,6 +68,57 @@ function Harness({ seed = initial(), onSave = () => {} }: { seed?: Task; onSave?
 }
 
 describe("task exploration workflow", () => {
+  it("confirms an independent goal and leaves the old branch read-only with a task link", async () => {
+    const user = userEvent.setup();
+    const { task } = branchTransferFixture();
+    const saved = vi.fn();
+    render(<Harness seed={task} onSave={saved} />);
+    await user.click(screen.getByRole("button", { name: /Markdown 方案.*待探索/ }));
+    await user.click(screen.getByRole("button", { name: "转为独立任务" }));
+    expect(screen.getByRole("textbox", { name: "新任务目标" })).toHaveValue("Markdown 方案");
+    expect(screen.queryByLabelText("主任务变更预览")).not.toBeInTheDocument();
+    await user.clear(screen.getByRole("textbox", { name: "新任务目标" }));
+    await user.type(screen.getByRole("textbox", { name: "新任务目标" }), "独立验证资料组织方式");
+    await user.type(screen.getByRole("textbox", { name: "完成标准" }), "完成 100 篇资料验证");
+    await user.type(screen.getByRole("textbox", { name: "转出原因" }), "需要持续投入");
+    await user.click(screen.getByRole("button", { name: "创建独立任务" }));
+    expect(saved).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(task.title);
+    const branch = screen.getByRole("region", { name: "分支：Markdown 方案" });
+    expect(within(branch).getByText("已独立")).toBeInTheDocument();
+    expect(within(branch).getByRole("link", { name: "打开独立任务 ↗" })).toHaveAttribute(
+      "href",
+      expect.stringContaining("/tasks/"),
+    );
+    expect(within(branch).queryByRole("button", { name: "提交结论" })).not.toBeInTheDocument();
+    expect(within(branch).queryByRole("button", { name: "调整探索状态" })).not.toBeInTheDocument();
+    expect(within(branch).queryByRole("button", { name: "选择成果并纳入主线" })).not.toBeInTheDocument();
+  });
+
+  it("keeps a failed transfer draft and retries with the same task identity and operation", async () => {
+    const user = userEvent.setup();
+    const { task } = branchTransferFixture();
+    const save = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("网络中断"))
+      .mockImplementationOnce(async (command) => transferTaskBranch(task, command, now).source);
+    render(
+      <TaskEvolutionActionForm
+        task={task}
+        intent={{ type: "transfer_branch", branchId: "a" }}
+        onExecute={save}
+        onCancel={vi.fn()}
+        onSuccess={vi.fn()}
+      />,
+    );
+    await user.type(screen.getByRole("textbox", { name: "完成标准" }), "验证可检索");
+    await user.type(screen.getByRole("textbox", { name: "转出原因" }), "单独推进");
+    await user.click(screen.getByRole("button", { name: "创建独立任务" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("网络中断");
+    await user.click(screen.getByRole("button", { name: "创建独立任务" }));
+    expect(save.mock.calls[0][0]).toEqual(save.mock.calls[1][0]);
+  });
+
   it("limits comparison to three branches and restores the selected evolution node on return", async () => {
     const user = userEvent.setup();
     const state = graphCommand(graphFixture(), "d", { type: "create_branch", title: "新方案", question: "可行吗？" });

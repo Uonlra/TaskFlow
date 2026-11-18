@@ -61,6 +61,7 @@ contextBridge.exposeInMainWorld("taskflowDesktop", {
     clear: () => invoke("taskflow:auth:clear"),
   },
   localTasks: {
+    transferBranch: (input) => invoke("taskflow:local-tasks:transfer", input),
     executeEvolution: (input) => invoke("taskflow:local-tasks:evolution", input),
     list: (input) => invoke("taskflow:local-tasks:list", input),
     get: (input) => invoke("taskflow:local-tasks:get", input),

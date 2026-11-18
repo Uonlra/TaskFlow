@@ -2,6 +2,8 @@ const crypto = require("node:crypto");
 const {
   assertOrdinaryTaskEdit,
   executeTaskEvolution,
+  transferTaskBranch,
+  orderTaskTransfers,
   readTaskEvolutionJson,
   parseTaskEvolution,
   restoreTaskEvolution,
@@ -98,13 +100,13 @@ function queueOperation(database, input) {
     });
 }
 
-function createLocalTask(database, accountId, input) {
+function createLocalTask(database, accountId, input, preparedTask) {
   const normalizedAccountId = normalizeAccountId(accountId);
   const taskInput = normalizeTaskInput(input);
   assertTaskEvolutionProjection(input);
-  const now = new Date().toISOString();
-  const id = crypto.randomUUID();
-  let task = {
+  const now = preparedTask?.createdAt ?? new Date().toISOString();
+  const id = preparedTask?.id ?? crypto.randomUUID();
+  let task = preparedTask ?? {
     id,
     title: taskInput.title,
     description: taskInput.description,
@@ -116,7 +118,8 @@ function createLocalTask(database, accountId, input) {
     updatedAt: now,
     completedAt: taskInput.status === "done" ? now : undefined,
   };
-  if (input.evolution) task = projectTaskEvolution(task, restoreTaskEvolution(input.evolution, id), now);
+  if (input.evolution && !preparedTask)
+    task = projectTaskEvolution(task, restoreTaskEvolution(input.evolution, id), now);
 
   const transaction = database.transaction(() => {
     database
@@ -266,6 +269,30 @@ function executeLocalTaskEvolution(database, accountId, taskId, command) {
   })();
 }
 
+function transferLocalTaskBranch(database, accountId, taskId, command) {
+  const normalized = normalizeAccountId(accountId);
+  return database.transaction(() => {
+    const current = getLocalTask(database, normalized, taskId);
+    if (!current) throw new Error("任务不存在。");
+    const result = transferTaskBranch(current, command, nextTaskTimestamp(current.updatedAt));
+    if (!result.task) return { source: current, task: getLocalTask(database, normalized, command.action.targetTaskId) };
+    createLocalTask(database, normalized, result.task, result.task);
+    database
+      .prepare(
+        "UPDATE tasks SET evolution_json = ?, updated_at = ?, sync_state = 'pending' WHERE id = ? AND account_id = ? AND deleted_at IS NULL",
+      )
+      .run(JSON.stringify(result.source.evolution), result.source.updatedAt, taskId, normalized);
+    queueOperation(database, {
+      accountId: normalized,
+      taskId,
+      operation: "upsert",
+      payload: result.source,
+      clientUpdatedAt: result.source.updatedAt,
+    });
+    return { source: result.source, task: getLocalTask(database, normalized, result.task.id) };
+  })();
+}
+
 function getLocalTask(database, accountId, taskId) {
   const row = getTaskRow(database, normalizeAccountId(accountId), taskId);
   return row ? mapTaskRow(row) : null;
@@ -396,7 +423,7 @@ function listPendingSyncOperations(database, accountId, limit = 50) {
   const normalizedAccountId = normalizeAccountId(accountId);
   const normalizedLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 100) : 50;
 
-  return database
+  const operations = database
     .prepare(
       `SELECT queue.operation_id, queue.account_id, queue.task_id, queue.operation,
               queue.payload_json, queue.client_updated_at, queue.attempts, queue.last_error, queue.created_at
@@ -406,10 +433,9 @@ function listPendingSyncOperations(database, accountId, limit = 50) {
            SELECT MAX(latest.id) FROM sync_queue AS latest
            WHERE latest.account_id = queue.account_id AND latest.task_id = queue.task_id
          )
-       ORDER BY queue.id ASC
-       LIMIT ?`,
+       ORDER BY queue.id ASC`,
     )
-    .all(normalizedAccountId, normalizedLimit)
+    .all(normalizedAccountId)
     .map((row) => ({
       operationId: row.operation_id,
       accountId: row.account_id,
@@ -421,6 +447,7 @@ function listPendingSyncOperations(database, accountId, limit = 50) {
       lastError: row.last_error ?? undefined,
       createdAt: row.created_at,
     }));
+  return orderTaskTransfers(operations).slice(0, normalizedLimit);
 }
 
 function acknowledgeSyncOperations(database, accountId, operations) {
@@ -493,6 +520,7 @@ module.exports = {
   acknowledgeSyncOperations,
   createLocalTask,
   executeLocalTaskEvolution,
+  transferLocalTaskBranch,
   settleSyncOperations,
   deleteLocalTask,
   getLocalTask,
