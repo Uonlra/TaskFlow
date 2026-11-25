@@ -90,7 +90,7 @@ function AuthPreviewLayout({ children }: { children: ReactNode }) {
                 }
               >
                 <span aria-hidden="true" />
-                {isReady ? "个人任务统计已同步完成" : "登录后自动同步你的个人任务数据"}
+                {isReady ? "个人任务预览已就绪" : "登录后查看你的个人任务数据"}
               </p>
               <div className="auth-preview-account">
                 <span className="auth-preview-account__avatar" aria-hidden={!isReady}>

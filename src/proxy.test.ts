@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { proxy } from "./proxy";
+import { config } from "./proxy";
+import { unstable_doesMiddlewareMatch as doesProxyMatch } from "next/experimental/testing/server";
 
 vi.mock("@/shared/lib/appwrite/env", () => ({
   appwriteSessionCookieName: "taskflow-session",
@@ -11,6 +13,15 @@ vi.mock("@/shared/lib/appwrite/env", () => ({
 vi.stubEnv("DESKTOP_ALLOWED_ORIGINS", "http://tauri.localhost");
 
 describe("proxy workspace access", () => {
+  it.each(["/api/auth/me", "/api/tasks/sync", "/settings", "/settings/profile"])("保留 %s 的鉴权与跨域处理", (url) => {
+    expect(doesProxyMatch({ config, nextConfig: {}, url })).toBe(true);
+  });
+  it.each(["/dashboard", "/tasks", "/calendar", "/stats", "/product", "/_next/static/app.js"])(
+    "不为 %s 额外执行前置函数",
+    (url) => {
+      expect(doesProxyMatch({ config, nextConfig: {}, url })).toBe(false);
+    },
+  );
   it.each(["/dashboard", "/tasks", "/tasks/task-1", "/calendar", "/stats"])("允许访客访问 %s", (pathname) => {
     const response = proxy(new NextRequest(`http://localhost${pathname}`));
 

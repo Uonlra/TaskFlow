@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import type { EChartsOption } from "echarts";
-import { useEffect } from "react";
 
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
@@ -103,18 +102,11 @@ const pulseOptionBase: EChartsOption = {
 };
 
 export function SidebarTaskPulse() {
-  const { user, isLoading: isAuthLoading, isConfigured } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const tasks = useTaskStore((state) => state.tasks);
   const isLoading = useTaskStore((state) => state.isLoading);
   const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
-  const syncTasks = useTaskStore((state) => state.syncTasks);
   const userId = user?.id;
-
-  useEffect(() => {
-    if (isConfigured && !isAuthLoading && !isLoading && userId && lastLoadedUserId !== userId) {
-      void syncTasks(userId);
-    }
-  }, [isAuthLoading, isConfigured, isLoading, lastLoadedUserId, syncTasks, userId]);
 
   const completedTrend = buildTrendData(tasks, { days: 10 });
   const completedTotal = completedTrend.reduce((total, point) => total + point.completed, 0);
@@ -150,7 +142,9 @@ export function SidebarTaskPulse() {
       {isTrendReady && tasks.length ? (
         <EChartsClient className="dashboard-sidebar-pulse__chart" ariaLabel="最近十天任务完成趋势图" option={option} />
       ) : (
-        <span className="dashboard-sidebar-pulse__empty">{isTrendReady ? "完成任务后显示趋势" : "正在同步任务"}</span>
+        <span className="dashboard-sidebar-pulse__empty">
+          {isTrendReady ? "完成任务后显示趋势" : "前往统计查看趋势"}
+        </span>
       )}
     </Link>
   );

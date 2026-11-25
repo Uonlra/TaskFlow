@@ -32,7 +32,6 @@ export type AuthEnvelope = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const clearTasks = useTaskStore((state) => state.clearTasks);
   const hydrateGuestTasks = useTaskStore((state) => state.hydrateGuestTasks ?? state.clearTasks);
   const syncTasks = useTaskStore((state) => state.syncTasks);
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -43,11 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hasAppwritePublicEnv) {
-      setSession(null);
-      setUser(null);
-      setProfile(null);
       hydrateGuestTasks();
-      setIsLoading(false);
       return;
     }
 
@@ -66,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(stored.session);
           setUser(stored.user);
           setProfile(stored.profile);
+          return;
         }
         const response = await apiFetch("/api/auth/me", { cache: "no-store", signal: controller.signal });
 
@@ -104,7 +100,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         void getDesktopBridge()
           ?.auth.set(payload)
           .catch(() => undefined);
-        void syncTasks(payload.user.id);
       } catch {
         if (!mounted) return;
         const stored = await readDesktopAuthEnvelope();
@@ -130,24 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [clearTasks, hydrateGuestTasks, syncTasks]);
-
-  useEffect(() => {
-    if (!isDesktopRuntime() || !user) return;
-
-    const replaySyncQueue = () => {
-      if (typeof navigator !== "undefined" && !navigator.onLine) return;
-      void syncTasks(user.id);
-    };
-
-    window.addEventListener("online", replaySyncQueue);
-    const intervalId = window.setInterval(replaySyncQueue, 30_000);
-
-    return () => {
-      window.removeEventListener("online", replaySyncQueue);
-      window.clearInterval(intervalId);
-    };
-  }, [syncTasks, user]);
+  }, [hydrateGuestTasks, syncTasks]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -238,7 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
     }),
-    [clearTasks, hydrateGuestTasks, isLoading, isProfileLoading, profile, session, user],
+    [hydrateGuestTasks, isLoading, isProfileLoading, profile, session, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

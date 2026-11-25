@@ -6,11 +6,13 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 import { getDesktopBridge } from "@/shared/lib/desktop/bridge";
+import { DesktopSyncButton } from "@/features/tasks/components/desktop-sync-button";
 
 export function DesktopWorkspacePanel() {
   const isDesktop = useDesktopRuntime();
   const { user, session, profile } = useAuth();
   const syncTasks = useTaskStore((state) => state.syncTasks);
+  const cloudBusy = useTaskStore((state) => state.isCloudSyncing);
   const [workspace, setWorkspace] = useState<{ accountId: string; syncEnabled: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,19 +51,20 @@ export function DesktopWorkspacePanel() {
     <section className="settings-profile-panel" aria-label="本地存储与云同步" data-auth-gate-bypass>
       <h2>本地存储与云同步</h2>
       <p>任务自动加密保存在此设备，关闭应用、断网或退出登录后仍可使用。</p>
-      <p>{connected ? "云同步已开启，联网后自动同步。" : "当前仅保存在本地，云同步已关闭。"}</p>
+      <p>{connected ? "已连接云端，点击“立即同步”更新。" : "当前仅保存在本地，云端未连接。"}</p>
       {switchingAccount ? (
         <p>切换后使用当前账户的工作区；原账户的任务仍保存在此设备，连接原账户后可重新打开。</p>
       ) : !connected ? (
-        <p>开启同步会将尚未绑定账户的本地任务加入当前云端账户。登录本身不会上传任务。</p>
+        <p>连接后，本地任务归入当前账户，点击“立即同步”才会上传或下载。</p>
       ) : null}
       {user ? (
-        <button type="button" onClick={() => void toggleSync()} disabled={busy || !workspace}>
-          {busy ? "正在处理…" : connected ? "暂停云同步" : switchingAccount ? "切换到当前账户并开启同步" : "开启云同步"}
+        <button type="button" onClick={() => void toggleSync()} disabled={busy || cloudBusy || !workspace}>
+          {busy ? "正在处理…" : connected ? "断开云端连接" : switchingAccount ? "切换并连接当前账户" : "连接云端账户"}
         </button>
       ) : (
         <Link href="/login?next=%2Fsettings">登录云端账户（可选）</Link>
       )}
+      {connected ? <DesktopSyncButton /> : null}
       <p>
         <Link href="/tasks">前往任务页导入或导出本地备份</Link>
       </p>

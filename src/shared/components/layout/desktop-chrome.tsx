@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useDesktopRuntime } from "@/shared/hooks/use-desktop-runtime";
 import { getDesktopBridge } from "@/shared/lib/desktop/bridge";
 import { useTaskStore } from "@/features/tasks/store/task-store";
+import { DesktopSyncButton } from "@/features/tasks/components/desktop-sync-button";
 import "@/styles/desktop-controls.css";
 
 export function DesktopChrome() {
@@ -66,6 +67,7 @@ export function DesktopChrome() {
       >
         ＋ 快速记录
       </button>
+      <DesktopSyncButton />
     </header>
   );
 }

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 
@@ -49,14 +49,12 @@ afterEach(() => {
 });
 
 describe("SidebarTaskPulse", () => {
-  it("会在当前用户任务未同步完成时自动触发同步并显示占位态", async () => {
+  it("不会为侧栏趋势额外拉取全部云端任务", () => {
     render(<SidebarTaskPulse />);
 
-    await waitFor(() => {
-      expect(mocks.taskState.syncTasks).toHaveBeenCalledWith("user-1");
-    });
+    expect(mocks.taskState.syncTasks).not.toHaveBeenCalled();
 
     expect(screen.getByText("--", { selector: "strong" })).toBeVisible();
-    expect(screen.getByText("正在同步任务")).toBeVisible();
+    expect(screen.getByText("前往统计查看趋势")).toBeVisible();
   });
 });

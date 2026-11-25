@@ -30,6 +30,23 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+it("manual refresh invalidates a fetched task that was deleted in the cloud", async () => {
+  mocks.get.mockResolvedValue(task);
+  useTaskStore.setState({ tasks: [task], lastLoadedUserId: "owner", isLoading: false });
+  render(<TaskDetailClient id="t" />);
+  await screen.findByRole("heading", { level: 1, name: task.title });
+  await act(async () => {
+    await Promise.resolve();
+  });
+  mocks.get.mockResolvedValue(null);
+  await act(async () => {
+    useTaskStore.setState({ tasks: [] });
+    window.dispatchEvent(new CustomEvent("taskflow:tasks-refreshed", { detail: { accountId: "owner" } }));
+  });
+  expect(await screen.findByRole("heading", { name: "没有找到这条任务" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { level: 1, name: task.title })).not.toBeInTheDocument();
+});
+
 it("conflict recovery replaces an older fetched local fork even when the cloud history has fewer events", async () => {
   const local = executeTaskEvolution(
     task,

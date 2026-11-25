@@ -100,7 +100,7 @@ export function SettingsClient() {
                 <strong>{isAuthenticated ? "账号已连接" : "访客工作区"}</strong>
                 <span>
                   {isDesktop
-                    ? "任务保存在本地，可选开启云同步"
+                    ? "任务保存在本地，云端手动同步"
                     : isAuthenticated
                       ? "资料和任务会安全同步"
                       : "任务仅保存在此标签页"}
