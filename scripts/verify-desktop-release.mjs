@@ -84,6 +84,7 @@ await writeFile(
       tag: `v${pkg.version}`,
       channel: policy.channel,
       sourceCommit: process.env.GITHUB_SHA ?? execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
+      sourceDirty: Boolean(execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim()),
       authenticode,
       files,
     },
