@@ -201,12 +201,6 @@ button.task-exploration-indicator {
 .task-detail-panel__activity .task-evolution-graph-title h2 {
   font-size: 16px;
 }
-.task-detail-panel__activity .task-evolution-graph-table {
-  min-width: calc(var(--graph-width) + 150px);
-}
-.task-detail-panel__activity .task-evolution-graph-row > button {
-  grid-template-columns: minmax(0, 1fr);
-}
 .task-detail-panel__activity .task-evolution-graph-row time {
   display: none;
 }

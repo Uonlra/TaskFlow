@@ -9,6 +9,57 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
 describe("TaskEvolutionGraph", () => {
+  it("leads with the concrete result and keeps its action and source in the metadata", () => {
+    render(<TaskEvolutionGraph evolution={graphFixture()} />);
+    const row = screen.getByRole("button", { name: /提交结论 Markdown 方案.*继续验证目录层级/ });
+    expect(row.querySelector("strong")).toHaveTextContent(/^继续验证目录层级$/);
+    expect(row.querySelector(".task-evolution-graph-meta")).toHaveTextContent("提交结论Markdown 方案");
+  });
+
+  it("browses neighboring key events in the inspector and restores the current row on close", async () => {
+    const user = userEvent.setup();
+    render(<TaskEvolutionGraph evolution={graphFixture()} />);
+    await user.click(screen.getByRole("button", { name: /撤回采纳 主线/ }));
+    const inspector = screen.getByRole("region", { name: "节点详情" });
+    expect(within(inspector).getByRole("button", { name: "较新一条记录" })).toBeDisabled();
+    const older = within(inspector).getByRole("button", { name: "较早一条记录" });
+    await user.click(older);
+    expect(inspector).toHaveTextContent("继续验证目录层级");
+    await waitFor(() => expect(older).toHaveFocus());
+    await user.click(within(inspector).getByRole("button", { name: "较新一条记录" }));
+    expect(inspector).toHaveTextContent("已撤回成果：");
+    await user.click(within(inspector).getByRole("button", { name: "关闭节点详情" }));
+    expect(screen.getByRole("button", { name: /撤回采纳 主线/ })).toHaveFocus();
+  });
+
+  it("updates the addressed node when following another history link within the same task", async () => {
+    const state = graphFixture();
+    const view = render(<TaskEvolutionGraph evolution={state} initialEventId="ra" />);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /提交结论 Markdown 方案.*目录与链接验证有效/ })).toHaveFocus(),
+    );
+    view.rerender(<TaskEvolutionGraph evolution={state} initialEventId="ra2" />);
+    expect(screen.getByRole("region", { name: "节点详情" })).toHaveTextContent("限制目录深度");
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /提交结论 Markdown 方案.*继续验证目录层级/ })).toHaveFocus(),
+    );
+  });
+
+  it("does not steal inspector focus when the initially addressed task receives new history", async () => {
+    const user = userEvent.setup();
+    const state = graphFixture();
+    const view = render(<TaskEvolutionGraph evolution={state} initialEventId="ra" />);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /提交结论 Markdown 方案.*目录与链接验证有效/ })).toHaveFocus(),
+    );
+    const older = screen.getByRole("button", { name: "较早一条记录" });
+    await user.click(older);
+    const updated = graphCommand(state, "new-progress", { type: "record_progress", note: "继续验证" });
+    view.rerender(<TaskEvolutionGraph evolution={updated} initialEventId="ra" />);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(older).toHaveFocus();
+  });
+
   it("opens and focuses the historical event addressed by a detail link", async () => {
     render(<TaskEvolutionGraph evolution={graphFixture()} initialEventId="ra" />);
     const row = screen.getByRole("button", { name: /提交结论 Markdown 方案.*目录与链接验证有效/ });
@@ -100,6 +151,7 @@ describe("TaskEvolutionGraph", () => {
     await user.click(screen.getAllByRole("button", { name: /展开 1 条进展与步骤记录/ })[1]);
     expect(screen.getByRole("button", { name: /记录进展.*准备 80 篇资料/ })).toBeInTheDocument();
     expect(container.querySelectorAll('path[data-edge-kind="merge"]')).toHaveLength(mergeCount);
+    await waitFor(() => expect(screen.getByRole("button", { name: /记录进展.*准备 80 篇资料/ })).toHaveFocus());
   });
 
   it("supports keyboard navigation and restores row focus when closing details", async () => {
@@ -123,6 +175,44 @@ describe("TaskEvolutionGraph", () => {
     await user.selectOptions(screen.getByRole("combobox", { name: "突出分支" }), "b");
     expect(container.querySelectorAll(".task-evolution-graph-row")).toHaveLength(count);
     expect(container.querySelectorAll(".is-dimmed").length).toBeGreaterThan(0);
+    await user.hover(screen.getByRole("button", { name: /提交结论 Markdown 方案.*继续验证目录层级/ }));
+    expect(screen.getByRole("button", { name: /提交结论 自动分类方案/ }).closest("li")).not.toHaveClass("is-dimmed");
+    expect(screen.getByRole("button", { name: /提交结论 Markdown 方案.*继续验证目录层级/ }).closest("li")).toHaveClass(
+      "is-dimmed",
+    );
+  });
+
+  it("reveals an older branch's latest event without opening details or taking focus from the selector", async () => {
+    const user = userEvent.setup();
+    let state = graphFixture();
+    state = graphCommand(state, "resume-old", {
+      type: "set_branch_status",
+      branchId: "b",
+      status: "exploring",
+      reason: "继续验证",
+    });
+    state = graphCommand(state, "old-branch-progress", {
+      type: "record_progress",
+      branchId: "b",
+      note: "此前的分支进展",
+    });
+    state = graphCommand(state, "later-main-progress", { type: "record_progress", note: "主线继续推进" });
+    for (let index = 0; index < 35; index++)
+      state = graphCommand(state, `result-${index}`, {
+        type: "submit_result",
+        branchId: "a",
+        summary: `新的验证 ${index}`,
+        points: ["继续探索"],
+      });
+    render(<TaskEvolutionGraph evolution={state} />);
+    expect(screen.queryByRole("button", { name: /记录进展 自动分类方案.*此前的分支进展/ })).not.toBeInTheDocument();
+    const selector = screen.getByRole("combobox", { name: "突出分支" });
+    await user.selectOptions(selector, "b");
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /记录进展 自动分类方案.*此前的分支进展/ })).toBeInTheDocument(),
+    );
+    expect(selector).toHaveFocus();
+    expect(screen.queryByRole("region", { name: "节点详情" })).not.toBeInTheDocument();
   });
 
   it("pages long histories while keeping the selection and nodes aligned", async () => {
