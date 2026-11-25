@@ -49,15 +49,16 @@ export function StatsClient({ initialRange }: StatsClientProps) {
   const searchParams = useSearchParams();
   const tasks = useTaskStore((state) => state.tasks);
   const isLoading = useTaskStore((state) => state.isLoading);
+  const taskError = useTaskStore((state) => state.error);
   const lastLoadedUserId = useTaskStore((state) => state.lastLoadedUserId);
   const syncTasks = useTaskStore((state) => state.syncTasks);
   const range = parseStatsRange(searchParams.get(STATS_QUERY_KEYS.range) ?? initialRange);
 
   useEffect(() => {
-    if (isConfigured && !isLoading && user?.id && lastLoadedUserId !== user.id) {
+    if (isConfigured && !isLoading && !taskError && user?.id && lastLoadedUserId !== user.id) {
       void syncTasks(user.id);
     }
-  }, [isConfigured, isLoading, lastLoadedUserId, syncTasks, user?.id]);
+  }, [isConfigured, isLoading, taskError, lastLoadedUserId, syncTasks, user?.id]);
 
   const stats = useMemo(() => buildDashboardStats(tasks, { range }), [range, tasks]);
   const workspaceState = getWorkspaceState({
@@ -80,6 +81,22 @@ export function StatsClient({ initialRange }: StatsClientProps) {
     params.set(STATS_QUERY_KEYS.range, nextRange);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
+
+  if (taskError) {
+    return (
+      <section className="stats-shell stats-shell--empty">
+        <DataEmptyState
+          title="统计暂时无法加载"
+          description={taskError}
+          action={
+            <button type="button" disabled={isLoading} onClick={() => void syncTasks(user?.id)}>
+              重新加载
+            </button>
+          }
+        />
+      </section>
+    );
+  }
 
   if (isAccountEmpty) {
     return (

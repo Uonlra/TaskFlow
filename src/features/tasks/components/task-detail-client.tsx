@@ -60,14 +60,19 @@ export function TaskDetailClient({
   const [syncResolutionVersion, setSyncResolutionVersion] = useState(0);
   useEffect(() => {
     const resolved = (event: Event) => {
-      const detail = (event as CustomEvent<{ taskId: string; accountId: string }>).detail;
-      if (detail?.taskId !== id || detail.accountId !== user?.id) return;
+      const detail = (event as CustomEvent<{ taskId?: string; accountId: string }>).detail;
+      if (!detail || (detail.taskId && detail.taskId !== id) || detail.accountId !== user?.id) return;
       ++mutationEpoch.current;
       setFetchedRecord(null);
+      setFinishedRequestId(null);
       setSyncResolutionVersion((version) => version + 1);
     };
     window.addEventListener("taskflow:task-sync-resolved", resolved);
-    return () => window.removeEventListener("taskflow:task-sync-resolved", resolved);
+    window.addEventListener("taskflow:tasks-refreshed", resolved);
+    return () => {
+      window.removeEventListener("taskflow:task-sync-resolved", resolved);
+      window.removeEventListener("taskflow:tasks-refreshed", resolved);
+    };
   }, [id, user?.id]);
 
   const fetchedTask = fetchedRecord?.owner === owner && fetchedRecord.task.id === id ? fetchedRecord.task : undefined;
@@ -94,12 +99,6 @@ export function TaskDetailClient({
       document.removeEventListener("keydown", closeMetadata);
     };
   }, []);
-
-  useEffect(() => {
-    if (isConfigured && !isLoading && user?.id && lastLoadedUserId !== user.id) {
-      void syncTasks(user.id);
-    }
-  }, [isConfigured, isLoading, lastLoadedUserId, syncTasks, user?.id]);
 
   useEffect(() => {
     if (!isConfigured || !user?.id) {

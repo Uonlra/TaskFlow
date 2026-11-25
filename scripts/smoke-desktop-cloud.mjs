@@ -122,7 +122,7 @@ const bridge = (operation, args) =>
   );
 const queue = () => bridge("syncQueue.list", { accountId });
 const local = (id) => bridge("localTasks.get", { accountId, taskId: id });
-const replay = () => app.page.evaluate(() => window.dispatchEvent(new Event("online")));
+const replay = () => app.page.getByRole("button", { name: "立即同步", exact: true }).first().click();
 async function desktopApi(endpoint, method = "GET", body) {
   return app.page.evaluate(
     async ({ url, method, body }) => {
@@ -184,7 +184,8 @@ try {
   assert.equal(await cloudTask(task.id), null, "登录不能自动上传本地任务");
   record("打包登录表单、app:// 跨域 Cookie 会话和登录不上传");
   await app.page.goto("app://taskflow/settings/");
-  await app.page.getByRole("button", { name: "开启云同步", exact: true }).click();
+  await app.page.getByRole("button", { name: "连接云端账户", exact: true }).click();
+  await replay();
   await expect.poll(async () => (await queue()).length).toBe(0);
   await expect.poll(async () => (await cloudTask(task.id))?.title).toBe(task.title);
   record("主动开启同步上传真实任务并确认队列");
@@ -268,7 +269,7 @@ try {
   record("多会话修改冲突：较新的远程修改覆盖较早离线修改");
 
   await app.page.goto("app://taskflow/settings/");
-  await app.page.getByRole("button", { name: "暂停云同步", exact: true }).click();
+  await app.page.getByRole("button", { name: "断开云端连接", exact: true }).click();
   await expect.poll(() => bridge("workspace.get")).toMatchObject({ syncEnabled: false });
   await bridge("localTasks.update", {
     accountId,
@@ -279,7 +280,8 @@ try {
   await delay(1000);
   assert.equal((await cloudTask(task.id)).description, "较新的远程编辑");
   assert.ok((await queue()).length);
-  await app.page.getByRole("button", { name: "开启云同步", exact: true }).click();
+  await app.page.getByRole("button", { name: "连接云端账户", exact: true }).click();
+  await replay();
   await expect.poll(async () => (await queue()).length).toBe(0);
   await expect.poll(async () => (await cloudTask(task.id))?.description).toBe("恢复同步后的本地新编辑");
   record("暂停仍可编辑、恢复后本地较新修改上传");
@@ -307,7 +309,8 @@ try {
   await app.page.getByRole("button", { name: "登录", exact: true }).click();
   await expect.poll(async () => (await bridge("auth.get"))?.user?.id).toBe(accountId);
   await app.page.goto("app://taskflow/settings/");
-  await app.page.getByRole("button", { name: "开启云同步", exact: true }).click();
+  await app.page.getByRole("button", { name: "连接云端账户", exact: true }).click();
+  await replay();
   await expect.poll(() => bridge("workspace.get")).toMatchObject({ syncEnabled: true });
   assert.ok(await local(remote.id));
   record("重新登录并主动恢复原账户同步");

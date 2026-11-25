@@ -1,8 +1,27 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, ChevronsDown, GitBranch, List, ListFilter, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  ChevronDown,
+  ChevronsDown,
+  GitBranch,
+  List,
+  ListFilter,
+  X,
+} from "lucide-react";
 import type { TaskEvolution } from "@/features/tasks/types/task-evolution.types";
 import {
   buildEvolutionGraph,
@@ -38,7 +57,7 @@ type TaskEvolutionGraphProps = {
 };
 
 export function TaskEvolutionGraph(props: TaskEvolutionGraphProps) {
-  return <TaskEvolutionGraphView key={props.evolution.taskId} {...props} />;
+  return <TaskEvolutionGraphView key={`${props.evolution.taskId}:${props.initialEventId ?? ""}`} {...props} />;
 }
 
 function TaskEvolutionGraphView({
@@ -56,6 +75,8 @@ function TaskEvolutionGraphView({
   const [focusedBranch, setFocusedBranch] = useState("");
   const [hoveredBranch, setHoveredBranch] = useState<string | undefined>();
   const rowRefs = useRef(new Map<string, HTMLButtonElement>());
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const initialFocusRef = useRef<string | undefined>(undefined);
   const headingId = useId();
   const inspectorId = useId();
   const inspectorHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -73,21 +94,52 @@ function TaskEvolutionGraphView({
   );
   const selected = topology.nodes.find((node) => node.event.id === selectedId);
   const selectedDetails = selected ? describeEvolutionEvent(evolution, selected.event) : undefined;
+  const navigableRows = allRows.filter((row) => row.type === "event");
+  const selectedIndex = navigableRows.findIndex((row) => row.id === selectedId);
+  const revealLane = useCallback((lane: number) => {
+    const scroll = scrollRef.current;
+    const record = scroll?.querySelector<HTMLElement>(".task-evolution-graph-record");
+    if (!scroll || !record || !scroll.querySelector("svg")?.getClientRects().length) return;
+    const available = record.getBoundingClientRect().left - scroll.getBoundingClientRect().left - scroll.clientLeft;
+    const x = EVOLUTION_GRAPH_INSET + lane * EVOLUTION_LANE_WIDTH;
+    if (x - scroll.scrollLeft < 14 || x - scroll.scrollLeft > available - 14)
+      scroll.scrollLeft = Math.max(0, x - available / 2);
+  }, []);
+  const revealRow = useCallback(
+    (id: string, focus = true) => {
+      const row = rowRefs.current.get(id);
+      if (focus) row?.focus({ preventScroll: true });
+      // Inspector navigation should scroll the list without moving the page
+      // away from the controls the user is operating.
+      const scroll = scrollRef.current;
+      if (row && scroll) {
+        const bounds = row.getBoundingClientRect();
+        const top = scroll.getBoundingClientRect().top + scroll.clientTop;
+        const bottom = top + scroll.clientHeight;
+        if (bounds.top < top) scroll.scrollTop += bounds.top - top;
+        else if (bounds.bottom > bottom) scroll.scrollTop += bounds.bottom - bottom;
+      }
+      if (focus) row?.scrollIntoView({ block: "nearest", inline: "nearest" });
+      const node = topology.nodes.find((item) => item.event.id === id);
+      if (node) revealLane(node.lane);
+    },
+    [topology, revealLane],
+  );
   useEffect(() => {
-    if (!initialEventId) return;
+    if (!initialEventId || initialFocusRef.current === initialEventId) return;
     const frame = requestAnimationFrame(() => {
-      rowRefs.current.get(initialEventId)?.focus();
-      rowRefs.current.get(initialEventId)?.scrollIntoView({ block: "nearest" });
+      revealRow(initialEventId);
+      initialFocusRef.current = initialEventId;
     });
     return () => cancelAnimationFrame(frame);
-  }, [initialEventId]);
-  const highlighted = hoveredBranch ?? focusedBranch;
+  }, [initialEventId, revealRow]);
+  const highlighted = focusedBranch || hoveredBranch;
   const dim = (branchId?: string) => Boolean(highlighted && branchId && branchId !== highlighted);
 
   function closeInspector() {
     setLimit(visibleLimit);
     setSelectedId(null);
-    if (selectedId) rowRefs.current.get(selectedId)?.focus();
+    if (selectedId) revealRow(selectedId);
   }
 
   function selectEvent(id: string) {
@@ -98,18 +150,34 @@ function TaskEvolutionGraphView({
     setLimit(visibleLimit);
     setExpanded((ids) => new Set([...ids, id]));
     setSelectedId(id);
-    requestAnimationFrame(() => rowRefs.current.get(id)?.scrollIntoView({ block: "nearest" }));
+    requestAnimationFrame(() => revealRow(id, false));
   }
-  function locateEvent(id: string) {
+  function locateEvent(id: string, focus = true) {
     const rowIndex = allRows.findIndex((row) => (row.type === "event" ? row.id === id : row.eventIds.includes(id)));
     if (rowIndex < 0) return;
     setExpanded((ids) => new Set([...ids, id]));
     setLimit((current) => Math.max(current, rowIndex + EVOLUTION_PAGE_SIZE));
     setSelectedId(id);
+    requestAnimationFrame(() => revealRow(id, focus));
+  }
+  function emphasizeBranch(branchId: string) {
+    setFocusedBranch(branchId);
+    if (!branchId) {
+      if (scrollRef.current) scrollRef.current.scrollLeft = 0;
+      return;
+    }
+    const latest = topology.nodes.filter((node) => node.branchId === branchId).at(-1);
+    if (latest) {
+      const rowIndex = allRows.findIndex((row) =>
+        row.type === "event" ? row.id === latest.event.id : row.eventIds.includes(latest.event.id),
+      );
+      setExpanded((ids) => new Set([...ids, latest.event.id]));
+      // A folded interval can become a newer gap, the target, and an older gap.
+      setLimit((current) => Math.max(current, rowIndex + 3));
+    }
     requestAnimationFrame(() => {
-      const row = rowRefs.current.get(id);
-      row?.focus();
-      row?.scrollIntoView({ block: "nearest" });
+      if (latest) revealRow(latest.event.id, false);
+      revealLane(topology.lanes.get(branchId) ?? 0);
     });
   }
   function rowKeyboard(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -131,7 +199,7 @@ function TaskEvolutionGraphView({
       return;
     } else return;
     event.preventDefault();
-    rowRefs.current.get(graph.rows[Math.max(0, Math.min(next, graph.rows.length - 1))].id)?.focus();
+    revealRow(graph.rows[Math.max(0, Math.min(next, graph.rows.length - 1))].id);
   }
 
   return (
@@ -151,7 +219,7 @@ function TaskEvolutionGraphView({
               <select
                 aria-label="突出分支"
                 value={focusedBranch}
-                onChange={(event) => setFocusedBranch(event.target.value)}
+                onChange={(event) => emphasizeBranch(event.target.value)}
               >
                 <option value="">全部分支</option>
                 {evolution.branches.map((branch) => (
@@ -175,6 +243,7 @@ function TaskEvolutionGraphView({
         </div>
       </header>
       <div
+        ref={scrollRef}
         className="task-evolution-graph-scroll"
         role="group"
         tabIndex={0}
@@ -231,7 +300,7 @@ function TaskEvolutionGraphView({
               const color = node.main ? "var(--primary)" : branchColor(evolution, node.branchId);
               const selectedNode = node.event.id === selectedId;
               return (
-                <g key={row.id} opacity={dim(node.branchId) ? 0.3 : 1} data-event-node={row.id}>
+                <g key={row.id} opacity={dim(node.branchId) && !selectedNode ? 0.3 : 1} data-event-node={row.id}>
                   {selectedNode ? (
                     <circle cx={x} cy={y} r={11} fill="var(--surface-strong)" stroke={color} strokeWidth={1} />
                   ) : null}
@@ -282,11 +351,16 @@ function TaskEvolutionGraphView({
                         else rowRefs.current.delete(row.id);
                       }}
                       onKeyDown={(event) => rowKeyboard(event, index)}
-                      onClick={() => setExpanded((ids) => new Set([...ids, ...row.eventIds]))}
+                      onClick={() => {
+                        setExpanded((ids) => new Set([...ids, ...row.eventIds]));
+                        requestAnimationFrame(() => revealRow(row.eventIds.at(-1)!));
+                      }}
                     >
-                      <span className="task-evolution-graph-gap">
-                        <ChevronDown size={14} aria-hidden="true" />
-                        {row.eventIds.length} 条记录
+                      <span className="task-evolution-graph-record">
+                        <span className="task-evolution-graph-gap">
+                          <ChevronDown size={14} aria-hidden="true" />
+                          {row.eventIds.length}
+                        </span>
                       </span>
                     </button>
                   </li>
@@ -317,42 +391,47 @@ function TaskEvolutionGraphView({
                       else rowRefs.current.delete(row.id);
                     }}
                     onClick={() => selectEvent(row.id)}
+                    onFocus={() => revealLane(node.lane)}
                     onKeyDown={(event) => rowKeyboard(event, index)}
                     onMouseEnter={() => setHoveredBranch(node.branchId)}
                     onMouseLeave={() => setHoveredBranch(undefined)}
                   >
-                    <span aria-hidden="true" className={`task-evolution-graph-mobile-marker is-${node.marker}`}>
-                      {node.marker === "transferred"
-                        ? "↗"
-                        : node.marker === "merge"
-                          ? "◎"
-                          : node.marker === "paused"
-                            ? "Ⅱ"
-                            : node.marker === "ended"
-                              ? "−"
-                              : node.marker === "withdrawn"
-                                ? "×"
-                                : "●"}
-                    </span>
-                    <span className="task-evolution-graph-copy">
-                      <strong>
-                        {label}
-                        {detail ? ` · ${detail}` : ""}
-                        {adoption?.withdrawnBy ? <small> · 已撤回</small> : null}
-                      </strong>
-                      <span>
-                        {node.marker === "merge" && branch ? (
-                          <>
-                            {branch.title}
-                            <ArrowRight size={11} aria-hidden="true" />
-                            主线
-                          </>
-                        ) : (
-                          source
-                        )}
+                    <span className="task-evolution-graph-record">
+                      <span aria-hidden="true" className={`task-evolution-graph-mobile-marker is-${node.marker}`}>
+                        {node.marker === "transferred"
+                          ? "↗"
+                          : node.marker === "merge"
+                            ? "◎"
+                            : node.marker === "paused"
+                              ? "Ⅱ"
+                              : node.marker === "ended"
+                                ? "−"
+                                : node.marker === "withdrawn"
+                                  ? "×"
+                                  : "●"}
+                      </span>
+                      <span className="task-evolution-graph-copy">
+                        <strong>
+                          {detail || label}
+                          {adoption?.withdrawnBy ? <small> · 已撤回</small> : null}
+                        </strong>
+                        <span className="task-evolution-graph-meta">
+                          {detail ? <span className="task-evolution-graph-kind">{label}</span> : null}
+                          <span className="task-evolution-graph-source">
+                            {node.marker === "merge" && branch ? (
+                              <>
+                                {branch.title}
+                                <ArrowRight size={11} aria-hidden="true" />
+                                主线
+                              </>
+                            ) : (
+                              source
+                            )}
+                          </span>
+                          <time dateTime={node.event.occurredAt}>{formatDateTime(node.event.occurredAt)}</time>
+                        </span>
                       </span>
                     </span>
-                    <time dateTime={node.event.occurredAt}>{formatDateTime(node.event.occurredAt)}</time>
                   </button>
                 </li>
               );
@@ -370,8 +449,7 @@ function TaskEvolutionGraphView({
               setLimit(visibleLimit + EVOLUTION_PAGE_SIZE);
               requestAnimationFrame(() => {
                 if (nextRow) {
-                  rowRefs.current.get(nextRow)?.focus();
-                  rowRefs.current.get(nextRow)?.scrollIntoView({ block: "nearest" });
+                  revealRow(nextRow);
                 }
               });
             }}
@@ -398,15 +476,41 @@ function TaskEvolutionGraphView({
             <h3 ref={inspectorHeadingRef} tabIndex={-1}>
               {selectedDetails.label}
             </h3>
-            <button
-              type="button"
-              className="task-evolution-graph-icon-button"
-              onClick={closeInspector}
-              aria-label="关闭节点详情"
-              title="关闭"
-            >
-              <X size={16} aria-hidden="true" />
-            </button>
+            <div className="task-evolution-graph-inspector-tools">
+              {!compact ? (
+                <>
+                  <button
+                    type="button"
+                    className="task-evolution-graph-icon-button"
+                    aria-label="较新一条记录"
+                    title="较新一条记录"
+                    disabled={selectedIndex <= 0}
+                    onClick={() => locateEvent(navigableRows[selectedIndex - 1].id, false)}
+                  >
+                    <ArrowUp size={16} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="task-evolution-graph-icon-button"
+                    aria-label="较早一条记录"
+                    title="较早一条记录"
+                    disabled={selectedIndex < 0 || selectedIndex === navigableRows.length - 1}
+                    onClick={() => locateEvent(navigableRows[selectedIndex + 1].id, false)}
+                  >
+                    <ArrowDown size={16} aria-hidden="true" />
+                  </button>
+                </>
+              ) : null}
+              <button
+                type="button"
+                className="task-evolution-graph-icon-button"
+                onClick={closeInspector}
+                aria-label="关闭节点详情"
+                title="关闭"
+              >
+                <X size={16} aria-hidden="true" />
+              </button>
+            </div>
           </header>
           <time dateTime={selected.event.occurredAt}>{formatDateTime(selected.event.occurredAt)}</time>
           <TaskEvolutionEventDetails evolution={evolution} event={selected.event} />

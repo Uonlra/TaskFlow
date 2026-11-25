@@ -22,6 +22,8 @@ import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
 import { getDesktopBridge, isDesktopRuntime } from "@/shared/lib/desktop/bridge";
 
 let taskLoadVersion = 0;
+let manualSync: { accountId: string; promise: Promise<void> } | null = null;
+const MAX_MANUAL_SYNC_BATCHES = 20;
 
 export const GUEST_TASKS_STORAGE_KEY = "u-task-guest-tasks";
 
@@ -29,11 +31,13 @@ type TaskStore = {
   tasks: Task[];
   isLoading: boolean;
   error: string | null;
+  isCloudSyncing: boolean;
   lastLoadedUserId: string | null;
   clearTasks: () => void;
   hydrateGuestTasks: () => void;
   initializeTasks: (tasks: Task[], userId: string) => void;
   syncTasks: (userId?: string) => Promise<void>;
+  syncCloudTasks: (userId: string) => Promise<void>;
   createTaskAsync: (input: TaskFormValues, userId?: string) => Promise<string>;
   updateTask: (id: string, input: TaskFormValues, userId?: string) => Promise<void>;
   updateTaskStatus: (id: string, status: Task["status"], userId?: string) => Promise<void>;
@@ -41,10 +45,11 @@ type TaskStore = {
   executeEvolution: (id: string, command: TaskEvolutionCommand, userId?: string) => Promise<Task>;
 };
 
-export const useTaskStore = create<TaskStore>()((set) => ({
+export const useTaskStore = create<TaskStore>()((set, get) => ({
   tasks: [],
   isLoading: false,
   error: null,
+  isCloudSyncing: false,
   lastLoadedUserId: null,
   clearTasks: () => set({ tasks: [], error: null, lastLoadedUserId: null }),
   hydrateGuestTasks: () => {
@@ -85,18 +90,6 @@ export const useTaskStore = create<TaskStore>()((set) => ({
 
     if (isDesktopRuntime()) {
       try {
-        const workspace = await getDesktopBridge()!.workspace.get();
-        if (userId && hasAppwritePublicEnv && workspace.syncEnabled && workspace.accountId === userId) {
-          await flushDesktopSyncQueue(userId);
-          const remoteTasks = await pullDesktopSyncRecords();
-          if (version !== taskLoadVersion) return;
-          if (repository instanceof DesktopTaskRepository) await repository.importRemoteTasks(remoteTasks, userId);
-        }
-      } catch {
-        // Local tasks remain available when cloud synchronization fails.
-      }
-
-      try {
         const tasks = await repository.list();
         if (version === taskLoadVersion)
           set({ tasks: tasks.map(normalizeTask), isLoading: false, error: null, lastLoadedUserId: userId ?? null });
@@ -112,6 +105,57 @@ export const useTaskStore = create<TaskStore>()((set) => ({
       set({ tasks: tasks.map(normalizeTask), isLoading: false, error: null, lastLoadedUserId: userId ?? null });
     } catch (error) {
       set({ isLoading: false, error: error instanceof Error ? error.message : "无法同步任务列表。" });
+    }
+  },
+  syncCloudTasks: async (userId) => {
+    if (!isDesktopRuntime() || !hasAppwritePublicEnv || !userId) throw new Error("请先登录桌面云端账户。");
+    if (manualSync) {
+      if (manualSync.accountId !== userId) throw new Error("另一个账户正在同步，请稍后重试。");
+      return manualSync.promise;
+    }
+    const bridge = getDesktopBridge()!;
+    const ensureWorkspace = async () => {
+      const workspace = await bridge.workspace.get();
+      const auth = (await bridge.auth.get()) as { user?: { id?: string } } | null;
+      if (!workspace.syncEnabled || workspace.accountId !== userId || auth?.user?.id !== userId)
+        throw new Error("云端连接已关闭或账户已切换，请在设置中重新连接。");
+    };
+    const run = async () => {
+      set({ isCloudSyncing: true });
+      try {
+        let failed = 0;
+        let processed = 0;
+        let batches = 0;
+        // Bound each user action even if edits keep arriving during the upload.
+        do {
+          await ensureWorkspace();
+          const result = await flushDesktopSyncQueue(userId);
+          failed = result.failed;
+          processed = result.processed;
+          batches++;
+        } while (processed > 0 && failed === 0 && batches < MAX_MANUAL_SYNC_BATCHES);
+        const remaining =
+          batches === MAX_MANUAL_SYNC_BATCHES ? await bridge.syncQueue.list({ accountId: userId, limit: 1 }) : [];
+        await ensureWorkspace();
+        const remoteTasks = await pullDesktopSyncRecords();
+        await ensureWorkspace();
+        await new DesktopTaskRepository(userId).importRemoteTasks(remoteTasks, userId);
+        await ensureWorkspace();
+        await get().syncTasks(userId);
+        if (get().error) throw new Error(get().error!);
+        window.dispatchEvent(new CustomEvent("taskflow:tasks-refreshed", { detail: { accountId: userId } }));
+        if (failed) throw new Error(`已更新本地任务，仍有 ${failed} 项上传失败，请处理后手动重试。`);
+        if (remaining.length) throw new Error("已更新本地任务，仍有待上传内容，请再次点击立即同步。");
+      } finally {
+        set({ isCloudSyncing: false });
+      }
+    };
+    const promise = run();
+    manualSync = { accountId: userId, promise };
+    try {
+      await promise;
+    } finally {
+      if (manualSync?.promise === promise) manualSync = null;
     }
   },
   createTaskAsync: async (input, userId) => {

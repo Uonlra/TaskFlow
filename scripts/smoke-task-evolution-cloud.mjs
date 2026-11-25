@@ -123,7 +123,7 @@ const bridge = (operation, args) =>
   );
 const local = (taskId) => bridge("localTasks.get", { accountId, taskId });
 const queue = () => bridge("syncQueue.list", { accountId });
-const replay = () => app.page.evaluate(() => window.dispatchEvent(new Event("online")));
+const replay = () => app.page.getByRole("button", { name: "立即同步", exact: true }).first().click();
 
 try {
   for (let i = 0; i < 2; i++) {
@@ -224,7 +224,8 @@ try {
   await app.page.getByRole("button", { name: "登录", exact: true }).click();
   await expect.poll(async () => (await bridge("auth.get"))?.user?.id).toBe(accountId);
   await app.page.goto("app://taskflow/settings/");
-  await app.page.getByRole("button", { name: "开启云同步", exact: true }).click();
+  await app.page.getByRole("button", { name: "连接云端账户", exact: true }).click();
+  await replay();
   await expect.poll(async () => Boolean((await local(source.id))?.evolution)).toBe(true);
   await expect.poll(async () => Boolean(await local(onlineTargetId))).toBe(true);
   record("当前桌面源码通过真实登录与同步下载来源和独立任务");

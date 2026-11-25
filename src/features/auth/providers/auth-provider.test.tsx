@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AuthProvider, useAuth } from "@/features/auth/providers/auth-provider";
+import type { TaskflowDesktopBridge } from "@/shared/lib/desktop/bridge";
 
 const mocks = vi.hoisted(() => ({
   clearTasks: vi.fn(),
@@ -107,6 +108,8 @@ describe("AuthProvider", () => {
   });
 
   afterEach(() => {
+    delete window.taskflowDesktop;
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -132,7 +135,7 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
     expect(screen.getByTestId("email")).toHaveTextContent("demo@example.com");
     expect(screen.getByTestId("profile")).toHaveTextContent("测试用户");
-    expect(mocks.syncTasks).toHaveBeenCalledWith("user-1");
+    expect(mocks.syncTasks).not.toHaveBeenCalled();
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/auth/me",
@@ -143,6 +146,28 @@ describe("AuthProvider", () => {
     );
 
     expect(mocks.clearTasks).not.toHaveBeenCalled();
+  });
+
+  it("桌面启动只恢复本地账户，计时与联网恢复不触发云端请求", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.spyOn(global, "fetch");
+    window.taskflowDesktop = {
+      isDesktop: true,
+      auth: { get: vi.fn().mockResolvedValue(authEnvelope) },
+    } as unknown as TaskflowDesktopBridge;
+    mocks.syncTasks.mockResolvedValue(undefined);
+    await act(async () => {
+      renderAuthProvider();
+    });
+    expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
+    expect(mocks.syncTasks).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(90_000);
+      window.dispatchEvent(new Event("online"));
+      window.dispatchEvent(new Event("focus"));
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mocks.syncTasks).toHaveBeenCalledTimes(1);
   });
 
   it("当前会话无效时保持访客状态并清空任务", async () => {
