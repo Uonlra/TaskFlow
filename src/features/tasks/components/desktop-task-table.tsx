@@ -81,7 +81,9 @@ export function DesktopTaskTable({
           </span>
           <span role="columnheader">任务</span>
           <span role="columnheader">标签</span>
-          <span role="columnheader">截止时间</span>
+          <span role="columnheader" className="desktop-task-table__deadline">
+            截止时间
+          </span>
           <span role="columnheader">优先级</span>
           <span role="columnheader">状态</span>
           <span role="columnheader">操作</span>
@@ -167,15 +169,19 @@ function DesktopTaskRow({
       </span>
 
       <span role="cell" className="desktop-task-table__task-cell">
-        <strong>{task.title}</strong>
+        <strong title={task.title}>{task.title}</strong>
         {task.evolution?.branches.length ? (
           <TaskExplorationIndicator task={task} onOpen={() => (onOpenRelations ?? onSelectTask)(task.id)} />
-        ) : (
-          <small>{task.description || "无描述"}</small>
-        )}
+        ) : task.description.trim() ? (
+          <small title={task.description}>{task.description}</small>
+        ) : null}
       </span>
 
-      <span role="cell" className="desktop-task-table__tags">
+      <span
+        role="cell"
+        className="desktop-task-table__tags"
+        title={task.tags.length ? task.tags.join("、") : undefined}
+      >
         {task.tags.length ? (
           <>
             {task.tags.slice(0, 2).map((tag) => (
@@ -188,12 +194,22 @@ function DesktopTaskRow({
             ) : null}
           </>
         ) : (
-          <span className="desktop-task-muted">无标签</span>
+          <span className="desktop-task-table__placeholder" aria-label="无标签">
+            —
+          </span>
         )}
       </span>
 
-      <span role="cell" className={`desktop-task-due desktop-task-due--${dueMeta.tone}`}>
-        {formatDueLabel(task, dueMeta.label)}
+      <span role="cell" className={`desktop-task-table__deadline desktop-task-due desktop-task-due--${dueMeta.tone}`}>
+        {task.dueDate ? (
+          <time dateTime={task.dueDate} title={task.dueDate}>
+            {formatDueLabel(task, dueMeta.label)}
+          </time>
+        ) : (
+          <span className="desktop-task-table__placeholder" aria-label="未设置截止时间">
+            —
+          </span>
+        )}
       </span>
 
       <span role="cell" className="desktop-task-priority">
@@ -223,7 +239,7 @@ function DesktopTaskRow({
 }
 
 function formatDueLabel(task: Task, fallback: string) {
-  if (!task.dueDate || task.status === "done") {
+  if (!task.dueDate) {
     return fallback;
   }
 
@@ -237,11 +253,11 @@ function formatDueLabel(task: Task, fallback: string) {
   const dueDate = startOfDay(date);
   const diffDays = Math.round((dueDate.getTime() - today.getTime()) / 86400000);
 
-  if (diffDays === 0) {
+  if (diffDays === 0 && task.status !== "done") {
     return "今天";
   }
 
-  if (diffDays === 1) {
+  if (diffDays === 1 && task.status !== "done") {
     return "明天";
   }
 

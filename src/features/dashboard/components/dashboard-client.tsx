@@ -11,13 +11,13 @@ import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import { useAuth } from "@/features/auth/providers/auth-provider";
 import { useTaskStore } from "@/features/tasks/store/task-store";
 import { TaskQuickViewDialog } from "@/features/tasks/components/task-quick-view-dialog";
-import type { DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
+import { toDashboardTaskPreview, type DashboardTaskPreview } from "@/features/tasks/utils/task-analytics";
 import type { Task } from "@/features/tasks/types/task.types";
-import { getTaskDueMeta } from "@/features/tasks/utils/task-deadline";
 import { buildTasksHref } from "@/shared/lib/constants/query-params";
 import { getTaskRepository } from "@/features/tasks/repositories/task-repository-selector";
 import { isDesktopRuntime } from "@/shared/lib/desktop/bridge";
 import { latestTask } from "@/features/tasks/utils/task-evolution-navigation";
+import { useToast } from "@/shared/providers/toast-provider";
 
 type DashboardRange = "today" | "week" | "all";
 
@@ -39,6 +39,7 @@ type DashboardClientProps = {
 
 export function DashboardClient({ initialRange = "today" }: DashboardClientProps) {
   const { user, isLoading: isAuthLoading } = useAuth();
+  const { showToast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -112,6 +113,28 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
     setPreviewTask(null);
   };
 
+  const handleToggleTask = async (task: DashboardTaskPreview) => {
+    try {
+      const knownTask = syncedTasks.find((item) => item.id === task.id);
+      const currentTask = task.hasEvolution === undefined ? await loadPreview(task.id) : knownTask;
+      if (currentTask === null) throw new Error("任务不存在或已删除。");
+      if (currentTask?.evolution) {
+        setPreviewTask(currentTask);
+        return;
+      }
+
+      const nextStatus = task.status === "done" ? "todo" : "done";
+      await updateTaskStatus(task.id, nextStatus, user?.id);
+      showToast({ title: nextStatus === "done" ? "任务已完成" : "任务已标记为未完成", tone: "success" });
+    } catch (error) {
+      showToast({
+        title: "未能更新任务状态",
+        description: error instanceof Error ? error.message : "请稍后重试。",
+        tone: "error",
+      });
+    }
+  };
+
   const handlePreviewUpdate = async (task: Task, values: TaskFormValues) => {
     await updateTask(task.id, values, user?.id);
 
@@ -150,6 +173,7 @@ export function DashboardClient({ initialRange = "today" }: DashboardClientProps
           onPriorityFiltersChange={setPriorityFilters}
           onCreateTask={handleCreateTask}
           onPreviewTask={handlePreviewTask}
+          onToggleTask={handleToggleTask}
           onStatusFilter={handleStatusFilter}
         />
       </div>
@@ -204,19 +228,5 @@ function toTaskPreview(task: DashboardTaskPreview): Task {
     tags: task.tags,
     dueDate: task.dueDate,
     createdAt: task.createdAt,
-  };
-}
-
-function toDashboardTaskPreview(task: Task): DashboardTaskPreview {
-  return {
-    id: task.id,
-    title: task.title,
-    description: task.description,
-    createdAt: task.createdAt,
-    status: task.status,
-    priority: task.priority,
-    dueDate: task.dueDate,
-    dueLabel: getTaskDueMeta(task).label,
-    tags: task.tags,
   };
 }

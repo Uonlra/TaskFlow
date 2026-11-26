@@ -44,11 +44,13 @@ export function TaskDetailHero({ task, statusAnimationKey }: { task: Task; statu
 export function TaskDetailPropertyList({
   task,
   includeOwner = false,
+  showTimestamps = true,
   onStatusClick,
   statusAnimationKey,
 }: {
   task: Task;
   includeOwner?: boolean;
+  showTimestamps?: boolean;
   onStatusClick?: () => void;
   statusAnimationKey?: number;
 }) {
@@ -87,13 +89,17 @@ export function TaskDetailPropertyList({
         </span>
       </TaskDetailProperty>
       {includeOwner ? <TaskDetailProperty label="归属人">你</TaskDetailProperty> : null}
-      <TaskDetailProperty label="创建时间">{formatDateTime(task.createdAt)}</TaskDetailProperty>
-      <TaskDetailProperty label="更新时间">
-        {task.updatedAt ? formatDateTime(task.updatedAt) : "未更新"}
-      </TaskDetailProperty>
-      <TaskDetailProperty label="完成时间">
-        {task.completedAt ? formatDateTime(task.completedAt) : "未完成"}
-      </TaskDetailProperty>
+      {showTimestamps ? (
+        <>
+          <TaskDetailProperty label="创建时间">{formatDateTime(task.createdAt)}</TaskDetailProperty>
+          <TaskDetailProperty label="更新时间">
+            {task.updatedAt ? formatDateTime(task.updatedAt) : "未更新"}
+          </TaskDetailProperty>
+          <TaskDetailProperty label="完成时间">
+            {task.completedAt ? formatDateTime(task.completedAt) : "未完成"}
+          </TaskDetailProperty>
+        </>
+      ) : null}
     </div>
   );
 }

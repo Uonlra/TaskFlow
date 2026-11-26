@@ -54,6 +54,7 @@ export type DashboardTaskPreview = {
   dueDate?: string;
   dueLabel: string;
   tags: string[];
+  hasEvolution?: boolean;
 };
 
 export type DashboardTodayPace = {
@@ -347,7 +348,7 @@ function buildUpcomingDeadlines(tasks: Task[], excludedIds = new Set<string>()) 
     .map(toDashboardTaskPreview);
 }
 
-function toDashboardTaskPreview(task: Task): DashboardTaskPreview {
+export function toDashboardTaskPreview(task: Task): DashboardTaskPreview {
   return {
     id: task.id,
     title: task.title,
@@ -358,6 +359,7 @@ function toDashboardTaskPreview(task: Task): DashboardTaskPreview {
     dueDate: task.dueDate,
     dueLabel: getTaskDueMeta(task).label,
     tags: task.tags,
+    hasEvolution: Boolean(task.evolution),
   };
 }
 

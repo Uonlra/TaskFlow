@@ -8,7 +8,7 @@ import { matchesTaskDueFilter } from "@/features/tasks/utils/task-deadline";
 import { handleApiError } from "@/shared/lib/api/error";
 import { getCurrentAuthEnvelope } from "@/shared/lib/appwrite/server";
 import { getAppwriteSessionSecret } from "@/shared/lib/appwrite/session";
-import { listTasksForDashboard } from "@/shared/lib/appwrite/tasks";
+import { getDashboardEvolutionFlags, listTasksForDashboard } from "@/shared/lib/appwrite/tasks";
 import type { TaskDueFilter } from "@/shared/lib/constants/query-params";
 
 export async function GET(request: NextRequest) {
@@ -35,6 +35,12 @@ export async function GET(request: NextRequest) {
     );
 
     stats.focusTasks = buildFocusTasks(focusCandidates, { includeCompleted: status === "done" });
+    const evolutionFlags = await getDashboardEvolutionFlags(
+      sessionSecret,
+      stats.focusTasks.map((task) => task.id),
+      request,
+    ).catch(() => new Map<string, boolean>());
+    stats.focusTasks = stats.focusTasks.map((task) => ({ ...task, hasEvolution: evolutionFlags.get(task.id) }));
 
     return NextResponse.json({ stats, hasAnyTasks: result.hasAnyTasks });
   } catch (error) {
