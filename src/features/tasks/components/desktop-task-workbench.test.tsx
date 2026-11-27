@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -221,13 +221,14 @@ describe("DesktopTaskWorkbench keyboard path", () => {
     expect(screen.queryByRole("heading", { name: "第一项任务" })).not.toBeInTheDocument();
   });
 
-  it("移动断点下保留详情占位，但不挂载详情模块", () => {
+  it("在窄桌面按需打开详情，按 Escape 返回仍在原位的列表", async () => {
+    const user = userEvent.setup();
     const originalMatchMedia = window.matchMedia;
     Object.defineProperty(window, "matchMedia", {
       configurable: true,
       value: vi.fn(() => ({
         matches: false,
-        media: "(min-width: 961px)",
+        media: "(min-width: 1321px)",
         onchange: null,
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
@@ -256,8 +257,15 @@ describe("DesktopTaskWorkbench keyboard path", () => {
         </ToastProvider>,
       );
 
-      expect(screen.getByLabelText("正在加载任务详情")).toBeInTheDocument();
+      expect(screen.queryByLabelText("正在加载任务详情")).not.toBeInTheDocument();
       expect(screen.queryByRole("heading", { name: "第一项任务" })).not.toBeInTheDocument();
+      const list = screen.getByRole("rowgroup", { name: "可滚动任务列表" });
+      await user.click(screen.getByText("第二项任务"));
+      const detail = await screen.findByRole("heading", { name: "第二项任务" });
+      await waitFor(() => expect(detail.closest("aside")?.parentElement).toHaveFocus());
+      await user.keyboard("{Escape}");
+      expect(screen.queryByRole("heading", { name: "第二项任务" })).not.toBeInTheDocument();
+      expect(screen.getByRole("rowgroup", { name: "可滚动任务列表" })).toBe(list);
     } finally {
       Object.defineProperty(window, "matchMedia", { configurable: true, value: originalMatchMedia });
     }

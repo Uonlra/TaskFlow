@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ChangeEvent } from "react";
 import dynamic from "next/dynamic";
+import { PanelRightOpen } from "lucide-react";
 
 import { CustomSelect } from "@/shared/components/common/custom-select";
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
@@ -54,6 +55,22 @@ const categoryTabs = [
   { value: "all", label: "全部" },
 ] as const;
 
+const dockedDetailQuery = "(min-width: 1321px)";
+
+function subscribeToDetailLayout(onChange: () => void) {
+  const media = window.matchMedia?.(dockedDetailQuery);
+  media?.addEventListener("change", onChange);
+  return () => media?.removeEventListener("change", onChange);
+}
+
+function getDetailLayoutSnapshot() {
+  return window.matchMedia?.(dockedDetailQuery).matches ?? true;
+}
+
+function getServerDetailLayoutSnapshot() {
+  return true;
+}
+
 type CategoryTab = (typeof categoryTabs)[number]["value"];
 type EmptyStateCopy = {
   title: string;
@@ -84,7 +101,18 @@ export function DesktopTaskWorkbench({
   const { showToast } = useToast();
   const importInputRef = useRef<HTMLInputElement>(null);
   const taskListScrollTopRef = useRef(0);
+  const detailRegionRef = useRef<HTMLDivElement>(null);
+  const detailOpenerRef = useRef<HTMLElement | null>(null);
+  const openDetailButtonRef = useRef<HTMLButtonElement>(null);
+  const taskListRegionRef = useRef<HTMLDivElement>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(() => tasks[0]?.id ?? null);
+  const [detailOpen, setDetailOpen] = useState<boolean | null>(null);
+  const isDocked = useSyncExternalStore(
+    subscribeToDetailLayout,
+    getDetailLayoutSnapshot,
+    getServerDetailLayoutSnapshot,
+  );
+  const showDetail = detailOpen ?? isDocked;
   const [relationsTarget, setRelationsTarget] = useState<{ id: string; requestId: string } | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [canLoadDetail, setCanLoadDetail] = useState(false);
@@ -109,35 +137,51 @@ export function DesktopTaskWorkbench({
   }
 
   useEffect(() => {
+    if (!showDetail || canLoadDetail) return;
+
     const idleWindow = window as unknown as {
       requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
       cancelIdleCallback?: (id: number) => void;
     };
-    const desktopQuery = window.matchMedia?.("(min-width: 961px)");
-    let cancelScheduledLoad = () => {};
+    if (idleWindow.requestIdleCallback) {
+      const idleId = idleWindow.requestIdleCallback(() => setCanLoadDetail(true), { timeout: 400 });
+      return () => idleWindow.cancelIdleCallback?.(idleId);
+    }
 
-    const scheduleDetailLoad = () => {
-      if (desktopQuery && !desktopQuery.matches) return;
+    const timeoutId = window.setTimeout(() => setCanLoadDetail(true), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [showDetail, canLoadDetail]);
 
-      cancelScheduledLoad();
-      if (idleWindow.requestIdleCallback) {
-        const idleId = idleWindow.requestIdleCallback(() => setCanLoadDetail(true), { timeout: 400 });
-        cancelScheduledLoad = () => idleWindow.cancelIdleCallback?.(idleId);
-        return;
-      }
+  const openDetail = (id: string, openRelations = false) => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active !== document.body && !detailRegionRef.current?.contains(active)) {
+      detailOpenerRef.current = active;
+    }
+    setSelectedTaskId(id);
+    setRelationsTarget(openRelations ? { id, requestId: crypto.randomUUID() } : null);
+    setCanLoadDetail(true);
+    setDetailOpen(true);
 
-      const timeoutId = window.setTimeout(() => setCanLoadDetail(true), 0);
-      cancelScheduledLoad = () => window.clearTimeout(timeoutId);
-    };
+    if (!isDocked) {
+      requestAnimationFrame(() => {
+        const region = detailRegionRef.current;
+        if (region && !region.contains(document.activeElement)) region.focus({ preventScroll: true });
+      });
+    }
+  };
 
-    scheduleDetailLoad();
-    desktopQuery?.addEventListener("change", scheduleDetailLoad);
-
-    return () => {
-      cancelScheduledLoad();
-      desktopQuery?.removeEventListener("change", scheduleDetailLoad);
-    };
-  }, []);
+  const closeDetail = () => {
+    setDetailOpen(false);
+    setRelationsTarget(null);
+    requestAnimationFrame(() => {
+      const opener = detailOpenerRef.current;
+      const target =
+        opener?.isConnected && opener.getClientRects().length
+          ? opener
+          : ((isDocked ? openDetailButtonRef.current : null) ?? taskListRegionRef.current);
+      target?.focus({ preventScroll: true });
+    });
+  };
 
   const handleCategoryChange = (value: CategoryTab) => {
     const nextFilters: TaskFilters = {
@@ -265,6 +309,12 @@ export function DesktopTaskWorkbench({
     <section
       className={`${tasks.length ? "desktop-task-workbench" : "desktop-task-workbench desktop-task-workbench--filtered-empty"}${
         isLoading ? " desktop-task-workbench--refreshing" : ""
+      }${
+        detailOpen === true
+          ? " desktop-task-workbench--detail-open"
+          : detailOpen === false
+            ? " desktop-task-workbench--detail-hidden"
+            : ""
       }`}
       aria-label="桌面端任务工作台"
       aria-busy={isLoading}
@@ -318,26 +368,32 @@ export function DesktopTaskWorkbench({
                 options={sortOptions}
                 onChange={(value) => onFiltersChange({ ...filters, sort: value })}
               />
+              {detailOpen === false && selectedTask ? (
+                <button
+                  ref={openDetailButtonRef}
+                  className="desktop-task-workbench__open-detail"
+                  type="button"
+                  onClick={() => openDetail(selectedTask.id)}
+                  aria-label="展开详情"
+                  title="展开详情"
+                >
+                  <PanelRightOpen size={16} aria-hidden="true" />
+                </button>
+              ) : null}
             </div>
           </>
         }
         primaryAction={<TaskFormDialog onSubmitTask={onCreateTask} triggerLabel="新建任务" />}
       />
 
-      <div className="desktop-task-workbench__main">
+      <div className="desktop-task-workbench__main" ref={taskListRegionRef} tabIndex={-1}>
         {tasks.length ? (
           <DesktopTaskTable
             tasks={tasks}
             emptyState={emptyState}
-            selectedTaskId={selectedTask?.id ?? null}
-            onSelectTask={(id) => {
-              setSelectedTaskId(id);
-              setRelationsTarget(null);
-            }}
-            onOpenRelations={(id) => {
-              setSelectedTaskId(id);
-              setRelationsTarget({ id, requestId: crypto.randomUUID() });
-            }}
+            selectedTaskId={showDetail ? (selectedTask?.id ?? null) : null}
+            onSelectTask={openDetail}
+            onOpenRelations={(id) => openDetail(id, true)}
             onPreviewTask={onPreviewTask}
             onUpdateStatus={onUpdateStatus}
             scrollPositionRef={taskListScrollTopRef}
@@ -387,19 +443,36 @@ export function DesktopTaskWorkbench({
         ) : null}
       </div>
 
-      {tasks.length ? (
-        canLoadDetail ? (
-          <TaskDetailPanel
-            key={`${selectedTask?.id}:${relationsTarget?.id === selectedTask?.id ? relationsTarget?.requestId : "details"}`}
-            task={selectedTask}
-            initiallyOpenRelations={Boolean(relationsTarget && relationsTarget.id === selectedTask?.id)}
-            onUpdateTask={onUpdateTask}
-            onUpdateStatus={onUpdateStatus}
-            onDeleteTask={onDeleteTask}
-          />
-        ) : (
-          <TaskDetailPanelSkeleton />
-        )
+      {selectedTask && showDetail ? (
+        <div
+          className="desktop-task-workbench__detail"
+          ref={detailRegionRef}
+          tabIndex={-1}
+          onKeyDown={(event) => {
+            if (
+              event.key === "Escape" &&
+              !event.defaultPrevented &&
+              event.currentTarget.contains(event.target as Node)
+            ) {
+              event.preventDefault();
+              closeDetail();
+            }
+          }}
+        >
+          {canLoadDetail ? (
+            <TaskDetailPanel
+              key={`${selectedTask?.id}:${relationsTarget?.id === selectedTask?.id ? relationsTarget?.requestId : "details"}`}
+              task={selectedTask}
+              initiallyOpenRelations={Boolean(relationsTarget && relationsTarget.id === selectedTask?.id)}
+              onUpdateTask={onUpdateTask}
+              onUpdateStatus={onUpdateStatus}
+              onDeleteTask={onDeleteTask}
+              onClose={closeDetail}
+            />
+          ) : (
+            <TaskDetailPanelSkeleton />
+          )}
+        </div>
       ) : null}
     </section>
   );

@@ -152,6 +152,25 @@ export async function listTasksForDashboard(
   };
 }
 
+export async function getDashboardEvolutionFlags(sessionSecret: string, taskIds: string[], request?: NextRequest) {
+  if (!taskIds.length) return new Map<string, boolean>();
+
+  // Read only the visible priority tasks so the aggregate queries stay lightweight.
+  const { rows } = await appwriteTaskRequest<AppwriteRowsList>(
+    "",
+    {
+      sessionSecret,
+      request,
+      searchParams: {
+        queries: [JSON.stringify({ method: "equal", attribute: "$id", values: taskIds }), queryLimit(taskIds.length)],
+      },
+    },
+    appwriteRowsListSchema,
+  );
+
+  return new Map(rows.map((row) => [row.$id, row.evolutionJson != null]));
+}
+
 function buildDashboardRangeQueries(range: Exclude<DashboardAnalyticsRange, "all">) {
   const start = startOfTaskDay(new Date());
   const end = addTaskDays(start, range === "today" ? 1 : 7);

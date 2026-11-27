@@ -2,234 +2,124 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { AuthInput } from "@/features/auth/components/auth-input";
 import { AuthFormShell } from "@/features/auth/components/auth-form-shell";
-import { useAuthPreviewState } from "@/features/auth/components/auth-preview-state";
 import { useAuthAccountLookup } from "@/features/auth/hooks/use-auth-account-lookup";
 import { registerSchema, type RegisterFormValues } from "@/features/auth/schemas/register-schema";
+import { getAuthReturnPath } from "@/features/auth/utils/get-auth-return-path";
 import { apiFetch } from "@/shared/lib/api/client";
 import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
 import { useToast } from "@/shared/providers/toast-provider";
 
 export function RegisterForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const nextPath = getSafeNextPath(searchParams.get("next"));
+  const nextPath = getAuthReturnPath(useSearchParams().get("next"));
+  const loginHref = `/login?next=${encodeURIComponent(nextPath)}`;
   const { showToast } = useToast();
-  const { preloginAccountStatus, setPreloginAccountStatus, setPreloginEmail, setPreloginName } = useAuthPreviewState();
-  const [submittedName, setSubmittedName] = useState<string | null>(null);
-  const [submitMessage, setSubmitMessage] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [hasPasswordInteraction, setHasPasswordInteraction] = useState(false);
+  const [error, setError] = useState("");
+  const [created, setCreated] = useState(false);
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   });
-  const watchedName = watch("name");
-  const watchedEmail = watch("email");
-  const watchedPassword = watch("password");
-  const watchedConfirmPassword = watch("confirmPassword");
-  useAuthAccountLookup(watchedEmail);
+  const [email, password, confirmation] = useWatch({ control, name: ["email", "password", "confirmPassword"] });
+  const accountStatus = useAuthAccountLookup(email);
 
-  const hasValidPasswordLength = watchedPassword.length >= 8;
-  const shouldShowPasswordFeedback = hasPasswordInteraction || watchedPassword.length > 0;
-  const shouldShowConfirmationFeedback = watchedConfirmPassword.length > 0 && !errors.confirmPassword;
-  const passwordsMatch = watchedPassword === watchedConfirmPassword;
-
-  useEffect(() => {
-    setPreloginName(watchedName.trim());
-    setPreloginEmail(watchedEmail.trim());
-
-    return () => {
-      setPreloginAccountStatus("idle");
-      setPreloginName("");
-      setPreloginEmail("");
-    };
-  }, [setPreloginAccountStatus, setPreloginEmail, setPreloginName, watchedEmail, watchedName]);
-
-  const navigateToLogin = () => {
-    const loginPath = `/login?reason=registered&next=${encodeURIComponent(nextPath)}`;
-
-    if (typeof window !== "undefined") {
-      window.location.assign(loginPath);
-      return;
-    }
-
-    router.replace(loginPath);
-    router.refresh();
-  };
-
-  const onSubmit = async (values: RegisterFormValues) => {
-    setSubmitError(null);
-    setSubmitMessage(null);
-
-    if (!hasAppwritePublicEnv) {
-      const message = "服务尚未配置，暂时无法创建账号。";
-      setSubmitError(message);
-      showToast({ title: "暂时无法注册", description: message, tone: "error" });
-      return;
-    }
-
-    const response = await apiFetch("/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(values),
-    });
-
-    const payload = (await response.json().catch(() => null)) as {
-      message?: string;
-    } | null;
-
-    if (!response.ok) {
-      const message = payload?.message || "注册失败，请稍后再试。";
-      setSubmitError(message);
-      showToast({
-        title: "注册失败",
-        description: message,
-        tone: "error",
+  async function onSubmit(values: RegisterFormValues) {
+    setError("");
+    try {
+      if (!hasAppwritePublicEnv) throw new Error("服务尚未配置，暂时无法创建账号。");
+      const response = await apiFetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
       });
-      return;
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.message || "注册失败，请稍后再试。");
+      }
+      setCreated(true);
+      router.replace(loginHref + "&reason=registered");
+    } catch (cause) {
+      const message =
+        cause instanceof Error && !(cause instanceof TypeError) ? cause.message : "连接失败，请检查网络后重试。";
+      setError(message);
+      showToast({ title: "注册失败", description: message, tone: "error" });
     }
-
-    setSubmittedName(values.name);
-    setPreloginName(values.name.trim());
-    setPreloginEmail(values.email.trim());
-    const message = payload?.message || "账号已创建，请登录。";
-    setSubmitMessage(message);
-    showToast({
-      title: "账号已创建",
-      description: message,
-      tone: "success",
-    });
-    navigateToLogin();
-  };
+  }
 
   return (
     <AuthFormShell
-      eyebrow="注册"
       title="创建账号"
-      description="填写信息后，账号会安全保存，随后登录继续使用任务本。"
+      description="注册 U’s Task，开始整理你的第一份任务清单。"
       footer={
         <>
-          已经有账号了？{" "}
-          <Link href={`/login?next=${encodeURIComponent(nextPath)}`} className="auth-form-footer-link">
-            去登录
-          </Link>
+          已有账号？ <Link href={loginHref}>去登录</Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
+      <form className="auth-form" noValidate onSubmit={handleSubmit(onSubmit)}>
         <AuthInput
-          label="姓名"
+          label="昵称"
           type="text"
-          placeholder="请输入你的昵称"
-          error={errors.name?.message}
+          autoComplete="nickname"
+          placeholder="怎么称呼你？"
           registration={register("name")}
-          icon="U"
+          error={errors.name?.message}
         />
         <AuthInput
           label="邮箱"
           type="email"
-          placeholder="请输入邮箱地址"
-          error={errors.email?.message}
+          autoComplete="username"
+          placeholder="you@example.com"
           registration={register("email")}
-          icon="@"
+          error={errors.email?.message}
+          supportingContent={
+            accountStatus === "registered" ? (
+              <>
+                此邮箱已注册，<Link href={loginHref}>去登录</Link>
+              </>
+            ) : undefined
+          }
         />
-        <AccountLookupMessage status={preloginAccountStatus} />
         <AuthInput
           label="密码"
           type="password"
-          placeholder="请输入至少 8 位密码"
-          error={errors.password?.message}
+          autoComplete="new-password"
+          placeholder="设置登录密码"
           registration={register("password")}
-          icon="*"
-          onFocus={() => setHasPasswordInteraction(true)}
-          supportingContent={
-            shouldShowPasswordFeedback ? (
-              <p
-                className={
-                  hasValidPasswordLength
-                    ? "auth-password-feedback auth-password-feedback--success"
-                    : "auth-password-feedback"
-                }
-                aria-live="polite"
-              >
-                <span aria-hidden="true">{hasValidPasswordLength ? "✓" : "○"}</span>
-                {hasValidPasswordLength ? "已满足至少 8 个字符" : "至少 8 个字符"}
-              </p>
-            ) : null
-          }
+          error={errors.password?.message}
+          supportingContent={password.length >= 8 ? "已满足至少 8 个字符" : "至少 8 个字符"}
         />
         <AuthInput
           label="确认密码"
           type="password"
-          placeholder="请再次输入密码"
-          error={errors.confirmPassword?.message}
+          autoComplete="new-password"
+          placeholder="再次输入密码"
           registration={register("confirmPassword")}
-          icon="*"
+          error={errors.confirmPassword?.message}
           supportingContent={
-            shouldShowConfirmationFeedback ? (
-              <p
-                className={
-                  passwordsMatch
-                    ? "auth-password-feedback auth-password-feedback--success"
-                    : "auth-password-feedback auth-password-feedback--error"
-                }
-                aria-live="polite"
-              >
-                <span aria-hidden="true">{passwordsMatch ? "✓" : "!"}</span>
-                {passwordsMatch ? "两次密码一致" : "两次输入的密码不一致"}
-              </p>
-            ) : null
+            confirmation ? (confirmation === password ? "两次密码一致" : "两次输入的密码不一致") : undefined
           }
         />
-        <button type="submit" disabled={isSubmitting} className="auth-submit-button">
-          {isSubmitting ? "创建中..." : "创建任务本"}
+        {error && (
+          <p className="auth-error" role="alert">
+            {error}
+          </p>
+        )}
+        <button type="submit" className="auth-submit" disabled={isSubmitting || created}>
+          {created ? "账号已创建" : isSubmitting ? "创建中…" : "创建账号"}
         </button>
-        {submittedName ? (
-          <p className="auth-form-message auth-form-message--success">{`已为 ${submittedName} 创建账号。`}</p>
-        ) : null}
-        {submitMessage ? <p className="auth-form-message auth-form-message--success">{submitMessage}</p> : null}
-        {submitError ? <p className="auth-form-message auth-form-message--error">{submitError}</p> : null}
       </form>
     </AuthFormShell>
   );
-}
-
-function AccountLookupMessage({ status }: { status: ReturnType<typeof useAuthPreviewState>["preloginAccountStatus"] }) {
-  if (status === "idle") {
-    return null;
-  }
-
-  const message =
-    status === "checking"
-      ? "正在确认邮箱状态..."
-      : status === "registered"
-        ? "这个邮箱已经有记录了，直接登录会更快。"
-        : status === "available"
-          ? "这个邮箱可以创建新记录，进度会从 0 开始。"
-          : "暂时无法确认邮箱状态，可以继续填写注册信息。";
-
-  return <p className="auth-form-message auth-form-message--hint">{message}</p>;
-}
-
-function getSafeNextPath(value: string | null) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/dashboard";
-  return value;
 }

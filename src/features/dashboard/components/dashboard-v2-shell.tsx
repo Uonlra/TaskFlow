@@ -7,6 +7,8 @@ import type {
 import { DashboardRangeMenu } from "@/features/dashboard/components/dashboard-range-menu";
 import { DashboardWorkspace } from "@/features/dashboard/components/dashboard-workspace";
 import { DashboardEmptyOrbit } from "@/features/dashboard/components/dashboard-empty-orbit";
+import { DashboardDeadlinePanel } from "@/features/dashboard/components/dashboard-deadline-panel";
+import { DashboardDistributionPanel } from "@/features/dashboard/components/dashboard-distribution-panel";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
 import type { DashboardAnalyticsRange, DashboardStats } from "@/features/tasks/utils/task-analytics";
@@ -17,21 +19,6 @@ import { PageToolbarTemporalContext } from "@/shared/components/layout/page-tool
 const DashboardTrendPanel = dynamic(
   () => import("@/features/dashboard/components/dashboard-trend-panel").then((module) => module.DashboardTrendPanel),
   { loading: () => <DashboardDeferredPanelSkeleton label="趋势分析加载中" /> },
-);
-const DashboardDistributionPanel = dynamic(
-  () =>
-    import("@/features/dashboard/components/dashboard-distribution-panel").then(
-      (module) => module.DashboardDistributionPanel,
-    ),
-  { loading: () => <DashboardDeferredPanelSkeleton label="分布分析加载中" /> },
-);
-const DashboardFocusPanel = dynamic(
-  () => import("@/features/dashboard/components/dashboard-focus-panel").then((module) => module.DashboardFocusPanel),
-  { loading: () => <DashboardDeferredPanelSkeleton label="重点任务加载中" /> },
-);
-const DashboardRiskPanel = dynamic(
-  () => import("@/features/dashboard/components/dashboard-risk-panel").then((module) => module.DashboardRiskPanel),
-  { loading: () => <DashboardDeferredPanelSkeleton label="风险分析加载中" /> },
 );
 
 type DashboardV2ShellProps = {
@@ -52,6 +39,7 @@ type DashboardV2ShellProps = {
   onPriorityFiltersChange: (filters: DashboardPriorityFilters) => void;
   onCreateTask: (values: TaskFormValues) => Promise<void>;
   onPreviewTask: (task: DashboardTaskPreview) => void;
+  onToggleTask: (task: DashboardTaskPreview) => Promise<void>;
   onStatusFilter: (filter: "active" | "in_progress" | "near") => void;
 };
 
@@ -73,6 +61,7 @@ export function DashboardV2Shell({
   onPriorityFiltersChange,
   onCreateTask,
   onPreviewTask,
+  onToggleTask,
   onStatusFilter,
 }: DashboardV2ShellProps) {
   const pageToolbar = (
@@ -108,6 +97,7 @@ export function DashboardV2Shell({
           isLoading={isLoading}
           isRangeEmpty
           onPreviewTask={onPreviewTask}
+          onToggleTask={onToggleTask}
           onStatusFilter={onStatusFilter}
         />
         <DashboardEmptyOrbit tasks={orbitTasks} onPreviewTask={onPreviewTask} onCreateTask={onCreateTask} />
@@ -123,40 +113,37 @@ export function DashboardV2Shell({
         priorityTasks={priorityTasks}
         isLoading={isLoading}
         onPreviewTask={onPreviewTask}
+        onToggleTask={onToggleTask}
         onStatusFilter={onStatusFilter}
       />
       <div className="dashboard-v2-grid">
-        <div className="dashboard-v2-grid__main">
-          <DashboardTrendPanel
-            stats={stats}
-            trend={stats.trend}
-            range={range}
-            rangeLabel={rangeLabel}
-            isEmpty={isEmpty}
-            isLoading={isLoading}
-            error={error}
-            onRetry={onRetry}
-            hasPreviousData={hasPreviousData}
-          />
-          <DashboardDistributionPanel
-            statusDistribution={stats.statusDistribution}
-            priorityDistribution={stats.priorityDistribution}
-            tagTop={stats.tagTop}
-            range={range}
-            rangeLabel={rangeLabel}
-            isEmpty={isEmpty}
-          />
-        </div>
-        <aside className="dashboard-v2-grid__aside">
-          <DashboardFocusPanel
-            tasks={stats.focusTasks}
-            deadlines={stats.upcomingDeadlines}
-            range={range}
-            showFocus={false}
-            onPreviewTask={onPreviewTask}
-          />
-          <DashboardRiskPanel risks={stats.overdueRisk} overdueCount={stats.overdueCount} isEmpty={isEmpty} />
-        </aside>
+        <DashboardTrendPanel
+          stats={stats}
+          trend={stats.trend}
+          range={range}
+          rangeLabel={rangeLabel}
+          isEmpty={isEmpty}
+          isLoading={isLoading}
+          error={error}
+          onRetry={onRetry}
+          hasPreviousData={hasPreviousData}
+        />
+        <DashboardDeadlinePanel
+          deadlines={stats.upcomingDeadlines}
+          focusTasks={priorityTasks}
+          overdueCount={stats.overdueCount}
+          risks={stats.overdueRisk}
+          range={range}
+          isLoading={isLoading && !hasPreviousData}
+          onPreviewTask={onPreviewTask}
+        />
+        <DashboardDistributionPanel
+          statusDistribution={stats.statusDistribution}
+          priorityDistribution={stats.priorityDistribution}
+          tagTop={stats.tagTop}
+          rangeLabel={rangeLabel}
+          isLoading={isLoading && !hasPreviousData}
+        />
       </div>
     </section>
   );

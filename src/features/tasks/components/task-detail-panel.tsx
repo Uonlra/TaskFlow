@@ -3,6 +3,7 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import Link from "next/link";
 import { useRef, useState } from "react";
+import { X } from "lucide-react";
 
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { TaskFormDialog } from "@/features/tasks/components/task-form-dialog";
@@ -24,6 +25,7 @@ type TaskDetailPanelProps = {
   onUpdateTask: (id: string, values: TaskFormValues) => void | Promise<void>;
   onUpdateStatus: (id: string, status: Task["status"]) => void | Promise<void>;
   onDeleteTask: (id: string) => void | Promise<void>;
+  onClose?: () => void;
   initiallyOpenRelations?: boolean;
 };
 
@@ -34,6 +36,7 @@ export function TaskDetailPanel({
   onUpdateTask,
   onUpdateStatus,
   onDeleteTask,
+  onClose,
   initiallyOpenRelations = false,
 }: TaskDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<TaskDetailTab>("details");
@@ -82,7 +85,7 @@ export function TaskDetailPanel({
   };
 
   return (
-    <aside className="task-detail-panel" aria-label="任务详情">
+    <aside className="task-detail-panel" aria-label="任务详情" data-lenis-prevent-wheel="true">
       <header className="task-detail-panel__header">
         <div className="task-detail-panel__tabs" role="tablist" aria-label="任务详情视图">
           <button
@@ -122,6 +125,17 @@ export function TaskDetailPanel({
             活动
           </button>
         </div>
+        {onClose ? (
+          <button
+            className="task-detail-panel__close"
+            type="button"
+            onClick={onClose}
+            aria-label="关闭详情"
+            title="关闭详情"
+          >
+            <X size={17} aria-hidden="true" />
+          </button>
+        ) : null}
       </header>
 
       <div
@@ -132,28 +146,41 @@ export function TaskDetailPanel({
         className="task-detail-panel__content"
       >
         <section className="task-detail-panel__summary">
-          <div>
-            <h2>{task.title}</h2>
-            <p>{task.description || "暂无描述"}</p>
+          <h2>{task.title}</h2>
+          <TaskDetailPropertyList
+            task={task}
+            showTimestamps={false}
+            onStatusClick={
+              task.evolution ? undefined : () => void onUpdateStatus(task.id, task.status === "done" ? "todo" : "done")
+            }
+          />
+          <div className="task-detail-panel__primary-actions">
+            <TaskFormDialog
+              lockGoalAndStatus={Boolean(task.evolution)}
+              onSubmitTask={(values) => onUpdateTask(task.id, values)}
+              initialValues={taskValues}
+              triggerLabel="编辑"
+              dialogEyebrow="编辑任务"
+              dialogTitle="调整这条任务"
+              submitLabel="保存修改"
+            />
+            <Link className="task-detail-panel__exploration-link" href={`/tasks/${encodeURIComponent(task.id)}`}>
+              {task.evolution ? (task.status === "done" ? "前往详情重新打开" : "前往详情验收") : "打开完整详情"}
+            </Link>
           </div>
         </section>
 
-        <TaskOriginLink evolution={task.evolution} />
+        {task.description.trim() ? <p className="task-detail-panel__description">{task.description}</p> : null}
         {task.evolution?.goal.successCriteria ? (
           <section className="task-workbench-criteria" aria-label="完成标准">
             <span>完成标准</span>
             <p>{task.evolution.goal.successCriteria}</p>
           </section>
         ) : null}
+        <TaskOriginLink evolution={task.evolution} />
         {task.evolution ? (
           <TaskWorkbenchExploration evolution={task.evolution} initiallyOpen={initiallyOpenRelations} />
         ) : null}
-        <TaskDetailPropertyList
-          task={task}
-          onStatusClick={
-            task.evolution ? undefined : () => void onUpdateStatus(task.id, task.status === "done" ? "todo" : "done")
-          }
-        />
         <TaskDetailTags task={task} />
       </div>
       {activeTab === "activity" ? (
@@ -194,18 +221,6 @@ export function TaskDetailPanel({
       ) : null}
 
       <footer className="task-detail-panel__actions">
-        <Link className="task-detail-panel__exploration-link" href={`/tasks/${encodeURIComponent(task.id)}`}>
-          探索与成果采纳 →
-        </Link>
-        <TaskFormDialog
-          lockGoalAndStatus={Boolean(task.evolution)}
-          onSubmitTask={(values) => onUpdateTask(task.id, values)}
-          initialValues={taskValues}
-          triggerLabel="编辑"
-          dialogEyebrow="编辑任务"
-          dialogTitle="调整这条任务"
-          submitLabel="保存修改"
-        />
         <ConfirmDialog
           triggerLabel="删除"
           title="确认删除这条任务？"

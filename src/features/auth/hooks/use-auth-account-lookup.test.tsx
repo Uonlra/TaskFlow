@@ -1,24 +1,13 @@
 // @vitest-environment jsdom
 
-import type { ReactNode } from "react";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AuthPreviewStateProvider, useAuthPreviewState } from "@/features/auth/components/auth-preview-state";
 import { useAuthAccountLookup } from "@/features/auth/hooks/use-auth-account-lookup";
 
 vi.mock("@/shared/lib/appwrite/env", () => ({
   hasAppwritePublicEnv: true,
 }));
-
-function Wrapper({ children }: { children: ReactNode }) {
-  return <AuthPreviewStateProvider>{children}</AuthPreviewStateProvider>;
-}
-
-function useLookupHarness(email: string) {
-  useAuthAccountLookup(email);
-  return useAuthPreviewState().preloginAccountStatus;
-}
 
 describe("useAuthAccountLookup", () => {
   beforeEach(() => {
@@ -33,7 +22,7 @@ describe("useAuthAccountLookup", () => {
   it("空邮箱保持 idle 且不请求接口", () => {
     const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(new Response());
 
-    const { result } = renderHook(() => useLookupHarness(""), { wrapper: Wrapper });
+    const { result } = renderHook(() => useAuthAccountLookup(""));
 
     expect(result.current).toBe("idle");
     expect(fetchMock).not.toHaveBeenCalled();
@@ -42,7 +31,7 @@ describe("useAuthAccountLookup", () => {
   it("非法邮箱保持 idle 且不请求接口", () => {
     const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(new Response());
 
-    const { result } = renderHook(() => useLookupHarness("invalid-email"), { wrapper: Wrapper });
+    const { result } = renderHook(() => useAuthAccountLookup("invalid-email"));
 
     expect(result.current).toBe("idle");
     expect(fetchMock).not.toHaveBeenCalled();
@@ -63,7 +52,7 @@ describe("useAuthAccountLookup", () => {
       ),
     );
 
-    const { result } = renderHook(() => useLookupHarness(" demo@example.com "), { wrapper: Wrapper });
+    const { result } = renderHook(() => useAuthAccountLookup(" demo@example.com "));
 
     expect(result.current).toBe("idle");
     expect(fetchMock).not.toHaveBeenCalled();
@@ -85,7 +74,7 @@ describe("useAuthAccountLookup", () => {
   it("接口请求失败时更新为 unknown", async () => {
     vi.spyOn(global, "fetch").mockRejectedValue(new Error("Network unavailable"));
 
-    const { result } = renderHook(() => useLookupHarness("demo@example.com"), { wrapper: Wrapper });
+    const { result } = renderHook(() => useAuthAccountLookup("demo@example.com"));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(450);

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { DashboardWorkspace } from "@/features/dashboard/components/dashboard-workspace";
@@ -15,6 +16,7 @@ describe("DashboardWorkspace loading state", () => {
         isLoading
         onStatusFilter={vi.fn()}
         onPreviewTask={vi.fn()}
+        onToggleTask={vi.fn()}
       />,
     );
 
@@ -33,6 +35,7 @@ describe("DashboardWorkspace loading state", () => {
         isRangeEmpty
         onStatusFilter={vi.fn()}
         onPreviewTask={vi.fn()}
+        onToggleTask={vi.fn()}
       />,
     );
 
@@ -50,6 +53,7 @@ describe("DashboardWorkspace loading state", () => {
         priorityTasks={[]}
         onStatusFilter={vi.fn()}
         onPreviewTask={vi.fn()}
+        onToggleTask={vi.fn()}
       />,
     );
 
@@ -58,4 +62,42 @@ describe("DashboardWorkspace loading state", () => {
     expect(emptyPriority).not.toHaveClass("dashboard-workspace__priority--empty");
     expect(emptyPriority?.parentElement).not.toHaveClass("dashboard-workspace--empty");
   });
+});
+
+it("separates status changes and previews, and links tasks with evolution to their review page", async () => {
+  const user = userEvent.setup();
+  const onPreviewTask = vi.fn();
+  const onToggleTask = vi.fn().mockResolvedValue(undefined);
+  const stats = buildDashboardStats([], { range: "week" });
+  const task = {
+    id: "ordinary",
+    title: "整理文档",
+    description: "",
+    status: "todo" as const,
+    priority: "medium" as const,
+    createdAt: "2026-11-26T00:00:00.000Z",
+    dueLabel: "未设置截止日期",
+    tags: [],
+    hasEvolution: false,
+  };
+
+  render(
+    <DashboardWorkspace
+      stats={{ ...stats, completedCount: 1, totalCount: 2 }}
+      priorityTasks={[task, { ...task, id: "evolved", title: "检查实验结果", hasEvolution: true }]}
+      onStatusFilter={vi.fn()}
+      onPreviewTask={onPreviewTask}
+      onToggleTask={onToggleTask}
+    />,
+  );
+
+  await user.click(screen.getByRole("button", { name: "标记为完成：整理文档" }));
+  expect(onToggleTask).toHaveBeenCalledExactlyOnceWith(task);
+  expect(onPreviewTask).not.toHaveBeenCalled();
+
+  await user.click(screen.getByRole("button", { name: /^整理文档/ }));
+  expect(onPreviewTask).toHaveBeenCalledExactlyOnceWith(task);
+  expect(screen.queryByRole("button", { name: "标记为完成：检查实验结果" })).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "验收：检查实验结果" })).toHaveAttribute("href", "/tasks/evolved");
+  expect(screen.getByRole("progressbar", { name: "本周进度" })).toHaveAttribute("value", "1");
 });

@@ -96,6 +96,26 @@ export function buildTaskTrendOption(trend: DashboardTrendPoint[], options: { sp
   };
 }
 
+export function buildTaskComparisonOption(points: DashboardTrendPoint[]): EChartsOption {
+  return {
+    color: ["#7c8ca5", "#3e6ae1"],
+    grid: { top: 36, right: 16, bottom: 28, left: 42 },
+    legend: { top: 0, right: 12, itemWidth: 12, itemHeight: 8 },
+    tooltip: { trigger: "axis", ...tooltipBase, axisPointer: { type: "shadow" }, formatter: formatAxisTooltip },
+    xAxis: {
+      type: "category",
+      data: points.map((point) => point.label),
+      axisTick: { show: false },
+      axisLabel: { hideOverlap: true, fontSize: 11 },
+    },
+    yAxis: { type: "value", minInterval: 1, axisLabel: { fontSize: 11 } },
+    series: [
+      { name: "新增", type: "bar", barMaxWidth: 16, data: points.map((point) => point.created) },
+      { name: "完成", type: "bar", barMaxWidth: 16, data: points.map((point) => point.completed) },
+    ],
+  };
+}
+
 export function buildTaskStatusOption(items: Array<DashboardDistributionItem<TaskStatus>>): EChartsOption {
   return {
     color: items.map((item) => item.color),
@@ -203,7 +223,7 @@ export function buildTaskTagTopOption(items: DashboardTagTopItem[]): EChartsOpti
       top: 8,
       right: 16,
       bottom: 8,
-      left: 48,
+      left: 76,
     },
     xAxis: {
       type: "value",
@@ -223,6 +243,8 @@ export function buildTaskTagTopOption(items: DashboardTagTopItem[]): EChartsOpti
       axisLabel: {
         color: "#334155",
         fontSize: 12,
+        width: 64,
+        overflow: "truncate",
       },
     },
     series: [

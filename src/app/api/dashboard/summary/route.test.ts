@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   getAppwriteSessionSecret: vi.fn(),
   getCurrentAuthEnvelope: vi.fn(),
   listTasksForDashboard: vi.fn(),
+  getDashboardEvolutionFlags: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/appwrite/session", () => ({
@@ -17,6 +18,7 @@ vi.mock("@/shared/lib/appwrite/server", () => ({
 
 vi.mock("@/shared/lib/appwrite/tasks", () => ({
   listTasksForDashboard: mocks.listTasksForDashboard,
+  getDashboardEvolutionFlags: mocks.getDashboardEvolutionFlags,
 }));
 
 import { GET } from "@/app/api/dashboard/summary/route";
@@ -29,6 +31,7 @@ describe("/api/dashboard/summary", () => {
     mocks.getAppwriteSessionSecret.mockResolvedValue("session-secret");
     mocks.getCurrentAuthEnvelope.mockResolvedValue(authEnvelope);
     mocks.listTasksForDashboard.mockResolvedValue({ tasks: [], paceTasks: [], hasAnyTasks: false });
+    mocks.getDashboardEvolutionFlags.mockResolvedValue(new Map());
   });
 
   it("未登录时返回 401", async () => {
@@ -40,6 +43,7 @@ describe("/api/dashboard/summary", () => {
   });
 
   it("按范围和优先处理筛选返回聚合摘要", async () => {
+    mocks.getDashboardEvolutionFlags.mockResolvedValue(new Map([["high-1", true]]));
     mocks.listTasksForDashboard.mockResolvedValue({
       hasAnyTasks: true,
       paceTasks: [],
@@ -66,8 +70,13 @@ describe("/api/dashboard/summary", () => {
     expect(payload.hasAnyTasks).toBe(true);
     expect(payload.stats.totalCount).toBe(1);
     expect(payload.stats.focusTasks).toEqual([
-      expect.objectContaining({ id: "high-1", createdAt: "2026-08-23T08:00:00.000Z" }),
+      expect.objectContaining({ id: "high-1", createdAt: "2026-08-23T08:00:00.000Z", hasEvolution: true }),
     ]);
     expect(mocks.listTasksForDashboard).toHaveBeenCalledWith("session-secret", "all", expect.any(NextRequest));
+    expect(mocks.getDashboardEvolutionFlags).toHaveBeenCalledWith(
+      "session-secret",
+      ["high-1"],
+      expect.any(NextRequest),
+    );
   });
 });

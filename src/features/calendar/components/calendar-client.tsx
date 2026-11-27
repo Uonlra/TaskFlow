@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DataEmptyState } from "@/shared/components/common/data-empty-state";
 import { PageToolbarTemporalContext } from "@/shared/components/layout/page-toolbar-context";
 
-import { CalendarDayDrawer } from "@/features/calendar/components/calendar-day-drawer";
+import { CalendarDayAgenda } from "@/features/calendar/components/calendar-day-agenda";
 import { TaskQuickViewDialog } from "@/features/tasks/components/task-quick-view-dialog";
 import type { TaskFormValues } from "@/features/tasks/schemas/task-schema";
-import type { Task, TaskPriority, TaskStatus } from "@/features/tasks/types/task.types";
+import type { Task, TaskPriority } from "@/features/tasks/types/task.types";
 import {
   addTaskDays,
   formatTaskDateParam,
@@ -60,12 +60,6 @@ const rangeOptions: Array<{ value: DashboardRangeValue; label: string }> = [
   { value: DASHBOARD_RANGE_VALUES.all, label: "全部" },
 ];
 
-const statusLabels: Record<TaskStatus, string> = {
-  todo: "待开始",
-  in_progress: "进行中",
-  done: "已完成",
-};
-
 const priorityLabels: Record<TaskPriority, string> = {
   high: "高",
   medium: "中",
@@ -85,7 +79,7 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   const searchParams = useSearchParams();
   const dateParam = parseCalendarDate(searchParams.get(CALENDAR_QUERY_KEYS.date) ?? initialDate);
   const range = parseCalendarRange(searchParams.get(CALENDAR_QUERY_KEYS.range) ?? initialRange);
-  const isDateDrawerOpen = searchParams.get(CALENDAR_QUERY_KEYS.drawer) === "date";
+  const pendingAgendaDate = useRef<string | null>(null);
   const previewTaskId = searchParams.get(CALENDAR_QUERY_KEYS.task);
   const selectedDate = useMemo(() => parseTaskDateParam(dateParam) ?? startOfTaskDay(new Date()), [dateParam]);
   const monthGridStart = useMemo(() => getCalendarGridStart(selectedDate), [selectedDate]);
@@ -123,7 +117,20 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   const rangeLabel = rangeOptions.find((item) => item.value === range)?.label ?? "本周";
   const isAccountEmpty = !isLoading && !hasAnyTasks;
 
+  useEffect(() => {
+    if (pendingAgendaDate.current !== dateParam || error) return;
+    pendingAgendaDate.current = null;
+    revealDayAgenda();
+  }, [dateParam, error]);
+
+  const handleSelectDay = (nextDate: string) => {
+    if (!window.matchMedia("(max-width: 1023px)").matches) return;
+    pendingAgendaDate.current = nextDate === dateParam ? null : nextDate;
+    if (nextDate === dateParam) revealDayAgenda();
+  };
+
   const updateCalendar = (input: { date?: string; range?: DashboardRangeValue }) => {
+    pendingAgendaDate.current = null;
     const params = new URLSearchParams(searchParams.toString());
     params.set(CALENDAR_QUERY_KEYS.date, input.date ?? dateParam);
     params.set(CALENDAR_QUERY_KEYS.range, input.range ?? range);
@@ -132,17 +139,10 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const closeDateDrawer = useCallback(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete(CALENDAR_QUERY_KEYS.drawer);
-    params.delete(CALENDAR_QUERY_KEYS.task);
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [pathname, router, searchParams]);
-
   const openTaskPreview = useCallback(
     (task: Task) => {
       const params = new URLSearchParams(searchParams.toString());
+      params.delete(CALENDAR_QUERY_KEYS.drawer);
       params.set(CALENDAR_QUERY_KEYS.task, task.id);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
@@ -150,14 +150,10 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
   );
 
   const closeTaskPreview = useCallback(() => {
-    const taskId = searchParams.get(CALENDAR_QUERY_KEYS.task);
     const params = new URLSearchParams(searchParams.toString());
     params.delete(CALENDAR_QUERY_KEYS.task);
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-    window.requestAnimationFrame(() => {
-      if (taskId) document.querySelector<HTMLElement>(`[data-calendar-task-id="${taskId}"]`)?.focus();
-    });
   }, [pathname, router, searchParams]);
 
   const handleCreateTask = async (values: TaskFormValues) => {
@@ -268,33 +264,6 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
     );
   }
 
-  if (isAccountEmpty) {
-    return (
-      <section className="calendar-shell calendar-shell--empty">
-        <CalendarToolbar
-          date={selectedDate}
-          dateParam={dateParam}
-          range={range}
-          rangeLabel={rangeLabel}
-          isSyncing={false}
-          isAccountEmpty
-          selectedTaskCount={selectedDaySummary.total}
-          selectedDoneCount={selectedDaySummary.done}
-          upcomingCount={upcomingTasks.length}
-          overdueCount={attentionCounts.overdueCount}
-          nearDueCount={attentionCounts.nearDueCount}
-          onDateChange={(nextDate) => updateCalendar({ date: formatTaskDateParam(nextDate) })}
-          onRangeChange={(nextRange) => updateCalendar({ range: nextRange })}
-        />
-        <DataEmptyState
-          title="日历等待第一条任务"
-          description="为任务设置截止日期后，会在这里形成时间线。"
-          action={<Link href="/tasks">创建任务</Link>}
-        />
-      </section>
-    );
-  }
-
   return (
     <section className="calendar-shell">
       <CalendarToolbar
@@ -314,11 +283,19 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
       />
       {attention ? <CalendarAttentionBar attention={attention} /> : null}
       <div className="calendar-layout-grid">
-        <main className="calendar-main-stack">
-          <CalendarMonthGrid days={monthDays} range={range} selectedDate={selectedDate} />
-          <CalendarTimeline tasks={selectedDayTasks} selectedDate={selectedDate} isSyncing={isSyncing} />
-        </main>
-        <aside className="calendar-side-stack">
+        <CalendarMonthGrid days={monthDays} range={range} selectedDate={selectedDate} onSelectDay={handleSelectDay} />
+        <CalendarDayAgenda
+          date={selectedDate}
+          dateParam={dateParam}
+          tasks={selectedDayTasks}
+          summary={selectedDaySummary}
+          isLoading={isLoading}
+          onCreateTask={handleCreateTask}
+          onPreviewTask={openTaskPreview}
+        />
+      </div>
+      <div className="calendar-layout-grid">
+        {range !== DASHBOARD_RANGE_VALUES.today && !isAccountEmpty ? (
           <CalendarUpcomingPanel
             tasks={upcomingTasks}
             range={range}
@@ -326,19 +303,9 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
             selectedDate={selectedDate}
             isSyncing={isSyncing}
           />
-          <CalendarQuickLinks />
-        </aside>
+        ) : null}
+        <CalendarQuickLinks />
       </div>
-      <CalendarDayDrawer
-        open={isDateDrawerOpen}
-        dateParam={dateParam}
-        tasks={selectedDayTasks}
-        summary={selectedDaySummary}
-        isLoading={isLoading}
-        onClose={closeDateDrawer}
-        onCreateTask={handleCreateTask}
-        onPreviewTask={openTaskPreview}
-      />
       <TaskQuickViewDialog
         task={previewTask}
         onExecuteEvolution={(task, command) => executeEvolution(task.id, command)}
@@ -349,6 +316,13 @@ export function CalendarClient({ initialDate, initialRange }: CalendarClientProp
       />
     </section>
   );
+}
+
+function revealDayAgenda() {
+  if (!window.matchMedia("(max-width: 1023px)").matches) return;
+  const agenda = document.getElementById("calendar-day-agenda");
+  agenda?.focus({ preventScroll: true });
+  agenda?.scrollIntoView({ block: "start" });
 }
 
 export function CalendarToolbar({
@@ -387,7 +361,7 @@ export function CalendarToolbar({
   const loadSummary = isSyncing
     ? "正在同步日程"
     : selectedTaskCount
-      ? `${selectedDoneCount}/${selectedTaskCount} 项完成 · ${upcomingCount} 项即将到期`
+      ? `${selectedDoneCount}/${selectedTaskCount} 项完成${upcomingCount ? ` · ${upcomingCount} 项即将到期` : ""}`
       : "当前日期暂无安排";
 
   return (
@@ -519,28 +493,19 @@ function CalendarMonthGrid({
   days,
   range,
   selectedDate,
+  onSelectDay,
 }: {
   days: CalendarDay[];
   range: DashboardRangeValue;
   selectedDate: Date;
+  onSelectDay: (dateParam: string) => void;
 }) {
   return (
-    <section className="calendar-panel calendar-month-panel card-surface">
+    <section className="calendar-panel calendar-month-panel card-surface" aria-labelledby="calendar-month-heading">
       <div className="calendar-panel__head calendar-panel__head--inline">
-        <div>
-          <span className="calendar-eyebrow">月视图</span>
-          <h2>{formatCalendarMonth(selectedDate)}</h2>
-        </div>
-        <Link
-          href={buildTasksHref({
-            date: formatTaskDateParam(selectedDate),
-            range: DASHBOARD_RANGE_VALUES.week,
-          })}
-        >
-          查看任务
-        </Link>
+        <h2 id="calendar-month-heading">{formatCalendarMonth(selectedDate)}</h2>
+        <CalendarStatusLegend />
       </div>
-      <CalendarStatusLegend />
       <div className="calendar-weekday-row" aria-hidden="true">
         {weekdayLabels.map((label) => (
           <span key={label}>{label}</span>
@@ -550,7 +515,10 @@ function CalendarMonthGrid({
         {days.map((day) => (
           <Link
             key={day.dateParam}
-            href={buildCalendarHref({ date: day.dateParam, range, drawer: "date" })}
+            href={buildCalendarHref({ date: day.dateParam, range })}
+            scroll={false}
+            prefetch={false}
+            onNavigate={() => onSelectDay(day.dateParam)}
             data-calendar-date={day.dateParam}
             className={[
               "calendar-month-day",
@@ -563,15 +531,22 @@ function CalendarMonthGrid({
             aria-current={day.isSelected ? "date" : undefined}
             aria-label={formatCalendarDayAriaLabel(day)}
           >
-            <span className="calendar-month-day__number">{day.dayLabel}</span>
-            {day.summary.statusDots.length ? (
-              <span className="calendar-status-dots" aria-hidden="true">
-                {day.summary.statusDots.map((status) => (
-                  <span key={status} className={`calendar-status-dot calendar-status-dot--${status}`} />
-                ))}
+            <time className="calendar-month-day__number" dateTime={day.dateParam}>
+              {day.dayLabel}
+            </time>
+            {day.summary.total ? (
+              <span className="calendar-month-day__summary" aria-hidden="true">
+                <span className="calendar-status-dots">
+                  {day.summary.statusDots.map((status) => (
+                    <span key={status} className={`calendar-status-dot calendar-status-dot--${status}`} />
+                  ))}
+                </span>
+                <small className="calendar-month-day__count">
+                  {day.summary.total}
+                  <span> 项</span>
+                </small>
               </span>
             ) : null}
-            <small className="calendar-month-day__count">{day.summary.total ? `${day.summary.total} 项` : ""}</small>
           </Link>
         ))}
       </div>
@@ -596,63 +571,6 @@ function CalendarStatusLegend() {
         </span>
       ))}
     </div>
-  );
-}
-
-function CalendarTimeline({
-  tasks,
-  selectedDate,
-  isSyncing,
-}: {
-  tasks: Task[];
-  selectedDate: Date;
-  isSyncing: boolean;
-}) {
-  return (
-    <section className="calendar-panel card-surface">
-      <div className="calendar-panel__head calendar-panel__head--inline">
-        <div>
-          <span className="calendar-eyebrow">任务时间线</span>
-          <h2>{formatMonthDay(selectedDate)} 截止</h2>
-        </div>
-        <Link href={buildTasksHref({ date: formatTaskDateParam(selectedDate) })}>筛选任务</Link>
-      </div>
-      <div className="calendar-timeline">
-        {tasks.length ? (
-          tasks.map((task) => <CalendarTimelineItem key={task.id} task={task} />)
-        ) : (
-          <CalendarEmptyState
-            label={isSyncing ? "同步中" : "今天暂无截止"}
-            description={isSyncing ? "数据准备完成后自动显示。" : "该日期没有设置截止时间的任务。"}
-          />
-        )}
-      </div>
-    </section>
-  );
-}
-
-function CalendarTimelineItem({ task }: { task: Task }) {
-  const dueMeta = getTaskDueMeta(task);
-
-  return (
-    <Link
-      href={getTaskCalendarHref(task)}
-      className={`calendar-timeline__item calendar-timeline__item--${task.priority}${task.status === "done" ? " is-done" : ""}`}
-    >
-      <time>全天</time>
-      <span className="calendar-timeline__flag" aria-hidden="true" />
-      <div className="calendar-timeline__body">
-        <strong>{task.title}</strong>
-        <div className="calendar-timeline__meta">
-          <span>{priorityLabels[task.priority]}优先级</span>
-          <span>{statusLabels[task.status]}</span>
-          <span>{dueMeta.label}</span>
-          {task.tags.slice(0, 2).map((tag) => (
-            <span key={tag}>#{tag}</span>
-          ))}
-        </div>
-      </div>
-    </Link>
   );
 }
 
@@ -767,12 +685,10 @@ function getCalendarGridStart(date: Date) {
 }
 
 function buildUpcomingTasks(dueTasks: Task[], selectedDate: Date, range: DashboardRangeValue) {
+  if (range === DASHBOARD_RANGE_VALUES.today) return [];
   const activeTasks = dueTasks.filter((task) => task.status !== "done");
-  const start = startOfTaskDay(selectedDate);
-  const end =
-    range === DASHBOARD_RANGE_VALUES.all
-      ? addTaskDays(start, 30)
-      : addTaskDays(start, range === DASHBOARD_RANGE_VALUES.today ? 1 : 7);
+  const start = addTaskDays(startOfTaskDay(selectedDate), 1);
+  const end = addTaskDays(startOfTaskDay(selectedDate), range === DASHBOARD_RANGE_VALUES.all ? 30 : 7);
 
   return sortCalendarTasks(
     activeTasks.filter((task) => {
@@ -855,10 +771,6 @@ function shiftCalendarMonth(value: Date, amount: number) {
   return startOfTaskDay(target);
 }
 
-function formatMonthDay(value: Date) {
-  return `${value.getMonth() + 1}/${value.getDate()}`;
-}
-
 function isSameCalendarDay(left: Date, right: Date) {
   return startOfTaskDay(left).getTime() === startOfTaskDay(right).getTime();
 }
@@ -869,7 +781,8 @@ function createEmptyCalendarDaySummary(): CalendarDaySummary {
 
 function formatCalendarDayAriaLabel(day: CalendarDay) {
   const { summary } = day;
-  if (!summary.total) return `${day.dateParam}，无任务`;
+  const dateLabel = `${day.dateParam}${day.isToday ? "，今天" : ""}${day.isCurrentMonth ? "" : "，非本月"}`;
+  if (!summary.total) return `${dateLabel}，无任务`;
 
   const details = [
     summary.done ? `已完成 ${summary.done} 项` : "",
@@ -878,5 +791,5 @@ function formatCalendarDayAriaLabel(day: CalendarDay) {
     summary.overdue ? `其中逾期 ${summary.overdue} 项` : "",
   ].filter(Boolean);
 
-  return `${day.dateParam}，共 ${summary.total} 项任务，${details.join("，")}`;
+  return `${dateLabel}，共 ${summary.total} 项任务，${details.join("，")}`;
 }
