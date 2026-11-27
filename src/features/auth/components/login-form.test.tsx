@@ -5,19 +5,13 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LoginForm } from "@/features/auth/components/login-form";
-import { AuthPreviewStateProvider } from "@/features/auth/components/auth-preview-state";
 
 const mocks = vi.hoisted(() => {
   const applyAuthEnvelope = vi.fn();
   const syncTasks = vi.fn().mockResolvedValue(undefined);
   const showToast = vi.fn();
 
-  const useTaskStore = Object.assign(
-    vi.fn((selector: (state: { syncTasks: typeof syncTasks }) => unknown) => selector({ syncTasks })),
-    {
-      getState: vi.fn(() => ({ error: null })),
-    },
-  );
+  const useTaskStore = { getState: () => ({ error: null, syncTasks }) };
 
   return {
     applyAuthEnvelope,
@@ -56,11 +50,7 @@ vi.mock("@/features/auth/hooks/use-auth-account-lookup", () => ({
 }));
 
 function renderLoginForm() {
-  return render(
-    <AuthPreviewStateProvider>
-      <LoginForm />
-    </AuthPreviewStateProvider>,
-  );
+  return render(<LoginForm />);
 }
 
 describe("LoginForm", () => {

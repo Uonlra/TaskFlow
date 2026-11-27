@@ -1,67 +1,38 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
-
-import type { AuthAccountLookupStatus } from "@/features/auth/components/auth-preview-state";
-import { useAuthPreviewState } from "@/features/auth/components/auth-preview-state";
 import { apiFetch } from "@/shared/lib/api/client";
 import { hasAppwritePublicEnv } from "@/shared/lib/appwrite/env";
 
 const emailSchema = z.email();
-
-type LookupResponse = {
-  status?: AuthAccountLookupStatus | "invalid";
-};
+type Status = "registered" | "available" | "unknown";
 
 export function useAuthAccountLookup(email: string) {
-  const { setPreloginAccountStatus } = useAuthPreviewState();
-  const normalizedEmail = email.trim();
-
+  const key = email.trim();
+  const [result, setResult] = useState<{ email: string; status: Status } | null>(null);
   useEffect(() => {
-    if (!normalizedEmail) {
-      setPreloginAccountStatus("idle");
-      return;
-    }
-
-    if (!emailSchema.safeParse(normalizedEmail).success) {
-      setPreloginAccountStatus("idle");
-      return;
-    }
-
-    if (!hasAppwritePublicEnv) {
-      setPreloginAccountStatus("unknown");
-      return;
-    }
-
+    if (!hasAppwritePublicEnv || !emailSchema.safeParse(key).success) return;
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
-      setPreloginAccountStatus("checking");
-
+      let status: Status = "unknown";
       try {
-        const response = await apiFetch(`/api/auth/lookup?email=${encodeURIComponent(normalizedEmail)}`, {
+        const response = await apiFetch(`/api/auth/lookup?email=${encodeURIComponent(key)}`, {
           signal: controller.signal,
         });
-        const payload = (await response.json().catch(() => null)) as LookupResponse | null;
-
-        if (!response.ok || !payload?.status || payload.status === "invalid") {
-          setPreloginAccountStatus("unknown");
-          return;
+        if (response.ok) {
+          const payload = await response.json();
+          if (payload?.status === "available" || payload?.status === "registered") status = payload.status;
         }
-
-        setPreloginAccountStatus(payload.status);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
-
-        setPreloginAccountStatus("unknown");
+      } catch {
+        // The form remains usable when account lookup is unavailable.
       }
+      if (!controller.signal.aborted) setResult({ email: key, status });
     }, 450);
-
     return () => {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [normalizedEmail, setPreloginAccountStatus]);
+  }, [key]);
+  return result?.email === key ? result.status : "idle";
 }

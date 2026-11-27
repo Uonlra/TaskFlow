@@ -1,6 +1,7 @@
 # 日历模块
 
-- `components/calendar-client.tsx`：读取 URL 日期与抽屉状态、组织页面展示、提供操作反馈。
+- `components/calendar-client.tsx`：读取 URL 日期、组织月历和截止提醒、提供操作反馈。
+- `components/calendar-day-agenda.tsx`：展示选中日的任务、速览和带日期的新建入口。
 - `hooks/use-calendar-tasks.ts`：提供任务、提醒数量、加载状态、重试和任务操作。
 - `utils/calendar-task-summary.ts`：纯函数形式的每日汇总。
 

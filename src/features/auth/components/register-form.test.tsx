@@ -4,7 +4,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AuthPreviewStateProvider } from "@/features/auth/components/auth-preview-state";
 import { RegisterForm } from "@/features/auth/components/register-form";
 
 const mocks = vi.hoisted(() => ({
@@ -36,11 +35,7 @@ vi.mock("@/features/auth/hooks/use-auth-account-lookup", () => ({
 }));
 
 function renderRegisterForm() {
-  return render(
-    <AuthPreviewStateProvider>
-      <RegisterForm />
-    </AuthPreviewStateProvider>,
-  );
+  return render(<RegisterForm />);
 }
 
 describe("RegisterForm", () => {
@@ -57,9 +52,9 @@ describe("RegisterForm", () => {
 
     renderRegisterForm();
 
-    await user.click(screen.getByRole("button", { name: "创建任务本" }));
+    await user.click(screen.getByRole("button", { name: "创建账号" }));
 
-    expect(await screen.findByText("姓名至少需要 2 个字符。")).toBeInTheDocument();
+    expect(await screen.findByText("昵称至少需要 2 个字符。")).toBeInTheDocument();
     expect(screen.getByText("请输入有效的邮箱地址。")).toBeInTheDocument();
     expect(screen.getByText("密码至少需要 8 位。")).toBeInTheDocument();
     expect(screen.getByText("请再次输入密码。")).toBeInTheDocument();
@@ -70,7 +65,7 @@ describe("RegisterForm", () => {
 
     renderRegisterForm();
 
-    expect(screen.queryByText("至少 8 个字符")).not.toBeInTheDocument();
+    expect(screen.getByText("至少 8 个字符")).toBeInTheDocument();
 
     await user.click(screen.getByLabelText("密码"));
     expect(screen.getByText("至少 8 个字符")).toBeInTheDocument();
@@ -97,11 +92,11 @@ describe("RegisterForm", () => {
 
     renderRegisterForm();
 
-    await user.type(screen.getByLabelText("姓名"), "测试用户");
+    await user.type(screen.getByLabelText("昵称"), "测试用户");
     await user.type(screen.getByLabelText("邮箱"), "demo@example.com");
     await user.type(screen.getByLabelText("密码"), "password123");
     await user.type(screen.getByLabelText("确认密码"), "password123");
-    await user.click(screen.getByRole("button", { name: "创建任务本" }));
+    await user.click(screen.getByRole("button", { name: "创建账号" }));
 
     expect(await screen.findByText("该邮箱已注册。")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
